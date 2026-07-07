@@ -79,6 +79,8 @@ export { Layout } from './schemas/layout/layout.js';
 
 export type { ParseIssue, ParseResult } from './yaml/parse-result.types.js';
 export { parseYamlArtifact } from './yaml/parse-core.js';
+export { locateYamlPath } from './yaml/locate-yaml-path.js';
+export type { YamlPosition } from './yaml/locate-yaml-path.js';
 export { parseActorYaml } from './yaml/parse-actor-yaml.js';
 export { parseExternalSystemYaml } from './yaml/parse-external-system-yaml.js';
 export { parseSystemYaml } from './yaml/parse-system-yaml.js';

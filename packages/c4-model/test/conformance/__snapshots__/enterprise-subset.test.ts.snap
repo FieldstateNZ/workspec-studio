@@ -1,0 +1,179 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`enterprise-subset golden snapshot > loads with zero diagnostics and matches the committed snapshot 1`] = `
+{
+  "diagnostics": [],
+  "diagrams": [
+    {
+      "description": null,
+      "layout": null,
+      "lensViews": {
+        "deployment": {
+          "edges": [],
+          "nodes": [],
+        },
+        "logical": {
+          "edges": [],
+          "nodes": [],
+        },
+      },
+      "path": ".workspec/diagrams/container.yaml",
+      "raw": {
+        "edges": [],
+        "nodes": [],
+        "title": "Container",
+        "type": "c4-container",
+      },
+      "slug": "container",
+      "title": "Container",
+      "type": "c4-container",
+      "view": null,
+    },
+    {
+      "description": "Top-level system context — the project's actors and external systems.",
+      "layout": null,
+      "lensViews": null,
+      "path": ".workspec/diagrams/system-context.yaml",
+      "raw": {
+        "description": "Top-level system context — the project's actors and external systems.",
+        "edges": [],
+        "nodes": [],
+        "title": "System Context",
+        "type": "c4-context",
+      },
+      "slug": "system-context",
+      "title": "System Context",
+      "type": "c4-context",
+      "view": {
+        "edges": [],
+        "nodes": [
+          {
+            "dangling": false,
+            "description": "WorkSpec is Fieldstate's spec and traceability tool. One project board viewed through two lenses — freeform sketches and structured artifacts — with a per-element arc carrying any single thing from sketch through design, build, and test. An AI co-author drafts in pencil alongside the user, and a continuous spec↔code reconciliation loop keeps the spec honest after ship. No phase gates: readiness is per element, never per project.",
+            "injected": true,
+            "kind": "system",
+            "nodeId": "workspec",
+            "position": null,
+            "slug": "workspec",
+            "tags": [],
+            "technology": null,
+            "title": "WorkSpec",
+          },
+        ],
+      },
+    },
+  ],
+  "elements": {
+    "actor": {},
+    "component": {},
+    "container": {},
+    "database": {},
+    "domain": {},
+    "external-system": {},
+    "feature": {},
+    "queue": {},
+    "system": {
+      "workspec": {
+        "element": {
+          "data": {
+            "description": "WorkSpec is Fieldstate's spec and traceability tool. One project board viewed through two lenses — freeform sketches and structured artifacts — with a per-element arc carrying any single thing from sketch through design, build, and test. An AI co-author drafts in pencil alongside the user, and a continuous spec↔code reconciliation loop keeps the spec honest after ship. No phase gates: readiness is per element, never per project.",
+            "summary": "WorkSpec is Fieldstate's spec and traceability tool. One project board viewed through two lenses — freeform sketches and structured artifacts — with a per-element arc carrying any single thing from sketch through design, build, and test. An AI co-author drafts in pencil alongside the user, and a continuous spec↔code reconciliation loop keeps the spec honest after ship. No phase gates: readiness is per element, never per project.",
+            "title": "WorkSpec",
+          },
+          "kind": "system",
+        },
+        "path": ".workspec/system/workspec.yaml",
+        "slug": "workspec",
+      },
+    },
+  },
+  "spec": {
+    "data": {
+      "connections": {
+        "data": {
+          "accent": "#4CAF50",
+          "style": "solid",
+        },
+        "governance": {
+          "accent": "#9C27B0",
+          "style": "dashed",
+        },
+        "identity": {
+          "accent": "#4A90D9",
+          "style": "solid",
+        },
+        "interaction": {
+          "accent": "#64748b",
+          "style": "solid",
+        },
+      },
+      "elements": {
+        "actor": {
+          "accent": "#4A90D9",
+          "icon": "user",
+          "shape": "box",
+        },
+        "class": {
+          "accent": "hsl(262 52% 58%)",
+          "icon": "braces",
+          "shape": "box",
+        },
+        "component": {
+          "accent": "hsl(166 50% 40%)",
+          "icon": "package",
+          "shape": "box",
+        },
+        "container": {
+          "accent": "hsl(214 88% 51%)",
+          "icon": "server",
+          "shape": "box",
+        },
+        "database": {
+          "accent": "hsl(186 79% 35%)",
+          "icon": "database",
+          "shape": "cylinder",
+        },
+        "domain": {
+          "accent": "hsl(150 35% 38%)",
+          "icon": "boxes",
+          "shape": "box",
+        },
+        "external-system": {
+          "accent": "#64748b",
+          "icon": "external-link",
+          "shape": "box",
+          "variant": "external",
+        },
+        "feature": {
+          "accent": "hsl(166 50% 40%)",
+          "icon": "package",
+          "shape": "box",
+        },
+        "function": {
+          "accent": "hsl(150 45% 42%)",
+          "icon": "parentheses",
+          "shape": "box",
+        },
+        "interface": {
+          "accent": "hsl(199 65% 48%)",
+          "icon": "brackets",
+          "shape": "box",
+        },
+        "queue": {
+          "accent": "hsl(280 50% 55%)",
+          "icon": "git-merge",
+          "shape": "pill",
+        },
+        "system": {
+          "accent": "#1168BD",
+          "icon": "box",
+          "shape": "box",
+        },
+      },
+      "type": "style",
+      "version": 2,
+    },
+    "path": ".workspec/spec.yaml",
+  },
+}
+`;

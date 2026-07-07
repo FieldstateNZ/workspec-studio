@@ -37,7 +37,7 @@
     "vitest": "^4.1.10"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "lint": "eslint .",

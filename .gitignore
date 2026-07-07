@@ -12,6 +12,7 @@ playwright-report/
 .env
 .env.local
 .vitest-cache/
+.typecheck/
 
 # render-adr output (packages/decision-studio) is a generated artifact, never committed
 *.adr.md

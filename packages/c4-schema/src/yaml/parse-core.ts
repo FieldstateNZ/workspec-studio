@@ -1,28 +1,7 @@
-import { isNode, LineCounter, parseDocument } from 'yaml';
-import type { Document } from 'yaml';
+import { LineCounter, parseDocument } from 'yaml';
 import type { z } from 'zod';
+import { locateInDocument } from './locate-in-document.js';
 import type { ParseIssue, ParseResult } from './parse-result.types.js';
-
-function locate(
-  doc: Document,
-  lineCounter: LineCounter,
-  path: readonly PropertyKey[],
-): { line: number; col: number } {
-  const segments = path.slice();
-  while (segments.length > 0) {
-    const node: unknown = doc.getIn(segments as PropertyKey[], true);
-    if (isNode(node) && node.range) {
-      const pos = lineCounter.linePos(node.range[0]);
-      return { line: pos.line, col: pos.col };
-    }
-    segments.pop();
-  }
-  if (isNode(doc.contents) && doc.contents.range) {
-    const pos = lineCounter.linePos(doc.contents.range[0]);
-    return { line: pos.line, col: pos.col };
-  }
-  return { line: 1, col: 1 };
-}
 
 /**
  * Parses YAML text and validates it against `schema`, mapping every YAML
@@ -58,7 +37,7 @@ export function parseYamlArtifact<T>(text: string, schema: z.ZodType<T>): ParseR
   }
 
   const errors: ParseIssue[] = result.error.issues.map((issue) => {
-    const pos = locate(doc, lineCounter, issue.path);
+    const pos = locateInDocument(doc, lineCounter, issue.path) ?? { line: 1, col: 1 };
     return { path: issue.path.join('.'), message: issue.message, line: pos.line, col: pos.col };
   });
   return { ok: false, errors };
