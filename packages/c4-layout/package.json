@@ -1,0 +1,44 @@
+{
+  "name": "@workspec/c4-layout",
+  "version": "0.1.0-alpha.0",
+  "description": "Deterministic ELK-based auto-layout for resolved WorkSpec C4 diagrams, with pinned-node/mixed-mode support and .layout/ round-tripping. No IO assumptions, no DOM, runs in Node and the browser.",
+  "keywords": ["c4", "architecture", "diagrams", "layout", "elk", "elkjs"],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/c4-layout#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/c4-layout"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@workspec/c4-model": "workspace:^",
+    "@workspec/c4-schema": "workspace:^",
+    "elkjs": "^0.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && node scripts/assert-browser-safe.mjs",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    // Deliberately NOT "dist": this config's rootDir is "." (it covers
+    // top-level `test/` alongside `src/`, unlike `tsconfig.build.json`),
+    // so a `tsc -b` build of it emits `<outDir>/src/*.d.ts` +
+    // `<outDir>/test/*.d.ts` (mirroring the "." root), not the flat
+    // `<outDir>/*.d.ts` layout `tsconfig.build.json` and package.json's
+    // "types" field expect. Routing that emit to a top-level gitignored
+    // `.typecheck/` (never read by anything) keeps `tsc -b`'s
+    // self-bootstrap working for typecheck without ever touching the
+    // published `dist/` tree — `files: ["dist"]` means anything under
+    // dist/ ships in the npm tarball, so the shadow emit must live OUTSIDE
+    // it. Copied verbatim from `@workspec/c4-model` (see its tsconfig.json
+    // for the full rationale) — this package hit the same shape.
+    "outDir": ".typecheck",
+    "types": ["node"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+  },
+  // TS Project References: lets `tsc -b` type-check against c4-model's and
+  // c4-schema's real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Both point at
+  // the sibling's *build* config rather than its default `tsconfig.json`,
+  // for the same reason c4-model points at c4-schema's: the default
+  // `tsconfig.json` in each has `rootDir: "."` (it also typechecks
+  // `scripts/`/`test/`), so building it on demand via `-b` would emit to
+  // `dist/src/index.d.ts` instead of the `dist/index.d.ts` its own
+  // package.json "types" field points at.
+  "references": [{ "path": "../c4-model/tsconfig.build.json" }, { "path": "../c4-schema/tsconfig.build.json" }],
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}
