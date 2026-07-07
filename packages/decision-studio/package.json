@@ -13,7 +13,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
-    "directory": "packages/studio"
+    "directory": "packages/decision-studio"
   },
   "license": "Apache-2.0",
   "type": "module",
@@ -27,7 +27,6 @@
   },
   "exports": {
     ".": {
-      "@workspec/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
@@ -40,10 +39,10 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsup && vite build",
+    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && vite build",
     "build:client": "vite build",
     "dev": "vite build && tsx src/bin.ts serve --dir ../../examples/hosting-platform --port 4173",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "e2e": "playwright test --config e2e/playwright.config.ts"
   },

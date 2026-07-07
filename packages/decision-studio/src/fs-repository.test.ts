@@ -10,6 +10,12 @@ const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 let dir: string;
 
 beforeEach(async () => {
@@ -101,8 +107,8 @@ describe('FsRepository read', () => {
       await repo.readCatalog('bad.catalog.yaml');
     } catch (error) {
       const e = error as ArtifactValidationError;
-      expect(e.issues[0]!.path).toBe('spec.schedules.0.pct');
-      expect(e.issues[0]!.line).toBe(17);
+      expect(must(e.issues[0]).path).toBe('spec.schedules.0.pct');
+      expect(must(e.issues[0]).line).toBe(17);
     }
   });
 });
@@ -154,11 +160,11 @@ describe('FsRepository write (round-trip + comment preservation)', () => {
     const repo = new FsRepository(dir);
     const catalog = await repo.readCatalog('platform.catalog.yaml');
     // Bump a SKU price and write back.
-    catalog.spec.skus[0]!.price = 999;
+    must(catalog.spec.skus[0]).price = 999;
     await repo.writeCatalog('platform.catalog.yaml', catalog);
 
     const reread = await repo.readCatalog('platform.catalog.yaml');
-    expect(reread.spec.skus[0]!.price).toBe(999);
+    expect(must(reread.spec.skus[0]).price).toBe(999);
     const written = await readFile(join(dir, 'platform.catalog.yaml'), 'utf8');
     expect(written).toContain('# Pricing modes are multipliers'); // comment survived the edit
     expect(written).toContain('999');
@@ -178,7 +184,7 @@ describe('FsRepository write (round-trip + comment preservation)', () => {
   it('rejects writes that fail Zod validation', async () => {
     const repo = new FsRepository(dir);
     const catalog = await new FsRepository(HOSTING_DIR).readCatalog('platform.catalog.yaml');
-    catalog.spec.schedules[0]!.pct = 1.5; // out of range
+    must(catalog.spec.schedules[0]).pct = 1.5; // out of range
     await expect(repo.writeCatalog('platform.catalog.yaml', catalog)).rejects.toBeInstanceOf(
       ArtifactValidationError,
     );

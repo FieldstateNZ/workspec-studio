@@ -230,8 +230,8 @@ async function runRenderAdr(argv: string[], io: CliIO): Promise<number> {
       return 1;
     }
     ref = found.ref;
-  } else if (decisions.length === 1) {
-    ref = decisions[0]!.ref;
+  } else if (decisions.length === 1 && decisions[0] !== undefined) {
+    ref = decisions[0].ref;
   } else {
     io.err('render-adr: multiple decisions found; pass --decision <ref|id>:\n');
     for (const d of decisions) io.err(`  ${d.ref} (${d.id})\n`);

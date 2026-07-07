@@ -23,8 +23,9 @@ export function Shell(props: ShellProps): ReactNode {
 
   // Auto-select the first decision once the list loads.
   useEffect(() => {
-    if (props.selectedRef === undefined && list.length > 0) {
-      props.onSelectRef(list[0]!.ref);
+    const first = list[0];
+    if (props.selectedRef === undefined && first !== undefined) {
+      props.onSelectRef(first.ref);
     }
   }, [list, props]);
 

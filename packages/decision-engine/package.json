@@ -12,7 +12,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
-    "directory": "packages/engine"
+    "directory": "packages/decision-engine"
   },
   "license": "Apache-2.0",
   "type": "module",
@@ -23,7 +23,6 @@
   ],
   "exports": {
     ".": {
-      "@workspec/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
@@ -36,14 +35,15 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsup",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
     "test": "vitest run"
   },
   "dependencies": {
     "@workspec/decision-schema": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "fast-check": "^3.23.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",

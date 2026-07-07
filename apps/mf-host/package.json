@@ -10,7 +10,7 @@
     "build:remote": "pnpm --filter @workspec/decision-ui build:mf",
     "serve": "tsx serve.ts",
     "smoke": "pnpm build:remote && pnpm build && playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b"
   },
   "devDependencies": {
     "@module-federation/vite": "^1.16.12",

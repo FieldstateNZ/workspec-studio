@@ -253,7 +253,7 @@ function envCell(option: AdrConsideredOption, env: string): string {
 }
 
 function titleCase(env: string): string {
-  return env.length === 0 ? env : env[0]!.toUpperCase() + env.slice(1);
+  return env.length === 0 ? env : env.charAt(0).toUpperCase() + env.slice(1);
 }
 
 /**

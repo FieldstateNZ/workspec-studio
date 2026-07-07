@@ -6,5 +6,12 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"]
   },
+  // TS Project References: let `tsc -b` type-check against the workspace
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`.
+  "references": [
+    { "path": "../../packages/decision-schema" },
+    { "path": "../../packages/decision-ui" }
+  ],
   "include": ["src", "serve.ts", "vite.config.ts", "playwright.config.ts", "tests"]
 }

@@ -3,7 +3,16 @@
   "compilerOptions": {
     "outDir": "dist",
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
   },
+  // TS Project References: let `tsc -b` type-check against the sibling
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`.
+  "references": [
+    { "path": "../decision-schema" },
+    { "path": "../decision-engine" },
+    { "path": "../decision-ui" }
+  ],
   "include": ["src", "client"]
 }

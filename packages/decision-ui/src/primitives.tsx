@@ -22,7 +22,10 @@ export function optAccent(id: string): string {
   return OPT_ACCENT[id] ?? 'var(--ds-accent)';
 }
 
-type IconProps = { className?: string; style?: CSSProperties };
+interface IconProps {
+  className?: string;
+  style?: CSSProperties;
+}
 
 const svgBase = {
   viewBox: '0 0 16 16',
@@ -181,7 +184,11 @@ export function Picker(props: {
   label: string;
   triggerLabel: ReactNode;
   triggerClassName: string;
-  triggerTitle?: string;
+  // Explicitly `| undefined` (not just optional): this flows straight into the
+  // DOM `title` attribute below, which is `string | undefined` in React's own
+  // types — callers commonly derive it via `?.`, and "absent" and "undefined"
+  // both mean "no title" here.
+  triggerTitle?: string | undefined;
   items: PickerItem[];
   onSelect: (value: string) => void;
 }): ReactElement {

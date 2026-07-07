@@ -19,7 +19,7 @@ export interface Located {
  * nearest enclosing node), returning that node's start line/column. Unresolvable
  * paths fall back to `{ line: 1, col: 1 }`.
  */
-export function makeLocator(text: string): (path: ReadonlyArray<PropertyKey>) => Located {
+export function makeLocator(text: string): (path: readonly PropertyKey[]) => Located {
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter });
   return (path) => {

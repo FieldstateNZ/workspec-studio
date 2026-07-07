@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
 import { createMemoryRepository } from '@workspec/decision-schema';

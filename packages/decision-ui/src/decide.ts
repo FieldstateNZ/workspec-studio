@@ -17,7 +17,7 @@ export interface DecideMeta {
 }
 
 function lowerFirst(text: string): string {
-  return text.length === 0 ? text : text[0]!.toLowerCase() + text.slice(1);
+  return text.length === 0 ? text : text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 /**

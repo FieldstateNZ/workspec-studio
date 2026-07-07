@@ -55,9 +55,12 @@ export function Demo(): ReactElement {
 
   const active = DEMO_EXAMPLES.find((example) => example.key === exampleKey) ?? DEMO_EXAMPLES[0];
   if (active === undefined) throw new Error('demo: no examples seeded');
+  // Captured outside the closure below: TS doesn't carry the guard above's
+  // narrowing of `active` into a separately-declared nested function.
+  const activeDecisionRef = active.decisionRef;
 
   async function onExportAdr(): Promise<void> {
-    const { filename, markdown } = await renderAdr(repository, active!.decisionRef);
+    const { filename, markdown } = await renderAdr(repository, activeDecisionRef);
     downloadText(filename, markdown);
   }
 

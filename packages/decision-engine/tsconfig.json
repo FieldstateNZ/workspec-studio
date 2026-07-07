@@ -2,7 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
   },
+  // TS Project Reference: lets `tsc -b` type-check against decision-schema's
+  // real TypeScript source (building its declarations on demand), so
+  // `typecheck` never has to run after `build`.
+  "references": [{ "path": "../decision-schema" }],
   "include": ["src"]
 }

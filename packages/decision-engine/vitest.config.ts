@@ -1,14 +1,18 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
-import { workspaceAliases } from '../../vitest.aliases.js';
 
 export default defineConfig({
-  // Resolve sibling @workspec/* packages to their TypeScript source so tests
-  // run without a prior build.
+  // Resolve @workspec/decision-schema to its TypeScript source so tests run
+  // without a prior build.
   resolve: {
-    alias: workspaceAliases,
+    alias: {
+      '@workspec/decision-schema': fileURLToPath(
+        new URL('../decision-schema/src/index.ts', import.meta.url),
+      ),
+    },
   },
   test: {
-    name: 'engine',
+    name: 'decision-engine',
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },

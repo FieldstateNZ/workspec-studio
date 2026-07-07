@@ -8,6 +8,12 @@ import { buildAdrModel, formatMoney, renderAdrMarkdown } from './adr.js';
 const repoUrl = (rel: string): string => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const read = (rel: string): string => readFileSync(repoUrl(rel), 'utf8');
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 let decision: Decision;
 let catalog: Catalog;
 
@@ -44,11 +50,11 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
   it('carries the S2 golden annual costs on the considered options', () => {
     const model = buildAdrModel(decision, catalog);
     const byId = Object.fromEntries(model.consideredOptions.map((o) => [o.id, o]));
-    expect(byId['aks']!.annual).toBe(54336.576);
-    expect(byId['appsvc']!.annual).toBe(16104);
-    expect(byId['ase']!.annual).toBe(53700);
-    expect(byId['aca']!.annual).toBe(14160);
-    expect(byId['aca']!.complete).toBe(false);
+    expect(must(byId['aks']).annual).toBe(54336.576);
+    expect(must(byId['appsvc']).annual).toBe(16104);
+    expect(must(byId['ase']).annual).toBe(53700);
+    expect(must(byId['aca']).annual).toBe(14160);
+    expect(must(byId['aca']).complete).toBe(false);
   });
 
   it('derives consequences from the winner criteria + a premium/headroom line', () => {
@@ -59,7 +65,7 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
     expect(strengths.length).toBe(3);
     // 2 criteria weaknesses + 1 cost premium line.
     expect(weaknesses.length).toBe(3);
-    const premium = weaknesses.at(-1)!;
+    const premium = must(weaknesses.at(-1));
     expect(premium.text).toContain(formatMoney(54336.576 - 16104)); // $38,232.58
     expect(premium.text).toContain(formatMoney(950 * 12)); // $11,400
   });

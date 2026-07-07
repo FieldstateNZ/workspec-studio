@@ -34,8 +34,8 @@ describe('export ADR — same renderer as the CLI render-adr', () => {
   it('produces deterministic markdown for a seeded decision', async () => {
     const repository = createDemoRepository();
     const hosting = DEMO_EXAMPLES[0];
-    expect(hosting).toBeDefined();
-    const { filename, markdown } = await renderAdr(repository, hosting!.decisionRef);
+    if (hosting === undefined) throw new Error('expected at least one seeded example');
+    const { filename, markdown } = await renderAdr(repository, hosting.decisionRef);
     expect(filename).toBe('dec-hosting.adr.md');
     expect(markdown).toMatch(/hosting platform/i);
     // A real ADR body, not an empty shell.

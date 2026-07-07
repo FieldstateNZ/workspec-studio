@@ -4,6 +4,12 @@ import type { DecisionRepositoryPort } from './repository.js';
 import type { Catalog } from './catalog.js';
 import type { Decision } from './decision.js';
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 // ── Fixtures are factory-built, never shared mutable module state ─────────────
 
 function makeDecision(overrides: Partial<Decision['metadata']> = {}): Decision {
@@ -114,7 +120,7 @@ describe('createMemoryRepository', () => {
     const repo = createMemoryRepository();
     const bad = makeDecision();
     // Corrupt a required invariant: a score above the 0..5 range.
-    (bad.spec.options[0]!.scores as Record<string, { score: number }>).cost = { score: 9 };
+    (must(bad.spec.options[0]).scores as Record<string, { score: number }>).cost = { score: 9 };
     await expect(repo.writeDecision('bad.decision.yaml', bad)).rejects.toThrow(/invalid decision/);
   });
 

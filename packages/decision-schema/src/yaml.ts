@@ -35,7 +35,7 @@ export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: ParseI
 function locate(
   doc: Document.Parsed,
   lineCounter: LineCounter,
-  path: ReadonlyArray<PropertyKey>,
+  path: readonly PropertyKey[],
 ): { line: number; col: number } {
   const segments = path.slice();
   while (segments.length > 0) {

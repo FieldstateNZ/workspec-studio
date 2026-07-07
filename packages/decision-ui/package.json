@@ -12,7 +12,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
-    "directory": "packages/ui"
+    "directory": "packages/decision-ui"
   },
   "license": "Apache-2.0",
   "type": "module",
@@ -23,7 +23,6 @@
   ],
   "exports": {
     ".": {
-      "@workspec/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
@@ -37,9 +36,9 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
     "build:mf": "vite build --config vite.config.mf.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run"
   },
   "peerDependencies": {

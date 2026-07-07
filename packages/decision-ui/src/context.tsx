@@ -35,8 +35,11 @@ export interface DecisionStudioProviderProps {
   host: DecisionStudioHost;
   /** An existing QueryClient to reuse; a private one is created when omitted. */
   queryClient?: QueryClient;
+  // `| undefined` (not just optional): the destructuring default below already
+  // treats "provided but undefined" the same as "omitted", and callers commonly
+  // thread this through from another optional field (e.g. `options.theme`).
   /** Which theme to render (`data-theme` on the root). Defaults to `dark`. */
-  theme?: ThemeName;
+  theme?: ThemeName | undefined;
   /** Extra class names to add to the themed root element. */
   className?: string;
   children: ReactNode;
@@ -223,8 +226,13 @@ export interface WriteDecisionVars {
 export function useWriteDecision(): UseMutationResult<void, Error, WriteDecisionVars> {
   const repository = useRepository();
   const queryClient = useQueryClient();
-  return useMutation<void, Error, WriteDecisionVars>({
-    mutationFn: ({ ref, decision }) => repository.writeDecision(ref, decision),
+  // No explicit <void, Error, WriteDecisionVars> generics here: `void` as a
+  // call-site type argument trips @typescript-eslint/no-invalid-void-type.
+  // The annotated `mutationFn` parameter fixes TVariables and TData for the
+  // whole options object, so `onSuccess`'s second argument still infers as
+  // WriteDecisionVars.
+  return useMutation({
+    mutationFn: ({ ref, decision }: WriteDecisionVars) => repository.writeDecision(ref, decision),
     onSuccess: (_result, { ref, decision }) => {
       queryClient.setQueryData(decisionKey(repository, ref), decision);
     },
@@ -241,8 +249,9 @@ export interface WriteCatalogVars {
 export function useWriteCatalog(): UseMutationResult<void, Error, WriteCatalogVars> {
   const repository = useRepository();
   const queryClient = useQueryClient();
-  return useMutation<void, Error, WriteCatalogVars>({
-    mutationFn: ({ ref, catalog }) => repository.writeCatalog(ref, catalog),
+  // See useWriteDecision above for why the explicit <void, ...> generics are gone.
+  return useMutation({
+    mutationFn: ({ ref, catalog }: WriteCatalogVars) => repository.writeCatalog(ref, catalog),
     onSuccess: (_result, { ref, catalog }) => {
       queryClient.setQueryData(catalogKey(repository, ref), catalog);
     },

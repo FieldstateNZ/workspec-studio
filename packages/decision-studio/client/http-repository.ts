@@ -25,7 +25,7 @@ async function fail(response: Response): Promise<never> {
 
 /** A DecisionRepositoryPort implemented over the studio host's JSON API. */
 export class HttpRepository implements DecisionRepositoryPort {
-  constructor(private readonly base: string = '') {}
+  constructor(private readonly base = '') {}
 
   private async getJson<T>(path: string): Promise<T> {
     const response = await fetch(`${this.base}${path}`);

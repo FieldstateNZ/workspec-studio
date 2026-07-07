@@ -19,6 +19,12 @@ const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 let dir: string;
 
 beforeEach(async () => {
@@ -35,7 +41,7 @@ describe('decide flow round-trips to YAML on disk', () => {
   it('writes status: decided + outcome, and render-adr carries the rationale', async () => {
     const repo = new FsRepository(dir);
     const [entry] = await repo.listDecisions();
-    const ref = entry!.ref;
+    const ref = must(entry).ref;
     const decision = await repo.readDecision(ref);
     const catalog = await repo.readCatalog(repo.resolveCatalogRef(ref, decision));
 
@@ -64,7 +70,7 @@ describe('decide flow round-trips to YAML on disk', () => {
   it('reopen clears the outcome back to exploring on disk', async () => {
     const repo = new FsRepository(dir);
     const [entry] = await repo.listDecisions();
-    const ref = entry!.ref;
+    const ref = must(entry).ref;
     const decision = await repo.readDecision(ref);
 
     await repo.writeDecision(ref, decide(decision, 'aks', RATIONALE));

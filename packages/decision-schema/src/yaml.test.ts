@@ -12,6 +12,12 @@ const invalidUrl = (file: string): string =>
 
 const read = (path: string): string => readFileSync(path, 'utf8');
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 describe('valid hosting-platform fixtures', () => {
   it('parses the catalog fixture', () => {
     const res = parseCatalogYaml(read(repoUrl('examples/hosting-platform/platform.catalog.yaml')));
@@ -77,10 +83,9 @@ describe('invalid fixture battery', () => {
       const res = c.kind === 'catalog' ? parseCatalogYaml(text) : parseDecisionYaml(text);
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        const match = res.errors.find((e) => e.path === c.path);
-        expect(match, `expected an issue at path "${c.path}"`).toBeDefined();
-        expect(match!.line).toBe(c.line);
-        expect(match!.col).toBeGreaterThan(0);
+        const match = must(res.errors.find((e) => e.path === c.path));
+        expect(match.line).toBe(c.line);
+        expect(match.col).toBeGreaterThan(0);
       }
     });
   }
@@ -93,7 +98,7 @@ describe('YAML syntax errors', () => {
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.errors.length).toBeGreaterThan(0);
-      expect(res.errors[0]!.line).toBeGreaterThan(0);
+      expect(must(res.errors[0]).line).toBeGreaterThan(0);
     }
   });
 });

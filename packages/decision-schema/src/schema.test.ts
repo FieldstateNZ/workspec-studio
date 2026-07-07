@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogArtifact, DecisionArtifact, Line, Lever, identifier } from './index.js';
 
+/** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('expected value to be defined');
+  return value;
+}
+
 // Factories (not shared fixtures): each test builds the minimal valid artifact
 // it needs, then mutates one field to exercise a rule.
 
@@ -45,7 +51,7 @@ function makeDecision(): Record<string, unknown> {
 function withOption(mutate: (opt: Record<string, unknown>) => void): unknown {
   const doc = makeDecision();
   const spec = doc.spec as { options: Record<string, unknown>[] };
-  mutate(spec.options[0]!);
+  mutate(must(spec.options[0]));
   return doc;
 }
 
@@ -66,11 +72,11 @@ describe('CatalogArtifact', () => {
 
   it('rejects a schedule pct above 1', () => {
     const cat = makeCatalog() as { spec: { schedules: { pct: number }[] } };
-    cat.spec.schedules[0]!.pct = 1.5;
+    must(cat.spec.schedules[0]).pct = 1.5;
     const res = CatalogArtifact.safeParse(cat);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(res.error.issues[0]!.path).toEqual(['spec', 'schedules', 0, 'pct']);
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'schedules', 0, 'pct']);
     }
   });
 
@@ -112,7 +118,7 @@ describe('Line (discriminated union on flat)', () => {
     const res = Line.safeParse({ id: 'l', label: 'L', flat: 'maybe' });
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(res.error.issues[0]!.path).toEqual(['flat']);
+      expect(must(res.error.issues[0]).path).toEqual(['flat']);
     }
   });
 
@@ -159,13 +165,13 @@ describe('DecisionArtifact cross-field integrity', () => {
     const res = DecisionArtifact.safeParse(doc);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(res.error.issues[0]!.path).toEqual(['spec', 'options', 0, 'environments', 1]);
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'options', 0, 'environments', 1]);
     }
   });
 
   it('rejects a per-env line key not declared on the decision', () => {
     const doc = withOption((opt) => {
-      (opt.lines as { amount: Record<string, number> }[])[0]!.amount = {
+      must((opt.lines as { amount: Record<string, number> }[])[0]).amount = {
         dev: 10,
         staging: 5,
       };
@@ -197,7 +203,7 @@ describe('DecisionArtifact cross-field integrity', () => {
     const res = DecisionArtifact.safeParse(doc);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(res.error.issues[0]!.path).toEqual(['spec', 'outcome', 'option']);
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'outcome', 'option']);
     }
   });
 

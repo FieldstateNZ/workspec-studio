@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+  },
+  // Only `src` (the published library + bin entry) needs declarations; `client`
+  // is a browser bundle built separately by Vite, not part of the public API.
+  "references": [
+    { "path": "../decision-schema" },
+    { "path": "../decision-engine" },
+    { "path": "../decision-ui" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

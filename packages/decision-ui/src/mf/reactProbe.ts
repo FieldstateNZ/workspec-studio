@@ -14,11 +14,11 @@ import * as React from 'react';
 
 const INTERNALS_KEY = '__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED';
 
-type ReactLike = {
+interface ReactLike {
   useState?: unknown;
   version?: string;
   [INTERNALS_KEY]?: unknown;
-};
+}
 
 declare global {
   interface Window {

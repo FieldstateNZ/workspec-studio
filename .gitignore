@@ -1,7 +1,10 @@
 node_modules/
 dist/
+dist-mf/
 build/
 coverage/
+test-results/
+playwright-report/
 .turbo/
 *.tsbuildinfo
 .DS_Store
@@ -9,3 +12,6 @@ coverage/
 .env
 .env.local
 .vitest-cache/
+
+# render-adr output (packages/decision-studio) is a generated artifact, never committed
+*.adr.md

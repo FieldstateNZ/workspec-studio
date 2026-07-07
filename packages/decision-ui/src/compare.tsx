@@ -40,7 +40,7 @@ function Notice(props: { tone: 'muted' | 'error'; children: string }): ReactElem
 }
 
 function titleCase(env: string): string {
-  return env.length === 0 ? env : env[0]!.toUpperCase() + env.slice(1);
+  return env.length === 0 ? env : env.charAt(0).toUpperCase() + env.slice(1);
 }
 
 /** Load a decision + its catalog and render the side-by-side comparison. */

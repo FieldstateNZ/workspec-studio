@@ -45,7 +45,7 @@ function Notice(props: { tone: 'muted' | 'error'; children: string }): ReactElem
 }
 
 function titleCase(env: string): string {
-  return env.length === 0 ? env : env[0]!.toUpperCase() + env.slice(1);
+  return env.length === 0 ? env : env.charAt(0).toUpperCase() + env.slice(1);
 }
 
 /** Load a decision + its catalog and render the ADR. */
@@ -164,7 +164,9 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
     if (winner === '') return;
     const decidedAt = new Date().toISOString().slice(0, 10);
     const decidedBy = decision.metadata.deciders?.[0];
-    commit(decide(decision, winner, rationale, { decidedBy, decidedAt }));
+    // exactOptionalPropertyTypes: omit `decidedBy` entirely rather than set it
+    // to `undefined` when there's no first decider.
+    commit(decide(decision, winner, rationale, { ...(decidedBy !== undefined && { decidedBy }), decidedAt }));
   };
 
   const statusWord =
