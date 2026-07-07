@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    // The site is a living test of the PUBLISHED packages: resolve @workspec/*
+    // from their registry build (dist + .d.ts) in node_modules, NOT the
+    // workspace source. So we drop the base's `@workspec/source` condition.
+    "customConditions": [],
+    "noEmit": true
+  },
+  "include": ["src"]
+}

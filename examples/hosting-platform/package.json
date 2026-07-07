@@ -1,0 +1,7 @@
+{
+  "name": "@workspec-examples/hosting-platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worked example: hosting platform for the data and delivery services. Populated with *.decision.yaml / *.catalog.yaml in S1 (#2).",
+  "license": "Apache-2.0"
+}

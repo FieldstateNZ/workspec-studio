@@ -1,0 +1,98 @@
+name: Release (publish to npm)
+
+# Publishes all four @workspec/* packages to npm when a version tag is pushed
+# (e.g. `v0.1.0-alpha.0`).
+#
+# Auth is via npm TRUSTED PUBLISHING (OIDC) — there is NO `NPM_TOKEN` secret.
+# GitHub mints a short-lived id-token (`id-token: write` below) and npm exchanges
+# it for publish rights. Provenance is NOT enabled by this workflow — it is turned
+# on per package via each package.json's `publishConfig.provenance: true`, and is
+# attached because the publish runs in this OIDC-authenticated CI context.
+# Prerequisites:
+#   1. A trusted publisher registered on npmjs.com for each package, pointing at
+#      owner FieldstateNZ / repo workspec-decision-studio / workflow release.yml.
+#   2. npm CLI >= 11.5.1 (Node 20 ships npm 10, so we upgrade to a pinned 11.x below).
+# Then:
+#   pnpm version ...            # bump the four packages
+#   git tag v0.1.0-alpha.0 && git push --tags
+# See RELEASING.md for the full runbook (and the manual path).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for npm trusted publishing (OIDC) + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.
+      # Pin to an exact 11.x version for reproducible releases (bump deliberately);
+      # staying < 12 also avoids a future npm major that could drop Node 20.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@11.5.1
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm -r build
+
+      # Belt-and-braces gate before anything leaves the machine.
+      - name: Verify
+        run: |
+          pnpm typecheck
+          pnpm test
+
+      # OIDC trusted publishing for a pnpm workspace.
+      #
+      # `pnpm pack` rewrites each package's `workspace:*` dependency specifiers to
+      # the concrete published version *inside the tarball*. A raw `npm publish`
+      # from a package directory would NOT do this and would ship uninstallable
+      # manifests (npm has no `workspace:` protocol). We then `npm publish <tarball>`,
+      # which performs npm's OIDC token exchange (trusted publishing) and attaches
+      # provenance from the package's `publishConfig.provenance: true`.
+      - name: Publish (pnpm pack → npm publish, OIDC)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          out="$(mktemp -d)"
+          for pkg in schema engine ui studio; do
+            pnpm --filter "@workspec/decision-$pkg" pack --pack-destination "$out"
+          done
+          tarballs=("$out"/*.tgz)
+          if [ "${#tarballs[@]}" -eq 0 ]; then
+            echo "error: pnpm pack produced no tarballs in $out" >&2
+            exit 1
+          fi
+          # Derive the npm dist-tag from the version. A prerelease (e.g.
+          # 0.1.0-alpha.0) must NOT publish to `latest` — npm 11.x rejects it
+          # without an explicit --tag — so route it to its prerelease channel
+          # (alpha/beta/rc); a stable version publishes to `latest`.
+          version="$(node -p "require('./packages/schema/package.json').version")"
+          if [[ "$version" == *-* ]]; then
+            pre="${version#*-}"        # e.g. alpha.0
+            dist_tag="${pre%%.*}"      # e.g. alpha
+          else
+            dist_tag="latest"
+          fi
+          echo "publishing version $version to dist-tag '$dist_tag'"
+          for tgz in "${tarballs[@]}"; do
+            echo "publishing $tgz"
+            npm publish "$tgz" --access public --tag "$dist_tag"
+          done

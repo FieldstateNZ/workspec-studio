@@ -1,0 +1,309 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/decision.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Decision
+metadata:
+  id: dec-postgres
+  title: 'Postgres: managed PaaS vs self-hosted on Kubernetes'
+  status: decided
+  created: '2026-07-01'
+  deciders:
+    - 'Platform Engineering'
+spec:
+  context: >-
+    The analytics warehouse and the delivery service's application database both need a production
+    Postgres with a real HA story. We can buy it as a managed PaaS (Azure
+    Database for PostgreSQL Flexible Server) or run it ourselves on the existing
+    AKS cluster with the CloudNativePG operator. This decision costs all three
+    shapes across dev / test / prod and weighs them on ops burden, resilience,
+    performance control, lock-in and data residency.
+  catalog: ./postgres.catalog.yaml
+  currency: NZD
+  environments:
+    - dev
+    - test
+    - prod
+  criteria:
+    - id: opsBurden
+      label: 'Ops burden'
+      hint: 'Day-2 operational load (higher = lighter)'
+      weight: 1.5
+    - id: resilience
+      label: 'Resilience / HA'
+      hint: 'Failover posture and blast radius (higher = better)'
+      weight: 1.5
+    - id: perfControl
+      label: 'Performance control'
+      hint: 'Tuning, extensions, version control (higher = more control)'
+      weight: 0.8
+    - id: lockIn
+      label: 'Lock-in'
+      hint: 'Portability off the platform (higher = freer)'
+      weight: 0.6
+    - id: residency
+      label: 'Data residency'
+      hint: 'Control over where data physically lives (higher = more control)'
+      weight: 0.5
+  options:
+    # ── Managed (single-zone) ────────────────────────────────────────────────
+    - id: managed-single
+      name: 'Managed (single-zone)'
+      archetype: 'Azure Database for PostgreSQL — Flexible Server'
+      summary: >-
+        One managed Flexible Server per environment, single availability zone.
+        Cheapest to run; no HA, so a zone outage is downtime.
+      tag: 'cheapest'
+      environments: [dev, test, prod]
+      complete: true
+      lines:
+        - id: srv-nonprod
+          group: compute
+          label: 'Flexible Server (dev + test)'
+          flat: false
+          sku: pg_flex_d4
+          mode: payg
+          schedule: always
+          tag: nonprod
+          qty: { dev: 1, test: 1 }
+        - id: srv-prod
+          group: compute
+          label: 'Flexible Server (prod)'
+          flat: false
+          sku: pg_flex_d4
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { prod: 1 }
+        - id: storage
+          group: data
+          label: 'Storage + IOPS'
+          flat: true
+          amount: { dev: 40, test: 40, prod: 160 }
+          estimate: false
+        - id: backups
+          group: data
+          label: 'Backups (PITR)'
+          flat: true
+          amount: { dev: 10, test: 10, prod: 60 }
+          estimate: false
+      levers:
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod] }
+              set: { schedule: business }
+        - id: reserveProd
+          label: 'Reserve prod'
+          hint: '3yr reserved capacity on the always-on prod server'
+          enabled: false
+          patch:
+            - match: { tags: [steady-prod] }
+              set: { mode: ri3 }
+      scores:
+        opsBurden:
+          score: 5
+          note: "Fully managed — patching, backups, failover primitives are Azure's."
+        resilience:
+          score: 2
+          note: 'Single zone; a zonal outage is an outage.'
+        perfControl:
+          score: 2
+          note: 'Limited to exposed server parameters and supported extensions.'
+        lockIn:
+          score: 2
+          note: 'Azure-specific managed service contract.'
+        residency:
+          score: 3
+          note: "Region-pinned, but the control plane is Azure's."
+    # ── Managed (HA + read replica) ──────────────────────────────────────────
+    - id: managed-ha
+      name: 'Managed (HA + read replica)'
+      archetype: 'Flexible Server — zone-redundant HA + replica'
+      summary: >-
+        Zone-redundant HA standby plus a read replica for prod. Same managed
+        surface as single-zone, with a real failover and read-scaling story.
+      tag: 'resilient'
+      environments: [dev, test, prod]
+      complete: true
+      lines:
+        - id: srv-nonprod
+          group: compute
+          label: 'Flexible Server (dev + test)'
+          flat: false
+          sku: pg_flex_d4
+          mode: payg
+          schedule: always
+          tag: nonprod
+          qty: { dev: 1, test: 1 }
+        - id: srv-prod-primary
+          group: compute
+          label: 'Flexible Server primary (prod)'
+          flat: false
+          sku: pg_flex_d8
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { prod: 1 }
+        - id: srv-prod-standby
+          group: compute
+          label: 'Zone-redundant HA standby (prod)'
+          flat: false
+          sku: pg_flex_d8
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { prod: 1 }
+        - id: replica-prod
+          group: compute
+          label: 'Read replica (prod)'
+          flat: false
+          sku: pg_replica_d4
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { prod: 1 }
+        - id: storage
+          group: data
+          label: 'Storage + IOPS'
+          flat: true
+          amount: { dev: 40, test: 80, prod: 320 }
+          estimate: false
+        - id: backups
+          group: data
+          label: 'Backups (PITR + geo)'
+          flat: true
+          amount: { dev: 10, test: 20, prod: 120 }
+          estimate: false
+      levers:
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod] }
+              set: { schedule: business }
+        - id: reserveProd
+          label: 'Reserve prod'
+          hint: '3yr reserved capacity on the always-on prod primary, standby & replica'
+          enabled: false
+          patch:
+            - match: { tags: [steady-prod] }
+              set: { mode: ri3 }
+      scores:
+        opsBurden:
+          score: 5
+          note: 'Managed HA — failover is orchestrated by the platform.'
+        resilience:
+          score: 5
+          note: 'Zone-redundant standby + read replica; survives a zone loss.'
+        perfControl:
+          score: 2
+          note: 'Same managed constraints as single-zone.'
+        lockIn:
+          score: 2
+          note: 'Azure-specific managed service contract.'
+        residency:
+          score: 3
+          note: "Region-pinned, control plane is Azure's."
+    # ── Self-hosted on Kubernetes ────────────────────────────────────────────
+    - id: self-hosted
+      name: 'Self-hosted on Kubernetes'
+      archetype: 'CloudNativePG operator on AKS'
+      summary: >-
+        Run Postgres ourselves on the existing cluster with the CloudNativePG
+        operator: a 3-node prod quorum, our storage, our backups — and our
+        on-call. Cheapest compute, most control, heaviest ops.
+      tag: 'most control'
+      environments: [dev, test, prod]
+      complete: true
+      lines:
+        - id: nodes-nonprod
+          group: compute
+          label: 'DB nodes (dev + test)'
+          flat: false
+          sku: vm_d4s_v5
+          mode: payg
+          schedule: always
+          tag: nonprod
+          qty: { dev: 1, test: 1 }
+        - id: nodes-prod
+          group: compute
+          label: 'DB nodes (prod HA quorum)'
+          flat: false
+          sku: vm_d8s_v5
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { prod: 3 }
+        - id: storage
+          group: data
+          label: 'Premium managed disks'
+          flat: true
+          amount: { dev: 20, test: 20, prod: 140 }
+          estimate: false
+        - id: backups
+          group: data
+          label: 'WAL archive + blob backups'
+          flat: true
+          amount: { dev: 5, test: 5, prod: 60 }
+          estimate: false
+        - id: monitoring
+          group: platform
+          label: 'Monitoring + alerting'
+          flat: true
+          amount: { dev: 10, test: 10, prod: 50 }
+          estimate: false
+        - id: ops
+          group: platform
+          label: 'On-call + DBA time (loaded)'
+          flat: true
+          tag: ops
+          amount: { prod: 500 }
+          estimate: true
+      levers:
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod] }
+              set: { schedule: business }
+        - id: reserveNodes
+          label: 'Reserve prod nodes'
+          hint: '3yr reserved capacity on the always-on prod DB nodes'
+          enabled: false
+          patch:
+            - match: { tags: [steady-prod] }
+              set: { mode: ri3 }
+      scores:
+        opsBurden:
+          score: 1
+          note: 'We own patching, failover, backups, upgrades and on-call.'
+        resilience:
+          score: 4
+          note: 'Operator-managed HA quorum, but the failure modes are ours.'
+        perfControl:
+          score: 5
+          note: 'Any extension, any version, full parameter and storage control.'
+        lockIn:
+          score: 5
+          note: 'Vanilla Postgres on Kubernetes — portable across any cloud.'
+        residency:
+          score: 5
+          note: 'Data sits on disks we control, in clusters we place.'
+  outcome:
+    option: managed-ha
+    rationale: >-
+      We accept a higher run rate and continued Azure lock-in in exchange for
+      zone-redundant HA and a fully managed operational surface, so the platform
+      team stays focused on product rather than database on-call. Self-hosting
+      wins on control and portability but the loaded on-call cost and ops burden
+      outweigh that for a team this size.
+    decidedBy: 'Platform Engineering'
+    decidedAt: '2026-07-02'
+  links:
+    - kind: system-requirement
+      label: 'SYSREQ-44 Data residency (NZ)'
+    - kind: feature
+      label: 'FEAT-204 Unified warehouse'

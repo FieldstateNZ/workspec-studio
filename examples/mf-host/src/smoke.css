@@ -1,0 +1,25 @@
+/* Minimal host chrome. The remote's components self-style with `--ds-*`; this is
+   just page scaffolding so the smoke page has a background and some spacing. */
+body {
+  margin: 0;
+  background: #0a0a0c;
+}
+.smoke-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.smoke-h {
+  margin: 0 0 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #72727a;
+}
+#react-probe {
+  display: none;
+}

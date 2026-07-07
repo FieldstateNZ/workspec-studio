@@ -1,0 +1,31 @@
+{
+  "name": "@workspec/mf-host",
+  "version": "0.0.0",
+  "private": true,
+  "description": "S6 smoke host: a minimal Vite app that consumes @workspec/decision-ui as a module-federation remote and mounts DecisionCard + DecisionWorkspace over a MemoryRepository. CI integration proof; never published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "build:remote": "pnpm --filter @workspec/decision-ui build:mf",
+    "serve": "tsx serve.ts",
+    "smoke": "pnpm build:remote && pnpm build && playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "^1.16.12",
+    "@playwright/test": "1.56.1",
+    "@tanstack/react-query": "^5.62.7",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/decision-ui": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0"
+  }
+}

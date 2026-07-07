@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  id: cat-min
+  currency: NZD
+  asOf: "2026-07-01"
+spec:
+  pricingModes:
+    - id: payg
+      label: "PAYG"
+      mult: 1.0
+      committed: false
+  schedules:
+    - id: always
+      label: "24x7"
+      pct: 1.5
+  skus:
+    - id: d4s_v5
+      label: "D4s v5"
+      family: "General compute"
+      price: 190

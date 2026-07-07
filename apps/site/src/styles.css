@@ -1,0 +1,302 @@
+/* Marketing + demo chrome. Calm, documentation-adjacent, theme-aware.
+   The demo's DecisionApp brings its own `--ds-*` console theme via
+   @workspec/decision-ui/styles.css; everything here is the surrounding page. */
+
+:root {
+  --page-bg: #fbfbfa;
+  --panel-bg: #ffffff;
+  --ink: #1a1a1a;
+  --ink-muted: #5a5f66;
+  --line: #e6e6e3;
+  --accent: #1f6feb;
+  --accent-ink: #ffffff;
+  --code-bg: #f4f4f2;
+  --code-ink: #24292f;
+  --max: 62rem;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0e1116;
+    --panel-bg: #161b22;
+    --ink: #e8eaed;
+    --ink-muted: #9aa4b2;
+    --line: #262c36;
+    --accent: #4a91ff;
+    --accent-ink: #04122b;
+    --code-bg: #11161d;
+    --code-ink: #d5dbe3;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+code,
+pre {
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ── Marketing shell ─────────────────────────────────────────────────────── */
+.site {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.brand {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+.brand strong {
+  font-weight: 700;
+}
+.nav-links {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.hero {
+  padding: 3.5rem 0 2rem;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  margin: 0 0 1rem;
+}
+.hero h1 {
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+  max-width: 20ch;
+}
+.lede {
+  font-size: 1.15rem;
+  max-width: 60ch;
+  margin: 0 0 1.75rem;
+}
+.hero-sub {
+  color: var(--ink-muted);
+  max-width: 62ch;
+  margin: 1.75rem 0 0;
+}
+
+.cta-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-block;
+  padding: 0.7rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn:hover {
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+}
+.btn-secondary {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--panel-bg);
+}
+
+.shot {
+  margin: 2rem 0 3.5rem;
+}
+.shot img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: block;
+}
+
+section.quickstart,
+section.feature,
+section.closing {
+  padding: 2rem 0;
+  border-top: 1px solid var(--line);
+}
+h2 {
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.75rem;
+}
+.muted {
+  color: var(--ink-muted);
+}
+
+pre.code {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+pre.code code {
+  white-space: pre;
+}
+p code,
+li code {
+  background: var(--code-bg);
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+  font-size: 0.86em;
+}
+
+.closing {
+  text-align: center;
+}
+.closing .btn {
+  margin-top: 0.5rem;
+}
+
+.foot {
+  max-width: var(--max);
+  margin: 2rem auto 0;
+  padding: 2rem 1.5rem 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+.foot-links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+/* ── Demo chrome (the bar + banner around the embedded studio) ────────────── */
+.demo {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-bg);
+}
+.demo-home {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.demo-examples {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.demo-tab {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.demo-tab.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.demo-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+.demo-btn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.demo-note {
+  margin: 0;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  background: var(--code-bg);
+  border-bottom: 1px solid var(--line);
+}
+.demo-blurb {
+  opacity: 0.9;
+}
+.demo-stage {
+  flex: 1;
+  min-height: 0;
+}

@@ -1,0 +1,55 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`render-adr > renders a deterministic Markdown ADR to stdout with golden costs 1`] = `
+"# Hosting platform for the data and delivery services
+
+- **Status:** Proposed
+- **Decision:** \`dec-hosting\`
+- **Deciders:** Platform Engineering
+- **Created:** 2026-07-01
+- **Currency:** NZD
+
+## Context
+
+The data-management and delivery services need a consolidated hosting platform. The delivery service runs on App Service today; the data warehouse and batch jobs are outgrowing it. We need a like-for-like comparison of where these workloads should run — costed across dev / test / prod and weighed on ops, scale, isolation and lock-in.
+
+## Considered options
+
+| Option | Dev | Test | Prod | Annual |
+| --- | ---: | ---: | ---: | ---: |
+| AKS _(recommended)_ | $792 | $867 | $2,869.05 | $54,336.58 |
+| App Service | $187.20 | $440.20 | $714.60 | $16,104 |
+| Isolated App Service (ASE) | — | $1,575 | $2,900 | $53,700 |
+| Azure Container Apps _(incomplete)_ | $185 | $220 | $775 | $14,160 |
+
+- **AKS** — _Azure Kubernetes Service_
+  One cluster, multi-tenant node pools. Non-prod scheduled off; Spot for batch; steady prod reservable.
+- **App Service** — _Azure App Service (multi-tenant)_
+  Status quo for the delivery service. PaaS plans per app, simple ops. Weaker density and scale story at platform size.
+- **Isolated App Service (ASE)** — _App Service Environment v3_
+  Single-tenant isolation and compliance posture. Higher fixed floor from the ASE stamp fee.
+- **Azure Container Apps** — _Azure Container Apps (serverless)_
+  Serverless containers with scale-to-zero for spiky and preview workloads. Less control than AKS.
+
+## Decision
+
+AKS is the proposed option, selected by the engine's weighted recommendation across the considered options. No outcome has been recorded yet — decide to accept it.
+
+## Consequences & trade-offs
+
+- **Weakness** — Cluster ops, upgrades, capacity planning fall on the team.
+- **Strength** — Effectively unbounded; node pools scale independently.
+- **Strength** — Namespace + network policy; not a hard tenancy boundary.
+- **Weakness** — The delivery service must be containerised and re-platformed off App Service.
+- **Strength** — Standard Kubernetes — portable across clouds with effort.
+- **Weakness** — Run-rate sits $38,232.58/yr above the cheapest option; reserving steady prod recovers about $11,400/yr.
+
+## Links
+
+- **deployment** — deploy/hosting-platform
+- **feature** — FEAT-204 Unified warehouse
+- **feature** — FEAT-218 Batch ETL
+- **system-requirement** — SYSREQ-31 Multi-env parity
+- **system-requirement** — SYSREQ-44 Data residency (NZ)
+"
+`;

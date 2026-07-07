@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  id: project-effort
+  name: 'Project effort catalog'
+  currency: NZD
+  asOf: '2026-07-01'
+spec:
+  # These are the project's OWN architecture decisions, dogfooded through the
+  # same format. The "cost" here is ongoing effort — a loaded engineer-day — plus
+  # any SaaS seats a choice drags in. Costs are the *ongoing monthly* carrying
+  # cost of a choice (one-off setup effort is noted in each decision's context,
+  # since the engine annualises monthly cost ×12).
+  pricingModes:
+    - id: payg
+      label: 'As incurred'
+      short: 'PAYG'
+      mult: 1.0
+      committed: false
+      note: 'Effort/cost as it lands, no commitment discount'
+  schedules:
+    - id: always
+      label: 'Ongoing'
+      pct: 1.0
+  skus:
+    - id: eng_day
+      label: 'Engineer-day (loaded)'
+      family: 'Effort'
+      price: 1200
+      unit: 'eng-day / month'
+    - id: saas_seat
+      label: 'SaaS seat'
+      family: 'Tooling'
+      price: 40
+      unit: 'seat / month'

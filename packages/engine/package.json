@@ -1,0 +1,52 @@
+{
+  "name": "@workspec/decision-engine",
+  "version": "0.1.0-alpha.0",
+  "description": "Pure, normative cost engine for WorkSpec Decision Studio. No IO, no DOM, no React.",
+  "keywords": [
+    "cost-modelling",
+    "architecture-decision-records",
+    "pure-function",
+    "engine"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-decision-studio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
+    "directory": "packages/engine"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "@workspec/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@workspec/decision-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  }
+}

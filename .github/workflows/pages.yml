@@ -1,0 +1,75 @@
+name: Publish site (GitHub Pages)
+
+# Builds and deploys the product site (apps/site) to GitHub Pages at
+# https://decision-studio.workspec.io.
+#
+# Schema hosting has moved to FieldstateNZ/workspec-schemas, so this repo's Pages
+# slot now serves the site only. The custom domain is claimed by
+# apps/site/public/CNAME (Vite copies it to dist/CNAME); DNS for
+# decision-studio.workspec.io → fieldstatenz.github.io is already in place.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/site/**'
+      # Repo-level build inputs: with `--frozen-lockfile` the deployed site is
+      # pinned by the lockfile, so a dependency bump here must redeploy too.
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
+      - 'package.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel an in-flight Pages deploy; queue instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The site consumes the PUBLISHED @workspec/* packages, so a green build
+      # here also proves the released artifacts still build for consumers.
+      - name: Build the site
+        run: pnpm --filter @workspec/site build
+
+      - name: Verify the custom domain + SPA fallback landed
+        run: |
+          set -euo pipefail
+          test -f apps/site/dist/CNAME
+          test -f apps/site/dist/404.html
+          echo "serving $(cat apps/site/dist/CNAME)"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

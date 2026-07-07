@@ -1,0 +1,76 @@
+{
+  "name": "@workspec/decision-studio",
+  "version": "0.1.0-alpha.0",
+  "description": "WorkSpec Decision Studio — standalone CLI + localhost host shell. Run costed decisions from your working tree.",
+  "keywords": [
+    "architecture-decision-records",
+    "adr",
+    "cost-modelling",
+    "yaml",
+    "cli"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-decision-studio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
+    "directory": "packages/studio"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "workspec-decisions": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "@workspec/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup && vite build",
+    "build:client": "vite build",
+    "dev": "vite build && tsx src/bin.ts serve --dir ../../examples/hosting-platform --port 4173",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test --config e2e/playwright.config.ts"
+  },
+  "dependencies": {
+    "@workspec/decision-engine": "workspace:*",
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/decision-ui": "workspace:*",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@tanstack/react-query": "^5.62.7",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/supertest": "^6.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "supertest": "^7.0.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.4"
+  }
+}
