@@ -2,18 +2,20 @@ import { federation } from '@module-federation/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// The S6 smoke HOST: a minimal Vite app that consumes @workspec/decision-ui as a
-// module-federation remote. It declares the SAME shared singletons the remote
-// declares (react / react-dom / react/jsx-runtime / @tanstack/react-query) — the
-// host owns one copy of each and the remote borrows it, so there is exactly one
-// React and one react-query across the boundary. That is what lets the remote's
-// hooks run and the provider's QueryClient reach the views' `useQuery`.
+// The S6 smoke HOST: a minimal Vite app that consumes @workspec/decision-ui
+// AND @workspec/c4-ui as module-federation remotes. It declares the SAME
+// shared singletons each remote declares (react / react-dom /
+// react/jsx-runtime, plus @tanstack/react-query for decision-ui) — the host
+// owns one copy of each and the remotes borrow them, so there is exactly one
+// React across every boundary. That is what lets each remote's hooks run and
+// (for decision-ui) the provider's QueryClient reach the views' `useQuery`.
 //
-// The remote entry is a root-relative URL (`/remote/remoteEntry.js`): the smoke
-// server (serve.ts) serves the built remote under `/remote/` on the same origin,
-// so no port is baked into this build. Remote type consumption is disabled
-// (`dts: false`) — the remote is not running at build time; types come from the
-// hand-written `src/remotes.d.ts`.
+// Each remote entry is a root-relative URL: the smoke server (serve.ts)
+// serves the decision-ui remote under `/remote/` and the c4-ui remote under
+// `/remote-c4/`, both on the same origin, so no port is baked into this
+// build. Remote type consumption is disabled (`dts: false`) — neither remote
+// is running at build time; types come from the hand-written
+// `src/remotes.d.ts`.
 
 const REACT_RANGE = '^18.3';
 const REACT_QUERY_RANGE = '^5.0.0';
@@ -28,6 +30,11 @@ export default defineConfig({
           type: 'module',
           name: 'decisionStudio',
           entry: '/remote/remoteEntry.js',
+        },
+        c4Ui: {
+          type: 'module',
+          name: 'c4Ui',
+          entry: '/remote-c4/remoteEntry.js',
         },
       },
       shared: {

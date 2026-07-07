@@ -14,7 +14,11 @@
   // imports back to source.
   "references": [
     { "path": "../../packages/decision-schema/tsconfig.build.json" },
-    { "path": "../../packages/decision-ui/tsconfig.build.json" }
+    { "path": "../../packages/decision-ui/tsconfig.build.json" },
+    { "path": "../../packages/c4-schema/tsconfig.build.json" },
+    { "path": "../../packages/c4-model/tsconfig.build.json" },
+    { "path": "../../packages/c4-layout/tsconfig.build.json" },
+    { "path": "../../packages/c4-ui/tsconfig.build.json" }
   ],
   "include": ["src", "serve.ts", "vite.config.ts", "playwright.config.ts", "tests"]
 }

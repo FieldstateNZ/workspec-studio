@@ -1,0 +1,48 @@
+/* The package stylesheet build entry (compiled by @tailwindcss/cli into
+   dist/styles.css for the lib build, and by @tailwindcss/vite for the
+   module-federation remote — both targets compile the SAME entry).
+   Mirrors packages/decision-ui/src/index.css — see that file's comments for
+   the full rationale (no preflight, layer order, @source scanning).
+
+   Deliberately NOT `@import 'tailwindcss'`: that would include preflight, a
+   GLOBAL reset, and this CSS is injected into pages the package does not own
+   (bundleAllCSS attaches it to every federated expose). Theme + utilities
+   layers only, plus a scoped preflight stand-in below, so the remote stays
+   self-contained WITHOUT resetting the host page.
+
+   `@import '@workspec/design/tailwind'` is the WorkSpec preset: the
+   `@theme inline` utility→token mapping, the `dark` custom variant, and
+   tokens.css (the attribute-activated palettes). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@import './styles.css' layer(components);
+
+/* Scoped stand-in for the preflight rules the canvas relies on: box-sizing +
+   zero-width solid borders. Scoped under .c4-root so the host page is never
+   touched. */
+@layer base {
+  .c4-root *,
+  .c4-root *::before,
+  .c4-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .c4-root button {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+  }
+}
+
+/* Tailwind v4's automatic content detection skips node_modules, which is
+   where the adopted @workspec/design components live — @source is the
+   documented mechanism for scanning them anyway (this package's own sources
+   are scanned explicitly too). */
+@source '../node_modules/@workspec/design/dist/components';
+@source './';

@@ -42,3 +42,24 @@ declare module 'decisionStudio/reactProbe' {
   const _default: typeof reactProbe;
   export default _default;
 }
+
+declare module 'c4Ui/C4Diagram' {
+  import type { C4DiagramProps } from '@workspec/c4-ui';
+  import type { ReactElement } from 'react';
+  const C4Diagram: (props: C4DiagramProps) => ReactElement;
+  export default C4Diagram;
+}
+
+declare module 'c4Ui/C4Explorer' {
+  import type { C4ExplorerProps } from '@workspec/c4-ui';
+  import type { ReactElement } from 'react';
+  const C4Explorer: (props: C4ExplorerProps) => ReactElement;
+  export default C4Explorer;
+}
+
+declare module 'c4Ui/reactProbe' {
+  /** Reports whether the remote's React is the host-stamped instance. */
+  export function reactProbe(): { sameInstance: boolean; version: string };
+  const _default: typeof reactProbe;
+  export default _default;
+}

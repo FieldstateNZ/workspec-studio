@@ -127,3 +127,101 @@ after the S2 adversarial review. Two kinds of entry live here:
     (no Enterprise file format to conform to), but for the record: Enterprise's `diagram_layouts`
     DB column has no zoom constraint. This package rejects `zoom <= 0` because a non-positive
     zoom has no renderable meaning.
+
+## S5 — `@workspec/c4-ui` (issue #6): drift and new conventions
+
+11. **Drill-down has no backing field anywhere in the model — the issue text's "clicking an
+    element whose slug matches another diagram's scope" doesn't correspond to any real
+    `@workspec/c4-model`/`@workspec/c4-schema` field.** No `Diagram`/`ResolvedDiagram` carries a
+    "scope" or "parent element" concept; diagram slugs are just filenames, independent of any
+    element slug. `@workspec/c4-ui` establishes its OWN convention, layered entirely at the UI
+    level: `C4Diagram` proposes a drill via `onNavigate(clickedNode.slug)` unconditionally for any
+    node with a resolved slug (it has no model access to know whether a match exists);
+    `C4Explorer.handleNavigate` is what actually decides, switching diagrams only when the clicked
+    slug equals another diagram's own slug (a no-op otherwise). This is new studio-authoring
+    guidance for content authors, not an Enterprise-conformance fact: to get automatic drill-down,
+    name a system's container-level diagram after the system's own slug, and a domain's
+    component-level diagram after the domain's own slug (exactly what
+    `src/test-helpers/synthetic-model.ts`'s fixture does: `system/ledger.yaml` +
+    `diagrams/ledger.yaml`, `domains/billing.yaml` + `diagrams/billing.yaml`). Flagged for Brett —
+    an explicit `scope:`/`parent:` field on the diagram schema would be a cleaner long-term
+    answer, but that's a `@workspec/c4-schema` change, out of this slice's boundary.
+
+12. **Node surface/border/eyebrow ADOPT Enterprise's accent derivation (the `.c4-el` color-mix
+    layer), replicated over @workspec/design tokens.** Enterprise's style-spec governing rule
+    ("users author identity; the renderer owns legibility — derived from the accent on a neutral,
+    theme-aware surface") is implemented in `artifacts/workspec/src/index.css`'s "C4 style-spec v2
+    token layer" as `color-mix(in oklab, ...)` over its theme tokens — which is achievable
+    grep-clean here, so this package matches it rather than flattening to neutral surfaces (an
+    earlier revision of this entry wrongly claimed zero-local-tokens forced the flattening).
+    `src/styles.css`'s `.c4-node` layer replicates the derivation verbatim against
+    `@workspec/design` tokens: surface = accent 9% over `--bg-elevated` (14% dark), border =
+    accent 28% over transparent (34% dark), eyebrow/kind text = accent 70% into `--ink` (the
+    lifted accent itself in dark), dimmed secondary text = ink at 60% (62% dark), and dark mode
+    first lifts the accent 22% toward white — the renderer sets `--c4-el-accent-raw` inline per
+    node exactly as Enterprise's `C4NodeComponent` sets `--el-accent-raw`. The same percentages
+    live in `src/style/element-tints.ts` (pinned to the stylesheet by `element-tints.test.ts`) so
+    `renderSvg` computes identical values in code. The `external` variant dashes the 4px accent
+    identity stripe (Enterprise's dashed `borderLeft`), and hover draws Enterprise's 2px dashed
+    accent outline (`C4NodeComponent`'s active-not-selected treatment). Remaining micro-deltas,
+    listed honestly: (i) connection accents are NOT lifted 22% toward white in dark
+    (Enterprise's `.c4-conn` layer does this for edge strokes; here edges/arrowheads use the raw
+    category accent in both themes); (ii) no corner watermark icon (Enterprise draws the kind
+    icon huge and faint — `--el-watermark`, accent 14%/18% over transparent — bleeding off the
+    card; here the icon is small, top-left, accent-coloured); (iii) no `data-scope="focus"`
+    deepened tint (Enterprise's in-scope subject node — no counterpart concept in this package's
+    props); (iv) hover here does not scale the node 1.03 or add the soft halo box-shadow (an SVG
+    transform scale would visibly detach the node from its routed edge anchors mid-hover).
+
+13. **No frosted-glass type-label pill below the box.** The fieldstate-c4-core skill's rendering
+    doctrine (behavioural reference only, not binding visual spec) puts the kind label in a
+    floating pill below each node. This package renders the kind as small inline text inside the
+    node's own footprint instead — a "keep it basic" simplification within the brief's declared
+    freedom, consistent with the fixed `C4_NODE_WIDTH`/`HEIGHT` (300×110) `@workspec/c4-layout`
+    already commits to (no room budgeted below the box for a floating pill).
+
+14. **`renderSvg` vs canvas: colours match by construction; the icon glyph and exotic authored
+    accents are the remaining gaps.** Both renderers share node shape geometry, edge
+    routing/paths, and accent/style resolution (`render-svg.shared-modules.test.ts`), and both
+    apply the SAME accent derivation from entry 12: the canvas via `src/styles.css`'s CSS
+    `color-mix(in oklab, ...)` rules, `renderSvg` via an in-code oklab implementation
+    (`src/style/color-mix.ts`, Ottosson reference math — the same space CSS uses) over the same
+    `src/style/element-tints.ts` percentages, so the static export's node surfaces/borders/
+    eyebrows agree with the canvas within colour-space rounding rather than falling back to flat
+    theme surfaces. Two honest gaps remain: (i) the canvas draws a `lucide-react` kind icon
+    (`style/icons.tsx`) the SVG string does not reproduce (embedding per-icon path data was
+    judged out of scope; closing it means threading the icon path data, not the components, into
+    `render-svg.ts`'s templates); (ii) `color-mix.ts` parses only the accent forms that actually
+    occur in this package's inputs — hex, `hsl()` (the Enterprise-defaults form), and
+    `var(--token)` — so an exotic authored `spec.yaml` accent (`rgb()`, a named colour, `oklch()`)
+    renders flat theme surfaces in the static export while the browser canvas still derives it
+    via native CSS `color-mix`.
+
+15. **Element `links` reach the tooltip through a new prop, `elementsByKindAndSlug`, not through
+    `resolved`/`diagram` alone.** `@workspec/c4-model`'s `ResolvedDiagramNode` carries
+    title/description/technology/tags but not `links` (that field lives on the underlying
+    `LoadedElement`, looked up by kind+slug — see `element-key.ts`). `C4Diagram`'s two required
+    props (`diagram`, `resolved`) cannot reach it, so `C4Explorer` builds a
+    `ReadonlyMap<string, LoadedElement>` from the whole `C4Model` once and threads it down as a
+    third, optional prop. This is an addition beyond the brief's literal "props = positioned
+    diagram + resolved diagram + optional host" line for `C4Diagram`, made to satisfy the
+    "links rendering per LinkResolver host contract" requirement — noted here as the concrete
+    resolution of what would otherwise read as an API gap between the brief and
+    `@workspec/c4-model`'s actual exported shape.
+
+16. **Build tooling: `vitest`/`typescript` pinned to the c4-\* siblings' versions, not
+    `decision-ui`'s.** The brief asks to mirror `decision-ui`'s vitest/TS setup; in practice,
+    `vitest@^3.2.4` (decision-ui's pin) failed `toMatchSnapshot()` in this environment with
+    `SnapshotClient.setup()` errors — the golden-snapshot test `render-svg.test.ts` requires — and
+    a plain `expect.extend()` custom matcher confirmed vitest 3.2.7 itself was the variable, not
+    this package's code. `packages/c4-model`/`c4-layout` already use `vitest@^4.1.10` successfully
+    (including their own `toMatchSnapshot` golden-layout tests), so `@workspec/c4-ui` matches THAT
+    pin instead, plus `typescript@^6.0.3` (vitest 4's `@vitest/expect` types didn't check cleanly
+    against `typescript@^5.7.2`). A related pnpm phantom-dependency hazard is documented inline in
+    `src/testing.d.ts`/`src/vitest.setup.ts`: `@testing-library/jest-dom` declares neither
+    `vitest` nor `@vitest/expect` as a real dependency, so — with sibling packages pinning
+    different vitest majors — its own `/vitest` entry point and a naive type augmentation both
+    resolve through pnpm's shared hoisted slot rather than this package's own `vitest`; fixed by
+    adding `@vitest/expect` as an explicit devDependency (forcing a correctly-versioned local
+    resolution) and calling `expect.extend()` directly in `vitest.setup.ts` instead of importing
+    jest-dom's own vitest integration module.

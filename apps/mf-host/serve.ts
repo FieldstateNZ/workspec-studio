@@ -1,8 +1,9 @@
-// A tiny static server for the smoke test. It serves the built host at `/` and
-// the built module-federation remote at `/remote/`, from ONE origin — so the
-// host's `/remote/remoteEntry.js` reference and the remote's `publicPath: 'auto'`
-// chunk loading both resolve without any cross-origin or port coordination.
-// Deliberately dependency-free (Node built-ins only).
+// A tiny static server for the smoke test. It serves the built host at `/`,
+// the decision-ui remote at `/remote/`, and the c4-ui remote at `/remote-c4/`,
+// all from ONE origin — so the host's `/remote/remoteEntry.js` /
+// `/remote-c4/remoteEntry.js` references and each remote's
+// `publicPath: 'auto'` chunk loading all resolve without any cross-origin or
+// port coordination. Deliberately dependency-free (Node built-ins only).
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -12,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const HOST_DIST = resolve(here, 'dist');
 const REMOTE_DIST = resolve(here, '../../packages/decision-ui/dist-mf');
+const C4_REMOTE_DIST = resolve(here, '../../packages/c4-ui/dist-mf');
 const PORT = Number(process.env.PORT ?? 4390);
 
 const MIME: Record<string, string> = {
@@ -41,9 +43,14 @@ const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
     let pathname = decodeURIComponent(url.pathname);
 
-    // Route `/remote/*` to the built remote; everything else to the host.
+    // Route `/remote/*` to the decision-ui remote, `/remote-c4/*` to the
+    // c4-ui remote; everything else to the host. `/remote-c4` is checked
+    // first — it would otherwise also match the `/remote` prefix check.
     let baseDir = HOST_DIST;
-    if (pathname === '/remote' || pathname.startsWith('/remote/')) {
+    if (pathname === '/remote-c4' || pathname.startsWith('/remote-c4/')) {
+      baseDir = C4_REMOTE_DIST;
+      pathname = pathname.slice('/remote-c4'.length) || '/';
+    } else if (pathname === '/remote' || pathname.startsWith('/remote/')) {
       baseDir = REMOTE_DIST;
       pathname = pathname.slice('/remote'.length) || '/';
     }
