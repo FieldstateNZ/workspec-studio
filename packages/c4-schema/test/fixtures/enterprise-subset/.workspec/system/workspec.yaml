@@ -1,0 +1,13 @@
+title: WorkSpec
+summary: "WorkSpec is Fieldstate's spec and traceability tool. One project board
+  viewed through two lenses — freeform sketches and structured artifacts — with
+  a per-element arc carrying any single thing from sketch through design, build,
+  and test. An AI co-author drafts in pencil alongside the user, and a
+  continuous spec↔code reconciliation loop keeps the spec honest after ship. No
+  phase gates: readiness is per element, never per project."
+description: "WorkSpec is Fieldstate's spec and traceability tool. One project
+  board viewed through two lenses — freeform sketches and structured artifacts —
+  with a per-element arc carrying any single thing from sketch through design,
+  build, and test. An AI co-author drafts in pencil alongside the user, and a
+  continuous spec↔code reconciliation loop keeps the spec honest after ship. No
+  phase gates: readiness is per element, never per project."

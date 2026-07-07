@@ -1,0 +1,65 @@
+type: style
+version: 2
+elements:
+  actor:
+    accent: "#4A90D9"
+    icon: user
+    shape: box
+  system:
+    accent: "#1168BD"
+    icon: box
+    shape: box
+  external-system:
+    accent: "#64748b"
+    icon: external-link
+    shape: box
+    variant: external
+  container:
+    accent: hsl(214 88% 51%)
+    icon: server
+    shape: box
+  component:
+    accent: hsl(166 50% 40%)
+    icon: package
+    shape: box
+  database:
+    accent: hsl(186 79% 35%)
+    icon: database
+    shape: cylinder
+  queue:
+    accent: hsl(280 50% 55%)
+    icon: git-merge
+    shape: pill
+  domain:
+    accent: hsl(150 35% 38%)
+    icon: boxes
+    shape: box
+  feature:
+    accent: hsl(166 50% 40%)
+    icon: package
+    shape: box
+  class:
+    accent: hsl(262 52% 58%)
+    icon: braces
+    shape: box
+  interface:
+    accent: hsl(199 65% 48%)
+    icon: brackets
+    shape: box
+  function:
+    accent: hsl(150 45% 42%)
+    icon: parentheses
+    shape: box
+connections:
+  interaction:
+    accent: "#64748b"
+    style: solid
+  data:
+    accent: "#4CAF50"
+    style: solid
+  governance:
+    accent: "#9C27B0"
+    style: dashed
+  identity:
+    accent: "#4A90D9"
+    style: solid

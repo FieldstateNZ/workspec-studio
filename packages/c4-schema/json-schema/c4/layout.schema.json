@@ -1,0 +1,122 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/c4/layout.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A diagram layout file, pinning node positions and optionally edge routing and camera state.",
+  "properties": {
+    "edges": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "description": "Routing hint for one diagram edge.",
+        "properties": {
+          "waypoints": {
+            "description": "Ordered points the edge is routed through.",
+            "items": {
+              "additionalProperties": false,
+              "description": "A single waypoint along a routed edge.",
+              "properties": {
+                "x": {
+                  "description": "X coordinate, top-left page coords.",
+                  "type": "number"
+                },
+                "y": {
+                  "description": "Y coordinate, top-left page coords.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "waypoints"
+        ],
+        "type": "object"
+      },
+      "description": "Optional per-edge routing hints, keyed by \"<from>-><to>\".",
+      "propertyNames": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "nodes": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "description": "A pinned node position and optional size.",
+        "properties": {
+          "height": {
+            "description": "Optional pinned node height. Omit to use the renderer default.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "width": {
+            "description": "Optional pinned node width. Omit to use the renderer default.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "x": {
+            "description": "X coordinate, top-left page coords.",
+            "type": "number"
+          },
+          "y": {
+            "description": "Y coordinate, top-left page coords.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "type": "object"
+      },
+      "description": "Pinned node positions, keyed by element slug. Absence of a key means auto-layout.",
+      "propertyNames": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "version": {
+      "const": 1,
+      "description": "Layout file format version; always 1.",
+      "type": "number"
+    },
+    "viewport": {
+      "additionalProperties": false,
+      "description": "Optional persisted camera state.",
+      "properties": {
+        "x": {
+          "description": "Camera X offset, page coords.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Camera Y offset, page coords.",
+          "type": "number"
+        },
+        "zoom": {
+          "description": "Camera zoom factor; must be greater than zero.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "zoom"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "nodes"
+  ],
+  "title": "WorkSpec C4 Layout (v1alpha1)",
+  "type": "object"
+}

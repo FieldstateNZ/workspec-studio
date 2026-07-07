@@ -1,0 +1,5 @@
+version: 1
+nodes:
+  architect:
+    x: "80"
+    y: 200

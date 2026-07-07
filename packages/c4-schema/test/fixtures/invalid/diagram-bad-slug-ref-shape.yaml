@@ -1,0 +1,6 @@
+title: System Context
+type: c4-context
+nodes:
+  - component: diagram-editor
+    container: api-server
+edges: []

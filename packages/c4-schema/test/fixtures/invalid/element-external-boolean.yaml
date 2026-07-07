@@ -1,0 +1,3 @@
+title: Payment Gateway
+description: Third-party processor used to settle customer invoices.
+external: true

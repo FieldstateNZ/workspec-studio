@@ -1,0 +1,7 @@
+type: style
+version: 2
+elements:
+  actor:
+    accent: 42
+    icon: user
+    shape: box

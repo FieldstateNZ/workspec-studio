@@ -1,0 +1,7 @@
+title: System Context
+type: c4-context
+nodes:
+  - slug: architect
+edges:
+  - from: architect
+    label: designs systems in
