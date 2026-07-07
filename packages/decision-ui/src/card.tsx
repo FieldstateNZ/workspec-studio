@@ -9,12 +9,14 @@
 // deterministic money formatter, so a card, the workspace, and the CLI's ADR
 // never disagree. Read-only: no editing, no levers, no port writes.
 //
-// Styling is `--ds-*` only; the card renders inside a `DecisionStudioProvider`.
+// The card frame is the design system's `Card`; the inner summary layout is
+// domain styling on WorkSpec tokens. Renders inside a `DecisionStudioProvider`.
 
 import { useMemo } from 'react';
 import type { ReactElement } from 'react';
 import { compute, recommend } from '@workspec/decision-engine';
 import type { Catalog, Decision, Ref } from '@workspec/decision-schema';
+import { Card, Lbl } from '@workspec/design/components';
 import { useCatalog, useDecision } from './context.js';
 import { resolveCatalogRef } from './host.js';
 import { money } from './format.js';
@@ -33,9 +35,9 @@ function CardShell(props: {
     props.tone === 'error'
       ? 'ds-card ds-card-msg ds-card-error'
       : props.tone === 'muted'
-        ? 'ds-card ds-card-msg ds-muted'
+        ? 'ds-card ds-card-msg'
         : 'ds-card';
-  return <div className={cls}>{props.children}</div>;
+  return <Card className={cls}>{props.children}</Card>;
 }
 
 /** Load a decision + its catalog and render the compact summary card. */
@@ -85,9 +87,9 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
   const choiceLabel = decided ? 'Chosen' : 'Recommended';
 
   return (
-    <div className="ds-card">
+    <Card className="ds-card">
       <div className="ds-card-head">
-        <span className="ds-eyebrow">{`Decision · ${decision.metadata.id}`}</span>
+        <Lbl>{`Decision · ${decision.metadata.id}`}</Lbl>
         <span className={`ds-status ds-status-${statusClass}`}>
           <span className="ds-status-dot" aria-hidden="true" />
           {statusLabel}
@@ -109,9 +111,9 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
         </div>
       ) : (
         <div className="ds-card-choice ds-card-choice-empty">
-          <span className="ds-card-choice-lab ds-muted">No option modelled yet</span>
+          <span className="ds-card-choice-lab">No option modelled yet</span>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

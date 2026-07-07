@@ -5,7 +5,13 @@
     "outDir": "dist",
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
   },
-  "references": [{ "path": "../decision-schema" }, { "path": "../decision-engine" }],
+  "references": [
+    { "path": "../decision-schema/tsconfig.build.json" },
+    { "path": "../decision-engine/tsconfig.build.json" }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+  // test-utils is a test-only helper (imported exclusively by *.test.tsx):
+  // excluding it keeps its @testing-library devDep type references out of
+  // the published dist/ tree.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-utils.tsx"]
 }

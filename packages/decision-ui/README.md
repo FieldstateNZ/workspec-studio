@@ -96,42 +96,74 @@ root (`<div class="ds-root" data-theme=…>`). Hooks read the contract:
 its `spec.catalog` (matching `FsRepository`), so the catalog can be read back
 through the same port.
 
-## Theming — the `--ds-*` variables
+## Theming — WorkSpec design tokens (`@workspec/design`)
 
-All colour, type, radius, shadow, and motion tokens are namespaced **`--ds-*`**
-(e.g. `--ds-bg`, `--ds-ink`, `--ds-accent`, `--ds-line`, `--ds-r-4`, `--ds-sh-2`)
-so nothing collides with a host's own variables, and the package references
-**only** `var(--ds-*)` — never a bare token, never a Tailwind class. This is the
-S6 module-federation constraint: the remote must not depend on host CSS.
+The theming contract is the **WorkSpec design system**: every colour, type,
+radius, shadow, and motion value in this package reads a token owned by
+[`@workspec/design`](https://github.com/FieldstateNZ/workspec-design) —
+`var(--bg)`, `var(--ink)`, `var(--accent)`, `var(--line)`, `var(--r-4)`,
+`var(--sh-2)`, … This package defines **no token values of its own**; the two
+shipped themes are the design system's `console-dark` and `console-light`,
+selected by the provider's two-value `theme` prop (`'dark' | 'light'`).
 
-Two themes ship — `console-dark` and `console-light` — selected by `data-theme`
-on the `.ds-root` element:
+**How the provider binds a theme.** `DecisionStudioProvider` renders
+
+```html
+<div
+  class="ds-root dark"
+  data-aesthetic="console"
+  data-theme="dark"
+  style="--bg:#0a0a0c; --ink:#e8e8ea; …"
+></div>
+```
+
+- The **full token map is applied inline** via `@workspec/design`'s
+  `themeStyle()`, so the palette is bound wherever the views render — a
+  module-federation host does not need to set anything on `<html>`, import any
+  theme CSS, or run Tailwind. Inline custom properties also outrank any
+  stylesheet, so the bound theme is deterministic.
+- The root also carries WorkSpec's **dual theme signal** (see
+  `@workspec/design`'s `docs/theming.md`): the
+  `data-aesthetic="console"` + `data-theme` attribute pair activates the
+  token palette for attribute-based CSS, and the `.dark` class activates
+  Tailwind's `dark:` variant. Both signals always travel together, scoped to
+  the `.ds-root` subtree — setting only one is the documented desync bug
+  (upstream drift-log D22).
+
+**Host token overrides.** A host may re-skin the views by overriding
+individual WorkSpec tokens on `.ds-root`. Because the provider binds the
+palette inline, a plain stylesheet rule will not win — override with
+`!important` (which beats inline styles in the cascade):
 
 ```css
-.ds-root[data-theme='dark'] {
-  --ds-bg: #0a0a0c;
-  --ds-ink: #e8e8ea; …
-}
-.ds-root[data-theme='light'] {
-  --ds-bg: #f6f6f7;
-  --ds-ink: #0a0a0c; …
+.ds-root {
+  --accent: #7aa2ff !important;
 }
 ```
 
-The provider applies the active theme's tokens both via `data-theme` **and**
-inline on the root, so theming works whether or not the host imports
-`styles.css`. A host may override individual `--ds-*` tokens to re-skin the views;
-the token map is also exported from JS (`THEMES`, `DARK_THEME`, `LIGHT_THEME`,
-`themeStyle`) for programmatic use.
+The token map is also exported from JS (`THEMES`, `DESIGN_THEMES`,
+`themeStyle`, `TokenName`) for programmatic use.
 
-**Self-contained fallbacks.** `styles.css` also opens with a zero-specificity
-`:where(.ds-root)` block carrying the full **dark** ramp. It is a last resort: the
-`[data-theme]` blocks, the provider's inline tokens, and any host override all win
-over it (`:where()` contributes zero specificity). Its job is to guarantee a
-_usable dark theme_ even when a module-federation host sets no `--ds-*` tokens and
-never applies `data-theme` — so the remote's components stay legible with **no
-host CSS and no Tailwind**. Every component style also references tokens through
-`var(--ds-*)`, so an undefined token degrades rather than breaking layout.
+**Why there is no CSS fallback ramp anymore.** Earlier versions shipped a
+zero-specificity `:where(.ds-root)` dark ramp plus `[data-theme]` value blocks
+in `styles.css` as a safety net for hosts that imported no CSS and set no
+attributes. That net is gone by design: this is a React library, every view
+renders inside `DecisionStudioProvider`, and the provider's inline
+`themeStyle()` binding **guarantees** a bound theme wherever React renders —
+a CSS-side copy of the palette was redundant, not load-bearing, and it would
+have duplicated token values this repo no longer owns.
+
+**The stylesheet.** `styles.css` compiles three things into one file: the
+bespoke `.ds-*` component styles (tokens only, no values), the Tailwind
+utilities the adopted `@workspec/design` components use, and the design
+system's attribute-activated theme palettes. It deliberately contains **no
+Tailwind preflight** — a federated remote must never reset a host's page — so
+the only global effect of loading it is inert utility classes and
+attribute-scoped token definitions. The remote compiles its **own** CSS at
+build time (the S6 constraint was never "no Tailwind", only "no dependence on
+a host's Tailwind build"). Hosts supply their own web fonts if they want
+Inter Tight / JetBrains Mono (e.g. `@workspec/design/fonts.css`); the token
+font stacks degrade to system fonts otherwise.
 
 Import the compiled stylesheet once, at the host:
 
@@ -219,7 +251,7 @@ The package has **two build targets from one `src/`** — no component forks:
 
 Each exposed view imports the stylesheet, and the plugin attaches the bundle's
 CSS to every exposed module (`bundleAllCSS`), so **loading a federated view
-injects the `--ds-*` styles** — the host wires up no CSS. Chunks resolve relative
+injects the compiled WorkSpec styles** — the host wires up no CSS. Chunks resolve relative
 to wherever `remoteEntry.js` is served (`publicPath: 'auto'`), so the remote can
 be hosted at any path.
 

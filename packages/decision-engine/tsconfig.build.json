@@ -5,7 +5,7 @@
     "outDir": "dist",
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
   },
-  "references": [{ "path": "../decision-schema" }],
+  "references": [{ "path": "../decision-schema/tsconfig.build.json" }],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

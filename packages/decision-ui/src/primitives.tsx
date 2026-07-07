@@ -1,25 +1,29 @@
 // Shared presentational primitives, ported from the prototype's `primitives.jsx`
 // but reworked for accessibility: the `Picker` (inline dropdown) is a real
 // button that opens a keyboard-operable menu, and score dots are a proper
-// keyboard slider. All colours come from `var(--ds-*)`.
+// keyboard slider. All colours come from WorkSpec design tokens (`var(--*)`),
+// and the chip/flag roles are the design system's `Chip` component.
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
+import { Chip as DesignChip } from '@workspec/design/components';
 
 /**
  * Per-option accent, mapping option ids to WorkSpec artifact-type tokens so
  * options read as distinct C4-style elements. Unknown ids fall back to accent.
+ * These are token REFERENCES (product data keyed by option id), not token
+ * definitions — the values live in @workspec/design.
  */
 const OPT_ACCENT: Record<string, string> = {
-  aks: 'var(--ds-type-feature)',
-  appsvc: 'var(--ds-type-persona)',
-  ase: 'var(--ds-type-userreq)',
-  aca: 'var(--ds-type-scenario)',
+  aks: 'var(--type-feature)',
+  appsvc: 'var(--type-persona)',
+  ase: 'var(--type-userreq)',
+  aca: 'var(--type-scenario)',
 };
 
 /** The accent CSS value for an option id. */
 export function optAccent(id: string): string {
-  return OPT_ACCENT[id] ?? 'var(--ds-accent)';
+  return OPT_ACCENT[id] ?? 'var(--accent)';
 }
 
 interface IconProps {
@@ -82,22 +86,44 @@ export const Icon = {
 
 // ── Chip / Flag ────────────────────────────────────────────────────────────────
 
-/** A small inline badge. */
-export function Chip(props: { children: ReactNode; style?: CSSProperties }): ReactElement {
-  return (
-    <span className="ds-chip" style={props.style}>
-      {props.children}
-    </span>
-  );
+/** A small inline badge — the design system's mono-caps `Chip`. */
+export function Chip(props: { children: ReactNode; className?: string }): ReactElement {
+  return <DesignChip className={cn('ds-chip', props.className)}>{props.children}</DesignChip>;
 }
 
-/** A status flag: neutral, warn, accent, or agent-toned. */
+// The design system's Chip has no `warn` variant, so the warn tone rides in as
+// utility classes on the outline chip. `--warn` on light surfaces is a known
+// weak pair upstream (contrast-audit D39) — kept because it is the system's
+// only warning colour role; adjudication is Brett's, not this package's.
+const FLAG_TONE: Record<
+  'warn' | 'accent' | 'agent',
+  { variant?: 'active' | 'agent'; className?: string }
+> = {
+  accent: { variant: 'active' },
+  agent: { variant: 'agent' },
+  warn: { className: 'text-[color:var(--warn)] border-[color:var(--warn)]' },
+};
+
+/** A status flag: neutral, warn, accent, or agent-toned design-system Chip. */
 export function Flag(props: {
   children: ReactNode;
   tone?: 'warn' | 'accent' | 'agent';
 }): ReactElement {
-  const cls = props.tone ? `ds-flag ds-flag-${props.tone}` : 'ds-flag';
-  return <span className={cls}>{props.children}</span>;
+  const tone = props.tone !== undefined ? FLAG_TONE[props.tone] : {};
+  // exactOptionalPropertyTypes: omit `variant` entirely rather than pass it
+  // as `'active' | 'agent' | undefined` — DesignChip declares it plain-optional.
+  return (
+    <DesignChip
+      {...(tone.variant !== undefined && { variant: tone.variant })}
+      className={cn('ds-flag inline-flex items-center gap-1 [&_svg]:size-2.5', tone.className)}
+    >
+      {props.children}
+    </DesignChip>
+  );
+}
+
+function cn(...parts: (string | undefined)[]): string {
+  return parts.filter((p) => p !== undefined && p !== '').join(' ');
 }
 
 // ── Criteria dots ──────────────────────────────────────────────────────────────

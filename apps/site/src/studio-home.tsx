@@ -5,6 +5,7 @@
 // repository README and the Decisions module's own positioning so none of the
 // three ever drift apart.
 import type { ReactElement } from 'react';
+import { Button, Lbl } from '@workspec/design/components';
 
 import { Link } from './router.js';
 
@@ -56,7 +57,7 @@ export function StudioHome(): ReactElement {
 
       <main>
         <section className="hero">
-          <p className="eyebrow">Free · standalone · git-native</p>
+          <Lbl>Free · standalone · git-native</Lbl>
           <h1>One workbench over the WorkSpec artifacts already living in your repo.</h1>
           <p className="lede">
             WorkSpec Studio is the open-source home for every free WorkSpec module — costed
@@ -70,12 +71,12 @@ export function StudioHome(): ReactElement {
         <section className="modules" aria-label="WorkSpec Studio modules">
           {MODULES.map((mod) => (
             <article key={mod.key} className="feature module-card">
-              <p className="eyebrow module-status">{mod.status}</p>
+              <Lbl className="module-status">{mod.status}</Lbl>
               <h2>{mod.name}</h2>
               <p>{mod.blurb}</p>
-              <Link href={mod.href} className="btn btn-primary">
-                {mod.cta}
-              </Link>
+              <Button asChild>
+                <Link href={mod.href}>{mod.cta}</Link>
+              </Button>
             </article>
           ))}
         </section>
@@ -83,10 +84,10 @@ export function StudioHome(): ReactElement {
         <section className="feature">
           <h2>Open core</h2>
           <p>
-            Every package in this monorepo is Enterprise-grade by constitution — WorkSpec
-            Enterprise is a future consumer of this code, not a separate implementation. The
-            artifact schemas are shared, so files you author here come alive with richer context
-            inside Enterprise’s graph, with no forks and one source of truth.
+            Every package in this monorepo is Enterprise-grade by constitution — WorkSpec Enterprise
+            is a future consumer of this code, not a separate implementation. The artifact schemas
+            are shared, so files you author here come alive with richer context inside Enterprise’s
+            graph, with no forks and one source of truth.
           </p>
         </section>
       </main>

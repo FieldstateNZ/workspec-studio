@@ -1,5 +1,7 @@
-/* Minimal host chrome. The remote's components self-style with `--ds-*`; this is
-   just page scaffolding so the smoke page has a background and some spacing. */
+/* Minimal host chrome. The remote self-styles (it injects its own compiled
+   CSS — WorkSpec tokens + utilities — with every exposed module); this is
+   just page scaffolding so the smoke page has a background and some spacing.
+   The hex values are the HOST's own page choices, not remote tokens. */
 body {
   margin: 0;
   background: #0a0a0c;

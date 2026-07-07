@@ -1,5 +1,5 @@
-// `DecisionApp` — the full four-view app. A segmented nav (Options / Compare /
-// Catalog / ADR, mirroring the prototype topbar) switches among the Workspace,
+// `DecisionApp` — the full four-view app. A segmented nav (the design system's
+// Tabs: Options / Compare / Catalog / ADR) switches among the Workspace,
 // Compare, Catalog, and ADR views, managing view state internally. It re-provides
 // the host contract with a `navigate` that drives its own view switch, so the
 // Workspace's Compare / Decide buttons and Compare's "open the ADR" link route
@@ -11,6 +11,7 @@
 import { useCallback, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { Ref } from '@workspec/decision-schema';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspec/design/components';
 import { HostNavigateProvider, useDecision, useNavigate } from './context.js';
 import { resolveCatalogRef } from './host.js';
 import type { LinkTarget } from './host.js';
@@ -84,30 +85,37 @@ export function DecisionApp(props: DecisionAppProps): ReactElement {
   return (
     <HostNavigateProvider navigate={navigate}>
       <div className="ds-app">
-        <div className="ds-appbar">
-          <div className="ds-viewnav" role="tablist" aria-label="Decision views">
-            {VIEWS.map((v) => (
-              <button
-                key={v}
-                type="button"
-                role="tab"
-                aria-selected={view === v}
-                className={view === v ? 'ds-on' : ''}
-                onClick={() => setView(v)}
-              >
-                {VIEW_LABEL[v]}
-                {v === 'options' && <span className="ds-n">{optionCount}</span>}
-              </button>
-            ))}
+        <Tabs value={view} onValueChange={(v) => setView(v as DecisionView)}>
+          <div className="ds-appbar">
+            <TabsList aria-label="Decision views">
+              {VIEWS.map((v) => (
+                <TabsTrigger key={v} value={v} className="gap-2">
+                  {VIEW_LABEL[v]}
+                  {v === 'options' && (
+                    <span className="ds-n min-w-[18px] rounded-full border border-border bg-card px-1.5 text-center font-mono text-[10px] text-muted-foreground">
+                      {optionCount}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </div>
 
-        <div className="ds-view">
-          {view === 'options' && <DecisionWorkspace decisionRef={decisionRef} />}
-          {view === 'compare' && <DecisionCompare decisionRef={decisionRef} />}
-          {view === 'catalog' && <DecisionCatalog catalogRef={catalogRef} />}
-          {view === 'adr' && <DecisionAdr decisionRef={decisionRef} />}
-        </div>
+          <div className="ds-view">
+            <TabsContent value="options">
+              <DecisionWorkspace decisionRef={decisionRef} />
+            </TabsContent>
+            <TabsContent value="compare">
+              <DecisionCompare decisionRef={decisionRef} />
+            </TabsContent>
+            <TabsContent value="catalog">
+              <DecisionCatalog catalogRef={catalogRef} />
+            </TabsContent>
+            <TabsContent value="adr">
+              <DecisionAdr decisionRef={decisionRef} />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </HostNavigateProvider>
   );

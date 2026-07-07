@@ -9,6 +9,7 @@ import {
   DecisionStudioProvider,
   createInertLinkResolver,
 } from '@workspec/decision-ui';
+import { Button } from '@workspec/design/components';
 import type { DecisionStudioHost, ThemeName } from '@workspec/decision-ui';
 import '@workspec/decision-ui/styles.css';
 
@@ -78,28 +79,25 @@ export function Demo(): ReactElement {
             example, they don't reveal tabpanels. */}
         <div className="demo-examples" role="group" aria-label="Worked examples">
           {DEMO_EXAMPLES.map((example) => (
-            <button
+            <Button
               key={example.key}
-              type="button"
+              size="sm"
+              variant={example.key === active.key ? 'default' : 'secondary'}
+              className="rounded-full"
               aria-pressed={example.key === active.key}
-              className={example.key === active.key ? 'demo-tab is-active' : 'demo-tab'}
               onClick={() => setExampleKey(example.key)}
             >
               {example.label}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="demo-actions">
-          <button type="button" className="demo-btn" onClick={() => void onExportAdr()}>
+          <Button size="sm" onClick={() => void onExportAdr()}>
             Export ADR
-          </button>
-          <button
-            type="button"
-            className="demo-btn demo-btn-ghost"
-            onClick={() => setResetToken((n) => n + 1)}
-          >
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setResetToken((n) => n + 1)}>
             Reset
-          </button>
+          </Button>
         </div>
       </header>
 

@@ -1,4 +1,5 @@
 import { federation } from '@module-federation/vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
@@ -13,8 +14,14 @@ import { defineConfig } from 'vite';
 //     what keeps hooks working (one React) and the provider's QueryClient wired
 //     to the views' `useQuery` (one react-query). See the version-range policy
 //     below and packages/decision-ui/README.md.
-//   • the engine, the schema, and zod are BUNDLED IN. They are not framework
-//     singletons; a self-contained remote is the goal, so they ship inside it.
+//   • the engine, the schema, zod, and @workspec/design (tokens + the adopted
+//     components) are BUNDLED IN. They are not framework singletons; a
+//     self-contained remote is the goal, so they ship inside it. The remote
+//     also compiles its OWN Tailwind CSS (the @tailwindcss/vite plugin over
+//     src/index.css, theme + utilities layers only, no preflight) — the host
+//     needs no Tailwind build and its page styles are never reset. The S6
+//     constraint was never "no Tailwind", only "no dependence on a host's
+//     Tailwind build".
 //
 // Vite pin: `@module-federation/vite@^1.16` supports Vite 5/6/7/8, so the remote
 // builds on the repo's existing Vite 7 — no separate Vite major was needed.
@@ -28,6 +35,7 @@ const RQ_RANGE = pkg.peerDependencies['@tanstack/react-query'];
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     federation({
       name: 'decisionStudio',
@@ -48,7 +56,8 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: RQ_RANGE },
       },
       // Attach the bundle's CSS to every exposed module so loading any federated
-      // view injects the `--ds-*` styles — the host needs no separate CSS wiring.
+      // view injects the compiled styles (WorkSpec tokens + component
+      // utilities) — the host needs no separate CSS wiring.
       bundleAllCSS: true,
       // Resolve exposed chunks relative to wherever `remoteEntry.js` is served at
       // runtime (not a baked base path), so the remote can be hosted anywhere.

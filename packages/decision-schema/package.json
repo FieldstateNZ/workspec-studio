@@ -36,7 +36,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "gen:schema": "tsx scripts/gen-json-schema.ts"

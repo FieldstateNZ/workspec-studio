@@ -9,7 +9,7 @@ import type { Catalog, Criterion, Decision, Option } from '@workspec/decision-sc
 import { CostEditor } from './cost-editor.js';
 import type { CostEditorCallbacks } from './cost-editor.js';
 import { money } from './format.js';
-import { Dots, Flag, Icon, optAccent } from './primitives.js';
+import { Chip, Dots, Flag, Icon, optAccent } from './primitives.js';
 
 export interface OptionCardProps extends CostEditorCallbacks {
   option: Option;
@@ -32,7 +32,7 @@ export function OptionCard(props: OptionCardProps): ReactElement {
   if (props.open) cls.push('ds-opt-open');
   if (!complete) cls.push('ds-opt-incomplete');
 
-  const accentStyle = { '--ds-opt-accent': optAccent(option.id) } as CSSProperties;
+  const accentStyle = { '--opt-accent': optAccent(option.id) } as CSSProperties;
 
   return (
     <div className={cls.join(' ')} style={accentStyle}>
@@ -52,7 +52,7 @@ export function OptionCard(props: OptionCardProps): ReactElement {
             )}
             <span className="ds-opt-title">
               {option.name}
-              {option.tag !== undefined && <span className="ds-chip">{option.tag}</span>}
+              {option.tag !== undefined && <Chip>{option.tag}</Chip>}
               {!complete && <Flag tone="warn">Modelling</Flag>}
             </span>
             {option.summary !== undefined && <span className="ds-opt-sum">{option.summary}</span>}
@@ -68,12 +68,12 @@ export function OptionCard(props: OptionCardProps): ReactElement {
               })}
               {cheapest && (
                 <Flag tone="accent">
-                  <Icon.check className="ds-flag-icon" /> Cheapest
+                  <Icon.check /> Cheapest
                 </Flag>
               )}
               {recommended && (
                 <Flag tone="agent">
-                  <Icon.spark className="ds-flag-icon" /> Recommended
+                  <Icon.spark /> Recommended
                 </Flag>
               )}
             </span>

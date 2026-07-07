@@ -39,7 +39,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && vite build",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && vite build",
     "build:client": "vite build",
     "dev": "vite build && tsx src/bin.ts serve --dir ../../examples/hosting-platform --port 4173",
     "typecheck": "tsc -b",

@@ -6,16 +6,17 @@
 
 import type { ReactElement } from 'react';
 import type { LinkType } from '@workspec/decision-schema';
+import { Lbl } from '@workspec/design/components';
 import type { LinkResolver } from './host.js';
 
 const KIND_ACCENT: Record<string, string> = {
-  deployment: 'var(--ds-accent)',
-  feature: 'var(--ds-type-feature)',
-  'system-requirement': 'var(--ds-type-persona)',
+  deployment: 'var(--accent)',
+  feature: 'var(--type-feature)',
+  'system-requirement': 'var(--type-persona)',
 };
 
 function kindColor(kind: string): string {
-  return KIND_ACCENT[kind] ?? 'var(--ds-ink-fade)';
+  return KIND_ACCENT[kind] ?? 'var(--ink-fade)';
 }
 
 function LinkRow(props: { link: LinkType; resolve: LinkResolver }): ReactElement {
@@ -66,7 +67,7 @@ export function LinksBlock(props: {
   if (props.links.length === 0) return null;
   return (
     <div className="ds-links">
-      <span className="ds-eyebrow ds-links-lead">Traces to</span>
+      <Lbl className="ds-links-lead">Traces to</Lbl>
       {props.links.map((link, i) => (
         <LinkRow key={`${link.kind}:${link.label}:${i}`} link={link} resolve={props.resolve} />
       ))}

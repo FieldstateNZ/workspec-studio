@@ -10,6 +10,16 @@
 import { useState } from 'react';
 import type { ChangeEvent, ReactElement, ReactNode } from 'react';
 import type { Catalog, Ref } from '@workspec/decision-schema';
+import {
+  Button,
+  Input,
+  Lbl,
+  Switch,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@workspec/design/components';
 import { useCapabilities, useCatalog, useWriteCatalog } from './context.js';
 import {
   addPricingMode,
@@ -72,15 +82,14 @@ function TextCell(props: {
     return <span className={props.mono ? 'ds-cat-ro ds-mono' : 'ds-cat-ro'}>{props.value}</span>;
   }
   return (
-    <span className={props.mono ? 'ds-catinput ds-mono' : 'ds-catinput'}>
-      <input
-        type="text"
-        aria-label={props.ariaLabel}
-        value={props.value}
-        placeholder={props.placeholder}
-        onChange={(e) => props.onChange(e.target.value)}
-      />
-    </span>
+    <Input
+      type="text"
+      className={props.mono ? 'h-8 font-mono text-xs' : 'h-8 text-[13px]'}
+      aria-label={props.ariaLabel}
+      value={props.value}
+      placeholder={props.placeholder}
+      onChange={(e) => props.onChange(e.target.value)}
+    />
   );
 }
 
@@ -98,17 +107,22 @@ function NumberCell(props: {
     return <span className="ds-cat-ro ds-mono">{shown}</span>;
   }
   return (
-    <span className="ds-catinput ds-mono">
-      {props.prefix !== undefined && <span className="ds-cat-affix">{props.prefix}</span>}
-      <input
+    <span className="inline-flex items-center gap-1">
+      {props.prefix !== undefined && (
+        <span className="font-mono text-[11px] text-muted-foreground">{props.prefix}</span>
+      )}
+      <Input
         type="number"
         min={0}
         step={props.step ?? 1}
+        className="h-8 w-[76px] text-right font-mono text-xs"
         aria-label={props.ariaLabel}
         value={props.value}
         onChange={(e) => props.onChange(numberFromEvent(e))}
       />
-      {props.suffix !== undefined && <span className="ds-cat-affix">{props.suffix}</span>}
+      {props.suffix !== undefined && (
+        <span className="font-mono text-[11px] text-muted-foreground">{props.suffix}</span>
+      )}
     </span>
   );
 }
@@ -123,34 +137,39 @@ function CommittedToggle(props: {
     return <span className="ds-cat-ro ds-mono">{props.value ? 'committed' : 'on-demand'}</span>;
   }
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={props.value}
-      aria-label={props.ariaLabel}
-      className={props.value ? 'ds-cattoggle ds-cattoggle-on' : 'ds-cattoggle'}
-      onClick={() => props.onChange(!props.value)}
-    >
-      <span className="ds-cattoggle-sw" aria-hidden="true" />
-    </button>
+    <Switch checked={props.value} aria-label={props.ariaLabel} onCheckedChange={props.onChange} />
   );
 }
 
 function DeleteButton(props: { label: string; onClick: () => void }): ReactElement {
   return (
-    <button type="button" className="ds-cc-del" aria-label={props.label} onClick={props.onClick}>
-      <Icon.x className="ds-btn-icon" />
-    </button>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-muted-foreground hover:text-[color:var(--danger)]"
+      aria-label={props.label}
+      onClick={props.onClick}
+    >
+      <Icon.x />
+    </Button>
   );
 }
 
 function AddRow(props: { label: string; onClick: () => void }): ReactElement {
   return (
-    <div className="ds-addrow">
-      <button type="button" onClick={props.onClick}>
-        <Icon.plus className="ds-btn-icon" /> {props.label}
-      </button>
+    <div className="mt-3.5">
+      <Button variant="secondary" size="sm" className="border-dashed" onClick={props.onClick}>
+        <Icon.plus /> {props.label}
+      </Button>
     </div>
+  );
+}
+
+function CountBadge(props: { value: number }): ReactElement {
+  return (
+    <span className="ds-n min-w-[18px] rounded-full border border-border bg-card px-1.5 text-center font-mono text-[10px] text-muted-foreground">
+      {props.value}
+    </span>
   );
 }
 
@@ -195,7 +214,7 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
     <div className="ds-wrap ds-wide">
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
-          <div className="ds-eyebrow">Cost catalog · the priced tables every model draws from</div>
+          <Lbl>Cost catalog · the priced tables every model draws from</Lbl>
           <h1 className="ds-dechead-title">{draft.metadata.name ?? 'Cost catalog'}</h1>
           <p className="ds-ctx">
             {`${draft.metadata.currency} · prices as of ${draft.metadata.asOf}. `}
@@ -211,39 +230,21 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
         </div>
       </div>
 
-      <div className="ds-catnav" role="tablist" aria-label="Catalog sections">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'skus'}
-          className={tab === 'skus' ? 'ds-on' : ''}
-          onClick={() => setTab('skus')}
-        >
-          SKUs <span className="ds-n">{skus.length}</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'pricing'}
-          className={tab === 'pricing' ? 'ds-on' : ''}
-          onClick={() => setTab('pricing')}
-        >
-          Pricing modes <span className="ds-n">{pricingModes.length}</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'schedules'}
-          className={tab === 'schedules' ? 'ds-on' : ''}
-          onClick={() => setTab('schedules')}
-        >
-          Schedules <span className="ds-n">{schedules.length}</span>
-        </button>
-      </div>
+      <Tabs value={tab} onValueChange={(t) => setTab(t as CatalogTab)}>
+        <TabsList className="ds-catnav" aria-label="Catalog sections">
+          <TabsTrigger value="skus" className="gap-2">
+            SKUs <CountBadge value={skus.length} />
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="gap-2">
+            Pricing modes <CountBadge value={pricingModes.length} />
+          </TabsTrigger>
+          <TabsTrigger value="schedules" className="gap-2">
+            Schedules <CountBadge value={schedules.length} />
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="ds-catbody">
-        {tab === 'skus' && (
-          <>
+        <div className="ds-catbody">
+          <TabsContent value="skus">
             <SectionLabel
               title="SKUs"
               note="priced catalogue items · monthly PAYG list price per unit"
@@ -305,11 +306,9 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
                 }}
               />
             )}
-          </>
-        )}
+          </TabsContent>
 
-        {tab === 'pricing' && (
-          <>
+          <TabsContent value="pricing">
             <SectionLabel
               title="Pricing modes"
               note="named multipliers on the PAYG list price · committed modes bill 24×7"
@@ -384,11 +383,9 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
                 }}
               />
             )}
-          </>
-        )}
+          </TabsContent>
 
-        {tab === 'schedules' && (
-          <>
+          <TabsContent value="schedules">
             <SectionLabel
               title="Schedules"
               note="share of the ~730-hour month a line runs · committed pricing ignores this"
@@ -453,9 +450,9 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
                 }}
               />
             )}
-          </>
-        )}
-      </div>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

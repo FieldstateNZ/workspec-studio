@@ -1,18 +1,28 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
+    // Deliberately NOT "dist": this config covers `client/` alongside `src/`
+    // (rootDir infers to "."), so a `tsc -b` typecheck of it emits a
+    // `<outDir>/src` + `<outDir>/client` tree — not the flat dist/ layout the
+    // build config and package.json "types" expect — and includes test files.
+    // Routing the typecheck emit to a gitignored `.typecheck/` (never read by
+    // anything) keeps `tsc -b`'s self-bootstrap working without polluting
+    // `dist/` — same shadow-emit split as packages/c4-*.
+    "outDir": ".typecheck",
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
   },
   // TS Project References: let `tsc -b` type-check against the sibling
   // packages' real TypeScript source (building their declarations on
-  // demand), so `typecheck` never has to run after `build`.
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // siblings' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
   "references": [
-    { "path": "../decision-schema" },
-    { "path": "../decision-engine" },
-    { "path": "../decision-ui" }
+    { "path": "../decision-schema/tsconfig.build.json" },
+    { "path": "../decision-engine/tsconfig.build.json" },
+    { "path": "../decision-ui/tsconfig.build.json" }
   ],
   "include": ["src", "client"]
 }

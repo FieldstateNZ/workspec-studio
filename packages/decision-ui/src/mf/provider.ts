@@ -5,7 +5,7 @@
 // QueryClient wiring — across the federation boundary. A host that imported the
 // provider from its own bundled copy would create a second, disconnected
 // context and the views' `useHost()` would throw.
-import '../styles.css';
+import '../index.css';
 
 export { DecisionStudioProvider } from '../context.js';
 export type { DecisionStudioProviderProps } from '../context.js';

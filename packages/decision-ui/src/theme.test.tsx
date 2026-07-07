@@ -1,8 +1,11 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { THEME_TOKENS } from '@workspec/design';
 import { DecisionStudioProvider } from './context.js';
-import { DARK_THEME, LIGHT_THEME } from './themes.js';
 import { createHostingRepository, createTestHost } from './test-utils.js';
+
+const DARK = THEME_TOKENS['console-dark'];
+const LIGHT = THEME_TOKENS['console-light'];
 
 function renderThemed(theme: 'dark' | 'light'): HTMLElement {
   const { container } = render(
@@ -15,26 +18,36 @@ function renderThemed(theme: 'dark' | 'light'): HTMLElement {
   return root as HTMLElement;
 }
 
-describe('theming — data-theme swaps the --ds-* tokens', () => {
-  it('applies the dark token ramp on the root', () => {
+describe('theming — the provider binds WorkSpec tokens from @workspec/design', () => {
+  it('applies the console-dark token ramp inline on the root', () => {
     const root = renderThemed('dark');
     expect(root).toHaveAttribute('data-theme', 'dark');
-    expect(root.style.getPropertyValue('--ds-bg')).toBe(DARK_THEME['--ds-bg']);
-    expect(root.style.getPropertyValue('--ds-ink')).toBe(DARK_THEME['--ds-ink']);
-    expect(root.style.getPropertyValue('--ds-accent')).toBe(DARK_THEME['--ds-accent']);
+    expect(root.style.getPropertyValue('--bg')).toBe(DARK['--bg']);
+    expect(root.style.getPropertyValue('--ink')).toBe(DARK['--ink']);
+    expect(root.style.getPropertyValue('--accent')).toBe(DARK['--accent']);
   });
 
-  it('applies the light token ramp on the root', () => {
+  it('applies the console-light token ramp inline on the root', () => {
     const root = renderThemed('light');
     expect(root).toHaveAttribute('data-theme', 'light');
-    expect(root.style.getPropertyValue('--ds-bg')).toBe(LIGHT_THEME['--ds-bg']);
-    expect(root.style.getPropertyValue('--ds-ink')).toBe(LIGHT_THEME['--ds-ink']);
+    expect(root.style.getPropertyValue('--bg')).toBe(LIGHT['--bg']);
+    expect(root.style.getPropertyValue('--ink')).toBe(LIGHT['--ink']);
   });
 
-  it('the two themes are actually different', () => {
-    expect(DARK_THEME['--ds-bg']).not.toBe(LIGHT_THEME['--ds-bg']);
-    expect(DARK_THEME['--ds-ink']).not.toBe(LIGHT_THEME['--ds-ink']);
-    expect(DARK_THEME['--ds-on-accent']).not.toBe(LIGHT_THEME['--ds-on-accent']);
+  it('carries the dual theme signal: attribute pair plus the dark class', () => {
+    const dark = renderThemed('dark');
+    expect(dark).toHaveAttribute('data-aesthetic', 'console');
+    expect(dark).toHaveClass('dark');
+
+    const light = renderThemed('light');
+    expect(light).toHaveAttribute('data-aesthetic', 'console');
+    expect(light).not.toHaveClass('dark');
+  });
+
+  it('the two upstream themes are actually different', () => {
+    expect(DARK['--bg']).not.toBe(LIGHT['--bg']);
+    expect(DARK['--ink']).not.toBe(LIGHT['--ink']);
+    expect(DARK['--on-accent']).not.toBe(LIGHT['--on-accent']);
   });
 
   it('defaults to dark when no theme is given', () => {

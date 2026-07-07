@@ -1,11 +1,12 @@
 // @workspec/decision-ui — host-agnostic React views for WorkSpec Decision Studio.
 //
 // S4 (#5) ships: the `DecisionStudioProvider` + host contract, the
-// `DecisionWorkspace` view, the live cost editor, and the `--ds-*` console
-// themes. Components receive everything — repository, links, capabilities — via
-// the provider; there is no global, no ambient theme, no direct storage access.
-// S5 (#6) adds Compare / Catalog / ADR; S6 (#7) adds the module-federation
-// remote build against this exact contract.
+// `DecisionWorkspace` view, and the live cost editor. Components receive
+// everything — repository, links, capabilities — via the provider; there is no
+// global, no ambient theme, no direct storage access. S5 (#6) adds Compare /
+// Catalog / ADR; S6 (#7) adds the module-federation remote build against this
+// exact contract; S10 (#8) replaces the interim namespaced token layer with
+// WorkSpec design tokens and components from @workspec/design.
 //
 // Styles ship compiled and separate: import `@workspec/decision-ui/styles.css`.
 
@@ -87,9 +88,9 @@ export {
 } from './catalog-edits.js';
 export type { SkuPatch, PricingModePatch, SchedulePatch } from './catalog-edits.js';
 
-// ── Theming ───────────────────────────────────────────────────────────────────
-export { DARK_THEME, LIGHT_THEME, DEFAULT_THEME, THEMES, themeStyle } from './themes.js';
-export type { ThemeName, DsToken } from './themes.js';
+// ── Theming (WorkSpec design tokens, owned by @workspec/design) ───────────────
+export { DEFAULT_THEME, DESIGN_THEMES, THEMES, themeStyle } from './themes.js';
+export type { ThemeName, TokenName } from './themes.js';
 
 // ── Money formatting (shared with the engine / render-adr, P8) ───────────────
 export { formatMoney, money } from './format.js';

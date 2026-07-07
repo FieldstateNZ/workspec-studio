@@ -25,10 +25,11 @@ import {
   useRepository,
   useWriteDecision,
 } from './context.js';
+import { Button, Card, Lbl, Textarea } from '@workspec/design/components';
 import { decide, reopen, setRationale, suggestRationale } from './decide.js';
 import { repositoryId, resolveCatalogRef } from './host.js';
 import { money } from './format.js';
-import { Icon } from './primitives.js';
+import { Flag, Icon } from './primitives.js';
 
 /** Props for {@link DecisionAdr}. */
 export interface DecisionAdrProps {
@@ -85,8 +86,8 @@ function RationaleEditor(props: {
 }): ReactElement {
   const [value, setValue] = useState(props.initial);
   return (
-    <textarea
-      className="ds-adr-rationale"
+    <Textarea
+      className="min-h-[84px] text-[13.5px] leading-relaxed"
       aria-label="Decision rationale"
       value={value}
       onChange={(e) => setValue(e.target.value)}
@@ -181,20 +182,20 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
     <div className="ds-wrap ds-wide">
       <div className="ds-dechead" style={{ marginBottom: 16 }}>
         <div className="ds-dechead-meta">
-          <div className="ds-eyebrow">Decision record · derived from the cost models</div>
+          <Lbl>Decision record · derived from the cost models</Lbl>
           <h1 className="ds-dechead-title" style={{ fontSize: 22 }}>
             {`ADR · ${model.title}`}
           </h1>
         </div>
         <div className="ds-actions">
           {navigate !== undefined && (
-            <button
-              type="button"
-              className="ds-btn ds-btn-sm"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => navigate({ kind: 'view', label: 'Compare', target: 'compare' })}
             >
               ← Comparison
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -241,12 +242,8 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
                 <div className="ds-ac-main">
                   <div className="ds-ac-nm">
                     {option.name}
-                    {option.chosen && (
-                      <span className="ds-chip ds-chip-accent">
-                        {decided ? 'chosen' : 'proposed'}
-                      </span>
-                    )}
-                    {!option.complete && <span className="ds-flag ds-flag-warn">incomplete</span>}
+                    {option.chosen && <Flag tone="accent">{decided ? 'chosen' : 'proposed'}</Flag>}
+                    {!option.complete && <Flag tone="warn">incomplete</Flag>}
                   </div>
                   {(option.archetype !== undefined || option.summary !== undefined) && (
                     <div className="ds-ac-det">
@@ -330,16 +327,17 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
 
         <div className="ds-adr-rail">
           {superseded ? (
-            <div className="ds-railcard ds-railcard-warn">
+            <Card className="ds-railcard ds-railcard-warn">
               <h4>Superseded</h4>
               <p className="ds-rail-p">
                 This decision has been superseded and is read-only.
                 {supersededBy !== null && ` See ${supersededBy.title ?? supersededBy.id}.`}
               </p>
               {supersededBy !== null && navigate !== undefined && (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn-sm ds-btn-block"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
                   onClick={() =>
                     navigate({
                       kind: 'decision',
@@ -349,11 +347,11 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
                   }
                 >
                   Open superseding decision →
-                </button>
+                </Button>
               )}
-            </div>
+            </Card>
           ) : canDecide && !decided ? (
-            <div className="ds-railcard ds-railcard-warn">
+            <Card className="ds-railcard ds-railcard-warn">
               <h4>Not yet decided</h4>
               <p className="ds-rail-p">
                 This is a <b>proposed</b> record using the engine&apos;s recommendation. Choose a
@@ -378,54 +376,50 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
               </label>
               <label className="ds-rail-field">
                 <span className="ds-rail-lab">Rationale — we accept X for Y</span>
-                <textarea
-                  className="ds-rail-textarea"
+                <Textarea
+                  className="min-h-[92px] bg-secondary text-[12.5px]"
                   aria-label="Decision rationale"
                   value={rationale}
                   onChange={(e) => setRationale_(e.target.value)}
                 />
               </label>
-              <button
-                type="button"
-                className="ds-btn ds-btn-sm ds-btn-primary ds-btn-block"
-                disabled={winner === ''}
-                onClick={onDecide}
-              >
-                <Icon.check className="ds-btn-icon" /> Decide
-              </button>
-            </div>
+              <Button size="sm" className="w-full" disabled={winner === ''} onClick={onDecide}>
+                <Icon.check /> Decide
+              </Button>
+            </Card>
           ) : decided && canDecide ? (
-            <div className="ds-railcard">
+            <Card className="ds-railcard">
               <h4>Decided</h4>
               <p className="ds-rail-p">
                 Accepted on the recorded outcome. Every number traces to a cost model; edit the
                 rationale inline. Reopen to explore again.
               </p>
-              <button
-                type="button"
-                className="ds-btn ds-btn-sm ds-btn-block"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
                 onClick={() => commit(reopen(decision))}
               >
-                <Icon.undo className="ds-btn-icon" /> Reopen decision
-              </button>
-            </div>
+                <Icon.undo /> Reopen decision
+              </Button>
+            </Card>
           ) : (
-            <div className="ds-railcard">
+            <Card className="ds-railcard">
               <h4>Read-only</h4>
               <p className="ds-rail-p">
                 This host has not granted the decide capability. The record is derived from the cost
                 models and shown for review.
               </p>
-            </div>
+            </Card>
           )}
 
-          <div className="ds-railcard">
+          <Card className="ds-railcard">
             <h4>How this is built</h4>
             <p className="ds-rail-p">
               Rendered from the same deterministic model the CLI&apos;s <code>render-adr</code>{' '}
               serialises to <code>*.adr.md</code> — the file and this view never diverge.
             </p>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

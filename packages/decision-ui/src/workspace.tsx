@@ -25,6 +25,7 @@ import {
   toggleLever,
   toggleOptionEnv,
 } from './edits.js';
+import { Button, Lbl } from '@workspec/design/components';
 import { resolveCatalogRef } from './host.js';
 import { LinksBlock } from './links.js';
 import { OptionCard } from './option-card.js';
@@ -109,7 +110,7 @@ function WorkspaceView(props: {
     <div className="ds-wrap">
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
-          <div className="ds-eyebrow">{`Decision · ${draft.metadata.id}`}</div>
+          <Lbl>{`Decision · ${draft.metadata.id}`}</Lbl>
           <h1 className="ds-dechead-title">{draft.metadata.title}</h1>
           <p className="ds-ctx">{draft.spec.context}</p>
           <LinksBlock links={draft.spec.links ?? []} resolve={resolveLink} />
@@ -121,20 +122,19 @@ function WorkspaceView(props: {
           </span>
           {navigate !== undefined && (
             <>
-              <button
-                type="button"
-                className="ds-btn ds-btn-sm"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => navigate({ kind: 'view', label: 'Compare', target: 'compare' })}
               >
-                <Icon.scale className="ds-btn-icon" /> Compare
-              </button>
-              <button
-                type="button"
-                className="ds-btn ds-btn-sm ds-btn-primary"
+                <Icon.scale /> Compare
+              </Button>
+              <Button
+                size="sm"
                 onClick={() => navigate({ kind: 'view', label: 'ADR', target: 'adr' })}
               >
-                <Icon.doc className="ds-btn-icon" /> {capabilities.decide ? 'Decide' : 'View ADR'}
-              </button>
+                <Icon.doc /> {capabilities.decide ? 'Decide' : 'View ADR'}
+              </Button>
             </>
           )}
         </div>

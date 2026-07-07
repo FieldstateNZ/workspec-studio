@@ -4,6 +4,7 @@
 // once `packages/c4-*` ships a UI to embed, the same way `/decisions` embeds
 // `@workspec/decision-ui` today.
 import type { ReactElement } from 'react';
+import { Lbl } from '@workspec/design/components';
 
 import { Link } from './router.js';
 
@@ -21,7 +22,8 @@ const PACKAGES: readonly C4Package[] = [
   {
     name: '@workspec/c4-schema',
     source: `${REPO_URL}/c4-schema`,
-    blurb: 'Zod source of truth for C4 elements, diagrams, and layouts — plus generated JSON Schema.',
+    blurb:
+      'Zod source of truth for C4 elements, diagrams, and layouts — plus generated JSON Schema.',
   },
   {
     name: '@workspec/c4-model',
@@ -51,13 +53,13 @@ export function C4Stub(): ReactElement {
 
       <main>
         <section className="hero">
-          <p className="eyebrow">In progress · git-native</p>
+          <Lbl>In progress · git-native</Lbl>
           <h1>Browse, validate, and render C4 architecture trees from your repo.</h1>
           <p className="lede">
             The C4 module reads the actors, systems, containers, components, and diagrams already
             described as YAML under your repo’s <code>.workspec/</code> directory, resolves them
-            into one architecture model, and lays diagrams out deterministically — the same
-            artifact family WorkSpec Enterprise renders today, as a free standalone workbench.
+            into one architecture model, and lays diagrams out deterministically — the same artifact
+            family WorkSpec Enterprise renders today, as a free standalone workbench.
           </p>
         </section>
 

@@ -35,12 +35,12 @@ by package boundaries:
 > consumers, so tests run against source without a prior build while published tarballs ship only
 > `dist` + `README` + `LICENSE`.
 
-| Package           | Ships                                                                                                         | Runtime deps                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `decision-schema` | types, `safeParse`, YAML load w/ line/col, `zod-to-json-schema`, the repository **port** + `MemoryRepository` | `zod`, `zod-to-json-schema`, `yaml`                  |
-| `decision-engine` | `compute`, `applyLevers`, `validateRefs`, `recommend`, `buildAdrModel` + `renderAdrMarkdown`                  | `@workspec/decision-schema` only                     |
-| `decision-ui`     | `DecisionStudioProvider`, four views, `DecisionCard`, `DecisionApp`; `--ds-*` themes; `styles.css`            | peers: `react`, `react-dom`, `@tanstack/react-query` |
-| `decision-studio` | `workspec-decisions` bin, Express host, `FsRepository`, browser `HttpRepository`, bundled client              | `express`, `yaml`, the three `@workspec` libs        |
+| Package           | Ships                                                                                                                            | Runtime deps                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `decision-schema` | types, `safeParse`, YAML load w/ line/col, `zod-to-json-schema`, the repository **port** + `MemoryRepository`                    | `zod`, `zod-to-json-schema`, `yaml`                  |
+| `decision-engine` | `compute`, `applyLevers`, `validateRefs`, `recommend`, `buildAdrModel` + `renderAdrMarkdown`                                     | `@workspec/decision-schema` only                     |
+| `decision-ui`     | `DecisionStudioProvider`, four views, `DecisionCard`, `DecisionApp`; WorkSpec design tokens via `@workspec/design`; `styles.css` | peers: `react`, `react-dom`, `@tanstack/react-query` |
+| `decision-studio` | `workspec-decisions` bin, Express host, `FsRepository`, browser `HttpRepository`, bundled client                                 | `express`, `yaml`, the three `@workspec` libs        |
 
 ---
 
@@ -129,8 +129,10 @@ The contract that makes this work is `DecisionStudioHost`, the single object the
 - `capabilities` — `{ editCatalog, decide }` feature gates.
 
 `react` / `react-dom` / `@tanstack/react-query` are shared singletons across the federation
-boundary (a documented version-range policy); styles are self-contained via `--ds-*` CSS
-variables with fallbacks — **no Tailwind or global CSS crosses the package boundary**. The
+boundary (a documented version-range policy); styles are self-contained — the remote compiles its
+own CSS from the WorkSpec design-token preset and the provider binds the palette inline on
+`.ds-root` — **no dependence on a host Tailwind build, and no global CSS leaks across the package
+boundary**. The
 `apps/mf-host` smoke host is the CI integration proof: it mounts the remote over a
 `MemoryRepository` and Playwright asserts `DecisionCard` renders the golden cost **and** that
 there is exactly one React instance across the boundary.

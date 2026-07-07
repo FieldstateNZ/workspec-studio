@@ -36,7 +36,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && tailwindcss --input src/index.css --output dist/styles.css --minify",
     "build:mf": "vite build --config vite.config.mf.ts",
     "typecheck": "tsc -b",
     "test": "vitest run"
@@ -48,10 +48,13 @@
   },
   "dependencies": {
     "@workspec/decision-engine": "workspace:*",
-    "@workspec/decision-schema": "workspace:*"
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/design": "0.1.0-alpha.0"
   },
   "devDependencies": {
     "@module-federation/vite": "^1.16.12",
+    "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.14",
     "@tanstack/react-query": "^5.62.7",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -64,6 +67,7 @@
     "jsdom": "^25.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.14",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vite": "^7.0.0",

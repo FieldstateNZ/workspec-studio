@@ -8,10 +8,13 @@
   },
   // TS Project References: let `tsc -b` type-check against the workspace
   // packages' real TypeScript source (building their declarations on
-  // demand), so `typecheck` never has to run after `build`.
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // packages' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
   "references": [
-    { "path": "../../packages/decision-schema" },
-    { "path": "../../packages/decision-ui" }
+    { "path": "../../packages/decision-schema/tsconfig.build.json" },
+    { "path": "../../packages/decision-ui/tsconfig.build.json" }
   ],
   "include": ["src", "serve.ts", "vite.config.ts", "playwright.config.ts", "tests"]
 }

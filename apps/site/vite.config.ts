@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
@@ -24,7 +25,7 @@ function spaFallback(): Plugin {
 // which is exactly what an outside consumer would get from npm.
 export default defineConfig({
   base: '/',
-  plugins: [react(), spaFallback()],
+  plugins: [tailwindcss(), react(), spaFallback()],
   build: {
     outDir: 'dist',
     sourcemap: true,

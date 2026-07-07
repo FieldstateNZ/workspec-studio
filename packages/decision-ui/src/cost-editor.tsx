@@ -19,6 +19,7 @@ import type {
   Schedule,
   Sku,
 } from '@workspec/decision-schema';
+import { Input, Lbl } from '@workspec/design/components';
 import { money } from './format.js';
 import { Picker, ScoreDots } from './primitives.js';
 import type { PickerItem } from './primitives.js';
@@ -207,15 +208,15 @@ export function CostEditor(props: CostEditorProps): ReactElement {
       <div className="ds-editor-inner">
         <div className="ds-calc">
           <div className="ds-calc-toolbar">
-            <span className="ds-eyebrow">Cost model</span>
+            <Lbl>Cost model</Lbl>
             <span className="ds-spacer" />
-            <span className="ds-eyebrow ds-tnum">
+            <Lbl className="ds-tnum">
               {money(cost.monthly)}/mo · {money(cost.annual)}/yr
-            </span>
+            </Lbl>
           </div>
 
           <div className="ds-calc-toolbar">
-            <span className="ds-eyebrow">Environments</span>
+            <Lbl>Environments</Lbl>
             <div className="ds-envtoggles">
               {decision.spec.environments.map((e) => {
                 const on = option.environments.includes(e);
@@ -306,8 +307,8 @@ export function CostEditor(props: CostEditorProps): ReactElement {
                           return (
                             <td key={e} className="ds-num">
                               <div className="ds-qtycell">
-                                <input
-                                  className="ds-qtybox"
+                                <Input
+                                  className="h-7 w-11 px-0 text-center font-mono text-[11px]"
                                   type="number"
                                   min={0}
                                   aria-label={`${line.label} ${e} quantity`}
@@ -322,8 +323,8 @@ export function CostEditor(props: CostEditorProps): ReactElement {
                         const amt = line.amount[e] ?? 0;
                         return (
                           <td key={e} className={amt ? 'ds-num' : 'ds-num ds-zero'}>
-                            <input
-                              className="ds-qtybox ds-amountbox"
+                            <Input
+                              className="h-7 w-[60px] px-0 text-center font-mono text-[11px]"
                               type="number"
                               min={0}
                               aria-label={`${line.label} ${e} amount`}

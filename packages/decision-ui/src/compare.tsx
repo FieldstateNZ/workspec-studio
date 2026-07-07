@@ -21,6 +21,7 @@ import {
 import { decide, reopen, suggestRationale } from './decide.js';
 import { resolveCatalogRef } from './host.js';
 import { money } from './format.js';
+import { Button, Lbl } from '@workspec/design/components';
 import { Dots, Flag, Icon, optAccent } from './primitives.js';
 
 /** Props for {@link DecisionCompare}. */
@@ -135,9 +136,7 @@ function CompareView(props: {
     <div className="ds-wrap ds-wide">
       <div className="ds-dechead" style={{ marginBottom: 14 }}>
         <div className="ds-dechead-meta">
-          <div className="ds-eyebrow">
-            Compare · like-for-like · same workloads on each platform
-          </div>
+          <Lbl>Compare · like-for-like · same workloads on each platform</Lbl>
           <h1 className="ds-dechead-title" style={{ fontSize: 22 }}>
             {decision.metadata.title}
           </h1>
@@ -148,13 +147,13 @@ function CompareView(props: {
             {decided ? 'Decided' : 'Exploring'}
           </span>
           {navigate !== undefined && (
-            <button
-              type="button"
-              className="ds-btn ds-btn-sm"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => navigate({ kind: 'view', label: 'Options', target: 'options' })}
             >
               ← Back to options
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -206,7 +205,7 @@ function CompareView(props: {
                       className={`ds-opthcard${verdict === 'selected' ? ' ds-win' : ''}${
                         verdict === 'rejected' ? ' ds-dim' : ''
                       }`}
-                      style={{ '--ds-opt-accent': optAccent(o.id) } as CSSProperties}
+                      style={{ '--opt-accent': optAccent(o.id) } as CSSProperties}
                     >
                       {o.archetype !== undefined && <div className="ds-oh-arch">{o.archetype}</div>}
                       <div className="ds-oh-nm">{o.name}</div>
@@ -214,13 +213,13 @@ function CompareView(props: {
                         {cheapestId === o.id && <Flag tone="accent">Cheapest</Flag>}
                         {recommendedId === o.id && (
                           <Flag tone="agent">
-                            <Icon.spark className="ds-flag-icon" /> Recommended
+                            <Icon.spark /> Recommended
                           </Flag>
                         )}
                         {cost?.complete !== true && <Flag tone="warn">Modelling</Flag>}
                         {verdict === 'selected' && (
                           <Flag tone="accent">
-                            <Icon.check className="ds-flag-icon" /> Chosen
+                            <Icon.check /> Chosen
                           </Flag>
                         )}
                       </div>
@@ -283,7 +282,7 @@ function CompareView(props: {
                     </div>
                     <div
                       className="ds-barwrap"
-                      style={{ '--ds-opt-accent': optAccent(o.id) } as CSSProperties}
+                      style={{ '--opt-accent': optAccent(o.id) } as CSSProperties}
                     >
                       <div className="ds-bar-fill" style={{ width: `${width}%` }} />
                     </div>
@@ -334,24 +333,25 @@ function CompareView(props: {
                   return (
                     <td key={o.id} className="ds-cell ds-pickrow">
                       {verdict === 'selected' ? (
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn-sm ds-btn-win ds-btn-block"
+                        <Button
+                          size="sm"
+                          className="w-full"
                           onClick={() => commit(reopen(decision))}
                         >
-                          <Icon.check className="ds-btn-icon" /> Chosen · reopen
-                        </button>
+                          <Icon.check /> Chosen · reopen
+                        </Button>
                       ) : (
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn-sm ds-btn-block"
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
                           disabled={cost?.complete !== true}
                           onClick={() =>
                             commit(decide(decision, o.id, suggestRationale(decision, o.id)))
                           }
                         >
                           {`Select ${o.name}`}
-                        </button>
+                        </Button>
                       )}
                     </td>
                   );
@@ -364,13 +364,9 @@ function CompareView(props: {
 
       {decided && navigate !== undefined && (
         <div className="ds-compare-foot">
-          <button
-            type="button"
-            className="ds-btn ds-btn-primary"
-            onClick={() => navigate({ kind: 'view', label: 'ADR', target: 'adr' })}
-          >
-            <Icon.doc className="ds-btn-icon" /> Open the ADR
-          </button>
+          <Button onClick={() => navigate({ kind: 'view', label: 'ADR', target: 'adr' })}>
+            <Icon.doc /> Open the ADR
+          </Button>
         </div>
       )}
     </div>

@@ -61,17 +61,31 @@ function createDefaultQueryClient(): QueryClient {
 
 /**
  * Wraps the app in the host contract and a QueryClient, and renders a themed
- * root (`<div class="ds-root" data-theme=…>`) carrying the `--ds-*` tokens. All
- * Decision Studio views must render inside it.
+ * root (`<div class="ds-root" data-aesthetic="console" data-theme=…>`) carrying
+ * the full WorkSpec token palette INLINE via `@workspec/design`'s
+ * `themeStyle()`, so theming is bound wherever the views render with no
+ * document-level attributes required. The root also carries WorkSpec's dual
+ * theme signal (see @workspec/design docs/theming.md): the
+ * `data-aesthetic`/`data-theme` attribute pair activates the token palette for
+ * attribute-based CSS, and the `.dark` class activates Tailwind's `dark:`
+ * variant for the adopted @workspec/design components — both scoped to this
+ * subtree. All Decision Studio views must render inside it.
  */
 export function DecisionStudioProvider(props: DecisionStudioProviderProps): ReactNode {
   const { host, queryClient, theme = DEFAULT_THEME, className, children } = props;
   const client = useMemo(() => queryClient ?? createDefaultQueryClient(), [queryClient]);
-  const rootClass = className ? `ds-root ${className}` : 'ds-root';
+  const classes = ['ds-root'];
+  if (theme === 'dark') classes.push('dark');
+  if (className !== undefined && className !== '') classes.push(className);
 
   const root = createElement(
     'div',
-    { className: rootClass, 'data-theme': theme, style: themeStyle(theme) as CSSProperties },
+    {
+      className: classes.join(' '),
+      'data-aesthetic': 'console',
+      'data-theme': theme,
+      style: themeStyle(theme) as CSSProperties,
+    },
     children,
   );
   const withHost = createElement(HostContext.Provider, { value: host }, root);
