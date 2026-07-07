@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: c4-studio
+description: >
+  Standalone CLI (workspec-c4) and localhost host shell for C4 architecture
+  trees — validate, render, and serve subcommands over a working tree of
+  .workspec/ files. This very diagram is rendered by it.
+technology: Node.js, Express
+tags:
+  - c4
+  - published

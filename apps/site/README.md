@@ -12,14 +12,17 @@ one-time domain cutover from the old `decision-studio.workspec.io`.
 - **`/decisions/demo`** — the full studio (Options / Compare / Catalog / ADR) running entirely
   in the browser against a `MemoryRepository` seeded with both worked examples. Toggle levers,
   edit costs, decide, and **Export ADR** — nothing leaves the page.
-- **`/c4`** — a coming-soon stub for the C4 Diagrams module: states what it will do and links
-  the `packages/c4-*` packages. No product UI yet — swap it for the real module page once one
-  exists, the way `/decisions` embeds `@workspec/decision-ui` today.
+- **`/c4`** — the C4 Diagrams module page: positioning copy plus a live `C4Explorer` demo
+  running entirely in the browser against a `MemorySource` seeded with the representative
+  example tree (`src/c4-seed.ts` — the same anonymized tree `packages/c4-schema`'s conformance
+  suite exercises, never this repo's own dogfood `.workspec/` tree — see
+  `docs/c4/drift-log.md` entry 17). Read-only (`editLayout: false`); `npx @workspec/c4-studio
+  serve` gives you the same explorer with drag-to-pin over your own repo.
 
 ## Why it depends on the registry, not the workspace
 
 Unlike the other workspace packages, this app depends on the **published**
-`@workspec/*` versions from npm (see `package.json` — concrete versions, not
+`@workspec/decision-*` versions from npm (see `package.json` — concrete versions, not
 `workspace:*`). The root `.npmrc` sets `link-workspace-packages=false`, so pnpm
 installs them from the registry and the lockfile records the registry tarballs.
 
@@ -27,6 +30,16 @@ That makes the site a **living integration test of the published artifacts**: if
 `pnpm --filter @workspec/site build` succeeds, the packages work for a stranger
 running `npm install`. The vendored `src/examples/*.yaml` are a verbatim copy of
 the repo's `examples/`, and validate against the published schema's `apiVersion`.
+
+**Deliberate, temporary exception — the four `@workspec/c4-*` packages (plus
+`@workspec/design`, transitively via `c4-ui`) are `workspace:*` devDependencies, not registry
+pins.** They aren't published to npm yet (the same trusted-publisher registration gate
+blocking `@workspec/decision-*` releases — see the root README), so a registry pin is
+impossible today; leaving `/c4` a permanent stub instead felt worse than a documented,
+one-line-reversible exception. See the loud notice in `package.json` and
+`docs/c4/drift-log.md` entry 17 for the full rationale. **The decisions demo's registry pins
+are untouched** — this exception is scoped exclusively to the c4 packages, and flips to a
+normal registry pin (moved into `dependencies`) the moment they publish.
 
 ## Develop
 

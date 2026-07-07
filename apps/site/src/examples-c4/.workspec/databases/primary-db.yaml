@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/database.schema.json
+type: database
+title: Primary Database
+description: Postgres database holding all WorkSpec artifacts and app state.
+technology: PostgreSQL

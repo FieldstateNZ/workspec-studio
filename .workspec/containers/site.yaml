@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: site
+description: >
+  The WorkSpec Studio product site — the Studio landing page, the Decisions
+  module page with its in-browser demo, and the C4 module page with its
+  in-browser demo. Consumes the published @workspec/decision-* packages from
+  npm; the C4 packages are a temporary workspace-devDependency exception
+  documented in docs/c4/drift-log.md until they publish.
+technology: React, Vite
+tags:
+  - published-consumer

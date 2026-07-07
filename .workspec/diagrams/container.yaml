@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/diagram.schema.json
+title: Container
+type: c4-container
+description: >
+  Every published package plus the two consuming apps, and the real
+  workspace dependency edges between them (mined from each package.json).
+nodes:
+  - container: decision-schema
+  - container: decision-engine
+  - container: decision-ui
+  - container: decision-studio
+  - container: c4-schema
+  - container: c4-model
+  - container: c4-layout
+  - container: c4-ui
+  - container: c4-studio
+  - container: site
+  - container: mf-host
+edges:
+  - from: decision-engine
+    to: decision-schema
+    label: reads/validates artifacts via
+  - from: decision-ui
+    to: decision-schema
+    label: reads/validates artifacts via
+  - from: decision-ui
+    to: decision-engine
+    label: computes costs via
+  - from: decision-studio
+    to: decision-schema
+    label: filesystem repository over
+  - from: decision-studio
+    to: decision-engine
+    label: computes costs + renders ADRs via
+  - from: decision-studio
+    to: decision-ui
+    label: mounts the host shell via
+  - from: c4-model
+    to: c4-schema
+    label: parses + validates via
+  - from: c4-layout
+    to: c4-model
+    label: lays out resolved diagrams from
+  - from: c4-layout
+    to: c4-schema
+    label: serializes .layout/ files via
+  - from: c4-ui
+    to: c4-model
+    label: renders loaded models from
+  - from: c4-ui
+    to: c4-layout
+    label: lays out diagrams via
+  - from: c4-ui
+    to: c4-schema
+    label: resolves style + layout types via
+  - from: c4-studio
+    to: c4-schema
+    label: validates .layout writes via
+  - from: c4-studio
+    to: c4-model
+    label: loads trees via
+  - from: c4-studio
+    to: c4-layout
+    label: lays out diagrams via
+  - from: c4-studio
+    to: c4-ui
+    label: renders + hosts the explorer via
+  - from: site
+    to: decision-schema
+    label: parses the demo artifacts via
+  - from: site
+    to: decision-engine
+    label: exports the demo ADR via
+  - from: site
+    to: decision-ui
+    label: consumes the published package
+  - from: site
+    to: c4-schema
+    label: workspace devDependency (pre-publish)
+  - from: site
+    to: c4-model
+    label: loads the demo tree via
+  - from: site
+    to: c4-layout
+    label: workspace devDependency (pre-publish)
+  - from: site
+    to: c4-ui
+    label: consumes as a workspace devDependency (pre-publish)
+  - from: mf-host
+    to: decision-schema
+    label: seeds the demo repository via
+  - from: mf-host
+    to: decision-ui
+    label: loads as a module-federation remote
+  - from: mf-host
+    to: c4-schema
+    label: workspace devDependency (types)
+  - from: mf-host
+    to: c4-model
+    label: seeds the in-memory model via
+  - from: mf-host
+    to: c4-layout
+    label: lays out the smoke diagram via
+  - from: mf-host
+    to: c4-ui
+    label: loads as a module-federation remote

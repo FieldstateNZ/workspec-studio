@@ -251,4 +251,40 @@
     flex: 1;
     min-height: 0;
   }
+
+  /* ── The /c4 page's EMBEDDED demo (unlike /decisions/demo, this sits inside
+     the normal `.site` marketing shell, not a full-page layout) ──────────── */
+  .demo-embed {
+    padding: 2rem 0;
+    border-top: 1px solid var(--line);
+  }
+  .c4-demo-note {
+    margin: 0.75rem 0 1.25rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  .c4-demo-stage {
+    height: 640px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .c4-demo-loading,
+  .c4-demo-error {
+    padding: 2rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg-elevated);
+    color: var(--ink-soft);
+  }
+  .c4-demo-error {
+    color: var(--danger);
+  }
+  /* Suspense fallback while the lazy /c4 chunk (elkjs and friends) loads. */
+  .route-loading {
+    max-width: var(--max);
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+    color: var(--ink-soft);
+  }
 }

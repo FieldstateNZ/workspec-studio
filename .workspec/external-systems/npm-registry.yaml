@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/external-system.schema.json
+title: npm registry
+description: >
+  The public npm registry every @workspec/* package publishes to. Publishing
+  is currently paused pending trusted-publisher re-registration for this
+  repository (see the root README and .github/workflows/release.yml).
+tags:
+  - vendor

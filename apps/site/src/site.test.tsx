@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { userEvent } from '@testing-library/user-event';
 
-import { C4Stub } from './c4-stub.js';
+import { C4 } from './c4.js';
 import { Decisions } from './decisions.js';
 import { Demo } from './demo.js';
 import { renderAdr } from './export-adr.js';
@@ -18,7 +19,7 @@ describe('Studio landing page (/)', () => {
       'href',
       '/decisions',
     );
-    expect(screen.getByRole('link', { name: /coming/i })).toHaveAttribute('href', '/c4');
+    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute('href', '/c4');
   });
 });
 
@@ -36,21 +37,52 @@ describe('decisions module page (/decisions)', () => {
   });
 });
 
-describe('c4 coming-soon stub (/c4)', () => {
+describe('c4 module page (/c4) — pitch + live in-browser demo', () => {
   it('states what the module is and links each package to its GitHub source', () => {
-    render(<C4Stub />);
+    render(<C4 />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       /browse, validate, and render c4 architecture trees/i,
     );
     // Source links, NOT npm — the c4 packages aren't published yet, so an npm
     // href would 404 for anyone clicking through from the live page.
     const packagesBase = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
-    for (const pkg of ['c4-schema', 'c4-model', 'c4-layout']) {
+    for (const pkg of ['c4-schema', 'c4-model', 'c4-layout', 'c4-ui', 'c4-studio']) {
       expect(screen.getByRole('link', { name: `@workspec/${pkg}` })).toHaveAttribute(
         'href',
         `${packagesBase}/${pkg}`,
       );
     }
+    // The old "coming soon, nothing to click through" stub copy is gone.
+    expect(screen.queryByText(/not live yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/nothing to click through here yet/i)).not.toBeInTheDocument();
+  });
+
+  it('mounts a real C4Explorer over the representative example tree', async () => {
+    render(<C4 />);
+    expect(screen.getByText(/loading the demo tree/i)).toBeInTheDocument();
+
+    // The explorer's tree nav lists both diagrams from the seeded tree.
+    expect(await screen.findByRole('button', { name: /system context/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^container/i })).toBeInTheDocument();
+
+    // The default (first) diagram's canvas rendered its elements.
+    expect(await screen.findByText('Architect')).toBeInTheDocument();
+    expect(screen.getByText('Payment Gateway')).toBeInTheDocument();
+  });
+
+  it('drill-down works: switching the tree nav swaps the rendered diagram', async () => {
+    const user = userEvent.setup();
+    render(<C4 />);
+
+    await screen.findByText('Architect'); // system-context is showing first
+
+    await user.click(screen.getByRole('button', { name: /^container/i }));
+
+    // The container diagram's own elements now render…
+    expect(await screen.findByText('Billing')).toBeInTheDocument();
+    expect(screen.getByText('Primary Database')).toBeInTheDocument();
+    // …and the system-context-only element is gone.
+    expect(screen.queryByText('Payment Gateway')).not.toBeInTheDocument();
   });
 });
 

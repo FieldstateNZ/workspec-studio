@@ -37,7 +37,7 @@ const MODULES: readonly Module[] = [
     href: '/c4',
     blurb:
       'Browse, validate, and render C4 architecture trees — actors, systems, containers, components — straight from the .workspec/ files already in your repo.',
-    cta: 'See what’s coming',
+    cta: 'Try the demo',
   },
 ];
 

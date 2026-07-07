@@ -18,7 +18,8 @@
     "format:write": "prettier --write .",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
-    "build": "pnpm -r --if-present run build"
+    "build": "pnpm -r --if-present run build",
+    "render:c4": "pnpm --filter @workspec/c4-studio run render:dogfood"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

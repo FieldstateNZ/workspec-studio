@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: c4-schema
+description: >
+  Zod source of truth for C4 elements, diagrams, and .layout files — plus
+  generated JSON Schema published for editor IntelliSense.
+technology: TypeScript, Zod
+tags:
+  - c4
+  - published

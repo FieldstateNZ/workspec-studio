@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: c4-model
+description: >
+  Pure loader/resolver — discovers, parses, and resolves a .workspec/
+  working tree into one typed C4 model with best-effort diagnostics. No IO
+  assumptions, no DOM, no React.
+technology: TypeScript
+tags:
+  - c4
+  - published

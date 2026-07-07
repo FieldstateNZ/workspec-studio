@@ -1,0 +1,115 @@
+/* Host-chrome styles for the standalone shell. Uses the WorkSpec design
+   tokens (available because `Shell` binds the palette inline on its own
+   root — see shell.tsx), so the chrome themes together with the explorer. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.c4sh-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.c4sh-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.c4sh-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.c4sh-glyph {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+.c4sh-wmk {
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.c4sh-wmk span {
+  color: var(--ink-fade);
+  font-weight: 500;
+}
+.c4sh-dir {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-fade);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c4sh-spacer {
+  flex: 1;
+}
+
+.c4sh-iconbtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-3);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.c4sh-iconbtn:hover {
+  color: var(--ink);
+  border-color: var(--line-2);
+  background: var(--bg-soft);
+}
+
+.c4sh-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+/* `<C4Explorer>` wraps itself in its own themed root (`.c4-root`) with no
+   explicit height of its own — stretch it (and the explorer inside it) to
+   fill this shell's main area. */
+.c4sh-main > .c4-root {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+.c4sh-main .c4-explorer {
+  flex: 1;
+}
+.c4sh-empty,
+.c4sh-error {
+  max-width: 720px;
+  margin: 48px auto;
+  padding: 0 28px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+.c4sh-error {
+  color: var(--danger, #d33);
+}

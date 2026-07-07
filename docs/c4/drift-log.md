@@ -225,3 +225,59 @@ after the S2 adversarial review. Two kinds of entry live here:
     adding `@vitest/expect` as an explicit devDependency (forcing a correctly-versioned local
     resolution) and calling `expect.extend()` directly in `vitest.setup.ts` instead of importing
     jest-dom's own vitest integration module.
+
+## S6 — `@workspec/c4-studio` (issue #7): the ship slice
+
+17. **`apps/site`'s `/c4` demo depends on the four c4 packages (plus `@workspec/design` via
+    `c4-ui`) as workspace `devDependencies`, not registry pins — a deliberate, temporary
+    exception to the site's own registry-pins-only rule.** Every other `@workspec/*` dependency
+    the site takes (`decision-schema`, `decision-engine`, `decision-ui`) is a real published
+    version from npm, on principle: "if the site builds, the packages work for outside
+    consumers" (see `apps/site/package.json`'s own description). The c4 packages are **not yet
+    published** (npm trusted-publisher registration for this repo is still pending — the same
+    gate blocking `packages/decision-*`'s releases, see the root README), so pinning a registry
+    version for them is impossible today. Rather than leave `/c4` a static stub forever, the
+    demo takes the four `@workspec/c4-*` packages plus `@workspec/design` as `workspace:*`
+    **devDependencies** (never `dependencies` — they still resolve to workspace source at build
+    time, exactly like every other in-repo consumer, not a hand-rolled path alias), with a loud
+    comment at the top of `apps/site/package.json`'s devDependencies block and a note in this
+    file. **The decisions demo's registry pins are untouched** — this exception is scoped
+    exclusively to the c4 packages. One-line change at first publish: flip each `workspace:*`
+    entry to the published semver range and move it from `devDependencies` to `dependencies`,
+    the same shape `decision-*` already has.
+
+18. **The `render` CLI command has no `--lens` flag.** `@workspec/c4-model` resolves a
+    `c4-container` diagram to `lensViews.{logical,deployment}`, never a single `view` — see
+    entry 11 above and `preferred-type.ts`. `packages/c4-studio/src/render-diagram.ts` always
+    renders the **logical** lens for such a diagram (`diagram.view ?? diagram.lensViews?.logical
+    ?? emptyView`), matching `C4Explorer`'s own default lens. A tree whose container diagram has
+    no `domain`-kind elements sharing a slug with a `container`-kind element (this repo's own
+    dogfood tree included — see `.workspec/diagrams/container.yaml`, every node a typed ref)
+    resolves identically under both lenses regardless, so the single-shot CLI not exposing the
+    choice costs nothing there; a tree that DOES lens-disambiguate reaches the deployment lens
+    through the interactive `serve` explorer's lens toggle instead. Noted as a deliberate scope
+    boundary, not an oversight — the brief's literal flag set for `render` is `--dir`/`--out`/
+    `--theme` only.
+
+19. **`workspec-c4 serve`'s API is a generic four-method `C4FileSource` proxy plus one
+    convenience endpoint, not a per-artifact-kind API like `@workspec/decision-studio`'s
+    server.** Decision Studio's host has one route pair per artifact kind (`GET`/`PUT
+    /api/decision`, `GET`/`PUT /api/catalog`) because `DecisionRepositoryPort` is a six-method,
+    kind-aware port. `@workspec/c4-model`'s repository port (`C4FileSource`) is already generic
+    (`listFiles`/`readFile`/`writeFile`/`exists`, kind-agnostic) — proxying THAT port directly
+    over HTTP (`GET /api/files`, `GET /api/file`, `PUT /api/file`, `GET /api/file-exists`) is the
+    natural equivalent, not an invented one. `GET /api/model` is the one addition beyond the
+    literal port: it runs `loadC4Model` server-side and returns the whole resolved model as JSON
+    (`Map`s converted to plain objects, since JSON has no `Map`), so the browser client gets one
+    round trip for its initial load instead of reconstructing the tree itself over the generic
+    proxy. The proxy is deliberately least-privilege in BOTH directions. Reads (`GET
+    /api/files`/`/api/file`/`/api/file-exists`) are confined to `.workspec/**` at the shared
+    parameter gate — the explorer client only ever requests `.workspec/` paths, so serving
+    anything else in the served root (`.git/`, `.env`, source files) would be needless surface;
+    such paths are 400'd, never read. Writes are narrower still: since the only write path any
+    `@workspec/c4-ui` component ever exercises is the drag-to-pin `.layout/` write
+    (`C4Diagram`'s `writeLayout`), `PUT /api/file` additionally refuses every path that isn't a
+    `.layout/` file (`isLayoutFile`), and Zod-validates the body against `Layout`
+    (`parseLayoutYaml`) before it reaches the working tree — the same "validate before write,
+    never trust the client" principle `decision-studio`'s `PUT /api/decision`/`PUT /api/catalog`
+    already established.

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/external-system.schema.json
+title: GitHub Pages
+description: >
+  Static hosting serving the built apps/site build at studio.workspec.io,
+  deployed by .github/workflows/pages.yml on every push to main that touches
+  the site (DNS/Pages cutover is Brett-gated; the workflow itself is ready).
+tags:
+  - vendor
+  - hosting

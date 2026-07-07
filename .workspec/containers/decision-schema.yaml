@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: decision-schema
+description: >
+  Zod source of truth for Decision/Catalog artifacts — TS types, runtime
+  validation, JSON Schema, and the repository port + in-memory double the
+  UI and CLI both depend on.
+technology: TypeScript, Zod
+tags:
+  - decisions
+  - published

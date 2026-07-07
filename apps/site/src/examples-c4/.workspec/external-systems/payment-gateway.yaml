@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/external-system.schema.json
+title: Payment Gateway
+description: Third-party processor used to settle customer invoices.
+tags:
+  - vendor

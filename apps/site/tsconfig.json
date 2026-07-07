@@ -5,8 +5,13 @@
     "jsx": "react-jsx",
     "types": ["vite/client"],
     // The site is a living test of the PUBLISHED packages: no `paths` override
-    // here, unlike the workspace packages — @workspec/* resolves from its
-    // registry build (dist + .d.ts) in node_modules, never workspace source.
+    // here, unlike the workspace packages — @workspec/decision-* resolves
+    // from its registry build (dist + .d.ts) in node_modules, never workspace
+    // source. The @workspec/c4-* packages are the documented, temporary
+    // exception (workspace:* devDependencies — see docs/c4/drift-log.md
+    // entry 17): they resolve via the SAME node_modules mechanism (pnpm
+    // symlinks a `workspace:*` dep to the package's own dist + .d.ts), so
+    // this config needs no special case for them either.
     "noEmit": true
   },
   "include": ["src"]

@@ -5,10 +5,10 @@ product, publishing packages that WorkSpec Enterprise consumes directly rather t
 duplicating. Every package here is Enterprise-grade by constitution: Enterprise is a future
 consumer of this code.
 
-| Module      | Status      | Where                                              |
-| ----------- | ----------- | -------------------------------------------------- |
-| Decisions   | live        | `packages/decision-*`, `apps/site`, `apps/mf-host` |
-| C4 Diagrams | in progress | `packages/c4-*`                                    |
+| Module      | Status      | Where                                                          |
+| ----------- | ----------- | --------------------------------------------------------------- |
+| Decisions   | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`             |
+| C4 Diagrams | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/`          |
 
 ## Layout
 
@@ -53,6 +53,45 @@ design, and the project's own dogfooded decision records (D1–D6) — live unde
 Publishing is currently paused: the npm trusted publishers for the four `@workspec/decision-*`
 packages need re-registering against this repo before
 [`release.yml`](.github/workflows/release.yml) can publish (see the note at the top of that file).
+
+## C4 Diagrams module
+
+Browse, validate, and render C4 architecture trees — actors, systems, containers, components,
+domains, features, and diagrams — straight from the `.workspec/` files already in your repo.
+Full docs, the `.layout/` contract, and CLI usage live under [`docs/c4/`](docs/c4).
+
+| Package                | Path                    | Role                                                                    |
+| ------------------------ | ------------------------- | -------------------------------------------------------------------------- |
+| `@workspec/c4-schema`  | `packages/c4-schema`  | Zod source of truth → TS types, runtime validation, generated JSON Schema |
+| `@workspec/c4-model`   | `packages/c4-model`   | Pure loader/resolver: `.workspec/` tree → one typed model, with diagnostics |
+| `@workspec/c4-layout`  | `packages/c4-layout`  | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping |
+| `@workspec/c4-ui`      | `packages/c4-ui`      | Host-agnostic React components (interactive canvas + deterministic SVG export) |
+| `@workspec/c4-studio`  | `packages/c4-studio`  | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
+
+The `@workspec/c4-*` packages are not yet published to npm (same trusted-publisher gate above);
+`apps/site`'s `/c4` page takes them as `workspace:*` devDependencies as a documented, temporary
+exception — see [`docs/c4/drift-log.md`](docs/c4/drift-log.md).
+
+## Architecture
+
+This repo documents its own architecture as a `.workspec/` tree at the repo root, validated and
+rendered by its own `@workspec/c4-studio` CLI — the same tool this monorepo publishes.
+
+**System Context** — who and what WorkSpec Studio talks to:
+
+![WorkSpec Studio system context diagram](docs/c4/studio-system-context.svg)
+
+**Container** — every published package plus the two consuming apps, and the real workspace
+dependency edges between them:
+
+![WorkSpec Studio container diagram](docs/c4/studio-container.svg)
+
+Both SVGs are **generated, committed artifacts** — regenerate them with `pnpm run render:c4`
+(root script) any time `.workspec/` changes. Rendering is deterministic, which is what makes a
+package test (`packages/c4-studio/src/dogfood.test.ts`, run by the ordinary `pnpm run test`) an
+honest staleness gate: it re-renders both diagrams from the live tree and asserts byte-identical
+output against these committed files, alongside asserting the tree itself validates with zero
+diagnostics.
 
 ## License
 
