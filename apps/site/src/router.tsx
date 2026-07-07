@@ -1,13 +1,18 @@
-// A deliberately tiny path router — two routes, no dependency. Enough for a
-// marketing page (`/`) and the demo (`/demo`); GitHub Pages serves the SPA
-// fallback (404.html, written at build) so deep links resolve.
+// A deliberately tiny path router — no dependency. Four routes: the Studio
+// landing (`/`), the Decisions module page (`/decisions`) with its demo
+// nested under it (`/decisions/demo`), and the C4 stub (`/c4`). GitHub Pages
+// serves the SPA fallback (404.html, written at build) so deep links resolve.
 import { useCallback, useEffect, useState } from 'react';
 import type { AnchorHTMLAttributes, ReactElement } from 'react';
 
-export type Route = 'home' | 'demo';
+export type Route = 'studio-home' | 'decisions' | 'decisions-demo' | 'c4';
 
 function routeOf(pathname: string): Route {
-  return pathname.replace(/\/+$/, '') === '/demo' ? 'demo' : 'home';
+  const path = pathname.replace(/\/+$/, '') || '/';
+  if (path === '/decisions/demo') return 'decisions-demo';
+  if (path === '/decisions') return 'decisions';
+  if (path === '/c4') return 'c4';
+  return 'studio-home';
 }
 
 /** Current route, kept in sync with browser history (back/forward). */

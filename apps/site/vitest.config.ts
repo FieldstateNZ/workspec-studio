@@ -9,6 +9,11 @@ export default defineConfig({
   test: {
     name: 'site',
     environment: 'jsdom',
+    // Testing Library's auto-cleanup between tests hooks into a global
+    // `afterEach` — without it, renders from earlier tests in the same file
+    // (now several: studio home, decisions, c4 stub, demo) pile up in the DOM
+    // and role/heading queries start matching more than one element.
+    globals: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },

@@ -173,6 +173,28 @@ section.closing {
   padding: 2rem 0;
   border-top: 1px solid var(--line);
 }
+
+/* ── Studio landing: module cards ──────────────────────────────────────────
+   Reuses .feature's existing block (border-top rule, h2/p rhythm) side by
+   side instead of stacked — same tokens, no new visual language. */
+.modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--line);
+}
+.module-card {
+  flex: 1 1 260px;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+.module-status {
+  margin-bottom: 0.5rem;
+}
 h2 {
   font-size: 1.4rem;
   letter-spacing: -0.01em;

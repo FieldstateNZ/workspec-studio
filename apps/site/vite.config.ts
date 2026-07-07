@@ -1,20 +1,19 @@
-import { copyFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
-// After the build, copy index.html → 404.html so client-routed deep links like
-// `/demo` resolve on GitHub Pages (which serves 404.html for unknown paths).
+import { copyIndexToNotFound } from './src/copy-index-to-not-found.js';
+
+// After the build, copy index.html → 404.html so client-routed deep links —
+// `/decisions`, `/decisions/demo`, `/c4` — resolve on GitHub Pages (which
+// serves 404.html for unknown paths).
 function spaFallback(): Plugin {
   return {
     name: 'spa-404-fallback',
     apply: 'build',
     closeBundle() {
-      const index = fileURLToPath(new URL('dist/index.html', import.meta.url));
-      if (existsSync(index)) {
-        copyFileSync(index, fileURLToPath(new URL('dist/404.html', import.meta.url)));
-      }
+      copyIndexToNotFound(fileURLToPath(new URL('dist', import.meta.url)));
     },
   };
 }

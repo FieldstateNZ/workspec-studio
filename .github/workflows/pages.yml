@@ -1,12 +1,20 @@
 name: Publish site (GitHub Pages)
 
-# Builds and deploys the product site (apps/site) to GitHub Pages at
-# https://decision-studio.workspec.io.
+# Builds and deploys the WorkSpec Studio site (apps/site) to GitHub Pages at
+# https://studio.workspec.io.
 #
-# Schema hosting has moved to FieldstateNZ/workspec-schemas, so this repo's Pages
-# slot now serves the site only. The custom domain is claimed by
-# apps/site/public/CNAME (Vite copies it to dist/CNAME); DNS for
-# decision-studio.workspec.io → fieldstatenz.github.io is already in place.
+# BRETT-GATED: this workflow is ready but the domain will not serve until a
+# human completes the DNS + Pages cutover:
+#   1. Add a `studio` CNAME DNS record (grey-cloud / DNS-only, not proxied)
+#      pointing at fieldstatenz.github.io.
+#   2. Run the Pages claim/cert sequence in
+#      docs/decisions/site-cutover-runbook.md.
+# Until then this workflow still builds and deploys correctly — it just serves
+# on the default *.github.io URL, not the custom domain.
+#
+# The custom domain is claimed by apps/site/public/CNAME (Vite copies it to
+# dist/CNAME). Schema hosting lives in FieldstateNZ/workspec-schemas, so this
+# repo's Pages slot serves the Studio site only.
 
 on:
   push:
@@ -58,6 +66,9 @@ jobs:
           set -euo pipefail
           test -f apps/site/dist/CNAME
           test -f apps/site/dist/404.html
+          # 404.html must be byte-identical to index.html — that's what makes
+          # deep links (/decisions, /decisions/demo, /c4) resolve on Pages.
+          diff apps/site/dist/index.html apps/site/dist/404.html
           echo "serving $(cat apps/site/dist/CNAME)"
 
       - uses: actions/upload-pages-artifact@v3

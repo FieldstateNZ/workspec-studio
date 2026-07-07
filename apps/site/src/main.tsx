@@ -2,14 +2,25 @@ import { StrictMode } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { C4Stub } from './c4-stub.js';
+import { Decisions } from './decisions.js';
 import { Demo } from './demo.js';
-import { Marketing } from './marketing.js';
 import { useRoute } from './router.js';
+import { StudioHome } from './studio-home.js';
 import './styles.css';
 
 function App(): ReactElement {
   const route = useRoute();
-  return route === 'demo' ? <Demo /> : <Marketing />;
+  switch (route) {
+    case 'decisions':
+      return <Decisions />;
+    case 'decisions-demo':
+      return <Demo />;
+    case 'c4':
+      return <C4Stub />;
+    case 'studio-home':
+      return <StudioHome />;
+  }
 }
 
 const container = document.getElementById('root');

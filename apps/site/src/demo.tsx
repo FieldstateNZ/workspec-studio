@@ -67,7 +67,11 @@ export function Demo(): ReactElement {
   return (
     <div className="demo">
       <header className="demo-bar">
-        <Link href="/" className="demo-home" aria-label="Back to the WorkSpec Decision Studio home">
+        <Link
+          href="/decisions"
+          className="demo-home"
+          aria-label="Back to the WorkSpec Decision Studio page"
+        >
           ← WorkSpec Decision Studio
         </Link>
         {/* A toggle button group, not an ARIA tablist — these switch the seeded

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Product site + in-browser demo for WorkSpec Decision Studio. Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, the packages work for outside consumers.",
+  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions with its in-browser demo, /c4). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, the packages work for outside consumers.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -1,5 +1,8 @@
-// The marketing page (`/`). Calm and documentation-adjacent — this is the front
-// door to a developer tool, not a SaaS splash. Positioning and copy track the
+// The Decisions module page (`/decisions`), moved intact from the standalone
+// Decision Studio site's former `/` — same positioning copy, same quickstart,
+// same demo link, now nested under the Studio site with a link back up to the
+// family landing. Calm and documentation-adjacent — this is the front door to
+// a developer tool, not a SaaS splash. Positioning and copy track the
 // repository README so the two never drift.
 import type { ReactElement } from 'react';
 
@@ -8,15 +11,15 @@ import { Link } from './router.js';
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-decision-studio';
 const NPM_URL = 'https://www.npmjs.com/package/@workspec/decision-studio';
 
-export function Marketing(): ReactElement {
+export function Decisions(): ReactElement {
   return (
     <div className="site">
       <header className="nav">
         <span className="brand">
-          WorkSpec <strong>Decision Studio</strong>
+          <Link href="/">WorkSpec Studio</Link> · <strong>Decisions</strong>
         </span>
         <nav className="nav-links">
-          <Link href="/demo">Live demo</Link>
+          <Link href="/decisions/demo">Live demo</Link>
           <a href={REPO_URL}>GitHub</a>
           <a href={NPM_URL}>npm</a>
         </nav>
@@ -34,7 +37,7 @@ export function Marketing(): ReactElement {
             version with git.
           </p>
           <div className="cta-row">
-            <Link href="/demo" className="btn btn-primary">
+            <Link href="/decisions/demo" className="btn btn-primary">
               Try the live demo
             </Link>
             <a href={REPO_URL} className="btn btn-secondary">
@@ -121,7 +124,7 @@ export function Marketing(): ReactElement {
             The demo runs entirely in your browser against both worked examples — no install, no
             signup.
           </p>
-          <Link href="/demo" className="btn btn-primary">
+          <Link href="/decisions/demo" className="btn btn-primary">
             Open the live demo
           </Link>
         </section>
