@@ -38,6 +38,9 @@ permissions:
 
 jobs:
   publish:
+    # BRETT-GATE enforcement: flip to `true` only after the npm trusted
+    # publishers are re-registered against this repo (see header note).
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

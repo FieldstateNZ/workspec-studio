@@ -25,7 +25,7 @@ contract**; the attached design prototype (`Decision Studio.html` + imports) is 
 | 4   | **S3** Repo + CLI        | `@workspec/decision-schema`(port), `studio`          | `DecisionRepositoryPort` (6 methods), `FsRepository`, `MemoryRepository`, CLI `validate`/`render-adr` |
 | 5   | **S4** UI + host         | `@workspec/decision-ui`, `@workspec/decision-studio` | `DecisionStudioProvider`, Workspace view, cost editor, `--ds-*` themes; Express host shell; `serve`   |
 | 6   | **S5** Views             | `@workspec/decision-ui`                              | Compare, Catalog (gated edit), ADR (decide flow) — four-view parity                                   |
-| 7   | **S6** Module federation | `@workspec/decision-ui`, `examples/mf-host`          | MF remote build (`DecisionWorkspace`/`DecisionCard`/`AdrView`), smoke host, host contract doc         |
+| 7   | **S6** Module federation | `@workspec/decision-ui`, `apps/mf-host`          | MF remote build (`DecisionWorkspace`/`DecisionCard`/`AdrView`), smoke host, host contract doc         |
 | 8   | **S7** Launch polish     | all                                                  | npx packaging, E2E, README, `docs/` specs, 2nd example, Pages schema publish                          |
 
 **Dependency direction (enforced by package boundaries):** `schema ← engine ← ui ← studio`.
@@ -104,13 +104,13 @@ maps 1:1 to the issue's acceptance criteria plus the house conventions the issue
 ### S3 — Repository port + FsRepository + CLI (issue #4)
 
 - **Objective:** the storage abstraction that lets one UI run standalone (fs) and inside Enterprise (graph-backed); fs impl defines the standalone ceiling.
-- **Work:** `DecisionRepositoryPort` — **exactly six methods** (`list/read/writeDecision`, `list/read/writeCatalog`), no watch/history/concurrency; `FsRepository` (discovers `**/*.decision.yaml`/`**/*.catalog.yaml`; Zod-validate on read+write; `$schema` header on write; preserve YAML comments via `yaml` Document API); `MemoryRepository` factory double; CLI (`packages/studio/bin.ts`): `validate [--dir]` (non-zero exit, `file:line` output), `render-adr [--out]` (deterministic markdown from YAML: context, options table w/ computed costs [P8], criteria, rationale; generated artifact, never committed — documented).
+- **Work:** `DecisionRepositoryPort` — **exactly six methods** (`list/read/writeDecision`, `list/read/writeCatalog`), no watch/history/concurrency; `FsRepository` (discovers `**/*.decision.yaml`/`**/*.catalog.yaml`; Zod-validate on read+write; `$schema` header on write; preserve YAML comments via `yaml` Document API); `MemoryRepository` factory double; CLI (`packages/decision-studio/bin.ts`): `validate [--dir]` (non-zero exit, `file:line` output), `render-adr [--out]` (deterministic markdown from YAML: context, options table w/ computed costs [P8], criteria, rationale; generated artifact, never committed — documented).
 - **DoD:** temp-dir FsRepository unit/route tests (factories); `validate` catches every invalid fixture from S1 w/ correct `file:line`; `render-adr` on hosting-platform snapshot-stable and costs match S2 golden; port has exactly six methods.
 
 ### S4 — UI workspace + standalone host (issue #5)
 
 - **Objective:** first runnable app; UI host-agnostic from day one.
-- **Work (`packages/ui`, lib build only):** `DecisionStudioProvider` + `DecisionStudioHost` contract (`repository`, `links` resolver, optional `navigate`, `capabilities{editCatalog,decide}`); `DecisionWorkspace` view (option cards, per-env cost breakdown, lever toggles → engine recompute, cheapest + recommended badges, criteria + notes, links block per resolver); cost editor (line qty/mode/schedule, flat amounts, estimate flags); **`--ds-*` CSS variables only, no Tailwind across the package boundary** (MF constraint); console-dark + console-light themes ported; TanStack Query keyed on the port.
+- **Work (`packages/decision-ui`, lib build only):** `DecisionStudioProvider` + `DecisionStudioHost` contract (`repository`, `links` resolver, optional `navigate`, `capabilities{editCatalog,decide}`); `DecisionWorkspace` view (option cards, per-env cost breakdown, lever toggles → engine recompute, cheapest + recommended badges, criteria + notes, links block per resolver); cost editor (line qty/mode/schedule, flat amounts, estimate flags); **`--ds-*` CSS variables only, no Tailwind across the package boundary** (MF constraint); console-dark + console-light themes ported; TanStack Query keyed on the port.
 - **Work (`packages/studio`):** Express host (localhost, `--port`/`--dir`) → `FsRepository`, Zod-validated writes; client shell (file picker, theme toggle, mounts `DecisionWorkspace`); `serve` becomes default subcommand.
 - **DoD:** `pnpm dev` in a hosting-platform dir → pick decision, costs match golden, toggle lever, costs update; UI component tests vs `MemoryRepository`; unresolved links render as inert labels w/o errors; dark/light work; a11y basics (focus, contrast, keyboard nav on lever toggles).
 
@@ -123,7 +123,7 @@ maps 1:1 to the issue's acceptance criteria plus the house conventions the issue
 ### S6 — Module federation remote + smoke host (issue #7)
 
 - **Objective:** the same UI package consumable as an MF remote so Enterprise mounts Decision Studio in its shell — **no component forks**.
-- **Work:** second build target on `packages/ui` via `@module-federation/vite`, exposing `./DecisionWorkspace`, `./DecisionCard` (compact: title, status, chosen option, annual cost), `./AdrView` (read-only); `react`/`react-dom` singletons (document version-range policy); styles self-contained (`--ds-*` from host w/ fallbacks; no Tailwind/global-CSS dependence); `examples/mf-host/` minimal Vite host consuming the remote w/ `MemoryRepository` (CI smoke test); host-contract doc in `packages/ui` README (`DecisionStudioHost`, LinkResolver semantics, theming vars).
+- **Work:** second build target on `packages/decision-ui` via `@module-federation/vite`, exposing `./DecisionWorkspace`, `./DecisionCard` (compact: title, status, chosen option, annual cost), `./AdrView` (read-only); `react`/`react-dom` singletons (document version-range policy); styles self-contained (`--ds-*` from host w/ fallbacks; no Tailwind/global-CSS dependence); `apps/mf-host/` minimal Vite host consuming the remote w/ `MemoryRepository` (CI smoke test); host-contract doc in `packages/decision-ui` README (`DecisionStudioHost`, LinkResolver semantics, theming vars).
 - **DoD:** CI builds remote + smoke host, Playwright asserts `DecisionCard` renders correct cost data; lib + MF builds from one source, no forks; shared-dep config catches React duplication (single-instance assertion); host contract documented.
 
 ### S7 — Launch polish (issue #8)

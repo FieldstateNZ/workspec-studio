@@ -9,7 +9,7 @@ artifacts that live in the working tree and version with git:
 - a **catalog** artifact (`*.catalog.yaml`) — the priced tables (pricing modes, schedules,
   SKUs) the cost engine reads.
 
-The schema is defined **once** in Zod (`packages/schema/src`). That single definition yields
+The schema is defined **once** in Zod (`packages/decision-schema/src`). That single definition yields
 three outputs, which are therefore always in sync:
 
 1. **TypeScript types** via `z.infer`;

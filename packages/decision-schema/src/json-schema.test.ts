@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { buildCatalogJsonSchema, buildDecisionJsonSchema, serializeJsonSchema } from './index.js';
 
-// src/ → schema/ → packages/ → <repo root>/json-schema
+// src/ → decision-schema/ → packages/ → <repo root>/json-schema
 const committedUrl = (file: string): string =>
   fileURLToPath(new URL(`../../../json-schema/${file}`, import.meta.url));
 
