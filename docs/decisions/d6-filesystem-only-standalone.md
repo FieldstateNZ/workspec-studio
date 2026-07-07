@@ -7,7 +7,7 @@
   a cost/ops category — the chosen option's run cost is ~$0, which the costed decision format
   marks "incomplete" (an option needs `monthly > 0` to be complete). A decision whose winner is
   "zero" is better argued in prose than forced through the cost engine. (This limitation was
-  itself surfaced by dogfooding — see [`workspec-tech-spec-v0.1.md`](../workspec-tech-spec-v0.1.md).)
+  itself surfaced by dogfooding — see [`workspec-tech-spec-v0.1.md`](./workspec-tech-spec-v0.1.md).)
 
 ## Context
 

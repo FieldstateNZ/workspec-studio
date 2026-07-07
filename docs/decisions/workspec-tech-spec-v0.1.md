@@ -131,7 +131,7 @@ The contract that makes this work is `DecisionStudioHost`, the single object the
 `react` / `react-dom` / `@tanstack/react-query` are shared singletons across the federation
 boundary (a documented version-range policy); styles are self-contained via `--ds-*` CSS
 variables with fallbacks — **no Tailwind or global CSS crosses the package boundary**. The
-`examples/mf-host` smoke host is the CI integration proof: it mounts the remote over a
+`apps/mf-host` smoke host is the CI integration proof: it mounts the remote over a
 `MemoryRepository` and Playwright asserts `DecisionCard` renders the golden cost **and** that
 there is exactly one React instance across the boundary.
 

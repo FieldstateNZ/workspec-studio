@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const HOST_DIST = resolve(here, 'dist');
-const REMOTE_DIST = resolve(here, '../../packages/ui/dist-mf');
+const REMOTE_DIST = resolve(here, '../../packages/decision-ui/dist-mf');
 const PORT = Number(process.env.PORT ?? 4390);
 
 const MIME: Record<string, string> = {

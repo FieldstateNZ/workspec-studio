@@ -16,7 +16,7 @@ import { parse as parseYaml } from 'yaml';
 //
 // It runs over a TEMP COPY of examples/hosting-platform so the writes the app makes
 // never dirty the repo, and boots the built server the way `npx` would:
-//   node packages/studio/dist/bin.js serve --dir <tempcopy>
+//   node packages/decision-studio/dist/bin.js serve --dir <tempcopy>
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HERE = dirname(fileURLToPath(import.meta.url));

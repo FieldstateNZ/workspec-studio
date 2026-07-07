@@ -19,8 +19,8 @@ import {
 } from '@workspec/decision-schema';
 import type { DecisionStudioHost } from '@workspec/decision-ui';
 // The hosting-platform fixtures as raw strings, parsed at runtime into the MemoryRepository.
-import hostingDecisionYaml from '../../hosting-platform/hosting-platform.decision.yaml?raw';
-import hostingCatalogYaml from '../../hosting-platform/platform.catalog.yaml?raw';
+import hostingDecisionYaml from '../../../examples/hosting-platform/hosting-platform.decision.yaml?raw';
+import hostingCatalogYaml from '../../../examples/hosting-platform/platform.catalog.yaml?raw';
 import './smoke.css';
 
 // Stamp the host React for the single-instance probe (must precede remote loads).

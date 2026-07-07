@@ -8,7 +8,7 @@ outputs, always in sync:
 3. **JSON Schema** (draft 2020-12) for editor IntelliSense — committed under `json-schema/` at the
    repo root
 
-See [`docs/workspec-decision-schema-v0.1.md`](../../docs/workspec-decision-schema-v0.1.md) for the
+See [`docs/workspec-decision-schema-v0.1.md`](../../docs/decisions/workspec-decision-schema-v0.1.md) for the
 full schema spec.
 
 ## Artifacts & file naming (normative)

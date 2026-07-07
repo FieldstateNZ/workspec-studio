@@ -1,7 +1,7 @@
 // @workspec/decision-schema — the Zod source of truth for Decision Studio
 // artifacts. One definition yields three outputs: TypeScript types (`z.infer`),
 // runtime validation (`safeParse`), and JSON Schema (draft 2020-12) for editor
-// IntelliSense. See `docs/workspec-decision-schema-v0.1.md` for the spec.
+// IntelliSense. See `docs/decisions/workspec-decision-schema-v0.1.md` for the spec.
 
 // ── Version, URLs, directives and file-naming constants ─────────────────────
 export {

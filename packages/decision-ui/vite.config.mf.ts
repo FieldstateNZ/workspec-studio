@@ -12,7 +12,7 @@ import { defineConfig } from 'vite';
 //     SINGLETONS — the host owns one copy each; the remote borrows them. This is
 //     what keeps hooks working (one React) and the provider's QueryClient wired
 //     to the views' `useQuery` (one react-query). See the version-range policy
-//     below and packages/ui/README.md.
+//     below and packages/decision-ui/README.md.
 //   • the engine, the schema, and zod are BUNDLED IN. They are not framework
 //     singletons; a self-contained remote is the goal, so they ship inside it.
 //

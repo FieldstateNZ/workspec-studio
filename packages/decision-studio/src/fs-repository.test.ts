@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ArtifactValidationError, FsRepository } from './fs-repository.js';
 
-// packages/studio/src → repo root is three levels up.
+// packages/decision-studio/src → repo root is three levels up.
 const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');

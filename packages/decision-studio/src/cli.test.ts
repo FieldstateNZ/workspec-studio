@@ -9,7 +9,7 @@ import type { CliIO } from './cli.js';
 const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');
-const INVALID_DIR = repoPath('packages/schema/test/fixtures/invalid');
+const INVALID_DIR = repoPath('packages/decision-schema/test/fixtures/invalid');
 
 // Capturing IO double (factory-built per test).
 function captureIO(): { io: CliIO; out: () => string; err: () => string } {
@@ -23,7 +23,7 @@ function captureIO(): { io: CliIO; out: () => string; err: () => string } {
 }
 
 // The invalid-fixture battery from S1 with each fixture's expected first-issue
-// line (mirrors packages/schema/src/invalid-fixtures.expected.ts).
+// line (mirrors packages/decision-schema/src/invalid-fixtures.expected.ts).
 const INVALID_FIXTURES: { file: string; line: number }[] = [
   { file: 'bad-status.decision.yaml', line: 7 },
   { file: 'missing-context.decision.yaml', line: 9 },

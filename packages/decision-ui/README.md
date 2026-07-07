@@ -247,7 +247,7 @@ Version ranges (`requiredVersion`):
 
 A host on a compatible version reuses its instance; an incompatible major fails
 loudly at init rather than silently loading a second copy. See
-`examples/mf-host` for a minimal host that consumes this remote over a
+`apps/mf-host` for a minimal host that consumes this remote over a
 `MemoryRepository`, and the Playwright smoke that asserts a single React
 instance.
 

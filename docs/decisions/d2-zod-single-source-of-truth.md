@@ -7,7 +7,7 @@
   design-correctness decision, not a resource trade-off — the deciding factor is "one
   definition yields three always-in-sync outputs," which the costed decision format (options
   with per-env dollar costs) does not usefully model. See
-  [`workspec-tech-spec-v0.1.md`](../workspec-tech-spec-v0.1.md) §D-decisions for why D2/D3/D6
+  [`workspec-tech-spec-v0.1.md`](./workspec-tech-spec-v0.1.md) §D-decisions for why D2/D3/D6
   are prose and D1/D4/D5 are dogfooded YAML.
 
 ## Context
