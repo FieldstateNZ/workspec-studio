@@ -24,8 +24,8 @@ docs/       specs and design bundles
 ```bash
 pnpm install
 pnpm run lint        # eslint over the workspace
-pnpm run typecheck   # tsc --build (project references)
-pnpm run test        # vitest, all workspace projects
+pnpm run typecheck   # per-package tsc (pnpm -r recursion)
+pnpm run test        # per-package vitest (pnpm -r recursion)
 pnpm run build       # per-package builds (--if-present)
 ```
 
