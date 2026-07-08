@@ -45,7 +45,11 @@
       "type": "string"
     }
   },
-  "required": ["type", "title", "description"],
+  "required": [
+    "type",
+    "title",
+    "description"
+  ],
   "title": "WorkSpec C4 Container (v1alpha1)",
   "type": "object"
 }

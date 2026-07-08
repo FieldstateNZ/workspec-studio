@@ -27,7 +27,11 @@
     },
     "phase": {
       "description": "Current lifecycle phase of the project.",
-      "enum": ["discovery", "delivery", "archived"],
+      "enum": [
+        "discovery",
+        "delivery",
+        "archived"
+      ],
       "type": "string"
     },
     "slice_prefix": {
@@ -63,7 +67,10 @@
       "type": "string"
     }
   },
-  "required": ["title", "description"],
+  "required": [
+    "title",
+    "description"
+  ],
   "title": "WorkSpec C4 System (v1alpha1)",
   "type": "object"
 }
