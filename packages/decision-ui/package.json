@@ -8,10 +8,10 @@
     "architecture-decision-records",
     "ui"
   ],
-  "homepage": "https://github.com/FieldstateNZ/workspec-decision-studio#readme",
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/decision-ui#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
     "directory": "packages/decision-ui"
   },
   "license": "Apache-2.0",
