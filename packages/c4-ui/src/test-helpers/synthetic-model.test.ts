@@ -13,7 +13,7 @@ describe('loadSyntheticModel', () => {
     expect(slugs).toEqual(['billing', 'context', 'ledger']);
   });
 
-  it("the context diagram's injected system node resolves to the system's own slug (\"ledger\")", async () => {
+  it('the context diagram\'s injected system node resolves to the system\'s own slug ("ledger")', async () => {
     const model = await loadSyntheticModel();
     const context = model.diagrams.find((d) => d.slug === 'context');
     const systemNode = context?.view?.nodes.find((n) => n.kind === 'system');
@@ -23,7 +23,7 @@ describe('loadSyntheticModel', () => {
     expect(systemNode?.injected).toBe(true);
   });
 
-  it("the container diagram's billing domain node resolves to slug \"billing\"", async () => {
+  it('the container diagram\'s billing domain node resolves to slug "billing"', async () => {
     const model = await loadSyntheticModel();
     const container = model.diagrams.find((d) => d.slug === 'ledger');
     const billingNode = container?.lensViews?.logical.nodes.find((n) => n.kind === 'domain');

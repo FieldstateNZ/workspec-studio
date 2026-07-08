@@ -4,7 +4,8 @@ import { loadC4Model } from '../../src/load-c4-model.js';
 import { createMemorySource } from '../../src/sources/memory-source.js';
 
 const domainBilling = 'title: Billing\ndescription: Domain view of billing.\n';
-const containerBilling = 'type: container\ntitle: Billing Service\ndescription: Container view of billing.\n';
+const containerBilling =
+  'type: container\ntitle: Billing Service\ndescription: Container view of billing.\n';
 const featureBilling = 'title: Billing\ndescription: Feature view of billing.\n';
 
 describe('duplicate-slug: bare ref ambiguous across kinds', () => {
@@ -30,7 +31,11 @@ describe('duplicate-slug: bare ref ambiguous across kinds', () => {
     });
 
     const diagram = model.diagrams[0];
-    expect(diagram?.view?.nodes[0]).toMatchObject({ slug: 'billing', kind: 'feature', title: 'Billing' });
+    expect(diagram?.view?.nodes[0]).toMatchObject({
+      slug: 'billing',
+      kind: 'feature',
+      title: 'Billing',
+    });
   });
 });
 
@@ -47,7 +52,10 @@ describe('c4-container lens partitioning', () => {
 
     const diagram = model.diagrams[0];
     expect(diagram?.lensViews?.logical.nodes[0]).toMatchObject({ slug: 'billing', kind: 'domain' });
-    expect(diagram?.lensViews?.deployment.nodes[0]).toMatchObject({ slug: 'billing', kind: 'container' });
+    expect(diagram?.lensViews?.deployment.nodes[0]).toMatchObject({
+      slug: 'billing',
+      kind: 'container',
+    });
 
     // The ambiguity is real regardless of lens, but it's the same diagram+slug — deduped to one diagnostic.
     const warnings = model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.duplicateSlug);

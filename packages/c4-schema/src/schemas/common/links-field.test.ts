@@ -24,7 +24,10 @@ describe('linksField', () => {
 
   it('accepts a cardinality without a label', () => {
     const result = linksField.safeParse([
-      { 'entity-relates-to-entity': '~/data/order.yaml', cardinality: { from: '0..1', to: '1..*' } },
+      {
+        'entity-relates-to-entity': '~/data/order.yaml',
+        cardinality: { from: '0..1', to: '1..*' },
+      },
     ]);
     expect(result.success).toBe(true);
   });

@@ -11,9 +11,15 @@ import { sourceField } from './common/source-field.js';
  */
 export const ActorElement = z
   .object({
-    type: z.literal('actor').optional().describe('Redundant kind literal; inferred from directory when absent.'),
+    type: z
+      .literal('actor')
+      .optional()
+      .describe('Redundant kind literal; inferred from directory when absent.'),
     title: z.string().describe('Human-readable name of the actor.'),
-    description: z.string().min(1).describe('What this actor does and why it interacts with the system.'),
+    description: z
+      .string()
+      .min(1)
+      .describe('What this actor does and why it interacts with the system.'),
     tags: z.array(z.string()).optional().describe('Free-text labels for filtering and grouping.'),
     links: linksField,
     source: sourceField,

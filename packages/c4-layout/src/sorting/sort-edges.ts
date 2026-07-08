@@ -7,7 +7,9 @@ import { edgeKey } from './edge-key.js';
  * determinism rationale as `sortNodesById`, and ordinal comparison for the
  * same reason (no `localeCompare`).
  */
-export function sortEdgesByKey(edges: readonly ResolvedDiagramEdge[]): readonly ResolvedDiagramEdge[] {
+export function sortEdgesByKey(
+  edges: readonly ResolvedDiagramEdge[],
+): readonly ResolvedDiagramEdge[] {
   return [...edges].sort((a, b) => {
     const ka = edgeKey(a);
     const kb = edgeKey(b);

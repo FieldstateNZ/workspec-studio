@@ -58,6 +58,9 @@ export interface ResolvedDiagram {
   /** The as-parsed thin-or-fat diagram, unchanged — for callers that want the raw authored shape. */
   readonly raw: Diagram;
   readonly view: ResolvedDiagramView | null;
-  readonly lensViews: { readonly logical: ResolvedDiagramView; readonly deployment: ResolvedDiagramView } | null;
+  readonly lensViews: {
+    readonly logical: ResolvedDiagramView;
+    readonly deployment: ResolvedDiagramView;
+  } | null;
   readonly layout: LoadedLayoutInfo | null;
 }

@@ -16,7 +16,9 @@ const typedRefNodes = C4_REF_KINDS.map((kind) =>
   z
     .object({
       [kind]: z.string().describe(`The ${kind} element slug this node references.`),
-      position: DiagramPosition.optional().describe('Optional inline pinned position for this node.'),
+      position: DiagramPosition.optional().describe(
+        'Optional inline pinned position for this node.',
+      ),
     })
     .strict()
     .describe(`A typed-ref node naming its kind explicitly: { ${kind}: <slug> }.`),

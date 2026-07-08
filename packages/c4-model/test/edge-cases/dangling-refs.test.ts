@@ -7,7 +7,8 @@ describe('dangling-ref', () => {
   it('flags a bare slug that matches no element in any kind', async () => {
     const model = await loadC4Model(
       createMemorySource({
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - slug: ghost\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - slug: ghost\nedges: []\n',
       }),
     );
 
@@ -45,7 +46,8 @@ describe('dangling-ref', () => {
   it('typed ref to an unsupported C4_REF_KINDS kind (class/interface/function) is always dangling', async () => {
     const model = await loadC4Model(
       createMemorySource({
-        '.workspec/diagrams/code.yaml': 'title: Code\ntype: c4-code\nnodes:\n  - class: Widget\nedges: []\n',
+        '.workspec/diagrams/code.yaml':
+          'title: Code\ntype: c4-code\nnodes:\n  - class: Widget\nedges: []\n',
       }),
     );
 
@@ -65,7 +67,11 @@ describe('dangling-edge-ref', () => {
 
     const edgeDiag = model.diagnostics.find((d) => d.code === DIAGNOSTIC_CODES.danglingEdgeRef);
     // `- from: architect` (the edge entry) is line 6 of the diagram YAML.
-    expect(edgeDiag).toMatchObject({ severity: 'error', file: '.workspec/diagrams/ctx.yaml', line: 6 });
+    expect(edgeDiag).toMatchObject({
+      severity: 'error',
+      file: '.workspec/diagrams/ctx.yaml',
+      line: 6,
+    });
     expect(model.diagrams[0]?.view?.edges[0]).toMatchObject({ dangling: true });
   });
 });

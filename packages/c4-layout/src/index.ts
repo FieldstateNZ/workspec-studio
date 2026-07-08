@@ -13,8 +13,15 @@ export { serialize } from './serialize.js';
 export { C4_NODE_HEIGHT, C4_NODE_WIDTH } from './constants/node-size.js';
 
 export type { LayoutDirection } from './model/layout-direction.js';
-export type { LayoutDiagramInput, LayoutDiagramOptions } from './model/layout-diagram-input.types.js';
-export type { PositionedDiagram, PositionedEdge, PositionedNode } from './model/positioned-diagram.types.js';
+export type {
+  LayoutDiagramInput,
+  LayoutDiagramOptions,
+} from './model/layout-diagram-input.types.js';
+export type {
+  PositionedDiagram,
+  PositionedEdge,
+  PositionedNode,
+} from './model/positioned-diagram.types.js';
 export type { LaidOutDiagram } from './model/laid-out-diagram.types.js';
 
 export type { LayoutPoint } from './geometry/point.js';

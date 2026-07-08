@@ -53,7 +53,10 @@ describe('validate', () => {
   it('reports a parse-error as file:line: [error] with exit 1', async () => {
     await mkdir(join(dir, '.workspec/actors'), { recursive: true });
     // Missing required `description` — a schema-validation (parse-error) failure.
-    await writeFile(join(dir, '.workspec/actors/architect.yaml'), 'title: Architect\ntags: [human]\n');
+    await writeFile(
+      join(dir, '.workspec/actors/architect.yaml'),
+      'title: Architect\ntags: [human]\n',
+    );
 
     const cap = captureIO();
     const code = await run(['validate', '--dir', dir], cap.io);
@@ -66,14 +69,9 @@ describe('validate', () => {
     await mkdir(join(dir, '.workspec/diagrams'), { recursive: true });
     await writeFile(
       join(dir, '.workspec/diagrams/broken.yaml'),
-      [
-        'title: Broken',
-        'type: c4-context',
-        'nodes:',
-        '  - slug: ghost',
-        'edges: []',
-        '',
-      ].join('\n'),
+      ['title: Broken', 'type: c4-context', 'nodes:', '  - slug: ghost', 'edges: []', ''].join(
+        '\n',
+      ),
     );
 
     const cap = captureIO();

@@ -68,14 +68,14 @@ one convenience endpoint that runs the loader server-side:
 browser (HttpSource) → HTTP/JSON → Express → FsSource → working tree
 ```
 
-| Route                    | Does                                                              |
-| ------------------------ | ------------------------------------------------------------------ |
-| `GET /api/model`         | runs `loadC4Model` server-side, returns the whole model as JSON    |
-| `GET /api/files?dir=…`   | `C4FileSource.listFiles` — non-recursive directory listing         |
-| `GET /api/file?path=…`   | `C4FileSource.readFile`                                            |
-| `PUT /api/file?path=…`   | `C4FileSource.writeFile` — **only** for `.layout/` paths, Zod-validated (`parseLayoutYaml`) before it reaches the tree |
-| `GET /api/file-exists?path=…` | `C4FileSource.exists`                                          |
-| `GET /api/health`        | liveness + served directory                                        |
+| Route                         | Does                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/model`              | runs `loadC4Model` server-side, returns the whole model as JSON                                                        |
+| `GET /api/files?dir=…`        | `C4FileSource.listFiles` — non-recursive directory listing                                                             |
+| `GET /api/file?path=…`        | `C4FileSource.readFile`                                                                                                |
+| `PUT /api/file?path=…`        | `C4FileSource.writeFile` — **only** for `.layout/` paths, Zod-validated (`parseLayoutYaml`) before it reaches the tree |
+| `GET /api/file-exists?path=…` | `C4FileSource.exists`                                                                                                  |
+| `GET /api/health`             | liveness + served directory                                                                                            |
 
 Paths are repo-root-relative POSIX paths; absolute or `..`-traversal paths are refused, and
 **every route — reads included — is confined to `.workspec/**`**: the explorer client only
@@ -97,11 +97,11 @@ if (result.ok) console.log(result.svg);
 
 ## Scripts
 
-| Script                                          | Does                                                                |
-| ------------------------------------------------ | -------------------------------------------------------------------- |
-| `pnpm --filter @workspec/c4-studio build`       | `tsc --emitDeclarationOnly` + tsup → `dist/index.js`/`dist/bin.js`, and Vite → `dist/client` |
-| `pnpm --filter @workspec/c4-studio typecheck`   | `tsc -b` (server, CLI, and browser client)                          |
-| `pnpm --filter @workspec/c4-studio test`        | vitest (CLI, render determinism/golden, host API via supertest)     |
+| Script                                        | Does                                                                                         |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm --filter @workspec/c4-studio build`     | `tsc --emitDeclarationOnly` + tsup → `dist/index.js`/`dist/bin.js`, and Vite → `dist/client` |
+| `pnpm --filter @workspec/c4-studio typecheck` | `tsc -b` (server, CLI, and browser client)                                                   |
+| `pnpm --filter @workspec/c4-studio test`      | vitest (CLI, render determinism/golden, host API via supertest)                              |
 
 The build keeps the two targets separate: **tsup** compiles the Node server + CLI (ESM, with a
 shebang on `bin.js`), **Vite** bundles the browser client into `dist/client`, which the server

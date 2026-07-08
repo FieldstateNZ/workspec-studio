@@ -12,7 +12,13 @@
 
 // ── Host contract ─────────────────────────────────────────────────────────────
 export { createInertLinkResolver } from './host.js';
-export type { C4StudioHost, C4StudioCapabilities, LinkResolver, LinkResolution, LinkTarget } from './host.js';
+export type {
+  C4StudioHost,
+  C4StudioCapabilities,
+  LinkResolver,
+  LinkResolution,
+  LinkTarget,
+} from './host.js';
 
 // ── Element link parsing (for hosts that want to render an element's `links` field themselves) ──
 export { parseLinkEntries, parseLinkEntry, LinksBlock } from './links.js';
@@ -37,7 +43,12 @@ export {
   resolveElementStyle,
   resolveConnectionStyle,
 } from './style/spec-defaults.js';
-export type { ElementShape, ConnectionLineStyle, ResolvedElementStyle, ResolvedConnectionStyle } from './style/spec-defaults.js';
+export type {
+  ElementShape,
+  ConnectionLineStyle,
+  ResolvedElementStyle,
+  ResolvedConnectionStyle,
+} from './style/spec-defaults.js';
 
 // ── Theming (WorkSpec design tokens, owned by @workspec/design) ───────────────
 export { DEFAULT_THEME, DESIGN_THEMES, THEMES, themeStyle } from './themes.js';

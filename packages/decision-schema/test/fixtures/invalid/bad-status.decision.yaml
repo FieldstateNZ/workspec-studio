@@ -3,24 +3,24 @@ apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
   id: dec-min
-  title: "Minimal"
+  title: 'Minimal'
   status: pending
 spec:
-  context: "ctx"
+  context: 'ctx'
   catalog: ./x.catalog.yaml
   currency: NZD
   environments: [dev, prod]
   criteria:
     - id: cost
-      label: "Cost"
+      label: 'Cost'
       weight: 1
   options:
     - id: a
-      name: "A"
+      name: 'A'
       environments: [dev, prod]
       lines:
         - id: l1
-          label: "Line 1"
+          label: 'Line 1'
           flat: true
           amount: { dev: 10, prod: 20 }
       scores:

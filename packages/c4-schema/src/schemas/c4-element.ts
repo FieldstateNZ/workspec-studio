@@ -14,10 +14,15 @@ import { sourceField } from './common/source-field.js';
  */
 export const C4Element = z
   .object({
-    type: z.string().describe('The element kind: "container", "component", "database", or "queue".'),
+    type: z
+      .string()
+      .describe('The element kind: "container", "component", "database", or "queue".'),
     title: z.string().describe('Human-readable name of the element.'),
     description: z.string().min(1).describe('What this element does and why it exists.'),
-    technology: z.string().optional().describe('Implementation technology, e.g. "PostgreSQL", "Node.js".'),
+    technology: z
+      .string()
+      .optional()
+      .describe('Implementation technology, e.g. "PostgreSQL", "Node.js".'),
     tags: z.array(z.string()).optional().describe('Free-text labels for filtering and grouping.'),
     links: linksField,
     source: sourceField,

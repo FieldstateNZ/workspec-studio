@@ -1,8 +1,16 @@
 {
   "name": "@workspec/c4-schema",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Zod source of truth for WorkSpec C4 diagram artifacts — element/diagram/style/layout schemas, YAML parsing with line-mapped errors, and generated JSON Schema.",
-  "keywords": ["zod", "json-schema", "yaml", "c4", "architecture", "diagrams", "schema"],
+  "keywords": [
+    "zod",
+    "json-schema",
+    "yaml",
+    "c4",
+    "architecture",
+    "diagrams",
+    "schema"
+  ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/c4-schema#readme",
   "repository": {
     "type": "git",
@@ -11,7 +19,12 @@
   },
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist", "json-schema", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "json-schema",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

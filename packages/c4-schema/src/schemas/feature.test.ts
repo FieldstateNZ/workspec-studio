@@ -18,7 +18,9 @@ describe('FeatureElement', () => {
     const result = FeatureElement.safeParse({ title });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.some((issue) => issue.path.join('.') === 'description')).toBe(true);
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'description')).toBe(
+        true,
+      );
     }
   });
 

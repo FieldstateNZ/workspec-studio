@@ -22,12 +22,18 @@ export function parseLinkEntry(entry: Readonly<Record<string, unknown>>): LinkTa
   if (linkType === undefined) return null;
   const target = entry[linkType];
   if (typeof target !== 'string') return null;
-  const label = target.split('/').filter((part) => part.length > 0).pop() ?? target;
+  const label =
+    target
+      .split('/')
+      .filter((part) => part.length > 0)
+      .pop() ?? target;
   return { kind: linkType, label, target };
 }
 
 /** Every valid `{linkType, pathRef}` pair off a raw `links` array (invalid entries are dropped, not thrown). */
-export function parseLinkEntries(entries: readonly Readonly<Record<string, unknown>>[]): LinkTarget[] {
+export function parseLinkEntries(
+  entries: readonly Readonly<Record<string, unknown>>[],
+): LinkTarget[] {
   const parsed: LinkTarget[] = [];
   for (const entry of entries) {
     const link = parseLinkEntry(entry);
@@ -52,7 +58,12 @@ function LinkRow(props: { link: LinkTarget; resolve: LinkResolver }): ReactEleme
   if (resolution.resolved && resolution.onClick !== undefined) {
     const onClick = resolution.onClick;
     return (
-      <button type="button" className="c4-lk c4-lk-active" title={resolution.title} onClick={onClick}>
+      <button
+        type="button"
+        className="c4-lk c4-lk-active"
+        title={resolution.title}
+        onClick={onClick}
+      >
         {kind}
         {link.label}
       </button>
@@ -68,7 +79,10 @@ function LinkRow(props: { link: LinkTarget; resolve: LinkResolver }): ReactEleme
 }
 
 /** The tooltip's "Traces to …" block. Renders nothing when there are no links. */
-export function LinksBlock(props: { links: readonly LinkTarget[]; resolve: LinkResolver }): ReactElement | null {
+export function LinksBlock(props: {
+  links: readonly LinkTarget[];
+  resolve: LinkResolver;
+}): ReactElement | null {
   if (props.links.length === 0) return null;
   return (
     <div className="c4-links">

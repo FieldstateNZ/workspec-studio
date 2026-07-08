@@ -22,7 +22,9 @@ const offenders = Array.from(text.matchAll(IMPORT_SPECIFIER), (match) => match[1
 );
 
 if (offenders.length > 0) {
-  console.error(`dist/index.js is not browser-safe — it imports Node builtins: ${offenders.join(', ')}`);
+  console.error(
+    `dist/index.js is not browser-safe — it imports Node builtins: ${offenders.join(', ')}`,
+  );
   process.exit(1);
 }
 console.log('dist/index.js is browser-safe (no Node builtin imports)');

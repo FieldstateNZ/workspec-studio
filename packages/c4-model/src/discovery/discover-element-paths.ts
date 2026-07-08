@@ -16,7 +16,9 @@ export interface DiscoveredElementPaths {
  * yields an empty `paths` list rather than a diagnostic — an empty tree, or
  * one that simply has no actors yet, loads cleanly.
  */
-export async function discoverElementPaths(source: C4FileSource): Promise<readonly DiscoveredElementPaths[]> {
+export async function discoverElementPaths(
+  source: C4FileSource,
+): Promise<readonly DiscoveredElementPaths[]> {
   return Promise.all(
     ELEMENT_KINDS.map(async (kind) => ({
       kind,

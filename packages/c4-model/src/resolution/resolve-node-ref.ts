@@ -51,14 +51,21 @@ export function resolveNodeRef(
   if (isSystemAlias(node.slug)) {
     const element = systemSlug ? bearers.get('system', systemSlug) : null;
     return {
-      resolved: { nodeId: node.slug, slug: systemSlug, element: element?.element ?? null, dangling: !element },
+      resolved: {
+        nodeId: node.slug,
+        slug: systemSlug,
+        element: element?.element ?? null,
+        dangling: !element,
+      },
       diagnostics: [],
     };
   }
 
   if (node.explicitKind !== null) {
     const kind = node.explicitKind;
-    const element = ELEMENT_KINDS.includes(kind as ElementKind) ? bearers.get(kind as ElementKind, node.slug) : null;
+    const element = ELEMENT_KINDS.includes(kind as ElementKind)
+      ? bearers.get(kind as ElementKind, node.slug)
+      : null;
     if (element) {
       return {
         resolved: { nodeId: node.slug, slug: node.slug, element: element.element, dangling: false },
@@ -119,7 +126,12 @@ export function resolveNodeRef(
   const element = bearers.get(winner, node.slug);
 
   return {
-    resolved: { nodeId: node.slug, slug: node.slug, element: element?.element ?? null, dangling: !element },
+    resolved: {
+      nodeId: node.slug,
+      slug: node.slug,
+      element: element?.element ?? null,
+      dangling: !element,
+    },
     diagnostics,
   };
 }

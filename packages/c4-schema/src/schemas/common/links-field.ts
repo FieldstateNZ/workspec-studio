@@ -4,7 +4,11 @@ import { PATH_REF_PATTERN } from './path-ref-pattern.js';
 
 const linkEntry = z
   .record(
-    z.string().describe('The link type, e.g. "adr", "runbook" — or "cardinality" for the optional cardinality key.'),
+    z
+      .string()
+      .describe(
+        'The link type, e.g. "adr", "runbook" — or "cardinality" for the optional cardinality key.',
+      ),
     z.unknown(),
   )
   .superRefine((entry, ctx) => {
@@ -28,7 +32,8 @@ const linkEntry = z
     if (!PATH_REF_PATTERN.test(ref)) {
       ctx.addIssue({
         code: 'custom',
-        message: 'cross-references must start with ~/ or @workspace/ (bare paths and uuids are not allowed)',
+        message:
+          'cross-references must start with ~/ or @workspace/ (bare paths and uuids are not allowed)',
       });
       return;
     }

@@ -10,7 +10,10 @@ describe('createMemorySource', () => {
     });
 
     const entries = await source.listFiles('.workspec/diagrams');
-    expect([...entries].sort()).toEqual(['.workspec/diagrams/container.yaml', '.workspec/diagrams/system-context.yaml']);
+    expect([...entries].sort()).toEqual([
+      '.workspec/diagrams/container.yaml',
+      '.workspec/diagrams/system-context.yaml',
+    ]);
   });
 
   it('resolves an empty list for a directory with no entries', async () => {

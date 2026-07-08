@@ -15,14 +15,20 @@ describe('C4Explorer — tree nav + per-diagram layout', () => {
 
     const firstSlug = model.diagrams[0]?.slug;
     expect(firstSlug).toBe('billing'); // lexicographic file order: billing.yaml < context.yaml < ledger.yaml
-    expect(screen.getByRole('button', { name: /Billing components/i })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /Billing components/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
     expect(await screen.findByText('Invoicing')).toBeInTheDocument();
   });
 
   it('honours initialDiagramSlug', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="ledger" />);
-    expect(screen.getByRole('button', { name: /Containers/i })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /Containers/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
     expect(await screen.findByText('Billing')).toBeInTheDocument();
   });
 
@@ -44,12 +50,18 @@ describe('C4Explorer — tree nav + per-diagram layout', () => {
     // context -> container: click the injected system node (resolved slug "ledger").
     fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
     expect(await screen.findByText('Billing')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Containers/i })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /Containers/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
 
     // container -> component: click the "billing" domain node (resolved slug "billing").
     fireEvent.click(screen.getByRole('button', { name: /domain: Billing/i }));
     expect(await screen.findByText('Invoicing')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Billing components/i })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /Billing components/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
   });
 
   it('clicking a node whose slug matches no diagram is a no-op (stays on the same diagram)', async () => {
@@ -58,7 +70,10 @@ describe('C4Explorer — tree nav + per-diagram layout', () => {
     await screen.findByText('Architect');
 
     fireEvent.click(screen.getByRole('button', { name: /actor: Architect/i }));
-    expect(screen.getByRole('button', { name: /System Context/i })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /System Context/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
     expect(screen.getByText('Architect')).toBeInTheDocument();
   });
 });

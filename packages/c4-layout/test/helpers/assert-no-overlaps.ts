@@ -16,7 +16,9 @@ export function assertNoOverlaps(nodes: readonly PositionedNode[]): void {
       const a = nodes[i];
       const b = nodes[j];
       if (!a || !b) continue;
-      expect(rectsOverlap(a, b), `expected "${a.nodeId}" and "${b.nodeId}" not to overlap`).toBe(false);
+      expect(rectsOverlap(a, b), `expected "${a.nodeId}" and "${b.nodeId}" not to overlap`).toBe(
+        false,
+      );
     }
   }
 }

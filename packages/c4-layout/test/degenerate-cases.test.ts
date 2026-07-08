@@ -19,7 +19,11 @@ describe('full-auto and full-manual are degenerate cases of the one code path', 
     const diagram = findSystemContext(model);
     if (!diagram.view) throw new Error('system-context fixture should resolve a single view');
 
-    const positioned = await layoutDiagram({ nodes: diagram.view.nodes, edges: diagram.view.edges, layout: null });
+    const positioned = await layoutDiagram({
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout: null,
+    });
 
     expect(positioned.nodes.length).toBeGreaterThan(0);
     expect(positioned.nodes.every((node) => !node.pinned)).toBe(true);
@@ -49,7 +53,11 @@ describe('full-auto and full-manual are degenerate cases of the one code path', 
       edges: {},
     };
 
-    const positioned = await layoutDiagram({ nodes: diagram.view.nodes, edges: diagram.view.edges, layout });
+    const positioned = await layoutDiagram({
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout,
+    });
 
     expect(positioned.nodes.every((node) => node.pinned)).toBe(true);
     const byId = new Map(positioned.nodes.map((node) => [node.nodeId, node]));

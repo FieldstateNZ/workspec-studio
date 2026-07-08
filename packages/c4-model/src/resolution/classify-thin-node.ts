@@ -43,5 +43,7 @@ export function classifyThinNode(node: ThinDiagramNode): ClassifiedThinNode {
     }
   }
 
-  throw new Error('unreachable: a ThinDiagramNode always carries either `slug` or exactly one C4_REF_KINDS key');
+  throw new Error(
+    'unreachable: a ThinDiagramNode always carries either `slug` or exactly one C4_REF_KINDS key',
+  );
 }

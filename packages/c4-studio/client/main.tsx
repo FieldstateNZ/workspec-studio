@@ -39,7 +39,11 @@ function App(): ReactElement {
   }, []);
 
   return (
-    <Shell theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} dir={dir}>
+    <Shell
+      theme={theme}
+      onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+      dir={dir}
+    >
       {error !== null ? (
         <div className="c4sh-error" role="alert">
           Could not reach the host API: {error}

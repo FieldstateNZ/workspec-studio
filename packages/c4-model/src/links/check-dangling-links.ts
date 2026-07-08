@@ -12,7 +12,10 @@ import { elementLinkTargets } from './element-link-targets.js';
  * Iterates `ELEMENT_KINDS`, then each kind's elements in slug order, so the
  * diagnostics array is deterministic regardless of I/O completion order.
  */
-export async function checkDanglingLinks(source: C4FileSource, elements: LoadedElements): Promise<readonly C4Diagnostic[]> {
+export async function checkDanglingLinks(
+  source: C4FileSource,
+  elements: LoadedElements,
+): Promise<readonly C4Diagnostic[]> {
   const diagnostics: C4Diagnostic[] = [];
 
   for (const kind of ELEMENT_KINDS) {

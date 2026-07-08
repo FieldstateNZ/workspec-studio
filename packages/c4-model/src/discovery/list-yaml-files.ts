@@ -12,7 +12,10 @@ import type { C4FileSource } from '../ports/c4-file-source.js';
  * downstream consumer of this function sees a deterministic file order
  * regardless of which `C4FileSource` produced it.
  */
-export async function listYamlFiles(source: C4FileSource, dirPath: string): Promise<readonly string[]> {
+export async function listYamlFiles(
+  source: C4FileSource,
+  dirPath: string,
+): Promise<readonly string[]> {
   const entries = await source.listFiles(dirPath);
   return entries.filter((path) => path.endsWith(FILE_EXTENSION)).sort();
 }

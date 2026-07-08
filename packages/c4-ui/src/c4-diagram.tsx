@@ -7,7 +7,12 @@
 import type { CSSProperties, KeyboardEvent, PointerEvent, ReactElement, WheelEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
-import type { LayoutDirection, PositionedDiagram, PositionedEdge, PositionedNode } from '@workspec/c4-layout';
+import type {
+  LayoutDirection,
+  PositionedDiagram,
+  PositionedEdge,
+  PositionedNode,
+} from '@workspec/c4-layout';
 import { layoutPathFor, serializeLayout } from '@workspec/c4-schema';
 import type { Spec } from '@workspec/c4-schema';
 import { serializeForWrite } from './drag/serialize-for-write.js';
@@ -57,7 +62,17 @@ function rectOf(node: PositionedNode): Rect {
 }
 
 export function C4Diagram(props: C4DiagramProps): ReactElement {
-  const { diagram, resolved, spec, host, onNavigate, elementsByKindAndSlug, direction = 'LR', theme, className } = props;
+  const {
+    diagram,
+    resolved,
+    spec,
+    host,
+    onNavigate,
+    elementsByKindAndSlug,
+    direction = 'LR',
+    theme,
+    className,
+  } = props;
 
   const [nodes, setNodes] = useState<readonly PositionedNode[]>(diagram.nodes);
   const [edges, setEdges] = useState<readonly PositionedEdge[]>(diagram.edges);
@@ -89,7 +104,9 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     originY: number;
     moved: boolean;
   } | null>(null);
-  const panRef = useRef<{ startClientX: number; startClientY: number; camera: Camera } | null>(null);
+  const panRef = useRef<{ startClientX: number; startClientY: number; camera: Camera } | null>(
+    null,
+  );
 
   function pixelsToViewboxScale(): { sx: number; sy: number } {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -120,14 +137,19 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     }
   }
 
-  function writeLayout(nextNodes: readonly PositionedNode[], nextEdges: readonly PositionedEdge[]): void {
+  function writeLayout(
+    nextNodes: readonly PositionedNode[],
+    nextEdges: readonly PositionedEdge[],
+  ): void {
     if (!host?.source) return;
     const positioned: PositionedDiagram = { nodes: nextNodes, edges: nextEdges };
     const merged = serializeForWrite(resolved.layout?.data ?? null, positioned);
     const path = layoutPathFor(resolved.slug);
     host.source
       .writeFile(path, serializeLayout(merged))
-      .catch((error: unknown) => setWriteError(error instanceof Error ? error.message : String(error)));
+      .catch((error: unknown) =>
+        setWriteError(error instanceof Error ? error.message : String(error)),
+      );
   }
 
   function onNodePointerDown(event: PointerEvent<SVGGElement>, node: PositionedNode): void {
@@ -167,10 +189,17 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     // (not yet committed via `setNodes`, so edges stay in lockstep with the
     // node instead of trailing it by one event).
     const movedRects = new Map<string, Rect>(
-      nodes.map((n) => [n.nodeId, n.nodeId === drag.nodeId ? { x: nextX, y: nextY, width: n.width, height: n.height } : rectOf(n)]),
+      nodes.map((n) => [
+        n.nodeId,
+        n.nodeId === drag.nodeId
+          ? { x: nextX, y: nextY, width: n.width, height: n.height }
+          : rectOf(n),
+      ]),
     );
 
-    setNodes((prev) => prev.map((n) => (n.nodeId === drag.nodeId ? { ...n, x: nextX, y: nextY } : n)));
+    setNodes((prev) =>
+      prev.map((n) => (n.nodeId === drag.nodeId ? { ...n, x: nextX, y: nextY } : n)),
+    );
     setEdges((prevEdges) =>
       prevEdges.map((edge) => {
         if (edge.from !== drag.nodeId && edge.to !== drag.nodeId) return edge;
@@ -245,12 +274,24 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
       case '+':
       case '=':
         event.preventDefault();
-        setCamera((prev) => zoomAt(prev, { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 }, ZOOM_FACTOR));
+        setCamera((prev) =>
+          zoomAt(
+            prev,
+            { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 },
+            ZOOM_FACTOR,
+          ),
+        );
         break;
       case '-':
       case '_':
         event.preventDefault();
-        setCamera((prev) => zoomAt(prev, { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 }, 1 / ZOOM_FACTOR));
+        setCamera((prev) =>
+          zoomAt(
+            prev,
+            { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 },
+            1 / ZOOM_FACTOR,
+          ),
+        );
         break;
       default:
         break;
@@ -263,7 +304,10 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
   );
 
   const hoveredNode = nodes.find((n) => n.nodeId === hoveredId) ?? null;
-  const linkResolver = useMemo(() => host?.linkResolver ?? createInertLinkResolver(), [host?.linkResolver]);
+  const linkResolver = useMemo(
+    () => host?.linkResolver ?? createInertLinkResolver(),
+    [host?.linkResolver],
+  );
 
   return (
     <ThemedRoot theme={theme} className={className}>
@@ -401,13 +445,21 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                         height={node.height}
                         rx={shape.rx}
                         ry={shape.ry}
-                        style={{ fill: 'var(--c4-el-surface)', stroke: 'var(--c4-el-border)', strokeWidth: 1 }}
+                        style={{
+                          fill: 'var(--c4-el-surface)',
+                          stroke: 'var(--c4-el-border)',
+                          strokeWidth: 1,
+                        }}
                       />
                     ) : (
                       <>
                         <path
                           d={shape.outline}
-                          style={{ fill: 'var(--c4-el-surface)', stroke: 'var(--c4-el-border)', strokeWidth: 1 }}
+                          style={{
+                            fill: 'var(--c4-el-surface)',
+                            stroke: 'var(--c4-el-border)',
+                            strokeWidth: 1,
+                          }}
                         />
                         {shape.decoration !== undefined && (
                           <path
@@ -431,7 +483,13 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                         strokeDasharray: style.variant === 'external' ? '6 3' : undefined,
                       }}
                     />
-                    <Icon x={node.x + 14} y={node.y + 12} width={18} height={18} style={{ color: 'var(--c4-el-accent)' }} />
+                    <Icon
+                      x={node.x + 14}
+                      y={node.y + 12}
+                      width={18}
+                      height={18}
+                      style={{ color: 'var(--c4-el-accent)' }}
+                    />
                     <text x={node.x + 40} y={node.y + 26} className="c4-node-title">
                       {truncateLabel(node.title, 26)}
                     </text>
@@ -445,7 +503,12 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                         {truncateLabel(node.technology, 30)}
                       </text>
                     )}
-                    <text x={node.x + node.width - 10} y={node.y + node.height - 12} textAnchor="end" className="c4-node-kind">
+                    <text
+                      x={node.x + node.width - 10}
+                      y={node.y + node.height - 12}
+                      textAnchor="end"
+                      className="c4-node-kind"
+                    >
                       {node.kind ?? ''}
                     </text>
                     {(isHovered || isFocused) && (

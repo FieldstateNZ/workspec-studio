@@ -1,8 +1,14 @@
 {
   "name": "@workspec/c4-studio",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "WorkSpec C4 Studio — standalone CLI (validate, render, serve) and localhost host shell for browsing, validating, and rendering C4 architecture trees from a working directory's .workspec/ files.",
-  "keywords": ["c4", "architecture", "diagrams", "yaml", "cli"],
+  "keywords": [
+    "c4",
+    "architecture",
+    "diagrams",
+    "yaml",
+    "cli"
+  ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/c4-studio#readme",
   "repository": {
     "type": "git",
@@ -11,7 +17,11 @@
   },
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "workspec-c4": "./dist/bin.js"
   },

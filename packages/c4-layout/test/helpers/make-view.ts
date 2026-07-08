@@ -9,7 +9,10 @@ import type { ResolvedDiagramEdge, ResolvedDiagramNode } from '@workspec/c4-mode
  * silently diverging (the fieldstate-testing rule against hand-typed
  * domain shapes).
  */
-export function makeNode(nodeId: string, overrides: Partial<ResolvedDiagramNode> = {}): ResolvedDiagramNode {
+export function makeNode(
+  nodeId: string,
+  overrides: Partial<ResolvedDiagramNode> = {},
+): ResolvedDiagramNode {
   return {
     nodeId,
     slug: nodeId,
@@ -26,7 +29,11 @@ export function makeNode(nodeId: string, overrides: Partial<ResolvedDiagramNode>
 }
 
 /** Minimal synthetic `ResolvedDiagramEdge` — same rationale as {@link makeNode}. */
-export function makeEdge(from: string, to: string, overrides: Partial<ResolvedDiagramEdge> = {}): ResolvedDiagramEdge {
+export function makeEdge(
+  from: string,
+  to: string,
+  overrides: Partial<ResolvedDiagramEdge> = {},
+): ResolvedDiagramEdge {
   return {
     from,
     to,

@@ -3,7 +3,14 @@ import { contentBounds } from './content-bounds.js';
 
 describe('contentBounds', () => {
   it('returns a fallback canvas size for an empty node set', () => {
-    expect(contentBounds([])).toEqual({ minX: 0, minY: 0, maxX: 400, maxY: 200, width: 400, height: 200 });
+    expect(contentBounds([])).toEqual({
+      minX: 0,
+      minY: 0,
+      maxX: 400,
+      maxY: 200,
+      width: 400,
+      height: 200,
+    });
   });
 
   it('computes padded bounds around a single node', () => {

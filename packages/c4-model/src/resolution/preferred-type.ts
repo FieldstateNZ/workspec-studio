@@ -21,13 +21,18 @@ const PREFERRED_TYPE_BY_DIAGRAM: Readonly<Record<string, readonly ElementKind[]>
  * prefers `container` first. Both fall through to `database`/`queue` after
  * their respective first choice.
  */
-const PREFERRED_ORDER_BY_CONTAINER_LENS: Readonly<Record<'logical' | 'deployment', readonly ElementKind[]>> = {
+const PREFERRED_ORDER_BY_CONTAINER_LENS: Readonly<
+  Record<'logical' | 'deployment', readonly ElementKind[]>
+> = {
   logical: ['domain', 'container', 'database', 'queue'],
   deployment: ['container', 'domain', 'database', 'queue'],
 };
 
 /** The kind-preference order to disambiguate a bare-slug ref for `diagramType` (and, for `c4-container`, `lens`). */
-export function preferredOrderFor(diagramType: string, lens: 'logical' | 'deployment' | null): readonly ElementKind[] {
+export function preferredOrderFor(
+  diagramType: string,
+  lens: 'logical' | 'deployment' | null,
+): readonly ElementKind[] {
   if (diagramType === 'c4-container') {
     return PREFERRED_ORDER_BY_CONTAINER_LENS[lens ?? 'logical'];
   }

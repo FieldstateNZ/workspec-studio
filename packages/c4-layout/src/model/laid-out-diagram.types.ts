@@ -12,5 +12,8 @@ export interface LaidOutDiagram {
   readonly title: string;
   readonly type: string;
   readonly view: PositionedDiagram | null;
-  readonly lensViews: { readonly logical: PositionedDiagram; readonly deployment: PositionedDiagram } | null;
+  readonly lensViews: {
+    readonly logical: PositionedDiagram;
+    readonly deployment: PositionedDiagram;
+  } | null;
 }

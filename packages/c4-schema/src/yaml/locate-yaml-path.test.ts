@@ -37,7 +37,9 @@ describe('locateYamlPath', () => {
     // nodes[0] has no `ghost` key — falls back to nodes[0] itself.
     expect(locateYamlPath(DIAGRAM_YAML, ['nodes', 0, 'ghost'])).toEqual({ line: 4, col: 5 });
     // nodes has no index 99 — falls back to the nodes sequence.
-    expect(locateYamlPath(DIAGRAM_YAML, ['nodes', 99])).toEqual(locateYamlPath(DIAGRAM_YAML, ['nodes']));
+    expect(locateYamlPath(DIAGRAM_YAML, ['nodes', 99])).toEqual(
+      locateYamlPath(DIAGRAM_YAML, ['nodes']),
+    );
   });
 
   it('falls back to the document root for a path matching nothing', () => {

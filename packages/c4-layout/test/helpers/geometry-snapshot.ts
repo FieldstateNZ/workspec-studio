@@ -12,7 +12,13 @@ import type { PositionedDiagram } from '../../src/index.js';
 export function geometryOf(positioned: PositionedDiagram): unknown {
   return {
     nodes: positioned.nodes
-      .map((node) => ({ nodeId: node.nodeId, x: node.x, y: node.y, width: node.width, height: node.height }))
+      .map((node) => ({
+        nodeId: node.nodeId,
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height,
+      }))
       .sort((a, b) => (a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0)),
     edges: positioned.edges.map((edge) => ({ from: edge.from, to: edge.to, route: edge.route })),
   };

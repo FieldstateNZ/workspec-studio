@@ -1,16 +1,10 @@
 name: Release (publish to npm)
 
-# BRETT-GATED: this workflow moved with the repo when Decision Studio was
-# imported into workspec-studio (S0b). Every npm trusted publisher was
-# registered against owner FieldstateNZ / repo workspec-decision-studio /
-# workflow release.yml — that registration does NOT follow the import. Each of
-# the four @workspec/decision-* packages needs its trusted publisher
-# re-registered on npmjs.com against owner FieldstateNZ / repo workspec-studio /
-# workflow release.yml before this workflow can publish anything. Do not
-# re-enable/tag a release until that's done.
-#
-# Publishes all four @workspec/* packages to npm when a version tag is pushed
-# (e.g. `v0.1.0-alpha.0`).
+# Publishes the @workspec/decision-* and @workspec/c4-* packages to npm when
+# a version tag is pushed (e.g. `v0.1.0-alpha.1`). Any package whose current
+# version is already on the registry is skipped, so families can version
+# independently and a re-run never collides. Trusted publishers are registered
+# against owner FieldstateNZ / repo workspec-studio / workflow release.yml.
 #
 # Auth is via npm TRUSTED PUBLISHING (OIDC) — there is NO `NPM_TOKEN` secret.
 # GitHub mints a short-lived id-token (`id-token: write` below) and npm exchanges
@@ -38,9 +32,6 @@ permissions:
 
 jobs:
   publish:
-    # BRETT-GATE enforcement: flip to `true` only after the npm trusted
-    # publishers are re-registered against this repo (see header note).
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,13 +40,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
-      # Trusted publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.
-      # Pin to an exact 11.x version for reproducible releases (bump deliberately);
-      # staying < 12 also avoids a future npm major that could drop Node 20.
+      # Trusted publishing (OIDC) requires npm >= 11.5.1; the runner's default
+      # npm is older. Pin to an exact 11.x version for reproducible releases
+      # (bump deliberately). Node 22 matches ci.yml — the suite is only ever
+      # verified on 22.
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@11.5.1
 
@@ -82,29 +74,36 @@ jobs:
       - name: Publish (pnpm pack → npm publish, OIDC)
         run: |
           set -euo pipefail
-          shopt -s nullglob
+          packages=(
+            decision-schema decision-engine decision-ui decision-studio
+            c4-schema c4-model c4-layout c4-ui c4-studio
+          )
           out="$(mktemp -d)"
-          for pkg in schema engine ui studio; do
-            pnpm --filter "@workspec/decision-$pkg" pack --pack-destination "$out"
+          published=0
+          for pkg in "${packages[@]}"; do
+            version="$(node -p "require('./packages/$pkg/package.json').version")"
+            name="@workspec/$pkg"
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "skip: $name@$version already on the registry"
+              continue
+            fi
+            # A prerelease (e.g. 0.1.0-alpha.1) must NOT publish to `latest` —
+            # npm 11.x rejects it without an explicit --tag — so route it to its
+            # prerelease channel (alpha/beta/rc); a stable version goes to `latest`.
+            if [[ "$version" == *-* ]]; then
+              pre="${version#*-}"
+              dist_tag="${pre%%.*}"
+            else
+              dist_tag="latest"
+            fi
+            pnpm --filter "$name" pack --pack-destination "$out"
+            tgz="$out/workspec-$pkg-$version.tgz"
+            echo "publishing $name@$version to dist-tag '$dist_tag'"
+            npm publish "$tgz" --access public --tag "$dist_tag"
+            published=$((published + 1))
           done
-          tarballs=("$out"/*.tgz)
-          if [ "${#tarballs[@]}" -eq 0 ]; then
-            echo "error: pnpm pack produced no tarballs in $out" >&2
+          if [ "$published" -eq 0 ]; then
+            echo "error: nothing to publish — every package version already on the registry" >&2
             exit 1
           fi
-          # Derive the npm dist-tag from the version. A prerelease (e.g.
-          # 0.1.0-alpha.0) must NOT publish to `latest` — npm 11.x rejects it
-          # without an explicit --tag — so route it to its prerelease channel
-          # (alpha/beta/rc); a stable version publishes to `latest`.
-          version="$(node -p "require('./packages/decision-schema/package.json').version")"
-          if [[ "$version" == *-* ]]; then
-            pre="${version#*-}"        # e.g. alpha.0
-            dist_tag="${pre%%.*}"      # e.g. alpha
-          else
-            dist_tag="latest"
-          fi
-          echo "publishing version $version to dist-tag '$dist_tag'"
-          for tgz in "${tarballs[@]}"; do
-            echo "publishing $tgz"
-            npm publish "$tgz" --access public --tag "$dist_tag"
-          done
+          echo "published $published package(s)"

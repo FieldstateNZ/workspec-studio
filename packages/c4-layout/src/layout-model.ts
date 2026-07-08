@@ -20,15 +20,25 @@ export async function layoutModel(
   return Promise.all(model.diagrams.map((diagram) => layoutOneDiagram(diagram, options)));
 }
 
-async function layoutOneDiagram(diagram: ResolvedDiagram, options: LayoutDiagramOptions): Promise<LaidOutDiagram> {
+async function layoutOneDiagram(
+  diagram: ResolvedDiagram,
+  options: LayoutDiagramOptions,
+): Promise<LaidOutDiagram> {
   const layout = diagram.layout?.data ?? null;
   const base = { slug: diagram.slug, path: diagram.path, title: diagram.title, type: diagram.type };
 
   if (diagram.lensViews) {
     const [logical, deployment] = await Promise.all([
-      layoutDiagram({ nodes: diagram.lensViews.logical.nodes, edges: diagram.lensViews.logical.edges, layout }, options),
       layoutDiagram(
-        { nodes: diagram.lensViews.deployment.nodes, edges: diagram.lensViews.deployment.edges, layout },
+        { nodes: diagram.lensViews.logical.nodes, edges: diagram.lensViews.logical.edges, layout },
+        options,
+      ),
+      layoutDiagram(
+        {
+          nodes: diagram.lensViews.deployment.nodes,
+          edges: diagram.lensViews.deployment.edges,
+          layout,
+        },
         options,
       ),
     ]);

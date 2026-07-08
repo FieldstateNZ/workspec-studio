@@ -46,7 +46,12 @@ export interface ResolvedConnectionStyle {
 export const DEFAULT_ELEMENT_STYLES: Readonly<Record<string, ResolvedElementStyle>> = {
   actor: { accent: '#4A90D9', icon: 'user', shape: 'box', variant: null },
   system: { accent: '#1168BD', icon: 'box', shape: 'box', variant: null },
-  'external-system': { accent: '#64748b', icon: 'external-link', shape: 'box', variant: 'external' },
+  'external-system': {
+    accent: '#64748b',
+    icon: 'external-link',
+    shape: 'box',
+    variant: 'external',
+  },
   container: { accent: 'hsl(214 88% 51%)', icon: 'server', shape: 'box', variant: null },
   // A C4 component is a `feature` in WorkSpec — mirror feature's styling so a
   // (transient) component node reads as one.
@@ -100,8 +105,12 @@ function isConnectionLineStyle(value: string | undefined): value is ConnectionLi
  * through to the default), matching Enterprise's "lenient input, normalising
  * compiler" contract — this package never hard-fails on an authored style.
  */
-export function resolveElementStyle(kind: string | null, spec: Spec | undefined): ResolvedElementStyle {
-  const fallback = (kind !== null ? DEFAULT_ELEMENT_STYLES[kind] : undefined) ?? UNKNOWN_ELEMENT_STYLE;
+export function resolveElementStyle(
+  kind: string | null,
+  spec: Spec | undefined,
+): ResolvedElementStyle {
+  const fallback =
+    (kind !== null ? DEFAULT_ELEMENT_STYLES[kind] : undefined) ?? UNKNOWN_ELEMENT_STYLE;
   const override = kind !== null ? spec?.elements[kind] : undefined;
   if (!override) return fallback;
 
@@ -109,7 +118,12 @@ export function resolveElementStyle(kind: string | null, spec: Spec | undefined)
     accent: override.accent ?? fallback.accent,
     icon: override.icon ?? fallback.icon,
     shape: isElementShape(override.shape) ? override.shape : fallback.shape,
-    variant: override.variant === 'external' ? 'external' : override.variant == null ? fallback.variant : null,
+    variant:
+      override.variant === 'external'
+        ? 'external'
+        : override.variant == null
+          ? fallback.variant
+          : null,
   };
 }
 
@@ -121,8 +135,13 @@ export function resolveElementStyle(kind: string | null, spec: Spec | undefined)
  * edge with no `category` at all, or a category string outside the four
  * built-ins).
  */
-export function resolveConnectionStyle(category: string | null, spec: Spec | undefined): ResolvedConnectionStyle {
-  const fallback = (category !== null ? DEFAULT_CONNECTION_STYLES[category] : undefined) ?? UNKNOWN_CONNECTION_STYLE;
+export function resolveConnectionStyle(
+  category: string | null,
+  spec: Spec | undefined,
+): ResolvedConnectionStyle {
+  const fallback =
+    (category !== null ? DEFAULT_CONNECTION_STYLES[category] : undefined) ??
+    UNKNOWN_CONNECTION_STYLE;
   const override = category !== null ? spec?.connections[category] : undefined;
   if (!override) return fallback;
 

@@ -19,8 +19,13 @@ import { resolveDiagramNodes } from './resolve-diagram-nodes.js';
 
 type ContainerLens = 'logical' | 'deployment';
 
-function edgesForLens(edges: readonly IndexedDiagramEdge[], lens: ContainerLens): readonly IndexedDiagramEdge[] {
-  return edges.filter(({ edge }) => edge.lens === undefined || edge.lens === 'both' || edge.lens === lens);
+function edgesForLens(
+  edges: readonly IndexedDiagramEdge[],
+  lens: ContainerLens,
+): readonly IndexedDiagramEdge[] {
+  return edges.filter(
+    ({ edge }) => edge.lens === undefined || edge.lens === 'both' || edge.lens === lens,
+  );
 }
 
 function resolveOneView(
@@ -53,7 +58,12 @@ function resolveOneView(
   const edgesReferenceSystem = edges.some(
     ({ edge }) => isSystemAlias(edge.from) || isSystemAlias(edge.to),
   );
-  const resolvedNodes = injectSystemNodeIfMissing(diagramType, nodesResult.resolved, edgesReferenceSystem, system);
+  const resolvedNodes = injectSystemNodeIfMissing(
+    diagramType,
+    nodesResult.resolved,
+    edgesReferenceSystem,
+    system,
+  );
 
   const edgesResult = resolveDiagramEdges(
     edges,
@@ -85,7 +95,10 @@ export function resolveDiagram(
   const { data } = raw;
   const diagnostics: C4Diagnostic[] = [];
   const locate = createYamlLocator(raw.text);
-  const indexedEdges: readonly IndexedDiagramEdge[] = data.edges.map((edge, index) => ({ edge, index }));
+  const indexedEdges: readonly IndexedDiagramEdge[] = data.edges.map((edge, index) => ({
+    edge,
+    index,
+  }));
 
   if (systemSlug === null && usesSystemAlias(data.nodes, data.edges)) {
     diagnostics.push(

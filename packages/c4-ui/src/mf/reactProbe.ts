@@ -30,7 +30,8 @@ declare global {
 
 /** Report whether the remote's React is functionally the host-stamped instance. */
 export function reactProbe(): { sameInstance: boolean; version: string } {
-  const host = (typeof window !== 'undefined' ? window.__DS_HOST_REACT : undefined) as ReactLike | undefined;
+  const host = (typeof window !== 'undefined' ? window.__DS_HOST_REACT : undefined) as
+    ReactLike | undefined;
   const self = React as unknown as ReactLike;
 
   const sameHooks = host?.useState !== undefined && host.useState === self.useState;

@@ -7,7 +7,10 @@ import { z } from 'zod';
  */
 export const DiagramTagStyle = z
   .object({
-    color: z.string().optional().describe('Accent color for nodes carrying this tag, e.g. a hex or hsl value.'),
+    color: z
+      .string()
+      .optional()
+      .describe('Accent color for nodes carrying this tag, e.g. a hex or hsl value.'),
     border: z.string().optional().describe('Border style override for nodes carrying this tag.'),
   })
   .strict()

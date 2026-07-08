@@ -9,7 +9,10 @@ import { makeDiagnostic } from './make-diagnostic.js';
  * present, is folded into the message for context — `C4Diagnostic` itself
  * has no `path` field, since it isn't part of the public diagnostic shape.
  */
-export function parseIssuesToDiagnostics(file: string, issues: readonly ParseIssue[]): C4Diagnostic[] {
+export function parseIssuesToDiagnostics(
+  file: string,
+  issues: readonly ParseIssue[],
+): C4Diagnostic[] {
   return issues.map((issue) =>
     makeDiagnostic(
       'error',

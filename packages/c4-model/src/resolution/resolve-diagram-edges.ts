@@ -1,7 +1,10 @@
 import type { DiagramEdge } from '@workspec/c4-schema';
 import { DIAGNOSTIC_CODES } from '../model/diagnostic-codes.js';
 import type { C4Diagnostic } from '../model/diagnostic.types.js';
-import type { ResolvedDiagramEdge, ResolvedDiagramNode } from '../model/diagram-resolution.types.js';
+import type {
+  ResolvedDiagramEdge,
+  ResolvedDiagramNode,
+} from '../model/diagram-resolution.types.js';
 import { makeDiagnostic } from '../diagnostics/make-diagnostic.js';
 import type { YamlLocator } from '../diagnostics/yaml-locator.js';
 import { isSystemAlias } from './system-alias.js';
@@ -23,7 +26,12 @@ export interface IndexedDiagramEdge {
  * spec section). An edge's `category` is a free string everywhere — this
  * list only feeds the `unknown-category` warning, never a rejection.
  */
-const BUILT_IN_CATEGORIES: ReadonlySet<string> = new Set(['interaction', 'data', 'governance', 'identity']);
+const BUILT_IN_CATEGORIES: ReadonlySet<string> = new Set([
+  'interaction',
+  'data',
+  'governance',
+  'identity',
+]);
 
 /**
  * Resolves one edge endpoint (`from`/`to`) to the `nodeId` it refers to.
@@ -74,7 +82,8 @@ export function resolveDiagramEdges(
     // is already explained by this diagram's `no-system` diagnostic —
     // raising `dangling-edge-ref` too would just restate the same cause.
     const explainedByNoSystem =
-      isUnresolvableSystemAlias(edge.from, systemSlug) || isUnresolvableSystemAlias(edge.to, systemSlug);
+      isUnresolvableSystemAlias(edge.from, systemSlug) ||
+      isUnresolvableSystemAlias(edge.to, systemSlug);
 
     if (dangling && !explainedByNoSystem) {
       diagnostics.push(
@@ -88,7 +97,11 @@ export function resolveDiagramEdges(
       );
     }
 
-    if (edge.category && !BUILT_IN_CATEGORIES.has(edge.category) && !knownSpecCategories.has(edge.category)) {
+    if (
+      edge.category &&
+      !BUILT_IN_CATEGORIES.has(edge.category) &&
+      !knownSpecCategories.has(edge.category)
+    ) {
       diagnostics.push(
         makeDiagnostic(
           'warning',

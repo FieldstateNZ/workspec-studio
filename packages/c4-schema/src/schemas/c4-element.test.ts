@@ -3,10 +3,13 @@ import { c4ElementFactory } from '../../test/helpers/factories.js';
 import { C4Element } from './c4-element.js';
 
 describe('C4Element (container/component/database/queue)', () => {
-  it.each(['container', 'component', 'database', 'queue'])('accepts a minimal %s element', (type) => {
-    const result = C4Element.safeParse(c4ElementFactory({ type }));
-    expect(result.success).toBe(true);
-  });
+  it.each(['container', 'component', 'database', 'queue'])(
+    'accepts a minimal %s element',
+    (type) => {
+      const result = C4Element.safeParse(c4ElementFactory({ type }));
+      expect(result.success).toBe(true);
+    },
+  );
 
   it('accepts an optional technology field', () => {
     const result = C4Element.safeParse(c4ElementFactory({ technology: 'PostgreSQL' }));

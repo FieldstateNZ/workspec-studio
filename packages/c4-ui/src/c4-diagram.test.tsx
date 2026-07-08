@@ -9,11 +9,19 @@ import { elementKey } from './element-key.js';
 import type { C4StudioHost } from './host.js';
 import { loadSyntheticModel } from './test-helpers/synthetic-model.js';
 
-async function loadContext(): Promise<{ model: C4Model; resolved: ResolvedDiagram; diagram: PositionedDiagram }> {
+async function loadContext(): Promise<{
+  model: C4Model;
+  resolved: ResolvedDiagram;
+  diagram: PositionedDiagram;
+}> {
   const model = await loadSyntheticModel();
   const resolved = model.diagrams.find((d) => d.slug === 'context');
   if (!resolved || !resolved.view) throw new Error('fixture missing the context diagram');
-  const diagram = await layoutDiagram({ nodes: resolved.view.nodes, edges: resolved.view.edges, layout: null });
+  const diagram = await layoutDiagram({
+    nodes: resolved.view.nodes,
+    edges: resolved.view.edges,
+    layout: null,
+  });
   return { model, resolved, diagram };
 }
 
@@ -51,7 +59,9 @@ describe('C4Diagram — representative fixture render', () => {
     expect(screen.getByText('Payment Gateway')).toBeInTheDocument();
     expect(screen.getByText('Ledger')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actor: Architect/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /external-system: Payment Gateway/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /external-system: Payment Gateway/i }),
+    ).toBeInTheDocument();
   });
 
   it('renders both themes with the matching WorkSpec token ramp on the root', async () => {
@@ -124,24 +134,35 @@ describe('C4Diagram — hover tooltip', () => {
     render(<C4Diagram diagram={diagram} resolved={resolved} />);
 
     const architectNode = screen.getByRole('button', { name: /actor: Architect/i });
-    expect(screen.queryByText('Designs systems and reviews proposed changes.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Designs systems and reviews proposed changes.'),
+    ).not.toBeInTheDocument();
 
     fireEvent.pointerEnter(architectNode);
     expect(screen.getByText('Designs systems and reviews proposed changes.')).toBeInTheDocument();
     expect(screen.getByText('human')).toBeInTheDocument();
 
     fireEvent.pointerLeave(architectNode);
-    expect(screen.queryByText('Designs systems and reviews proposed changes.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Designs systems and reviews proposed changes.'),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an inert Links label when no linkResolver is supplied, and an active one when the host resolves it', async () => {
     const { resolved, diagram, model } = await loadContext();
     const elementsByKindAndSlug = new Map(
-      Array.from(model.elements.actor, ([slug, element]) => [elementKey('actor', slug), element] as const),
+      Array.from(
+        model.elements.actor,
+        ([slug, element]) => [elementKey('actor', slug), element] as const,
+      ),
     );
 
     const { rerender } = render(
-      <C4Diagram diagram={diagram} resolved={resolved} elementsByKindAndSlug={elementsByKindAndSlug} />,
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        elementsByKindAndSlug={elementsByKindAndSlug}
+      />,
     );
     fireEvent.pointerEnter(screen.getByRole('button', { name: /actor: Architect/i }));
     const inertLabel = screen.getByText('README.md');

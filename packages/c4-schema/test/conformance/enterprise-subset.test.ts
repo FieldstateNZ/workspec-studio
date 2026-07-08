@@ -6,7 +6,10 @@ import { parseDiagramYaml } from '../../src/yaml/parse-diagram-yaml.js';
 import { parseSpecYaml } from '../../src/yaml/parse-spec-yaml.js';
 import { parseSystemYaml } from '../../src/yaml/parse-system-yaml.js';
 
-const fixtureRoot = join(dirname(fileURLToPath(import.meta.url)), '../fixtures/enterprise-subset/.workspec');
+const fixtureRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '../fixtures/enterprise-subset/.workspec',
+);
 
 function read(relativePath: string): string {
   return readFileSync(join(fixtureRoot, relativePath), 'utf8');

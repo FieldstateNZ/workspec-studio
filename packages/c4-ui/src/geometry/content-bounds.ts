@@ -24,7 +24,14 @@ const EMPTY_HEIGHT = 200;
 /** Content bounds for a set of node rects, padded on every side. `padding` defaults to 40px. */
 export function contentBounds(nodes: readonly Rect[], padding = 40): ContentBounds {
   if (nodes.length === 0) {
-    return { minX: 0, minY: 0, maxX: EMPTY_WIDTH, maxY: EMPTY_HEIGHT, width: EMPTY_WIDTH, height: EMPTY_HEIGHT };
+    return {
+      minX: 0,
+      minY: 0,
+      maxX: EMPTY_WIDTH,
+      maxY: EMPTY_HEIGHT,
+      width: EMPTY_WIDTH,
+      height: EMPTY_HEIGHT,
+    };
   }
 
   let minX = Infinity;

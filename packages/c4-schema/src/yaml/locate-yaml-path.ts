@@ -16,7 +16,10 @@ export type { YamlPosition } from './locate-in-document.js';
  * Shares its walk with `parseYamlArtifact`'s internal issue mapping (see
  * `locate-in-document.ts`), so the two can't drift.
  */
-export function locateYamlPath(text: string, path: readonly (string | number)[]): YamlPosition | undefined {
+export function locateYamlPath(
+  text: string,
+  path: readonly (string | number)[],
+): YamlPosition | undefined {
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter });
   if (doc.errors.length > 0) {

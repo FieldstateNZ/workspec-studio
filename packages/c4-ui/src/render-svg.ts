@@ -87,8 +87,11 @@ function nodePaletteFor(
   }
 
   const lifted =
-    tints.accentLiftPct > 0 ? mixOklab(accentRgb, WHITE, (100 - tints.accentLiftPct) / 100) : accentRgb;
-  const eyebrowRgb = tints.eyebrowPct === 100 ? lifted : mixOklab(lifted, inkRgb, tints.eyebrowPct / 100);
+    tints.accentLiftPct > 0
+      ? mixOklab(accentRgb, WHITE, (100 - tints.accentLiftPct) / 100)
+      : accentRgb;
+  const eyebrowRgb =
+    tints.eyebrowPct === 100 ? lifted : mixOklab(lifted, inkRgb, tints.eyebrowPct / 100);
 
   return {
     accent: formatHex(lifted),
@@ -118,9 +121,13 @@ function renderNode(
       `<rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${shape.rx}" ry="${shape.ry}" fill="${palette.surface}" stroke="${palette.border}" stroke-width="1"/>`,
     );
   } else {
-    parts.push(`<path d="${shape.outline}" fill="${palette.surface}" stroke="${palette.border}" stroke-width="1"/>`);
+    parts.push(
+      `<path d="${shape.outline}" fill="${palette.surface}" stroke="${palette.border}" stroke-width="1"/>`,
+    );
     if (shape.decoration !== undefined) {
-      parts.push(`<path d="${shape.decoration}" fill="none" stroke="${palette.border}" stroke-width="1"/>`);
+      parts.push(
+        `<path d="${shape.decoration}" fill="none" stroke="${palette.border}" stroke-width="1"/>`,
+      );
     }
   }
   // The 4px accent identity stripe — a line so the external variant's dash
@@ -183,7 +190,9 @@ export function renderSvg(diagram: PositionedDiagram, options: RenderSvgOptions 
   const bounds = contentBounds(diagram.nodes.map(rectOf));
   const title = options.title ?? 'C4 diagram';
 
-  const accents = uniqueAccents(diagram.edges.map((edge) => resolveConnectionStyle(edge.category, options.spec).accent));
+  const accents = uniqueAccents(
+    diagram.edges.map((edge) => resolveConnectionStyle(edge.category, options.spec).accent),
+  );
   const markers = accents
     .map(
       (accent) =>
@@ -192,7 +201,9 @@ export function renderSvg(diagram: PositionedDiagram, options: RenderSvgOptions 
     .join('');
 
   const edgesSvg = diagram.edges.map((edge) => renderEdge(edge, options.spec)).join('');
-  const nodesSvg = diagram.nodes.map((node) => renderNode(node, options.spec, theme, tokens)).join('');
+  const nodesSvg = diagram.nodes
+    .map((node) => renderNode(node, options.spec, theme, tokens))
+    .join('');
   const canvasBg = tokens['--canvas-bg'];
 
   return (

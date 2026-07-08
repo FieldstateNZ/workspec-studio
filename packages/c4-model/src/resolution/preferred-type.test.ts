@@ -11,12 +11,27 @@ describe('preferredOrderFor', () => {
   });
 
   it('lens-partitions c4-container: logical prefers domain, deployment prefers container', () => {
-    expect(preferredOrderFor('c4-container', 'logical')).toEqual(['domain', 'container', 'database', 'queue']);
-    expect(preferredOrderFor('c4-container', 'deployment')).toEqual(['container', 'domain', 'database', 'queue']);
+    expect(preferredOrderFor('c4-container', 'logical')).toEqual([
+      'domain',
+      'container',
+      'database',
+      'queue',
+    ]);
+    expect(preferredOrderFor('c4-container', 'deployment')).toEqual([
+      'container',
+      'domain',
+      'database',
+      'queue',
+    ]);
   });
 
   it('defaults c4-container with no lens given to the logical order', () => {
-    expect(preferredOrderFor('c4-container', null)).toEqual(['domain', 'container', 'database', 'queue']);
+    expect(preferredOrderFor('c4-container', null)).toEqual([
+      'domain',
+      'container',
+      'database',
+      'queue',
+    ]);
   });
 
   it('returns an empty order for any other diagram type', () => {

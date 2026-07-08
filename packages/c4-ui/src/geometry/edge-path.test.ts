@@ -7,7 +7,12 @@ describe('orthogonalEdgePath', () => {
   });
 
   it('renders a two-point route as a straight line', () => {
-    expect(orthogonalEdgePath([{ x: 0, y: 0 }, { x: 100, y: 0 }])).toBe('M 0 0 L 100 0');
+    expect(
+      orthogonalEdgePath([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+    ).toBe('M 0 0 L 100 0');
   });
 
   it('rounds each interior bend of a multi-point route with a quadratic curve', () => {
@@ -48,7 +53,12 @@ describe('orthogonalEdgePath', () => {
 
 describe('routeMidpoint', () => {
   it('is the exact centre of a straight two-point route', () => {
-    expect(routeMidpoint([{ x: 0, y: 0 }, { x: 100, y: 0 }])).toEqual({ x: 50, y: 0 });
+    expect(
+      routeMidpoint([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+    ).toEqual({ x: 50, y: 0 });
   });
 
   it('walks cumulative length across a multi-segment route to find the 50% point', () => {

@@ -75,7 +75,9 @@ describe('root entry is browser-safe', () => {
   it('never imports a DOM global reference (document/window) from any source file', () => {
     const reachable = reachableFrom(join(SRC_DIR, 'index.ts'));
 
-    const offenders = Array.from(reachable).filter((file) => /\b(document|window)\b/.test(readFileSync(file, 'utf8')));
+    const offenders = Array.from(reachable).filter((file) =>
+      /\b(document|window)\b/.test(readFileSync(file, 'utf8')),
+    );
 
     expect(offenders).toEqual([]);
   });

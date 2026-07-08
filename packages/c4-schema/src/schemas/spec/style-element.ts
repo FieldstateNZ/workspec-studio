@@ -26,7 +26,10 @@ export const STYLE_ELEMENT_VARIANTS = ['external'] as const;
 export const StyleElement = z
   .looseObject({
     accent: z.string().optional().describe('Accent color, e.g. "#4A90D9" or "hsl(214 88% 51%)".'),
-    icon: z.string().optional().describe('Icon name rendered on the node, e.g. "user", "database".'),
+    icon: z
+      .string()
+      .optional()
+      .describe('Icon name rendered on the node, e.g. "user", "database".'),
     shape: z
       .string()
       .optional()

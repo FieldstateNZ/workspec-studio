@@ -20,7 +20,9 @@ export const StyleConnection = z
     accent: z.string().optional().describe('Accent color, e.g. "#64748b".'),
     style: z.string().optional().describe('Rendered line style. Known values: "solid", "dashed".'),
   })
-  .describe('Authored visual style for one edge category (lenient; the style compiler normalises).');
+  .describe(
+    'Authored visual style for one edge category (lenient; the style compiler normalises).',
+  );
 
 /** Inferred type of one connection style entry. */
 export type StyleConnection = z.infer<typeof StyleConnection>;

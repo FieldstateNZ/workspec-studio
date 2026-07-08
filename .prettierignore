@@ -3,3 +3,12 @@ build
 coverage
 node_modules
 pnpm-lock.yaml
+# Generated artifacts (byte-exact by contract — never reformat)
+json-schema
+packages/c4-schema/json-schema
+docs/c4/*.svg
+# Vendored/authored trees asserted byte-identical or schema-bound in tests
+packages/c4-schema/test/fixtures
+packages/c4-model/test/fixtures
+apps/site/src/examples-c4
+.workspec

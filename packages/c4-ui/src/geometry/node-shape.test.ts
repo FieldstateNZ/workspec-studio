@@ -5,7 +5,11 @@ const RECT = { x: 10, y: 20, width: 300, height: 110 };
 
 describe('nodeShapeGeometry', () => {
   it('box renders as a plain rounded rect (no path needed)', () => {
-    expect(nodeShapeGeometry(RECT, 'box')).toEqual({ kind: 'rect', rx: BOX_CORNER_RADIUS, ry: BOX_CORNER_RADIUS });
+    expect(nodeShapeGeometry(RECT, 'box')).toEqual({
+      kind: 'rect',
+      rx: BOX_CORNER_RADIUS,
+      ry: BOX_CORNER_RADIUS,
+    });
   });
 
   it('pill renders as a fully-rounded (stadium) rect: rx/ry = half the height', () => {

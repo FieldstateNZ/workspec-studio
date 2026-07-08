@@ -38,7 +38,10 @@ function pointToward(corner: EdgePoint, endpoint: EdgePoint, amount: number): Ed
  * never overshoots past the segment's own endpoints). A route of fewer than
  * three points has no interior bend and renders as a plain polyline/line.
  */
-export function orthogonalEdgePath(route: readonly EdgePoint[], radius = EDGE_CORNER_RADIUS): string {
+export function orthogonalEdgePath(
+  route: readonly EdgePoint[],
+  radius = EDGE_CORNER_RADIUS,
+): string {
   if (route.length === 0) return '';
   if (route.length <= 2) {
     return route.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');

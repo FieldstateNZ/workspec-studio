@@ -27,10 +27,16 @@ describe('styles.css .c4-node derivation matches ELEMENT_TINTS', () => {
   it('light theme: surface, eyebrow, ink-dim, and border percentages', () => {
     const css = lightBlock();
     const tints = ELEMENT_TINTS.light;
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent) ${tints.surfacePct}%, var(--bg-elevated))`);
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent) ${tints.eyebrowPct}%, var(--ink))`);
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent) ${tints.surfacePct}%, var(--bg-elevated))`,
+    );
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent) ${tints.eyebrowPct}%, var(--ink))`,
+    );
     expect(css).toContain(`color-mix(in oklab, var(--ink) ${tints.inkDimPct}%, transparent)`);
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent) ${tints.borderPct}%, transparent)`);
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent) ${tints.borderPct}%, transparent)`,
+    );
     expect(tints.accentLiftPct).toBe(0);
     expect(css).toContain('--c4-el-accent: var(--c4-el-accent-raw)');
   });
@@ -38,10 +44,16 @@ describe('styles.css .c4-node derivation matches ELEMENT_TINTS', () => {
   it('dark theme: accent lift, surface, ink-dim, and border percentages; eyebrow is the lifted accent itself', () => {
     const css = darkBlock();
     const tints = ELEMENT_TINTS.dark;
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent-raw), white ${tints.accentLiftPct}%)`);
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent) ${tints.surfacePct}%, var(--bg-elevated))`);
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent-raw), white ${tints.accentLiftPct}%)`,
+    );
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent) ${tints.surfacePct}%, var(--bg-elevated))`,
+    );
     expect(css).toContain(`color-mix(in oklab, var(--ink) ${tints.inkDimPct}%, transparent)`);
-    expect(css).toContain(`color-mix(in oklab, var(--c4-el-accent) ${tints.borderPct}%, transparent)`);
+    expect(css).toContain(
+      `color-mix(in oklab, var(--c4-el-accent) ${tints.borderPct}%, transparent)`,
+    );
     expect(tints.eyebrowPct).toBe(100);
     expect(css).toContain('--c4-el-eyebrow: var(--c4-el-accent)');
   });

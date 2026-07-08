@@ -43,7 +43,13 @@ describe('overlapping pins', () => {
 
     const byId = new Map(positioned.nodes.map((node) => [node.nodeId, node]));
     for (const nodeId of ['a', 'b', 'c']) {
-      expect(byId.get(nodeId)).toMatchObject({ x: 100, y: 100, width: 300, height: 110, pinned: true });
+      expect(byId.get(nodeId)).toMatchObject({
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 110,
+        pinned: true,
+      });
     }
 
     // The unpinned node must still clear every pinned rect — the guarantee
@@ -70,7 +76,12 @@ describe('degenerate inputs', () => {
 
     expect(positioned.edges).toEqual([]);
     expect(positioned.nodes).toHaveLength(1);
-    expect(positioned.nodes[0]).toMatchObject({ nodeId: 'only', width: 300, height: 110, pinned: false });
+    expect(positioned.nodes[0]).toMatchObject({
+      nodeId: 'only',
+      width: 300,
+      height: 110,
+      pinned: false,
+    });
     assertNoOverlaps(positioned.nodes);
   });
 });

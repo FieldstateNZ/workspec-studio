@@ -85,7 +85,9 @@ describe('root entry is browser-safe', () => {
     const fsSourceFile = join(SRC_DIR, 'sources/fs-source.ts');
 
     expect(reachable.has(fsSourceFile)).toBe(true);
-    const hasNodeImport = Array.from(reachable).some((file) => importSpecifiers(file).some(isNodeBuiltin));
+    const hasNodeImport = Array.from(reachable).some((file) =>
+      importSpecifiers(file).some(isNodeBuiltin),
+    );
     expect(hasNodeImport).toBe(true);
   });
 

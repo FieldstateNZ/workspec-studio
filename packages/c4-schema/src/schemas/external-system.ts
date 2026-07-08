@@ -16,7 +16,10 @@ export const ExternalSystemElement = z
       .optional()
       .describe('Redundant kind literal; inferred from directory when absent.'),
     title: z.string().describe('Human-readable name of the external system.'),
-    description: z.string().min(1).describe('What this external system provides and how it is used.'),
+    description: z
+      .string()
+      .min(1)
+      .describe('What this external system provides and how it is used.'),
     tags: z.array(z.string()).optional().describe('Free-text labels for filtering and grouping.'),
     links: linksField,
     source: sourceField,

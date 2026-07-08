@@ -7,12 +7,12 @@ reach. Execute in order.
 
 ## 0. What's moving where
 
-| Old                                                 | New                                       |
-| ---------------------------------------------------- | ------------------------------------------ |
-| `https://decision-studio.workspec.io/` (marketing)  | `https://studio.workspec.io/decisions`    |
-| `https://decision-studio.workspec.io/demo`          | `https://studio.workspec.io/decisions/demo` |
-| — (didn't exist)                                     | `https://studio.workspec.io/` (Studio landing) |
-| — (didn't exist)                                     | `https://studio.workspec.io/c4` (coming-soon stub) |
+| Old                                                | New                                                |
+| -------------------------------------------------- | -------------------------------------------------- |
+| `https://decision-studio.workspec.io/` (marketing) | `https://studio.workspec.io/decisions`             |
+| `https://decision-studio.workspec.io/demo`         | `https://studio.workspec.io/decisions/demo`        |
+| — (didn't exist)                                   | `https://studio.workspec.io/` (Studio landing)     |
+| — (didn't exist)                                   | `https://studio.workspec.io/c4` (coming-soon stub) |
 
 The old repo is `FieldstateNZ/workspec-decision-studio`; the new one is this repo,
 `FieldstateNZ/workspec-studio`.
@@ -74,10 +74,10 @@ curl -sI https://studio.workspec.io/c4                   # expect HTTP 404 — s
 
 **Note on the 404s:** GitHub Pages has no server-side router, so the SPA-fallback trick (serving
 `404.html` — a byte-identical copy of `index.html` — for any unrecognised path) means deep links
-correctly load the app shell, but the *HTTP status code* GitHub reports for them is still `404`.
+correctly load the app shell, but the _HTTP status code_ GitHub reports for them is still `404`.
 That's expected, not a regression — confirm the deep links work by loading them in a real browser
 (client-side JS takes over immediately and renders the right route) or by checking the response
-*body* contains the app shell (`curl -s ... | grep 'id="root"'`) rather than the status code.
+_body_ contains the app shell (`curl -s ... | grep 'id="root"'`) rather than the status code.
 
 ## 5. Retire the old site — paste this into `workspec-decision-studio`
 

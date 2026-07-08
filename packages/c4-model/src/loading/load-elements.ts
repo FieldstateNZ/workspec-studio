@@ -22,10 +22,9 @@ export interface LoadedElements {
 export async function loadElements(source: C4FileSource): Promise<LoadedElements> {
   const discovered = await discoverElementPaths(source);
   const diagnostics: C4Diagnostic[] = [];
-  const byKind = Object.fromEntries(ELEMENT_KINDS.map((kind) => [kind, new Map<string, LoadedElement>()])) as Record<
-    ElementKind,
-    Map<string, LoadedElement>
-  >;
+  const byKind = Object.fromEntries(
+    ELEMENT_KINDS.map((kind) => [kind, new Map<string, LoadedElement>()]),
+  ) as Record<ElementKind, Map<string, LoadedElement>>;
 
   for (const { kind, paths } of discovered) {
     // Read concurrently, but parse and insert in the fixed, sorted `paths`

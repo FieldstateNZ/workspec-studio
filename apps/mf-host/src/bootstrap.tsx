@@ -63,9 +63,11 @@ const host: DecisionStudioHost = {
 //    pipeline, not a hand-typed lookalike shape) and lay out its one diagram ──
 const c4Model = await loadC4Model(
   createMemorySource({
-    '.workspec/system/ledger.yaml': 'title: Ledger\ndescription: Cost tracking and invoicing platform.\n',
+    '.workspec/system/ledger.yaml':
+      'title: Ledger\ndescription: Cost tracking and invoicing platform.\n',
     '.workspec/actors/architect.yaml': 'title: Architect\ndescription: Designs systems.\n',
-    '.workspec/external-systems/gateway.yaml': 'title: Payment Gateway\ndescription: Settles invoices.\n',
+    '.workspec/external-systems/gateway.yaml':
+      'title: Payment Gateway\ndescription: Settles invoices.\n',
     '.workspec/diagrams/context.yaml': [
       'title: System Context',
       'type: c4-context',
@@ -87,7 +89,8 @@ const c4Model = await loadC4Model(
 );
 const foundC4Diagram = c4Model.diagrams.find((d) => d.slug === 'context');
 const foundC4View = foundC4Diagram?.view;
-if (!foundC4Diagram || !foundC4View) throw new Error('c4-ui smoke: context diagram failed to resolve');
+if (!foundC4Diagram || !foundC4View)
+  throw new Error('c4-ui smoke: context diagram failed to resolve');
 // Fresh `const`s (rather than relying on the guard above narrowing
 // `foundC4Diagram`/`foundC4View` inside `C4SmokeApp`, defined further
 // down): TypeScript's control-flow narrowing doesn't carry into a function
@@ -140,7 +143,12 @@ function C4SmokeApp(): React.ReactElement {
       />
       <section id="c4-diagram-mount" className="smoke-section" style={{ height: 420 }}>
         <h2 className="smoke-h">C4Diagram · remote</h2>
-        <C4Diagram diagram={c4Positioned} resolved={c4Diagram} spec={c4Model.spec.data} theme="dark" />
+        <C4Diagram
+          diagram={c4Positioned}
+          resolved={c4Diagram}
+          spec={c4Model.spec.data}
+          theme="dark"
+        />
       </section>
       <section id="c4-explorer-mount" className="smoke-section" style={{ height: 420 }}>
         <h2 className="smoke-h">C4Explorer · remote</h2>

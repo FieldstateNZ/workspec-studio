@@ -12,16 +12,29 @@ describe('ThinDiagramNode', () => {
     expect(result.success).toBe(true);
   });
 
-  it.each(['actor', 'system', 'external-system', 'container', 'component', 'database', 'queue', 'domain', 'feature', 'class', 'interface', 'function'])(
-    'accepts a typed-ref for kind "%s"',
-    (kind) => {
-      const result = ThinDiagramNode.safeParse({ [kind]: 'some-slug' });
-      expect(result.success).toBe(true);
-    },
-  );
+  it.each([
+    'actor',
+    'system',
+    'external-system',
+    'container',
+    'component',
+    'database',
+    'queue',
+    'domain',
+    'feature',
+    'class',
+    'interface',
+    'function',
+  ])('accepts a typed-ref for kind "%s"', (kind) => {
+    const result = ThinDiagramNode.safeParse({ [kind]: 'some-slug' });
+    expect(result.success).toBe(true);
+  });
 
   it('rejects a node with two typed-ref keys (ambiguous kind)', () => {
-    const result = ThinDiagramNode.safeParse({ component: 'diagram-editor', container: 'api-server' });
+    const result = ThinDiagramNode.safeParse({
+      component: 'diagram-editor',
+      container: 'api-server',
+    });
     expect(result.success).toBe(false);
   });
 

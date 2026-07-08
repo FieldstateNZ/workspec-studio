@@ -13,7 +13,10 @@ export const LinkCardinality = z
   .object({
     from: z.enum(CARDINALITY_VALUES).describe('Multiplicity at the source end, e.g. "1".'),
     to: z.enum(CARDINALITY_VALUES).describe('Multiplicity at the target end, e.g. "0..*".'),
-    label: z.string().optional().describe('Optional human-readable relationship label, e.g. "owns".'),
+    label: z
+      .string()
+      .optional()
+      .describe('Optional human-readable relationship label, e.g. "owns".'),
   })
   .strict()
   .describe('Relationship cardinality carried on a links entry.');

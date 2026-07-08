@@ -1,7 +1,10 @@
 import { C4_NODE_HEIGHT, C4_NODE_WIDTH } from './constants/node-size.js';
 import { buildElkGraph } from './elk/build-elk-graph.js';
 import { runAutoLayout } from './elk/run-auto-layout.js';
-import type { LayoutDiagramInput, LayoutDiagramOptions } from './model/layout-diagram-input.types.js';
+import type {
+  LayoutDiagramInput,
+  LayoutDiagramOptions,
+} from './model/layout-diagram-input.types.js';
 import type { PositionedDiagram, PositionedNode } from './model/positioned-diagram.types.js';
 import { pinsForNodes } from './pinning/pins-for-nodes.js';
 import { resolveNodeRects } from './pinning/resolve-node-rects.js';
@@ -65,7 +68,13 @@ export async function layoutDiagram(
     // Every id in `nodeIds` was just fed into `resolveNodeRects`, which
     // returns an entry for each one unconditionally — this is unreachable,
     // guarded only so `rect` narrows without a non-null assertion.
-    const { x, y, width, height, pinned } = rect ?? { x: 0, y: 0, width: C4_NODE_WIDTH, height: C4_NODE_HEIGHT, pinned: false };
+    const { x, y, width, height, pinned } = rect ?? {
+      x: 0,
+      y: 0,
+      width: C4_NODE_WIDTH,
+      height: C4_NODE_HEIGHT,
+      pinned: false,
+    };
     return { ...node, x, y, width, height, pinned };
   });
 

@@ -13,7 +13,7 @@ export const StyleSurfaceSet = z
     ink: z.string().optional().describe('Text/ink color used on the surface.'),
     page: z.string().optional().describe('Page (canvas) background color.'),
   })
-  .describe('One theme\'s surface, ink, and page colors.');
+  .describe("One theme's surface, ink, and page colors.");
 
 /** Inferred type of one theme's surface set. */
 export type StyleSurfaceSet = z.infer<typeof StyleSurfaceSet>;

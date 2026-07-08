@@ -37,7 +37,9 @@ describe('resolveElementStyle', () => {
 
   it('honours a full override (accent, icon, shape, variant) for a known kind', () => {
     const spec = Spec.parse({
-      elements: { container: { accent: '#123456', icon: 'server', shape: 'pill', variant: 'external' } },
+      elements: {
+        container: { accent: '#123456', icon: 'server', shape: 'pill', variant: 'external' },
+      },
     });
     expect(resolveElementStyle('container', spec)).toEqual({
       accent: '#123456',
@@ -66,10 +68,16 @@ describe('resolveElementStyle', () => {
 
 describe('resolveConnectionStyle', () => {
   it('falls back to the Enterprise default for every built-in category', () => {
-    expect(resolveConnectionStyle('interaction', EMPTY_SPEC)).toEqual(DEFAULT_CONNECTION_STYLES.interaction);
+    expect(resolveConnectionStyle('interaction', EMPTY_SPEC)).toEqual(
+      DEFAULT_CONNECTION_STYLES.interaction,
+    );
     expect(resolveConnectionStyle('data', EMPTY_SPEC)).toEqual(DEFAULT_CONNECTION_STYLES.data);
-    expect(resolveConnectionStyle('governance', EMPTY_SPEC)).toEqual(DEFAULT_CONNECTION_STYLES.governance);
-    expect(resolveConnectionStyle('identity', EMPTY_SPEC)).toEqual(DEFAULT_CONNECTION_STYLES.identity);
+    expect(resolveConnectionStyle('governance', EMPTY_SPEC)).toEqual(
+      DEFAULT_CONNECTION_STYLES.governance,
+    );
+    expect(resolveConnectionStyle('identity', EMPTY_SPEC)).toEqual(
+      DEFAULT_CONNECTION_STYLES.identity,
+    );
   });
 
   it('governance defaults to a dashed line, the rest solid', () => {
@@ -84,6 +92,8 @@ describe('resolveConnectionStyle', () => {
 
   it('falls back to a design-token accent for no category / an unknown category', () => {
     expect(resolveConnectionStyle(null, EMPTY_SPEC).accent).toBe('var(--ink-fade)');
-    expect(resolveConnectionStyle('not-a-real-category', EMPTY_SPEC).accent).toBe('var(--ink-fade)');
+    expect(resolveConnectionStyle('not-a-real-category', EMPTY_SPEC).accent).toBe(
+      'var(--ink-fade)',
+    );
   });
 });

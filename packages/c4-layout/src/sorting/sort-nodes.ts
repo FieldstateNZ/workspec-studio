@@ -13,6 +13,8 @@ import type { ResolvedDiagramNode } from '@workspec/c4-model';
  * result depends on the runtime's default locale/ICU data, which is exactly
  * the kind of environment-dependence the determinism requirement rules out.
  */
-export function sortNodesById(nodes: readonly ResolvedDiagramNode[]): readonly ResolvedDiagramNode[] {
+export function sortNodesById(
+  nodes: readonly ResolvedDiagramNode[],
+): readonly ResolvedDiagramNode[] {
   return [...nodes].sort((a, b) => (a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0));
 }

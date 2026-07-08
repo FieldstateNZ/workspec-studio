@@ -17,7 +17,9 @@ describe('artifactPathFor', () => {
   });
 
   it('builds a diagram path', () => {
-    expect(artifactPathFor('diagram', 'system-context')).toBe('.workspec/diagrams/system-context.yaml');
+    expect(artifactPathFor('diagram', 'system-context')).toBe(
+      '.workspec/diagrams/system-context.yaml',
+    );
   });
 
   it('never emits a .yml extension', () => {

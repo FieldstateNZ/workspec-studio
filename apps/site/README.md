@@ -17,7 +17,7 @@ one-time domain cutover from the old `decision-studio.workspec.io`.
   example tree (`src/c4-seed.ts` — the same anonymized tree `packages/c4-schema`'s conformance
   suite exercises, never this repo's own dogfood `.workspec/` tree — see
   `docs/c4/drift-log.md` entry 17). Read-only (`editLayout: false`); `npx @workspec/c4-studio
-  serve` gives you the same explorer with drag-to-pin over your own repo.
+serve` gives you the same explorer with drag-to-pin over your own repo.
 
 ## Why it depends on the registry, not the workspace
 

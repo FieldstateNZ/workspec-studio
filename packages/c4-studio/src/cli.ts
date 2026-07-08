@@ -76,7 +76,8 @@ logical lens — use "serve" for the interactive deployment lens.
 `;
 
 function formatDiagnostic(diagnostic: C4Diagnostic): string {
-  const location = diagnostic.line !== undefined ? `${diagnostic.file}:${diagnostic.line}` : diagnostic.file;
+  const location =
+    diagnostic.line !== undefined ? `${diagnostic.file}:${diagnostic.line}` : diagnostic.file;
   const slugSuffix = diagnostic.slug !== undefined ? ` (${diagnostic.slug})` : '';
   return `${location}: [${diagnostic.severity}] ${diagnostic.code} ${diagnostic.message}${slugSuffix}\n`;
 }
@@ -126,7 +127,9 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
     io.err(`validate: ${totalArtifacts} artifact(s) OK${suffix}\n`);
     return values.strict === true && warningCount > 0 ? 1 : 0;
   }
-  io.err(`validate: ${errorCount} error(s), ${warningCount} warning(s) across ${totalArtifacts} artifact(s)\n`);
+  io.err(
+    `validate: ${errorCount} error(s), ${warningCount} warning(s) across ${totalArtifacts} artifact(s)\n`,
+  );
   return 1;
 }
 

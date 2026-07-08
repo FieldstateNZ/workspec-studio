@@ -26,7 +26,11 @@ describe('mixed pinned/auto layout', () => {
     const layout = diagram.layout?.data ?? null;
     expect(layout).not.toBeNull();
 
-    const positioned = await layoutDiagram({ nodes: diagram.view.nodes, edges: diagram.view.edges, layout });
+    const positioned = await layoutDiagram({
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout,
+    });
 
     expect(positioned.nodes).toHaveLength(3);
     const byId = new Map(positioned.nodes.map((node) => [node.nodeId, node]));
@@ -52,7 +56,11 @@ describe('mixed pinned/auto layout', () => {
     const diagram = findSystemContext(model);
     if (!diagram.view) throw new Error('system-context fixture should resolve a single view');
 
-    const positioned = await layoutDiagram({ nodes: diagram.view.nodes, edges: diagram.view.edges, layout: null });
+    const positioned = await layoutDiagram({
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout: null,
+    });
 
     expect(positioned.nodes.every((node) => !node.pinned)).toBe(true);
     assertNoOverlaps(positioned.nodes);
