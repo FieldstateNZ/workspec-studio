@@ -59,7 +59,10 @@ jobs:
       # The site consumes the PUBLISHED @workspec/* packages, so a green build
       # here also proves the released artifacts still build for consumers.
       - name: Build the site
-        run: pnpm --filter @workspec/site build
+        # The `...` suffix also builds the site's WORKSPACE dependencies first
+        # (the c4 packages ride as workspace devDeps until their registry pins
+        # land) — a fresh runner has no dist/ for them otherwise.
+        run: pnpm --filter '@workspec/site...' build
 
       - name: Verify the custom domain + SPA fallback landed
         run: |
