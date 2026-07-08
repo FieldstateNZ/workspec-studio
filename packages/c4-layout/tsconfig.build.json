@@ -5,7 +5,10 @@
     "outDir": "dist",
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
   },
-  "references": [{ "path": "../c4-model/tsconfig.build.json" }, { "path": "../c4-schema/tsconfig.build.json" }],
+  "references": [
+    { "path": "../c4-model/tsconfig.build.json" },
+    { "path": "../c4-schema/tsconfig.build.json" }
+  ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

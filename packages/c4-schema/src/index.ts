@@ -1,4 +1,8 @@
-export { SCHEMA_VERSION, SCHEMA_BASE_URL, JSON_SCHEMA_DIALECT } from './constants/schema-version.js';
+export {
+  SCHEMA_VERSION,
+  SCHEMA_BASE_URL,
+  JSON_SCHEMA_DIALECT,
+} from './constants/schema-version.js';
 export {
   schemaUrlFor,
   ACTOR_SCHEMA_URL,
@@ -67,7 +71,11 @@ export { DiagramTagStyle } from './schemas/diagram/diagram-tag-style.js';
 export { FatDiagram } from './schemas/diagram/diagram-fat.js';
 export { Diagram } from './schemas/diagram/diagram.js';
 
-export { StyleElement, STYLE_SHAPES, STYLE_ELEMENT_VARIANTS } from './schemas/spec/style-element.js';
+export {
+  StyleElement,
+  STYLE_SHAPES,
+  STYLE_ELEMENT_VARIANTS,
+} from './schemas/spec/style-element.js';
 export { StyleConnection, STYLE_CONNECTION_STYLES } from './schemas/spec/style-connection.js';
 export { StyleSurfaceSet } from './schemas/spec/style-surface-set.js';
 export { Spec } from './schemas/spec/spec.js';

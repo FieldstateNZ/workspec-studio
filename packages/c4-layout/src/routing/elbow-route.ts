@@ -21,7 +21,11 @@ function midpoint(a: number, b: number): number {
  * simple, always consistent with the nodes it connects, and identical
  * whether every node is pinned, none are, or anything in between.
  */
-export function elbowRoute(from: Rect, to: Rect, direction: LayoutDirection): readonly LayoutPoint[] {
+export function elbowRoute(
+  from: Rect,
+  to: Rect,
+  direction: LayoutDirection,
+): readonly LayoutPoint[] {
   if (direction === 'LR') {
     const start = { x: from.x + from.width, y: from.y + from.height / 2 };
     const end = { x: to.x, y: to.y + to.height / 2 };

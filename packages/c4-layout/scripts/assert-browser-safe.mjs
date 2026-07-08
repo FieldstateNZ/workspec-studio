@@ -28,4 +28,6 @@ if (offenders.length > 0) {
   console.error(`dist/index.js imports Node builtins: ${offenders.join(', ')}`);
   process.exit(1);
 }
-console.log('dist/index.js imports no Node builtins (DOM-global check lives in test/browser-safety.test.ts)');
+console.log(
+  'dist/index.js imports no Node builtins (DOM-global check lives in test/browser-safety.test.ts)',
+);

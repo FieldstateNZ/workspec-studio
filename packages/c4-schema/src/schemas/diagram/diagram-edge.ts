@@ -21,7 +21,9 @@ export const DiagramEdge = z
     lens: z
       .enum(DIAGRAM_EDGE_LENSES)
       .optional()
-      .describe('Restricts which c4-container lens this edge appears under. Omit to show under both.'),
+      .describe(
+        'Restricts which c4-container lens this edge appears under. Omit to show under both.',
+      ),
     category: z
       .string()
       .optional()

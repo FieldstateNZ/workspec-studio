@@ -1,4 +1,10 @@
-import { mkdir, readdir, readFile as readFileAsync, stat, writeFile as writeFileAsync } from 'node:fs/promises';
+import {
+  mkdir,
+  readdir,
+  readFile as readFileAsync,
+  stat,
+  writeFile as writeFileAsync,
+} from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { C4FileSource } from '../ports/c4-file-source.js';
 

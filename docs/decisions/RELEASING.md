@@ -1,6 +1,9 @@
 # Releasing
 
-WorkSpec Decision Studio publishes four packages to npm, all versioned together:
+WorkSpec Studio publishes the `@workspec/decision-*` and `@workspec/c4-*` families to npm.
+Each family versions together; the release workflow walks every publishable package and skips
+any whose current version is already on the registry, so tagging a release with only one
+family bumped publishes exactly that family. The Decision Studio set:
 
 | Package                     | npx / import                                                |
 | --------------------------- | ----------------------------------------------------------- |

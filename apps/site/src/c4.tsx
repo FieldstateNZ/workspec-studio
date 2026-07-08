@@ -50,7 +50,8 @@ const PACKAGES: readonly C4Package[] = [
   {
     name: '@workspec/c4-ui',
     source: `${REPO_URL}/c4-ui`,
-    blurb: 'Host-agnostic React components — the interactive canvas and the deterministic SVG export.',
+    blurb:
+      'Host-agnostic React components — the interactive canvas and the deterministic SVG export.',
   },
   {
     name: '@workspec/c4-studio',
@@ -124,18 +125,18 @@ export function C4(): ReactElement {
           <p className="lede">
             The C4 module reads the actors, systems, containers, components, and diagrams already
             described as YAML under your repo’s <code>.workspec/</code> directory, resolves them
-            into one architecture model, and lays diagrams out deterministically — the same
-            artifact family WorkSpec Enterprise renders today, as a free standalone workbench.
+            into one architecture model, and lays diagrams out deterministically — the same artifact
+            family WorkSpec Enterprise renders today, as a free standalone workbench.
           </p>
         </section>
 
         <section className="demo-embed" aria-label="C4 explorer demo">
           <h2>See it move</h2>
           <p className="c4-demo-note" role="note">
-            A live <code>C4Explorer</code> running entirely in your browser against a
-            representative example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} —
-            no install, no signup, read-only. <code>npx @workspec/c4-studio serve</code> gives you
-            the same explorer with drag-to-pin over your own repo.
+            A live <code>C4Explorer</code> running entirely in your browser against a representative
+            example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} — no install, no
+            signup, read-only. <code>npx @workspec/c4-studio serve</code> gives you the same
+            explorer with drag-to-pin over your own repo.
           </p>
           {error !== null ? (
             <div className="c4-demo-error" role="alert">
@@ -149,7 +150,12 @@ export function C4(): ReactElement {
                   "container" before "system-context" — pin the more natural
                   entry point explicitly rather than leave the demo's first
                   impression to filename sort order. */}
-              <C4Explorer model={model} host={host} theme={theme} initialDiagramSlug="system-context" />
+              <C4Explorer
+                model={model}
+                host={host}
+                theme={theme}
+                initialDiagramSlug="system-context"
+              />
             </div>
           )}
         </section>

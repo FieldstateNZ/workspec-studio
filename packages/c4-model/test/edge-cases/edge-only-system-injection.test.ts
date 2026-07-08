@@ -11,7 +11,9 @@ import { createMemorySource } from '../../src/sources/memory-source.js';
  */
 describe('edge-only __system__ refs materialize the system node (any diagram type)', () => {
   const systemFile = { '.workspec/system/acme.yaml': 'title: Acme\ndescription: The system.\n' };
-  const domainFile = { '.workspec/domains/billing.yaml': 'title: Billing\ndescription: Billing domain.\n' };
+  const domainFile = {
+    '.workspec/domains/billing.yaml': 'title: Billing\ndescription: Billing domain.\n',
+  };
 
   it('c4-container: both lens views gain the injected system node and consistent edge endpoints', async () => {
     const model = await loadC4Model(
@@ -27,7 +29,12 @@ describe('edge-only __system__ refs materialize the system node (any diagram typ
     const { lensViews } = model.diagrams[0] ?? {};
     for (const view of [lensViews?.logical, lensViews?.deployment]) {
       const system = view?.nodes.find((n) => n.kind === 'system');
-      expect(system).toMatchObject({ nodeId: 'acme', slug: 'acme', injected: true, dangling: false });
+      expect(system).toMatchObject({
+        nodeId: 'acme',
+        slug: 'acme',
+        injected: true,
+        dangling: false,
+      });
       const edge = view?.edges[0];
       expect(edge).toMatchObject({ from: 'billing', to: 'acme', dangling: false });
       // Contract: every non-dangling endpoint names a node present in the view.
@@ -47,7 +54,10 @@ describe('edge-only __system__ refs materialize the system node (any diagram typ
 
     expect(model.diagnostics).toEqual([]);
     const view = model.diagrams[0]?.view;
-    expect(view?.nodes.find((n) => n.kind === 'system')).toMatchObject({ nodeId: 'acme', injected: true });
+    expect(view?.nodes.find((n) => n.kind === 'system')).toMatchObject({
+      nodeId: 'acme',
+      injected: true,
+    });
     expect(view?.edges[0]).toMatchObject({ from: 'billing', to: 'acme', dangling: false });
   });
 
@@ -56,7 +66,8 @@ describe('edge-only __system__ refs materialize the system node (any diagram typ
       createMemorySource({
         ...systemFile,
         ...domainFile,
-        '.workspec/diagrams/cont.yaml': 'title: Container\ntype: c4-container\nnodes:\n  - domain: billing\nedges: []\n',
+        '.workspec/diagrams/cont.yaml':
+          'title: Container\ntype: c4-container\nnodes:\n  - domain: billing\nedges: []\n',
       }),
     );
 
@@ -74,7 +85,9 @@ describe('edge-only __system__ refs materialize the system node (any diagram typ
       }),
     );
 
-    expect(model.diagnostics).toMatchObject([{ severity: 'error', code: DIAGNOSTIC_CODES.noSystem }]);
+    expect(model.diagnostics).toMatchObject([
+      { severity: 'error', code: DIAGNOSTIC_CODES.noSystem },
+    ]);
     const { lensViews } = model.diagrams[0] ?? {};
     for (const view of [lensViews?.logical, lensViews?.deployment]) {
       expect(view?.nodes.some((n) => n.kind === 'system')).toBe(false);

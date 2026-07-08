@@ -64,7 +64,7 @@ after the S2 adversarial review. Two kinds of entry live here:
 8. **Dagre vs ELK.** Enterprise's auto-layout uses dagre; the S4 brief for the standalone layout
    engine mandates ELK. Deliberate, already-agreed choice — not drift — recorded here because it
    looks like an inconsistency on a shallow read. Out of scope for S2 (this package holds the
-   `.layout/` file *schema*, no engine code).
+   `.layout/` file _schema_, no engine code).
 
 9. **No `apiVersion`/`kind` envelope.** Unlike the decision/catalog artifact family
    (`@workspec/decision-schema`), Enterprise's existing C4 element YAML has no envelope — files
@@ -86,47 +86,47 @@ after the S2 adversarial review. Two kinds of entry live here:
 ## Deliberate divergences remaining in @workspec/c4-schema
 
 (a) **`.strict()` where Enterprise strips.** Every element schema, both diagram schemas (and
-    their fat nodes/edges/tag styles), and the layout schema in this package are `.strict()`: an
-    unknown key is a validation **error**. The corresponding Enterprise schemas are plain
-    `z.object(...)`: unknown keys are silently **stripped** on parse. This is deliberate
-    authoring-contract hardening — a typo'd field name in a studio-authored file fails loudly
-    instead of being dropped on the floor. Consequence to keep in view: if a future Enterprise
-    version adds a field to one of these shapes, files carrying it will **fail studio validation**
-    until this package ships the matching schema update. The style spec is the exception: it is
-    passthrough end-to-end, faithfully matching Enterprise's lenient `StyleSpecYamlSchema`.
+their fat nodes/edges/tag styles), and the layout schema in this package are `.strict()`: an
+unknown key is a validation **error**. The corresponding Enterprise schemas are plain
+`z.object(...)`: unknown keys are silently **stripped** on parse. This is deliberate
+authoring-contract hardening — a typo'd field name in a studio-authored file fails loudly
+instead of being dropped on the floor. Consequence to keep in view: if a future Enterprise
+version adds a field to one of these shapes, files carrying it will **fail studio validation**
+until this package ships the matching schema update. The style spec is the exception: it is
+passthrough end-to-end, faithfully matching Enterprise's lenient `StyleSpecYamlSchema`.
 
 (b) **Typed-ref diagram nodes: strict vs passthrough.** Enterprise's `typedRefNodeSchema` is
-    `.passthrough()` per kind variant — extra keys ride along, and an entry with *two* kind keys
-    parses (the resolver picks the first kind present; multi-kind entries are only caught there).
-    This package's typed-ref node variants are `.strict()`, so `{component: "x", container: "y"}`
-    — or a typed ref with any stray key — is rejected at parse time. Same hardening rationale as
-    (a), called out separately because it changes accepted *shapes*, not just unknown-key
-    tolerance.
+`.passthrough()` per kind variant — extra keys ride along, and an entry with _two_ kind keys
+parses (the resolver picks the first kind present; multi-kind entries are only caught there).
+This package's typed-ref node variants are `.strict()`, so `{component: "x", container: "y"}`
+— or a typed ref with any stray key — is rejected at parse time. Same hardening rationale as
+(a), called out separately because it changes accepted _shapes_, not just unknown-key
+tolerance.
 
 (c) **The links entry rule is runtime-only.** The "exactly one `{linkType: pathRef}` pair, plus
-    optional `cardinality`" rule is a Zod `superRefine` — JSON Schema cannot express it, so the
-    generated `*.schema.json` types a links entry as an open object. Editors (VS Code YAML) will
-    NOT red-squiggle a malformed links entry; runtime Zod validation (`parse*Yaml` / `safeParse`)
-    will catch it. The same applies to the pathRef `~/`/`@workspace/` prefix rule and the
-    cardinality enum, which live inside the superRefine. Noted in the package README's
-    IntelliSense section.
+optional `cardinality`" rule is a Zod `superRefine` — JSON Schema cannot express it, so the
+generated `*.schema.json` types a links entry as an open object. Editors (VS Code YAML) will
+NOT red-squiggle a malformed links entry; runtime Zod validation (`parse*Yaml` / `safeParse`)
+will catch it. The same applies to the pathRef `~/`/`@workspace/` prefix rule and the
+cardinality enum, which live inside the superRefine. Noted in the package README's
+IntelliSense section.
 
 (d) **`slugify` skips Enterprise's unicode-escape preprocessing.** Enterprise's `slugify` first
-    runs `decodeUnicodeEscapes` (turning literal `\uXXXX` sequences into characters) — an MCP
-    tool-input normalisation concern, not slug semantics. This package's `slugify` is otherwise
-    operation-for-operation identical (lowercase → collapse non-alphanumerics → trim hyphens →
-    `slice(0, 64)` with **no** second trim, so a slug whose 64-char cut lands on a hyphen keeps
-    it). For inputs containing no literal `\u` escape sequences the two functions are
-    byte-identical.
+runs `decodeUnicodeEscapes` (turning literal `\uXXXX` sequences into characters) — an MCP
+tool-input normalisation concern, not slug semantics. This package's `slugify` is otherwise
+operation-for-operation identical (lowercase → collapse non-alphanumerics → trim hyphens →
+`slice(0, 64)` with **no** second trim, so a slug whose 64-char cut lands on a hyphen keeps
+it). For inputs containing no literal `\u` escape sequences the two functions are
+byte-identical.
 
 (e) **`LinkCardinality` is `.strict()`.** Enterprise's `linkCardinalitySchema` is a plain
-    `z.object` (an unknown key inside `cardinality` would be stripped); this package rejects it.
-    Same hardening family as (a).
+`z.object` (an unknown key inside `cardinality` would be stripped); this package rejects it.
+Same hardening family as (a).
 
 (f) **Layout `viewport.zoom` must be strictly positive.** The `.layout/` format is new surface
-    (no Enterprise file format to conform to), but for the record: Enterprise's `diagram_layouts`
-    DB column has no zoom constraint. This package rejects `zoom <= 0` because a non-positive
-    zoom has no renderable meaning.
+(no Enterprise file format to conform to), but for the record: Enterprise's `diagram_layouts`
+DB column has no zoom constraint. This package rejects `zoom <= 0` because a non-positive
+zoom has no renderable meaning.
 
 ## S5 — `@workspec/c4-ui` (issue #6): drift and new conventions
 
@@ -250,7 +250,7 @@ after the S2 adversarial review. Two kinds of entry live here:
     `c4-container` diagram to `lensViews.{logical,deployment}`, never a single `view` — see
     entry 11 above and `preferred-type.ts`. `packages/c4-studio/src/render-diagram.ts` always
     renders the **logical** lens for such a diagram (`diagram.view ?? diagram.lensViews?.logical
-    ?? emptyView`), matching `C4Explorer`'s own default lens. A tree whose container diagram has
+?? emptyView`), matching `C4Explorer`'s own default lens. A tree whose container diagram has
     no `domain`-kind elements sharing a slug with a `container`-kind element (this repo's own
     dogfood tree included — see `.workspec/diagrams/container.yaml`, every node a typed ref)
     resolves identically under both lenses regardless, so the single-shot CLI not exposing the
@@ -262,7 +262,7 @@ after the S2 adversarial review. Two kinds of entry live here:
 19. **`workspec-c4 serve`'s API is a generic four-method `C4FileSource` proxy plus one
     convenience endpoint, not a per-artifact-kind API like `@workspec/decision-studio`'s
     server.** Decision Studio's host has one route pair per artifact kind (`GET`/`PUT
-    /api/decision`, `GET`/`PUT /api/catalog`) because `DecisionRepositoryPort` is a six-method,
+/api/decision`, `GET`/`PUT /api/catalog`) because `DecisionRepositoryPort` is a six-method,
     kind-aware port. `@workspec/c4-model`'s repository port (`C4FileSource`) is already generic
     (`listFiles`/`readFile`/`writeFile`/`exists`, kind-agnostic) — proxying THAT port directly
     over HTTP (`GET /api/files`, `GET /api/file`, `PUT /api/file`, `GET /api/file-exists`) is the
@@ -271,7 +271,7 @@ after the S2 adversarial review. Two kinds of entry live here:
     (`Map`s converted to plain objects, since JSON has no `Map`), so the browser client gets one
     round trip for its initial load instead of reconstructing the tree itself over the generic
     proxy. The proxy is deliberately least-privilege in BOTH directions. Reads (`GET
-    /api/files`/`/api/file`/`/api/file-exists`) are confined to `.workspec/**` at the shared
+/api/files`/`/api/file`/`/api/file-exists`) are confined to `.workspec/**` at the shared
     parameter gate — the explorer client only ever requests `.workspec/` paths, so serving
     anything else in the served root (`.git/`, `.env`, source files) would be needless surface;
     such paths are 400'd, never read. Writes are narrower still: since the only write path any

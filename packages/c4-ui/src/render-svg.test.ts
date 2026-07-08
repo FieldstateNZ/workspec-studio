@@ -3,7 +3,9 @@ import type { PositionedDiagram, PositionedEdge, PositionedNode } from '@workspe
 import { Spec } from '@workspec/c4-schema';
 import { renderSvg } from './render-svg.js';
 
-function node(overrides: Partial<PositionedNode> & Pick<PositionedNode, 'nodeId' | 'x' | 'y'>): PositionedNode {
+function node(
+  overrides: Partial<PositionedNode> & Pick<PositionedNode, 'nodeId' | 'x' | 'y'>,
+): PositionedNode {
   return {
     slug: overrides.nodeId,
     kind: 'container',
@@ -21,7 +23,9 @@ function node(overrides: Partial<PositionedNode> & Pick<PositionedNode, 'nodeId'
   };
 }
 
-function edge(overrides: Partial<PositionedEdge> & Pick<PositionedEdge, 'from' | 'to' | 'route'>): PositionedEdge {
+function edge(
+  overrides: Partial<PositionedEdge> & Pick<PositionedEdge, 'from' | 'to' | 'route'>,
+): PositionedEdge {
   return { label: null, category: null, lens: null, dangling: false, ...overrides };
 }
 

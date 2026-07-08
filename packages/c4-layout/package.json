@@ -2,7 +2,14 @@
   "name": "@workspec/c4-layout",
   "version": "0.1.0-alpha.0",
   "description": "Deterministic ELK-based auto-layout for resolved WorkSpec C4 diagrams, with pinned-node/mixed-mode support and .layout/ round-tripping. No IO assumptions, no DOM, runs in Node and the browser.",
-  "keywords": ["c4", "architecture", "diagrams", "layout", "elk", "elkjs"],
+  "keywords": [
+    "c4",
+    "architecture",
+    "diagrams",
+    "layout",
+    "elk",
+    "elkjs"
+  ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/c4-layout#readme",
   "repository": {
     "type": "git",
@@ -11,7 +18,11 @@
   },
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

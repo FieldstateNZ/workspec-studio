@@ -26,11 +26,16 @@ export interface TooltipContentModel {
  * slug, is where those live.
  */
 export function tooltipContentFor(
-  node: Pick<ResolvedDiagramNode, 'title' | 'kind' | 'description' | 'technology' | 'tags' | 'slug'>,
+  node: Pick<
+    ResolvedDiagramNode,
+    'title' | 'kind' | 'description' | 'technology' | 'tags' | 'slug'
+  >,
   elementsByKindAndSlug: ReadonlyMap<string, LoadedElement> | undefined,
 ): TooltipContentModel {
   const element =
-    node.slug !== null && node.kind !== null ? elementsByKindAndSlug?.get(elementKey(node.kind, node.slug)) : undefined;
+    node.slug !== null && node.kind !== null
+      ? elementsByKindAndSlug?.get(elementKey(node.kind, node.slug))
+      : undefined;
   const rawLinks = element?.element.data.links ?? [];
   return {
     title: node.title,
@@ -49,7 +54,9 @@ export function TooltipContent(props: {
   const { content, linkResolver } = props;
   return (
     <div className="c4-tooltip-body">
-      {content.kind !== null && <div className="c4-tooltip-kind">{content.kind.replace(/-/g, ' ')}</div>}
+      {content.kind !== null && (
+        <div className="c4-tooltip-kind">{content.kind.replace(/-/g, ' ')}</div>
+      )}
       <div className="c4-tooltip-title">{content.title}</div>
       {content.description !== null && content.description !== '' && (
         <p className="c4-tooltip-desc">{content.description}</p>

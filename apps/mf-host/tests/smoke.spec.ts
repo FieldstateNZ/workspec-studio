@@ -48,7 +48,9 @@ test.describe('MF smoke — host consumes the @workspec/decision-ui remote', () 
     //       the in-memory C4 model's elements. ─────────────────────────────────
     await expect(page.locator('#c4-diagram-mount').getByText('Architect')).toBeVisible();
     await expect(page.locator('#c4-diagram-mount').getByText('Payment Gateway')).toBeVisible();
-    await expect(page.locator('#c4-explorer-mount').getByRole('button', { name: /System Context/i })).toBeVisible();
+    await expect(
+      page.locator('#c4-explorer-mount').getByRole('button', { name: /System Context/i }),
+    ).toBeVisible();
     await expect(page.locator('#c4-explorer-mount').getByText('Architect')).toBeVisible();
 
     // ── 3b. c4-ui's own reactProbe: same single-instance proof, independently. ─

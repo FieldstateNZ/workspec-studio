@@ -8,8 +8,13 @@ import { classifyThinNode } from './classify-thin-node.js';
  * diagnostic (the alias was actually exercised) rather than simply
  * irrelevant to this diagram.
  */
-export function usesSystemAlias(nodes: readonly (ThinDiagramNode | FatDiagramNode)[], edges: readonly DiagramEdge[]): boolean {
-  const nodeUsesAlias = nodes.some((node) => !('id' in node) && isSystemAlias(classifyThinNode(node).slug));
+export function usesSystemAlias(
+  nodes: readonly (ThinDiagramNode | FatDiagramNode)[],
+  edges: readonly DiagramEdge[],
+): boolean {
+  const nodeUsesAlias = nodes.some(
+    (node) => !('id' in node) && isSystemAlias(classifyThinNode(node).slug),
+  );
   const edgeUsesAlias = edges.some((edge) => isSystemAlias(edge.from) || isSystemAlias(edge.to));
   return nodeUsesAlias || edgeUsesAlias;
 }

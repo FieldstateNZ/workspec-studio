@@ -18,7 +18,10 @@ import { Layout } from '@workspec/c4-schema';
 import type { Layout as LayoutData } from '@workspec/c4-schema';
 
 /** Merges one lens's freshly positioned view into the diagram's existing `.layout/` data, for a drag-to-pin write. */
-export function serializeForWrite(existing: LayoutData | null, positioned: PositionedDiagram): LayoutData {
+export function serializeForWrite(
+  existing: LayoutData | null,
+  positioned: PositionedDiagram,
+): LayoutData {
   const incoming = serialize(positioned);
   return Layout.parse({
     version: 1,

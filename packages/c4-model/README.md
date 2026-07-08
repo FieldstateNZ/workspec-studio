@@ -4,7 +4,7 @@ Pure loader/resolver for a WorkSpec C4 working tree. Discovers `.workspec/` elem
 `.layout/` files through a small file-source port, parses and validates every one via
 [`@workspec/c4-schema`](../c4-schema), resolves every diagram's node/edge references against the
 tree — the `__system__` alias, preferred-type disambiguation, and the c4-context safety net mirror
-WorkSpec Enterprise's `get-diagram.ts`, while c4-container *lens partitioning* is a deliberate
+WorkSpec Enterprise's `get-diagram.ts`, while c4-container _lens partitioning_ is a deliberate
 enhancement beyond Enterprise's single combined preference list (see
 `src/resolution/preferred-type.ts`) — and returns one typed `C4Model`, alongside a best-effort
 diagnostics array. Never throws: every failure mode degrades to a diagnostic, and the model is
@@ -30,7 +30,9 @@ const source = createMemorySource({
 const memoryModel = await loadC4Model(source);
 
 for (const diagnostic of model.diagnostics) {
-  console.warn(`${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message} (${diagnostic.file})`);
+  console.warn(
+    `${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message} (${diagnostic.file})`,
+  );
 }
 ```
 
@@ -45,7 +47,7 @@ interface C4FileSource {
 }
 ```
 
-Every path is POSIX-relative to the repo root that *contains* `.workspec/` (e.g.
+Every path is POSIX-relative to the repo root that _contains_ `.workspec/` (e.g.
 `.workspec/actors/architect.yaml`). Two implementations: `createMemorySource` (`Map`-backed,
 seedable, the root entry) and `createFsSource` (`node:fs/promises`-backed, the `./fs` subpath).
 
@@ -73,7 +75,7 @@ seedable, the root entry) and `createFsSource` (`node:fs/promises`-backed, the `
   defaults and `spec.yaml`'s `connections` map raises `unknown-category` — the category itself is
   never rejected.
 - `.layout/<slug>.yaml` files join their diagram by slug. A pinned node or edge-routing-hint key
-  that matches nothing the diagram's own YAML named (as a node ref *or* an edge endpoint — see
+  that matches nothing the diagram's own YAML named (as a node ref _or_ an edge endpoint — see
   `authored-diagram-refs.ts`) raises `orphan-layout-node` / `orphan-layout-edge-hint`; a layout file
   whose slug names no diagram at all raises `orphan-layout-file`.
 - `~/`-rooted `links` entries that don't resolve to a file in the tree raise `dangling-link`;
@@ -93,12 +95,12 @@ points at, distinct from `slug` which names the file carrying the reference.
 
 ## Scripts
 
-| Script                                        | Does                                       |
-| ---------------------------------------------- | ------------------------------------------- |
-| `pnpm --filter @workspec/c4-model run build`   | `tsc --emitDeclarationOnly` + tsup → `dist/` |
-| `pnpm --filter @workspec/c4-model run typecheck`| `tsc -b`                                    |
-| `pnpm --filter @workspec/c4-model run test`    | vitest (unit, conformance, edge cases)      |
-| `pnpm --filter @workspec/c4-model run lint`    | eslint                                      |
+| Script                                           | Does                                         |
+| ------------------------------------------------ | -------------------------------------------- |
+| `pnpm --filter @workspec/c4-model run build`     | `tsc --emitDeclarationOnly` + tsup → `dist/` |
+| `pnpm --filter @workspec/c4-model run typecheck` | `tsc -b`                                     |
+| `pnpm --filter @workspec/c4-model run test`      | vitest (unit, conformance, edge cases)       |
+| `pnpm --filter @workspec/c4-model run lint`      | eslint                                       |
 
 ## Out of scope (see other slices)
 

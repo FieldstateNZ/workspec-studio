@@ -30,11 +30,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "exploring",
-            "decided",
-            "superseded"
-          ],
+          "enum": ["exploring", "decided", "superseded"],
           "description": "Lifecycle status: exploring → decided; a decided decision may later be superseded."
         },
         "created": {
@@ -57,11 +53,7 @@
           "description": "Id of a decision this one supersedes."
         }
       },
-      "required": [
-        "id",
-        "title",
-        "status"
-      ],
+      "required": ["id", "title", "status"],
       "additionalProperties": false,
       "description": "Decision identity and lifecycle."
     },
@@ -119,11 +111,7 @@
                 "description": "Relative importance in the weighted recommendation (higher matters more; 0 disables the criterion)."
               }
             },
-            "required": [
-              "id",
-              "label",
-              "weight"
-            ],
+            "required": ["id", "label", "weight"],
             "additionalProperties": false,
             "description": "A decision criterion and its weight in the recommendation."
           },
@@ -236,15 +224,7 @@
                           "description": "Units of the SKU per environment, keyed by env id. A missing env is treated as 0."
                         }
                       },
-                      "required": [
-                        "id",
-                        "label",
-                        "flat",
-                        "sku",
-                        "mode",
-                        "schedule",
-                        "qty"
-                      ],
+                      "required": ["id", "label", "flat", "sku", "mode", "schedule", "qty"],
                       "additionalProperties": false,
                       "description": "A metered SKU line priced from the catalog."
                     },
@@ -294,12 +274,7 @@
                           "description": "Marks the amount as an estimate rather than a firm price."
                         }
                       },
-                      "required": [
-                        "id",
-                        "label",
-                        "flat",
-                        "amount"
-                      ],
+                      "required": ["id", "label", "flat", "amount"],
                       "additionalProperties": false,
                       "description": "A flat line with explicit per-env monthly amounts."
                     }
@@ -524,12 +499,7 @@
                                       "description": "Marks the amount as an estimate rather than a firm price."
                                     }
                                   },
-                                  "required": [
-                                    "id",
-                                    "label",
-                                    "flat",
-                                    "amount"
-                                  ],
+                                  "required": ["id", "label", "flat", "amount"],
                                   "additionalProperties": false,
                                   "description": "A flat line with explicit per-env monthly amounts."
                                 }
@@ -538,9 +508,7 @@
                             "description": "Extra lines this op contributes when the lever is enabled."
                           }
                         },
-                        "required": [
-                          "match"
-                        ],
+                        "required": ["match"],
                         "additionalProperties": false,
                         "description": "One declarative patch operation: a match plus a set and/or added lines."
                       },
@@ -548,11 +516,7 @@
                       "description": "Ordered patch operations applied, in order, when enabled."
                     }
                   },
-                  "required": [
-                    "id",
-                    "label",
-                    "patch"
-                  ],
+                  "required": ["id", "label", "patch"],
                   "additionalProperties": false,
                   "description": "A declarative what-if transform (lever) over an option's lines."
                 },
@@ -574,9 +538,7 @@
                       "description": "Optional rationale for the score."
                     }
                   },
-                  "required": [
-                    "score"
-                  ],
+                  "required": ["score"],
                   "additionalProperties": false,
                   "description": "A 0–5 score for one criterion, with an optional note."
                 },
@@ -587,13 +549,7 @@
                 "description": "Per-criterion scores, keyed by criterion id. Keys must be declared decision criteria."
               }
             },
-            "required": [
-              "id",
-              "name",
-              "environments",
-              "lines",
-              "scores"
-            ],
+            "required": ["id", "name", "environments", "lines", "scores"],
             "additionalProperties": false,
             "description": "A costed architecture option under comparison."
           },
@@ -625,10 +581,7 @@
               "description": "When the decision was made, ISO 8601."
             }
           },
-          "required": [
-            "option",
-            "rationale"
-          ],
+          "required": ["option", "rationale"],
           "additionalProperties": false,
           "description": "The recorded outcome; present once the decision is decided."
         },
@@ -653,34 +606,19 @@
                 "description": "Optional URL or opaque ref the host resolves."
               }
             },
-            "required": [
-              "kind",
-              "label"
-            ],
+            "required": ["kind", "label"],
             "additionalProperties": false,
             "description": "An external reference the host resolves."
           },
           "description": "External references the host resolves."
         }
       },
-      "required": [
-        "context",
-        "catalog",
-        "currency",
-        "environments",
-        "criteria",
-        "options"
-      ],
+      "required": ["context", "catalog", "currency", "environments", "criteria", "options"],
       "additionalProperties": false,
       "description": "The decision body."
     }
   },
-  "required": [
-    "apiVersion",
-    "kind",
-    "metadata",
-    "spec"
-  ],
+  "required": ["apiVersion", "kind", "metadata", "spec"],
   "additionalProperties": false,
   "description": "A WorkSpec decision artifact."
 }

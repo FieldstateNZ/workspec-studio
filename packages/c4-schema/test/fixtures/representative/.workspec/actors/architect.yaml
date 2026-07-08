@@ -4,4 +4,4 @@ description: Designs systems in WorkSpec and reviews proposed changes.
 tags:
   - human
 links:
-  - adr: "~/docs/architecture/README.md"
+  - adr: '~/docs/architecture/README.md'

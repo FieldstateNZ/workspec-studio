@@ -65,7 +65,7 @@ function parseHslBody(body: string): Rgb | null {
   if (s === 0) return { r: l, g: l, b: l };
   const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
   const p = 2 * l - q;
-  const hn = ((h % 360) + 360) % 360 / 360;
+  const hn = (((h % 360) + 360) % 360) / 360;
   return {
     r: hueToChannel(p, q, hn + 1 / 3),
     g: hueToChannel(p, q, hn),
@@ -77,7 +77,10 @@ function parseHslBody(body: string): Rgb | null {
  * Parses a CSS colour value into sRGB. `var(--token)` references resolve
  * (recursively) against `tokens`; unsupported forms return null.
  */
-export function parseCssColor(value: string, tokens?: Readonly<Record<string, string>>): Rgb | null {
+export function parseCssColor(
+  value: string,
+  tokens?: Readonly<Record<string, string>>,
+): Rgb | null {
   const trimmed = value.trim();
   if (trimmed.startsWith('#')) return parseHex(trimmed);
 
@@ -135,7 +138,7 @@ function oklabToRgb(lab: Oklab): Rgb {
   return {
     r: linearToSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
     g: linearToSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-    b: linearToSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s),
+    b: linearToSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
   };
 }
 

@@ -20,7 +20,9 @@ export const Spec = z
     type: z
       .string()
       .optional()
-      .describe('Artifact kind label: "style" (v2). Legacy files used "spec" — still accepted; the compiler upgrades.'),
+      .describe(
+        'Artifact kind label: "style" (v2). Legacy files used "spec" — still accepted; the compiler upgrades.',
+      ),
     version: z.number().optional().describe('Style spec format version. Current is 2.'),
     surfaces: z
       .object({
@@ -32,11 +34,15 @@ export const Spec = z
     elements: z
       .record(z.string(), StyleElement)
       .default({})
-      .describe('Per-element-kind visual style, keyed by kind name. Absent kinds use code defaults.'),
+      .describe(
+        'Per-element-kind visual style, keyed by kind name. Absent kinds use code defaults.',
+      ),
     connections: z
       .record(z.string(), StyleConnection)
       .default({})
-      .describe('Per-category edge visual style, keyed by category name. Absent categories use code defaults.'),
+      .describe(
+        'Per-category edge visual style, keyed by category name. Absent categories use code defaults.',
+      ),
     source: sourceField,
   })
   .describe('The singleton project style spec (lenient; the style compiler normalises).');

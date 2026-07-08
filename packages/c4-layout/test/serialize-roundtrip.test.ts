@@ -3,7 +3,11 @@ import { Layout } from '@workspec/c4-schema';
 import { layoutDiagram } from '../src/layout-diagram.js';
 import { serialize } from '../src/serialize.js';
 import { geometryOf } from './helpers/geometry-snapshot.js';
-import { findContainer, findSystemContext, loadRepresentativeModel } from './helpers/load-representative-model.js';
+import {
+  findContainer,
+  findSystemContext,
+  loadRepresentativeModel,
+} from './helpers/load-representative-model.js';
 
 /**
  * `serialize` is how a team graduates auto-layout to a curated `.layout/`
@@ -46,7 +50,11 @@ describe('serialize round-trip', () => {
     });
 
     const serialized = serialize(first);
-    const second = await layoutDiagram({ nodes: diagram.view.nodes, edges: diagram.view.edges, layout: serialized });
+    const second = await layoutDiagram({
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout: serialized,
+    });
 
     // Geometry must be pixel-identical; `pinned` legitimately flips to
     // `true` for the previously-auto `payment-gateway` node now that

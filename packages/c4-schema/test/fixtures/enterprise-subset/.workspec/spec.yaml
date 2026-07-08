@@ -2,15 +2,15 @@ type: style
 version: 2
 elements:
   actor:
-    accent: "#4A90D9"
+    accent: '#4A90D9'
     icon: user
     shape: box
   system:
-    accent: "#1168BD"
+    accent: '#1168BD'
     icon: box
     shape: box
   external-system:
-    accent: "#64748b"
+    accent: '#64748b'
     icon: external-link
     shape: box
     variant: external
@@ -52,14 +52,14 @@ elements:
     shape: box
 connections:
   interaction:
-    accent: "#64748b"
+    accent: '#64748b'
     style: solid
   data:
-    accent: "#4CAF50"
+    accent: '#4CAF50'
     style: solid
   governance:
-    accent: "#9C27B0"
+    accent: '#9C27B0'
     style: dashed
   identity:
-    accent: "#4A90D9"
+    accent: '#4A90D9'
     style: solid

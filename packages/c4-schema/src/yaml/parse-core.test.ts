@@ -4,7 +4,10 @@ import { parseYamlArtifact } from './parse-core.js';
 
 describe('parseYamlArtifact', () => {
   it('returns typed data on success', () => {
-    const result = parseYamlArtifact('title: Architect\ndescription: Designs systems.\n', ActorElement);
+    const result = parseYamlArtifact(
+      'title: Architect\ndescription: Designs systems.\n',
+      ActorElement,
+    );
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.title).toBe('Architect');
@@ -33,7 +36,12 @@ describe('parseYamlArtifact', () => {
   });
 
   it('reports the dot-joined path for a nested issue', () => {
-    const text = ['title: Architect', 'description: Designs systems.', 'links:', '  - adr: bad-path'].join('\n');
+    const text = [
+      'title: Architect',
+      'description: Designs systems.',
+      'links:',
+      '  - adr: bad-path',
+    ].join('\n');
     const result = parseYamlArtifact(text, ActorElement);
     expect(result.ok).toBe(false);
     if (!result.ok) {

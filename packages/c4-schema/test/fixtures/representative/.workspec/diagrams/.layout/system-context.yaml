@@ -10,7 +10,7 @@ nodes:
     x: 400
     y: 200
 edges:
-  "architect->__system__":
+  'architect->__system__':
     waypoints:
       - x: 200
         y: 220

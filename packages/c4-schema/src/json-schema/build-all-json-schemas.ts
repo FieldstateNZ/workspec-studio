@@ -31,21 +31,61 @@ import { buildJsonSchema } from './build-json-schema.js';
  */
 export function buildAllJsonSchemas(): Record<string, unknown> {
   return {
-    'actor.schema.json': buildJsonSchema(ActorElement, ACTOR_SCHEMA_URL, 'WorkSpec C4 Actor (v1alpha1)'),
-    'system.schema.json': buildJsonSchema(SystemElement, SYSTEM_SCHEMA_URL, 'WorkSpec C4 System (v1alpha1)'),
+    'actor.schema.json': buildJsonSchema(
+      ActorElement,
+      ACTOR_SCHEMA_URL,
+      'WorkSpec C4 Actor (v1alpha1)',
+    ),
+    'system.schema.json': buildJsonSchema(
+      SystemElement,
+      SYSTEM_SCHEMA_URL,
+      'WorkSpec C4 System (v1alpha1)',
+    ),
     'external-system.schema.json': buildJsonSchema(
       ExternalSystemElement,
       EXTERNAL_SYSTEM_SCHEMA_URL,
       'WorkSpec C4 External System (v1alpha1)',
     ),
-    'container.schema.json': buildJsonSchema(C4Element, CONTAINER_SCHEMA_URL, 'WorkSpec C4 Container (v1alpha1)'),
-    'component.schema.json': buildJsonSchema(C4Element, COMPONENT_SCHEMA_URL, 'WorkSpec C4 Component (v1alpha1)'),
-    'database.schema.json': buildJsonSchema(C4Element, DATABASE_SCHEMA_URL, 'WorkSpec C4 Database (v1alpha1)'),
-    'queue.schema.json': buildJsonSchema(C4Element, QUEUE_SCHEMA_URL, 'WorkSpec C4 Queue (v1alpha1)'),
-    'domain.schema.json': buildJsonSchema(DomainElement, DOMAIN_SCHEMA_URL, 'WorkSpec C4 Domain (v1alpha1)'),
-    'feature.schema.json': buildJsonSchema(FeatureElement, FEATURE_SCHEMA_URL, 'WorkSpec C4 Feature (v1alpha1)'),
-    'diagram.schema.json': buildJsonSchema(Diagram, DIAGRAM_SCHEMA_URL, 'WorkSpec C4 Diagram (v1alpha1)'),
-    'layout.schema.json': buildJsonSchema(Layout, LAYOUT_SCHEMA_URL, 'WorkSpec C4 Layout (v1alpha1)'),
+    'container.schema.json': buildJsonSchema(
+      C4Element,
+      CONTAINER_SCHEMA_URL,
+      'WorkSpec C4 Container (v1alpha1)',
+    ),
+    'component.schema.json': buildJsonSchema(
+      C4Element,
+      COMPONENT_SCHEMA_URL,
+      'WorkSpec C4 Component (v1alpha1)',
+    ),
+    'database.schema.json': buildJsonSchema(
+      C4Element,
+      DATABASE_SCHEMA_URL,
+      'WorkSpec C4 Database (v1alpha1)',
+    ),
+    'queue.schema.json': buildJsonSchema(
+      C4Element,
+      QUEUE_SCHEMA_URL,
+      'WorkSpec C4 Queue (v1alpha1)',
+    ),
+    'domain.schema.json': buildJsonSchema(
+      DomainElement,
+      DOMAIN_SCHEMA_URL,
+      'WorkSpec C4 Domain (v1alpha1)',
+    ),
+    'feature.schema.json': buildJsonSchema(
+      FeatureElement,
+      FEATURE_SCHEMA_URL,
+      'WorkSpec C4 Feature (v1alpha1)',
+    ),
+    'diagram.schema.json': buildJsonSchema(
+      Diagram,
+      DIAGRAM_SCHEMA_URL,
+      'WorkSpec C4 Diagram (v1alpha1)',
+    ),
+    'layout.schema.json': buildJsonSchema(
+      Layout,
+      LAYOUT_SCHEMA_URL,
+      'WorkSpec C4 Layout (v1alpha1)',
+    ),
     'spec.schema.json': buildJsonSchema(Spec, SPEC_SCHEMA_URL, 'WorkSpec C4 Style Spec (v1alpha1)'),
   };
 }

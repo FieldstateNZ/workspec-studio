@@ -37,7 +37,8 @@ export async function loadC4Model(source: C4FileSource): Promise<C4Model> {
   const { spec, diagnostics: specDiagnostics } = await loadSpec(source);
   diagnostics.push(...specDiagnostics);
 
-  const { diagrams: rawDiagrams, diagnostics: diagramParseDiagnostics } = await loadDiagramsRaw(source);
+  const { diagrams: rawDiagrams, diagnostics: diagramParseDiagnostics } =
+    await loadDiagramsRaw(source);
   diagnostics.push(...diagramParseDiagnostics);
 
   const { layouts: rawLayouts, diagnostics: layoutParseDiagnostics } = await loadLayoutsRaw(source);

@@ -24,18 +24,13 @@
                   "type": "number"
                 }
               },
-              "required": [
-                "x",
-                "y"
-              ],
+              "required": ["x", "y"],
               "type": "object"
             },
             "type": "array"
           }
         },
-        "required": [
-          "waypoints"
-        ],
+        "required": ["waypoints"],
         "type": "object"
       },
       "description": "Optional per-edge routing hints, keyed by \"<from>-><to>\".",
@@ -69,10 +64,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "x",
-          "y"
-        ],
+        "required": ["x", "y"],
         "type": "object"
       },
       "description": "Pinned node positions, keyed by element slug. Absence of a key means auto-layout.",
@@ -105,18 +97,11 @@
           "type": "number"
         }
       },
-      "required": [
-        "x",
-        "y",
-        "zoom"
-      ],
+      "required": ["x", "y", "zoom"],
       "type": "object"
     }
   },
-  "required": [
-    "version",
-    "nodes"
-  ],
+  "required": ["version", "nodes"],
   "title": "WorkSpec C4 Layout (v1alpha1)",
   "type": "object"
 }

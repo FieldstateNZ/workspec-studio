@@ -5,10 +5,10 @@ product, publishing packages that WorkSpec Enterprise consumes directly rather t
 duplicating. Every package here is Enterprise-grade by constitution: Enterprise is a future
 consumer of this code.
 
-| Module      | Status      | Where                                                          |
-| ----------- | ----------- | --------------------------------------------------------------- |
-| Decisions   | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`             |
-| C4 Diagrams | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/`          |
+| Module      | Status      | Where                                                 |
+| ----------- | ----------- | ----------------------------------------------------- |
+| Decisions   | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`    |
+| C4 Diagrams | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/` |
 
 ## Layout
 
@@ -60,18 +60,18 @@ Browse, validate, and render C4 architecture trees — actors, systems, containe
 domains, features, and diagrams — straight from the `.workspec/` files already in your repo.
 Full docs, the `.layout/` contract, and CLI usage live under [`docs/c4/`](docs/c4).
 
-| Package                | Path                    | Role                                                                    |
-| ------------------------ | ------------------------- | -------------------------------------------------------------------------- |
-| `@workspec/c4-schema`  | `packages/c4-schema`  | Zod source of truth → TS types, runtime validation, generated JSON Schema |
-| `@workspec/c4-model`   | `packages/c4-model`   | Pure loader/resolver: `.workspec/` tree → one typed model, with diagnostics |
-| `@workspec/c4-layout`  | `packages/c4-layout`  | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping |
-| `@workspec/c4-ui`      | `packages/c4-ui`      | Host-agnostic React components (interactive canvas + deterministic SVG export) |
-| `@workspec/c4-studio`  | `packages/c4-studio`  | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
+| Package               | Path                 | Role                                                                                  |
+| --------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| `@workspec/c4-schema` | `packages/c4-schema` | Zod source of truth → TS types, runtime validation, generated JSON Schema             |
+| `@workspec/c4-model`  | `packages/c4-model`  | Pure loader/resolver: `.workspec/` tree → one typed model, with diagnostics           |
+| `@workspec/c4-layout` | `packages/c4-layout` | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping         |
+| `@workspec/c4-ui`     | `packages/c4-ui`     | Host-agnostic React components (interactive canvas + deterministic SVG export)        |
+| `@workspec/c4-studio` | `packages/c4-studio` | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
 
-The `@workspec/c4-*` library packages are published to npm at `0.1.0-alpha.0`; `@workspec/c4-studio`
-is not yet published (trusted publisher pending). `apps/site`'s `/c4` page still takes the c4
-packages as `workspace:*` devDependencies as a documented, temporary exception — they flip to
-registry pins as a follow-up — see [`docs/c4/drift-log.md`](docs/c4/drift-log.md).
+All five `@workspec/c4-*` packages are published to npm at `0.1.0-alpha.0`. `apps/site`'s `/c4`
+page still takes the c4 packages as `workspace:*` devDependencies as a documented, temporary
+exception — they flip to registry pins as a follow-up — see
+[`docs/c4/drift-log.md`](docs/c4/drift-log.md).
 
 ## Architecture
 

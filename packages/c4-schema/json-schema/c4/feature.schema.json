@@ -29,10 +29,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "title",
-    "description"
-  ],
+  "required": ["title", "description"],
   "title": "WorkSpec C4 Feature (v1alpha1)",
   "type": "object"
 }

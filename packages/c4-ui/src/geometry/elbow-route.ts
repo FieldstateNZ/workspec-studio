@@ -27,7 +27,11 @@ function midpoint(a: number, b: number): number {
 export type ElbowDirection = 'LR' | 'TB';
 
 /** Recomputes a deterministic orthogonal route between two rects, matching `@workspec/c4-layout`'s own routing shape. */
-export function recomputeElbowRoute(from: Rect, to: Rect, direction: ElbowDirection): readonly EdgePoint[] {
+export function recomputeElbowRoute(
+  from: Rect,
+  to: Rect,
+  direction: ElbowDirection,
+): readonly EdgePoint[] {
   if (direction === 'LR') {
     const start = { x: from.x + from.width, y: from.y + from.height / 2 };
     const end = { x: to.x, y: to.y + to.height / 2 };

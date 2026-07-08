@@ -13,7 +13,10 @@ import { sortJsonKeys } from './sort-json-keys.js';
  * the editor-facing schema.
  */
 export function buildJsonSchema(schema: z.ZodType, id: string, title: string): unknown {
-  const body = z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' }) as Record<string, unknown>;
+  const body = z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' }) as Record<
+    string,
+    unknown
+  >;
   delete body.$schema;
   return sortJsonKeys({
     $schema: JSON_SCHEMA_DIALECT,

@@ -25,7 +25,7 @@ contract**; the attached design prototype (`Decision Studio.html` + imports) is 
 | 4   | **S3** Repo + CLI        | `@workspec/decision-schema`(port), `studio`          | `DecisionRepositoryPort` (6 methods), `FsRepository`, `MemoryRepository`, CLI `validate`/`render-adr` |
 | 5   | **S4** UI + host         | `@workspec/decision-ui`, `@workspec/decision-studio` | `DecisionStudioProvider`, Workspace view, cost editor, `--ds-*` themes; Express host shell; `serve`   |
 | 6   | **S5** Views             | `@workspec/decision-ui`                              | Compare, Catalog (gated edit), ADR (decide flow) — four-view parity                                   |
-| 7   | **S6** Module federation | `@workspec/decision-ui`, `apps/mf-host`          | MF remote build (`DecisionWorkspace`/`DecisionCard`/`AdrView`), smoke host, host contract doc         |
+| 7   | **S6** Module federation | `@workspec/decision-ui`, `apps/mf-host`              | MF remote build (`DecisionWorkspace`/`DecisionCard`/`AdrView`), smoke host, host contract doc         |
 | 8   | **S7** Launch polish     | all                                                  | npx packaging, E2E, README, `docs/` specs, 2nd example, Pages schema publish                          |
 
 **Dependency direction (enforced by package boundaries):** `schema ← engine ← ui ← studio`.

@@ -7,7 +7,9 @@ import { ThinDiagram } from './diagram-thin.js';
  * shape emitted by the MCP `create_diagram` tool. Lives at
  * `.workspec/diagrams/<slug>.yaml`.
  */
-export const Diagram = z.union([ThinDiagram, FatDiagram]).describe('A thin or fat diagram artifact.');
+export const Diagram = z
+  .union([ThinDiagram, FatDiagram])
+  .describe('A thin or fat diagram artifact.');
 
 /** Inferred type of a diagram artifact. */
 export type Diagram = z.infer<typeof Diagram>;

@@ -13,9 +13,13 @@ describe('no-system', () => {
       }),
     );
 
-    expect(model.diagnostics).toMatchObject([{ severity: 'error', code: DIAGNOSTIC_CODES.noSystem, file: '.workspec/diagrams/ctx.yaml' }]);
+    expect(model.diagnostics).toMatchObject([
+      { severity: 'error', code: DIAGNOSTIC_CODES.noSystem, file: '.workspec/diagrams/ctx.yaml' },
+    ]);
     // No redundant dangling-edge-ref for the same root cause.
-    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.danglingEdgeRef)).toEqual([]);
+    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.danglingEdgeRef)).toEqual(
+      [],
+    );
     expect(model.diagrams[0]?.view?.edges[0]).toMatchObject({ dangling: true });
   });
 
@@ -23,7 +27,8 @@ describe('no-system', () => {
     const model = await loadC4Model(
       createMemorySource({
         '.workspec/actors/architect.yaml': 'title: Architect\ndescription: Designs things.\n',
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
       }),
     );
 
@@ -37,13 +42,20 @@ describe('c4-context system-injection safety net', () => {
       createMemorySource({
         '.workspec/system/acme.yaml': 'title: Acme\ndescription: The system.\n',
         '.workspec/actors/architect.yaml': 'title: Architect\ndescription: Designs things.\n',
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
       }),
     );
 
     expect(model.diagnostics).toEqual([]);
     const nodes = model.diagrams[0]?.view?.nodes ?? [];
-    expect(nodes[0]).toMatchObject({ nodeId: 'acme', slug: 'acme', kind: 'system', injected: true, title: 'Acme' });
+    expect(nodes[0]).toMatchObject({
+      nodeId: 'acme',
+      slug: 'acme',
+      kind: 'system',
+      injected: true,
+      title: 'Acme',
+    });
     expect(nodes[1]).toMatchObject({ slug: 'architect', injected: false });
   });
 
@@ -51,7 +63,8 @@ describe('c4-context system-injection safety net', () => {
     const model = await loadC4Model(
       createMemorySource({
         '.workspec/system/acme.yaml': 'title: Acme\ndescription: The system.\n',
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - system: acme\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - system: acme\nedges: []\n',
       }),
     );
 
@@ -64,7 +77,8 @@ describe('c4-context system-injection safety net', () => {
     const model = await loadC4Model(
       createMemorySource({
         '.workspec/actors/architect.yaml': 'title: Architect\ndescription: Designs things.\n',
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
       }),
     );
 
@@ -84,13 +98,16 @@ describe('unknown-category', () => {
       }),
     );
 
-    expect(model.diagnostics).toMatchObject([{ severity: 'warning', code: DIAGNOSTIC_CODES.unknownCategory }]);
+    expect(model.diagnostics).toMatchObject([
+      { severity: 'warning', code: DIAGNOSTIC_CODES.unknownCategory },
+    ]);
   });
 
   it('does not warn for a built-in default category or a spec-defined one', async () => {
     const model = await loadC4Model(
       createMemorySource({
-        '.workspec/spec.yaml': 'type: style\nversion: 2\nconnections:\n  custom-thing:\n    accent: "#fff"\n',
+        '.workspec/spec.yaml':
+          'type: style\nversion: 2\nconnections:\n  custom-thing:\n    accent: "#fff"\n',
         '.workspec/actors/a.yaml': 'title: A\ndescription: a.\n',
         '.workspec/actors/b.yaml': 'title: B\ndescription: b.\n',
         '.workspec/diagrams/ctx.yaml':
@@ -98,6 +115,8 @@ describe('unknown-category', () => {
       }),
     );
 
-    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.unknownCategory)).toEqual([]);
+    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.unknownCategory)).toEqual(
+      [],
+    );
   });
 });

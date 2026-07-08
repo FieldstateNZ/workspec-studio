@@ -12,7 +12,9 @@ export default defineConfig({
       '@workspec/decision-engine': fileURLToPath(
         new URL('../decision-engine/src/index.ts', import.meta.url),
       ),
-      '@workspec/decision-ui': fileURLToPath(new URL('../decision-ui/src/index.ts', import.meta.url)),
+      '@workspec/decision-ui': fileURLToPath(
+        new URL('../decision-ui/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

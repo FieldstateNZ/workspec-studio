@@ -14,9 +14,14 @@ export const ThinDiagram = z
   .object({
     title: z.string().describe('Human-readable diagram title.'),
     type: z.string().describe('Diagram type, e.g. "c4-context", "c4-container", "c4-component".'),
-    description: z.string().optional().describe('Optional prose description of what the diagram shows.'),
-    nodes: z.array(ThinDiagramNode).describe('Slug references to the elements shown on this diagram.'),
-    edges: z.array(DiagramEdge).describe('Connections between the diagram\'s nodes.'),
+    description: z
+      .string()
+      .optional()
+      .describe('Optional prose description of what the diagram shows.'),
+    nodes: z
+      .array(ThinDiagramNode)
+      .describe('Slug references to the elements shown on this diagram.'),
+    edges: z.array(DiagramEdge).describe("Connections between the diagram's nodes."),
     source: sourceField,
   })
   .strict()

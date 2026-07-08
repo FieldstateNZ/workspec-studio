@@ -30,11 +30,7 @@
               },
               "lens": {
                 "description": "Restricts which c4-container lens this edge appears under. Omit to show under both.",
-                "enum": [
-                  "logical",
-                  "deployment",
-                  "both"
-                ],
+                "enum": ["logical", "deployment", "both"],
                 "type": "string"
               },
               "to": {
@@ -42,10 +38,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "from",
-              "to"
-            ],
+            "required": ["from", "to"],
             "type": "object"
           },
           "type": "array"
@@ -71,10 +64,7 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   },
                   "slug": {
@@ -82,9 +72,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "slug"
-                ],
+                "required": ["slug"],
                 "type": "object"
               },
               {
@@ -108,16 +96,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "actor"
-                ],
+                "required": ["actor"],
                 "type": "object"
               },
               {
@@ -137,10 +120,7 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   },
                   "system": {
@@ -148,9 +128,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "system"
-                ],
+                "required": ["system"],
                 "type": "object"
               },
               {
@@ -174,16 +152,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "external-system"
-                ],
+                "required": ["external-system"],
                 "type": "object"
               },
               {
@@ -207,16 +180,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "container"
-                ],
+                "required": ["container"],
                 "type": "object"
               },
               {
@@ -240,16 +208,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "component"
-                ],
+                "required": ["component"],
                 "type": "object"
               },
               {
@@ -273,16 +236,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "database"
-                ],
+                "required": ["database"],
                 "type": "object"
               },
               {
@@ -302,10 +260,7 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   },
                   "queue": {
@@ -313,9 +268,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "queue"
-                ],
+                "required": ["queue"],
                 "type": "object"
               },
               {
@@ -339,16 +292,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "domain"
-                ],
+                "required": ["domain"],
                 "type": "object"
               },
               {
@@ -372,16 +320,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "feature"
-                ],
+                "required": ["feature"],
                 "type": "object"
               },
               {
@@ -405,16 +348,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "class"
-                ],
+                "required": ["class"],
                 "type": "object"
               },
               {
@@ -438,16 +376,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "interface"
-                ],
+                "required": ["interface"],
                 "type": "object"
               },
               {
@@ -471,16 +404,11 @@
                         "type": "number"
                       }
                     },
-                    "required": [
-                      "x",
-                      "y"
-                    ],
+                    "required": ["x", "y"],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "function"
-                ],
+                "required": ["function"],
                 "type": "object"
               }
             ]
@@ -500,12 +428,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "title",
-        "type",
-        "nodes",
-        "edges"
-      ],
+      "required": ["title", "type", "nodes", "edges"],
       "type": "object"
     },
     {
@@ -536,11 +459,7 @@
               },
               "lens": {
                 "description": "Restricts which c4-container lens this edge appears under. Omit to show under both.",
-                "enum": [
-                  "logical",
-                  "deployment",
-                  "both"
-                ],
+                "enum": ["logical", "deployment", "both"],
                 "type": "string"
               },
               "to": {
@@ -548,10 +467,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "from",
-              "to"
-            ],
+            "required": ["from", "to"],
             "type": "object"
           },
           "type": "array"
@@ -594,11 +510,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "type",
-              "label"
-            ],
+            "required": ["id", "type", "label"],
             "type": "object"
           },
           "type": "array"
@@ -638,12 +550,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "title",
-        "type",
-        "nodes",
-        "edges"
-      ],
+      "required": ["title", "type", "nodes", "edges"],
       "type": "object"
     }
   ],

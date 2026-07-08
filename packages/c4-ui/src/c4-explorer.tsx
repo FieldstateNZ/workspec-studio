@@ -44,8 +44,10 @@ function buildElementsByKindAndSlug(model: C4Model): ReadonlyMap<string, LoadedE
 export function C4Explorer(props: C4ExplorerProps): ReactElement {
   const { model, host, theme, className, direction = 'LR', initialDiagramSlug } = props;
 
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(
-    () => (initialDiagramSlug && model.diagrams.some((d) => d.slug === initialDiagramSlug) ? initialDiagramSlug : (model.diagrams[0]?.slug ?? null)),
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(() =>
+    initialDiagramSlug && model.diagrams.some((d) => d.slug === initialDiagramSlug)
+      ? initialDiagramSlug
+      : (model.diagrams[0]?.slug ?? null),
   );
   const [lens, setLens] = useState<Lens>('logical');
   const [positioned, setPositioned] = useState<PositionedDiagram | null>(null);
@@ -89,7 +91,10 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     // out — a diagram switch clears the pane immediately rather than
     // leaving the previous selection's nodes on screen.
     setPositioned(null);
-    layoutDiagram({ nodes: view.nodes, edges: view.edges, layout: selected.layout?.data ?? null }, { direction }).then(
+    layoutDiagram(
+      { nodes: view.nodes, edges: view.edges, layout: selected.layout?.data ?? null },
+      { direction },
+    ).then(
       (result) => {
         if (generationRef.current !== generation) return;
         setPositioned(result);
@@ -123,7 +128,11 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
               <li key={diagram.slug}>
                 <button
                   type="button"
-                  className={diagram.slug === selectedSlug ? 'c4-tree-item c4-tree-item-active' : 'c4-tree-item'}
+                  className={
+                    diagram.slug === selectedSlug
+                      ? 'c4-tree-item c4-tree-item-active'
+                      : 'c4-tree-item'
+                  }
                   aria-current={diagram.slug === selectedSlug ? 'true' : undefined}
                   onClick={() => selectDiagram(diagram.slug)}
                 >

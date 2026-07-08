@@ -79,6 +79,11 @@ describe('serializeForWrite', () => {
     const diagram: PositionedDiagram = { nodes: [], edges: [makeEdge('a', 'b')] };
     const merged = serializeForWrite(existing, diagram);
     expect(merged.edges?.['x->y']).toEqual({ waypoints: [{ x: 0, y: 0 }] });
-    expect(merged.edges?.['a->b']).toEqual({ waypoints: [{ x: 0, y: 0 }, { x: 10, y: 10 }] });
+    expect(merged.edges?.['a->b']).toEqual({
+      waypoints: [
+        { x: 0, y: 0 },
+        { x: 10, y: 10 },
+      ],
+    });
   });
 });

@@ -38,7 +38,9 @@ export async function loadSpec(
 function defaultSpec(): Spec {
   const result = parseSpecYaml('{}');
   if (!result.ok) {
-    throw new Error('unreachable: an empty style spec document always satisfies the Spec schema defaults');
+    throw new Error(
+      'unreachable: an empty style spec document always satisfies the Spec schema defaults',
+    );
   }
   return result.data;
 }

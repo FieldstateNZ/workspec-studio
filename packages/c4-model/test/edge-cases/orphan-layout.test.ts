@@ -12,7 +12,11 @@ describe('orphan-layout-file', () => {
     );
 
     expect(model.diagnostics).toMatchObject([
-      { severity: 'warning', code: DIAGNOSTIC_CODES.orphanLayoutFile, file: '.workspec/diagrams/.layout/nonexistent.yaml' },
+      {
+        severity: 'warning',
+        code: DIAGNOSTIC_CODES.orphanLayoutFile,
+        file: '.workspec/diagrams/.layout/nonexistent.yaml',
+      },
     ]);
   });
 });
@@ -22,25 +26,36 @@ describe('orphan-layout-node and orphan-layout-edge-hint', () => {
     const model = await loadC4Model(
       createMemorySource({
         '.workspec/actors/architect.yaml': 'title: Architect\ndescription: Designs things.\n',
-        '.workspec/diagrams/ctx.yaml': 'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
+        '.workspec/diagrams/ctx.yaml':
+          'title: Context\ntype: c4-context\nnodes:\n  - slug: architect\nedges: []\n',
         '.workspec/diagrams/.layout/ctx.yaml':
           'version: 1\nnodes:\n  architect:\n    x: 0\n    y: 0\n  renamed-away:\n    x: 10\n    y: 10\nedges:\n  "a->b":\n    waypoints: []\n',
       }),
     );
 
     const orphanNode = model.diagnostics.find((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutNode);
-    expect(orphanNode).toMatchObject({ severity: 'warning', file: '.workspec/diagrams/.layout/ctx.yaml' });
+    expect(orphanNode).toMatchObject({
+      severity: 'warning',
+      file: '.workspec/diagrams/.layout/ctx.yaml',
+    });
     expect(orphanNode?.message).toContain('renamed-away');
     // The orphan pinned entry's value starts on line 7 (`x: 10`) of the layout YAML.
     expect(orphanNode?.line).toBe(7);
 
-    const orphanEdge = model.diagnostics.find((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutEdgeHint);
-    expect(orphanEdge).toMatchObject({ severity: 'warning', file: '.workspec/diagrams/.layout/ctx.yaml' });
+    const orphanEdge = model.diagnostics.find(
+      (d) => d.code === DIAGNOSTIC_CODES.orphanLayoutEdgeHint,
+    );
+    expect(orphanEdge).toMatchObject({
+      severity: 'warning',
+      file: '.workspec/diagrams/.layout/ctx.yaml',
+    });
     expect(orphanEdge?.message).toContain('a->b');
     expect(orphanEdge?.line).toBeTypeOf('number');
 
     // "architect" is pinned and real — must not itself be flagged.
-    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutNode)).toHaveLength(1);
+    expect(
+      model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutNode),
+    ).toHaveLength(1);
   });
 
   it('does not flag a layout pinning __system__ by alias when only edges (not nodes) reference the system', async () => {
@@ -55,6 +70,8 @@ describe('orphan-layout-node and orphan-layout-edge-hint', () => {
       }),
     );
 
-    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutNode)).toEqual([]);
+    expect(model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.orphanLayoutNode)).toEqual(
+      [],
+    );
   });
 });

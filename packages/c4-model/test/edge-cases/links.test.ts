@@ -13,7 +13,12 @@ describe('dangling-link', () => {
     );
 
     expect(model.diagnostics).toMatchObject([
-      { severity: 'warning', code: DIAGNOSTIC_CODES.danglingLink, file: '.workspec/actors/architect.yaml', slug: 'architect' },
+      {
+        severity: 'warning',
+        code: DIAGNOSTIC_CODES.danglingLink,
+        file: '.workspec/actors/architect.yaml',
+        slug: 'architect',
+      },
     ]);
   });
 

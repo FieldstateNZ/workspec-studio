@@ -15,16 +15,30 @@ export const SYSTEM_PHASES = ['discovery', 'delivery', 'archived'] as const;
  */
 export const SystemElement = z
   .object({
-    type: z.literal('system').optional().describe('Redundant kind literal; inferred from directory when absent.'),
+    type: z
+      .literal('system')
+      .optional()
+      .describe('Redundant kind literal; inferred from directory when absent.'),
     title: z.string().describe('Human-readable project/system name.'),
     summary: z
       .string()
       .nullish()
-      .describe('Short one-line summary, distinct from the fuller `description`. May be explicitly null.'),
-    description: z.string().min(1).describe('Fuller prose description of what the system is and does.'),
+      .describe(
+        'Short one-line summary, distinct from the fuller `description`. May be explicitly null.',
+      ),
+    description: z
+      .string()
+      .min(1)
+      .describe('Fuller prose description of what the system is and does.'),
     phase: z.enum(SYSTEM_PHASES).optional().describe('Current lifecycle phase of the project.'),
-    current_phase: z.string().optional().describe('Freeform current-phase label, distinct from `phase`.'),
-    slice_prefix: z.string().optional().describe('Prefix used when naming delivery slices for this project.'),
+    current_phase: z
+      .string()
+      .optional()
+      .describe('Freeform current-phase label, distinct from `phase`.'),
+    slice_prefix: z
+      .string()
+      .optional()
+      .describe('Prefix used when naming delivery slices for this project.'),
     status: z.string().optional().describe('Freeform status note.'),
     links: linksField,
     source: sourceField,

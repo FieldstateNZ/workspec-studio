@@ -21,7 +21,9 @@ describe('representative fixture tree', () => {
     // outside this fixture's own bounded `.workspec/` tree (that doc only
     // exists in the real monorepo), so a genuine `dangling-link` warning is
     // the correct, expected outcome here.
-    expect(model.diagnostics).toMatchObject([{ severity: 'warning', code: 'dangling-link', slug: 'architect' }]);
+    expect(model.diagnostics).toMatchObject([
+      { severity: 'warning', code: 'dangling-link', slug: 'architect' },
+    ]);
     expect(model.diagrams).toHaveLength(2);
 
     const systemContext = model.diagrams.find((d) => d.slug === 'system-context');

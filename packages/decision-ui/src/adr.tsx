@@ -167,7 +167,12 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
     const decidedBy = decision.metadata.deciders?.[0];
     // exactOptionalPropertyTypes: omit `decidedBy` entirely rather than set it
     // to `undefined` when there's no first decider.
-    commit(decide(decision, winner, rationale, { ...(decidedBy !== undefined && { decidedBy }), decidedAt }));
+    commit(
+      decide(decision, winner, rationale, {
+        ...(decidedBy !== undefined && { decidedBy }),
+        decidedAt,
+      }),
+    );
   };
 
   const statusWord =

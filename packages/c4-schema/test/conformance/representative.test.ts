@@ -16,7 +16,10 @@ import { parseSpecYaml } from '../../src/yaml/parse-spec-yaml.js';
 import { parseSystemYaml } from '../../src/yaml/parse-system-yaml.js';
 import type { ParseResult } from '../../src/yaml/parse-result.types.js';
 
-const fixtureRoot = join(dirname(fileURLToPath(import.meta.url)), '../fixtures/representative/.workspec');
+const fixtureRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '../fixtures/representative/.workspec',
+);
 
 function read(relativePath: string): string {
   return readFileSync(join(fixtureRoot, relativePath), 'utf8');
@@ -48,7 +51,9 @@ describe('representative fixture tree', () => {
   it.each(cases)('%s validates as a %s with zero errors', (path, _kind, parse) => {
     const result = parse(read(path));
     if (!result.ok) {
-      throw new Error(`${path}: ${result.errors.map((e) => `${e.path || '<root>'}: ${e.message}`).join('; ')}`);
+      throw new Error(
+        `${path}: ${result.errors.map((e) => `${e.path || '<root>'}: ${e.message}`).join('; ')}`,
+      );
     }
     expect(result.ok).toBe(true);
   });
@@ -68,7 +73,9 @@ describe('representative fixture tree', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       const diagram = result.data as { edges: { from: string; to: string }[] };
-      expect(diagram.edges.some((edge) => edge.from === '__system__' || edge.to === '__system__')).toBe(true);
+      expect(
+        diagram.edges.some((edge) => edge.from === '__system__' || edge.to === '__system__'),
+      ).toBe(true);
     }
   });
 

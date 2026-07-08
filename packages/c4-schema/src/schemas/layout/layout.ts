@@ -19,7 +19,9 @@ export const Layout = z
     version: z.literal(1).describe('Layout file format version; always 1.'),
     nodes: z
       .record(z.string().min(1), LayoutNode)
-      .describe('Pinned node positions, keyed by element slug. Absence of a key means auto-layout.'),
+      .describe(
+        'Pinned node positions, keyed by element slug. Absence of a key means auto-layout.',
+      ),
     edges: z
       .record(z.string().min(1), LayoutEdge)
       .optional()
@@ -27,7 +29,9 @@ export const Layout = z
     viewport: LayoutViewport.optional().describe('Optional persisted camera state.'),
   })
   .strict()
-  .describe('A diagram layout file, pinning node positions and optionally edge routing and camera state.');
+  .describe(
+    'A diagram layout file, pinning node positions and optionally edge routing and camera state.',
+  );
 
 /** Inferred type of a layout file. */
 export type Layout = z.infer<typeof Layout>;

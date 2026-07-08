@@ -15,10 +15,18 @@ describe('Spec', () => {
   it('accepts a v2 spec with elements, connections, and surfaces', () => {
     const result = Spec.safeParse(
       specFactory({
-        surfaces: { light: { surface: '#ffffff', ink: '#0f172a', page: '#f8fafc' }, dark: { surface: '#1e293b' } },
+        surfaces: {
+          light: { surface: '#ffffff', ink: '#0f172a', page: '#f8fafc' },
+          dark: { surface: '#1e293b' },
+        },
         elements: {
           actor: { accent: '#4A90D9', icon: 'user', shape: 'box' },
-          'external-system': { accent: '#64748b', icon: 'external-link', shape: 'box', variant: 'external' },
+          'external-system': {
+            accent: '#64748b',
+            icon: 'external-link',
+            shape: 'box',
+            variant: 'external',
+          },
           database: { accent: 'hsl(186 79% 35%)', icon: 'database', shape: 'cylinder' },
         },
         connections: {
@@ -38,7 +46,9 @@ describe('Spec', () => {
   it('accepts unknown shape/style/variant strings (compiler normalises, schema never hard-fails)', () => {
     const result = Spec.safeParse(
       specFactory({
-        elements: { actor: { accent: '#4A90D9', icon: 'user', shape: 'triangle', variant: 'internal' } },
+        elements: {
+          actor: { accent: '#4A90D9', icon: 'user', shape: 'triangle', variant: 'internal' },
+        },
         connections: { data: { accent: '#4CAF50', style: 'dotted' } },
       }),
     );
@@ -66,7 +76,11 @@ describe('Spec', () => {
   it('rejects a non-string accent', () => {
     // Deliberately-invalid runtime input, so a plain literal rather than
     // the `Partial<Spec>`-typed factory overrides.
-    const result = Spec.safeParse({ type: 'style', version: 2, elements: { actor: { accent: 42 } } });
+    const result = Spec.safeParse({
+      type: 'style',
+      version: 2,
+      elements: { actor: { accent: 42 } },
+    });
     expect(result.success).toBe(false);
   });
 
@@ -81,7 +95,11 @@ describe('Spec', () => {
   });
 
   it('rejects a non-string surface color', () => {
-    const result = Spec.safeParse({ type: 'style', version: 2, surfaces: { light: { surface: 7 } } });
+    const result = Spec.safeParse({
+      type: 'style',
+      version: 2,
+      surfaces: { light: { surface: 7 } },
+    });
     expect(result.success).toBe(false);
   });
 });

@@ -15,11 +15,14 @@ const jsonSchemaDir = join(dirname(fileURLToPath(import.meta.url)), '../../json-
 describe('JSON Schema drift', () => {
   const schemas = buildAllJsonSchemas();
 
-  it.each(Object.entries(schemas))('%s matches the committed file byte-for-byte', (filename, schema) => {
-    const committed = readFileSync(join(jsonSchemaDir, filename), 'utf8');
-    const regenerated = serializeJsonSchema(schema);
-    expect(regenerated).toBe(committed);
-  });
+  it.each(Object.entries(schemas))(
+    '%s matches the committed file byte-for-byte',
+    (filename, schema) => {
+      const committed = readFileSync(join(jsonSchemaDir, filename), 'utf8');
+      const regenerated = serializeJsonSchema(schema);
+      expect(regenerated).toBe(committed);
+    },
+  );
 
   it('covers exactly the twelve committed schema files, no more, no fewer', () => {
     expect(Object.keys(schemas).sort()).toEqual(

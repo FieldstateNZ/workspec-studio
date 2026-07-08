@@ -10,7 +10,14 @@ describe('serializeLayout', () => {
         architect: { x: 80, y: 200, width: 240, height: 120 },
         __system__: { x: 400, y: 200 },
       },
-      edges: { 'architect->__system__': { waypoints: [{ x: 200, y: 220 }, { x: 300, y: 220 }] } },
+      edges: {
+        'architect->__system__': {
+          waypoints: [
+            { x: 200, y: 220 },
+            { x: 300, y: 220 },
+          ],
+        },
+      },
       viewport: { x: 0, y: 0, zoom: 1.5 },
     });
 

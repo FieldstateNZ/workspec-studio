@@ -50,22 +50,32 @@ describe('host server — generic C4FileSource proxy', () => {
     expect(files.status).toBe(200);
     expect(files.body).toContain('.workspec/actors/architect.yaml');
 
-    const file = await request(app).get('/api/file').query({ path: '.workspec/actors/architect.yaml' });
+    const file = await request(app)
+      .get('/api/file')
+      .query({ path: '.workspec/actors/architect.yaml' });
     expect(file.status).toBe(200);
     expect(file.body.content).toContain('Architect');
 
-    const exists = await request(app).get('/api/file-exists').query({ path: '.workspec/actors/architect.yaml' });
+    const exists = await request(app)
+      .get('/api/file-exists')
+      .query({ path: '.workspec/actors/architect.yaml' });
     expect(exists.status).toBe(200);
     expect(exists.body.exists).toBe(true);
 
-    const missing = await request(app).get('/api/file-exists').query({ path: '.workspec/actors/nobody.yaml' });
+    const missing = await request(app)
+      .get('/api/file-exists')
+      .query({ path: '.workspec/actors/nobody.yaml' });
     expect(missing.body.exists).toBe(false);
   });
 
   it('404s a missing file and 400s a traversal path', async () => {
     const app = createServer({ dir });
-    expect((await request(app).get('/api/file').query({ path: '.workspec/actors/nobody.yaml' })).status).toBe(404);
-    expect((await request(app).get('/api/file').query({ path: '../../../etc/passwd' })).status).toBe(400);
+    expect(
+      (await request(app).get('/api/file').query({ path: '.workspec/actors/nobody.yaml' })).status,
+    ).toBe(404);
+    expect(
+      (await request(app).get('/api/file').query({ path: '../../../etc/passwd' })).status,
+    ).toBe(400);
   });
 
   it('confines every read route to .workspec/** — in-root but outside-tree paths are 400, not served', async () => {
@@ -80,14 +90,20 @@ describe('host server — generic C4FileSource proxy', () => {
     expect(read.status).toBe(400);
     expect(JSON.stringify(read.body)).not.toContain('hunter2');
 
-    expect((await request(app).get('/api/file-exists').query({ path: 'secrets.env' })).status).toBe(400);
+    expect((await request(app).get('/api/file-exists').query({ path: 'secrets.env' })).status).toBe(
+      400,
+    );
     expect((await request(app).get('/api/files').query({ dir: '.' })).status).toBe(400);
     expect((await request(app).get('/api/files').query({ dir: '.git' })).status).toBe(400);
     // A prefix-shaped near-miss must not slip through the startsWith check.
-    expect((await request(app).get('/api/file').query({ path: '.workspec-evil/x.yaml' })).status).toBe(400);
+    expect(
+      (await request(app).get('/api/file').query({ path: '.workspec-evil/x.yaml' })).status,
+    ).toBe(400);
 
     // ...while the real tree stays fully readable.
-    expect((await request(app).get('/api/files').query({ dir: '.workspec/actors' })).status).toBe(200);
+    expect((await request(app).get('/api/files').query({ dir: '.workspec/actors' })).status).toBe(
+      200,
+    );
   });
 });
 
@@ -110,7 +126,10 @@ describe('host server — drag-to-pin write-back through a temp dir', () => {
       '',
     ].join('\n');
 
-    const write = await request(app).put('/api/file').query({ path: LAYOUT_PATH }).send({ content });
+    const write = await request(app)
+      .put('/api/file')
+      .query({ path: LAYOUT_PATH })
+      .send({ content });
     expect(write.status).toBe(204);
 
     // The change actually landed on disk (the "temp dir" of the acceptance criterion).
@@ -122,9 +141,12 @@ describe('host server — drag-to-pin write-back through a temp dir', () => {
 
     // ...and a fresh model load picks it up.
     const model = await request(app).get('/api/model');
-    const diagram = (model.body.diagrams as { slug: string; layout: { data: { nodes: Record<string, { x: number }> } } }[]).find(
-      (d) => d.slug === 'system-context',
-    );
+    const diagram = (
+      model.body.diagrams as {
+        slug: string;
+        layout: { data: { nodes: Record<string, { x: number }> } };
+      }[]
+    ).find((d) => d.slug === 'system-context');
     expect(diagram?.layout.data.nodes.architect?.x).toBe(999);
   });
 

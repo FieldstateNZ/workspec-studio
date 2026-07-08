@@ -9,7 +9,9 @@ describe('ExternalSystemElement', () => {
   });
 
   it('accepts the optional type literal', () => {
-    const result = ExternalSystemElement.safeParse(externalSystemFactory({ type: 'external-system' }));
+    const result = ExternalSystemElement.safeParse(
+      externalSystemFactory({ type: 'external-system' }),
+    );
     expect(result.success).toBe(true);
   });
 

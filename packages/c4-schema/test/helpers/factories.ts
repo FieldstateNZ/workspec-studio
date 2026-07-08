@@ -25,7 +25,9 @@ export function actorFactory(overrides: Partial<ActorElement> = {}): ActorElemen
   };
 }
 
-export function externalSystemFactory(overrides: Partial<ExternalSystemElement> = {}): ExternalSystemElement {
+export function externalSystemFactory(
+  overrides: Partial<ExternalSystemElement> = {},
+): ExternalSystemElement {
   return {
     title: 'Payment Gateway',
     description: 'Third-party processor used to settle invoices.',

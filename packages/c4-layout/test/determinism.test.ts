@@ -17,7 +17,11 @@ describe('layoutDiagram determinism', () => {
     const diagram = findSystemContext(model);
     if (!diagram.view) throw new Error('system-context fixture should resolve a single view');
 
-    const input = { nodes: diagram.view.nodes, edges: diagram.view.edges, layout: diagram.layout?.data ?? null };
+    const input = {
+      nodes: diagram.view.nodes,
+      edges: diagram.view.edges,
+      layout: diagram.layout?.data ?? null,
+    };
 
     const first = await layoutDiagram(input);
     const second = await layoutDiagram(input);
@@ -31,7 +35,11 @@ describe('layoutDiagram determinism', () => {
     if (!container?.lensViews) throw new Error('container fixture should be lens-partitioned');
     expect(container.layout).toBeNull();
 
-    const input = { nodes: container.lensViews.logical.nodes, edges: container.lensViews.logical.edges, layout: null };
+    const input = {
+      nodes: container.lensViews.logical.nodes,
+      edges: container.lensViews.logical.edges,
+      layout: null,
+    };
 
     const first = await layoutDiagram(input);
     const second = await layoutDiagram(input);

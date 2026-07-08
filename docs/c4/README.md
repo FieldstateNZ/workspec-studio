@@ -4,13 +4,13 @@ Browse, validate, and render C4 architecture trees — actors, systems, containe
 domains, features, and diagrams — straight from the `.workspec/` files already in your repo. No
 database, ever: the YAML under `.workspec/`, versioned by git, is the single source of truth.
 
-| Package                 | Path                     | Role                                                                 |
-| ------------------------ | ------------------------ | --------------------------------------------------------------------- |
-| `@workspec/c4-schema`   | `packages/c4-schema`    | Zod source of truth → TS types, runtime validation, generated JSON Schema |
-| `@workspec/c4-model`    | `packages/c4-model`     | Pure loader/resolver: `.workspec/` tree → one typed `C4Model`, with diagnostics |
-| `@workspec/c4-layout`   | `packages/c4-layout`    | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping |
-| `@workspec/c4-ui`       | `packages/c4-ui`        | Host-agnostic React components (interactive canvas, deterministic SVG export) |
-| `@workspec/c4-studio`   | `packages/c4-studio`    | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
+| Package               | Path                 | Role                                                                                  |
+| --------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| `@workspec/c4-schema` | `packages/c4-schema` | Zod source of truth → TS types, runtime validation, generated JSON Schema             |
+| `@workspec/c4-model`  | `packages/c4-model`  | Pure loader/resolver: `.workspec/` tree → one typed `C4Model`, with diagnostics       |
+| `@workspec/c4-layout` | `packages/c4-layout` | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping         |
+| `@workspec/c4-ui`     | `packages/c4-ui`     | Host-agnostic React components (interactive canvas, deterministic SVG export)         |
+| `@workspec/c4-studio` | `packages/c4-studio` | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
 
 ## Tree conventions
 

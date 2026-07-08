@@ -5,10 +5,11 @@ import { buildJsonSchema } from './build-json-schema.js';
 describe('buildJsonSchema', () => {
   it('stamps $schema, $id, and title on the generated document', () => {
     const schema = z.object({ a: z.string() }).strict();
-    const result = buildJsonSchema(schema, 'https://example.com/x.schema.json', 'Example') as Record<
-      string,
-      unknown
-    >;
+    const result = buildJsonSchema(
+      schema,
+      'https://example.com/x.schema.json',
+      'Example',
+    ) as Record<string, unknown>;
 
     expect(result.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
     expect(result.$id).toBe('https://example.com/x.schema.json');

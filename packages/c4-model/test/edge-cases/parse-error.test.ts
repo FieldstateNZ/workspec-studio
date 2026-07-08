@@ -15,7 +15,11 @@ describe('parse-error', () => {
     const parseErrors = model.diagnostics.filter((d) => d.code === DIAGNOSTIC_CODES.parseError);
     expect(parseErrors.length).toBeGreaterThan(0);
     for (const diagnostic of parseErrors) {
-      expect(diagnostic).toMatchObject({ severity: 'error', file: '.workspec/actors/architect.yaml', slug: 'architect' });
+      expect(diagnostic).toMatchObject({
+        severity: 'error',
+        file: '.workspec/actors/architect.yaml',
+        slug: 'architect',
+      });
       expect(diagnostic.line).toBeTypeOf('number');
       expect(diagnostic.col).toBeTypeOf('number');
     }
@@ -30,7 +34,9 @@ describe('parse-error', () => {
       }),
     );
 
-    expect(model.diagnostics.some((d) => d.code === DIAGNOSTIC_CODES.parseError && d.line !== undefined)).toBe(true);
+    expect(
+      model.diagnostics.some((d) => d.code === DIAGNOSTIC_CODES.parseError && d.line !== undefined),
+    ).toBe(true);
     expect(model.elements.actor.has('fine')).toBe(true);
     expect(model.elements.actor.has('broken')).toBe(false);
   });

@@ -171,7 +171,10 @@ export function createServer(options: CreateServerOptions): Express {
       return;
     }
     const content = req.body as unknown;
-    const text = typeof content === 'object' && content !== null ? (content as { content?: unknown }).content : undefined;
+    const text =
+      typeof content === 'object' && content !== null
+        ? (content as { content?: unknown }).content
+        : undefined;
     if (typeof text !== 'string') {
       res.status(400).json({ error: 'missing "content" string in body' });
       return;

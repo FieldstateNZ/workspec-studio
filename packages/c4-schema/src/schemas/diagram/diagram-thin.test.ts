@@ -9,7 +9,9 @@ describe('ThinDiagram', () => {
   });
 
   it('accepts an optional top-level source field', () => {
-    const result = ThinDiagram.safeParse(thinDiagramFactory({ source: 'generated from repo scan' }));
+    const result = ThinDiagram.safeParse(
+      thinDiagramFactory({ source: 'generated from repo scan' }),
+    );
     expect(result.success).toBe(true);
   });
 

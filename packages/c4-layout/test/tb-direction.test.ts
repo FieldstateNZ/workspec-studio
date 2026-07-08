@@ -27,8 +27,20 @@ describe('TB direction', () => {
     expect(second).toStrictEqual(first);
 
     const byId = new Map(first.nodes.map((node) => [node.nodeId, node]));
-    expect(byId.get('architect')).toMatchObject({ x: 80, y: 200, width: 240, height: 120, pinned: true });
-    expect(byId.get('main-system')).toMatchObject({ x: 400, y: 200, width: 300, height: 110, pinned: true });
+    expect(byId.get('architect')).toMatchObject({
+      x: 80,
+      y: 200,
+      width: 240,
+      height: 120,
+      pinned: true,
+    });
+    expect(byId.get('main-system')).toMatchObject({
+      x: 400,
+      y: 200,
+      width: 300,
+      height: 110,
+      pinned: true,
+    });
     expect(byId.get('payment-gateway')?.pinned).toBe(false);
 
     assertNoOverlaps(first.nodes);

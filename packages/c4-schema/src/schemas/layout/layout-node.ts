@@ -13,7 +13,11 @@ export const LayoutNode = z
   .object({
     x: z.number().describe('X coordinate, top-left page coords.'),
     y: z.number().describe('Y coordinate, top-left page coords.'),
-    width: z.number().positive().optional().describe('Optional pinned node width. Omit to use the renderer default.'),
+    width: z
+      .number()
+      .positive()
+      .optional()
+      .describe('Optional pinned node width. Omit to use the renderer default.'),
     height: z
       .number()
       .positive()

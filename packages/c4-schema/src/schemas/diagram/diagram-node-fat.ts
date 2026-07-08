@@ -10,9 +10,15 @@ export const FatDiagramNode = z
     id: z.string().describe('Stable node id, unique within the diagram.'),
     type: z.string().describe('Element kind this node represents, e.g. "container", "domain".'),
     label: z.string().describe('Human-readable label shown on the node.'),
-    description: z.string().optional().describe('Optional prose description shown on hover/detail.'),
+    description: z
+      .string()
+      .optional()
+      .describe('Optional prose description shown on hover/detail.'),
     tags: z.array(z.string()).optional().describe('Free-text labels for filtering and grouping.'),
-    logical_type: z.string().optional().describe('Node kind under the logical lens (c4-container diagrams).'),
+    logical_type: z
+      .string()
+      .optional()
+      .describe('Node kind under the logical lens (c4-container diagrams).'),
     deployment_target: z
       .string()
       .optional()

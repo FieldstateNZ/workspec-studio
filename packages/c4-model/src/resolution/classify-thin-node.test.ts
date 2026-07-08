@@ -3,7 +3,11 @@ import { classifyThinNode } from './classify-thin-node.js';
 
 describe('classifyThinNode', () => {
   it('classifies a bare slug ref with no position', () => {
-    expect(classifyThinNode({ slug: 'architect' })).toEqual({ slug: 'architect', explicitKind: null, position: null });
+    expect(classifyThinNode({ slug: 'architect' })).toEqual({
+      slug: 'architect',
+      explicitKind: null,
+      position: null,
+    });
   });
 
   it('classifies a bare slug ref with a pinned position', () => {

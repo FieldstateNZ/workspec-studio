@@ -45,11 +45,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "type",
-    "title",
-    "description"
-  ],
+  "required": ["type", "title", "description"],
   "title": "WorkSpec C4 Component (v1alpha1)",
   "type": "object"
 }

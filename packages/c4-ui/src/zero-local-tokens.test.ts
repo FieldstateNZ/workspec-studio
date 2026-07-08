@@ -61,7 +61,9 @@ describe('zero local design tokens (grep-clean except the documented exceptions)
     expect(TAILWIND_ARBITRARY_COLOR.test('className="bg-[rgb(1,2,3)]"')).toBe(true);
     // The sanctioned patterns stay clean:
     expect(HEX_COLOR.test('const c = "var(--accent)";')).toBe(false);
-    expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(false);
+    expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(
+      false,
+    );
     expect(TAILWIND_ARBITRARY_COLOR.test('className="w-[300px]"')).toBe(false);
   });
 });

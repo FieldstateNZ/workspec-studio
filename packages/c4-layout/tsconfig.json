@@ -27,6 +27,9 @@
   // `scripts/`/`test/`), so building it on demand via `-b` would emit to
   // `dist/src/index.d.ts` instead of the `dist/index.d.ts` its own
   // package.json "types" field points at.
-  "references": [{ "path": "../c4-model/tsconfig.build.json" }, { "path": "../c4-schema/tsconfig.build.json" }],
+  "references": [
+    { "path": "../c4-model/tsconfig.build.json" },
+    { "path": "../c4-schema/tsconfig.build.json" }
+  ],
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

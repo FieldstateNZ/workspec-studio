@@ -56,20 +56,20 @@ from "all nodes pinned".
 Two consequences of "pins are authoritative" worth stating explicitly:
 
 - **The zero-overlap guarantee excludes pin-vs-pin.** Pins are never moved — not by auto-layout,
-  and not off *each other*. A `.layout/` file that pins two nodes onto overlapping (even identical)
+  and not off _each other_. A `.layout/` file that pins two nodes onto overlapping (even identical)
   coordinates is reproduced exactly as authored; only nodes this package places itself (the
   unpinned ones) are guaranteed to clear everything else. A curated layout colliding with itself is
   the author's statement to keep, not a defect for the layout engine to silently "fix".
 - **Pinning the same node under two keys is last-writer-wins.** A `.layout/` file may pin the
   system node under the literal `__system__` alias or under the system's real slug — both translate
-  to the same resolved node (see `src/model/resolve-system-alias-ref.ts`). If one file pins *both*,
+  to the same resolved node (see `src/model/resolve-system-alias-ref.ts`). If one file pins _both_,
   the entry appearing later in the file wins, with no diagnostic (`@workspec/c4-model`'s orphan-pin
   check sees both keys as valid, and this package doesn't re-diagnose `.layout/` contents).
 
 This mechanism trades a small amount of layout quality (the auto pass doesn't know a pinned node's
-*exact* coordinates when deciding where its neighbours go, only that it's present and how large it
+_exact_ coordinates when deciding where its neighbours go, only that it's present and how large it
 is) for a guarantee that's otherwise very hard to get from elkjs directly: elkjs's own "keep this
-node where it is" primitives (`elk.noLayout`, the `fixed` algorithm) are built for *nested* graphs
+node where it is" primitives (`elk.noLayout`, the `fixed` algorithm) are built for _nested_ graphs
 (a pre-laid-out subgraph embedded in a larger one), not for "some nodes in this flat graph are
 pinned, others aren't" — see the next section for what happened when this package tried them.
 
@@ -77,7 +77,7 @@ pinned, others aren't" — see the next section for what happened when this pack
 
 Node placement genuinely benefits from elkjs's layered algorithm (rank assignment, crossing
 minimization, spacing). Edge routing does not go through elkjs at all — edges are routed by a small,
-pure "elbow" router (`src/routing/elbow-route.ts`) operating directly on the *final* node rects
+pure "elbow" router (`src/routing/elbow-route.ts`) operating directly on the _final_ node rects
 (after pinning + nudging), for two reasons:
 
 - elkjs's edge routes are only trustworthy for a graph it placed every node in itself. Once a
@@ -85,7 +85,7 @@ pure "elbow" router (`src/routing/elbow-route.ts`) operating directly on the *fi
   computed during the auto pass no longer connects to where that node actually ended up.
 - elkjs's `fixed` algorithm — the obvious-looking "keep positions, just route edges" option — turns
   out to require every edge already have a routed section (`IllegalArgumentException: The edge needs
-  to have exactly one edge section. Found: 0` for a plain unrouted edge); it's designed to preserve a
+to have exactly one edge section. Found: 0` for a plain unrouted edge); it's designed to preserve a
   previously-computed layout, not to route a fresh one over externally-supplied positions.
 
 A route computed straight from the final rects is simple, always geometrically consistent with the

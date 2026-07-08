@@ -5,7 +5,14 @@
 // travels the wire as nested plain objects (`Record`, not `Map` — JSON has no
 // Map); this reconstructs the `ReadonlyMap`s every `@workspec/c4-ui`
 // component expects.
-import type { C4Diagnostic, C4Model, C4ModelSpec, ElementKind, LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
+import type {
+  C4Diagnostic,
+  C4Model,
+  C4ModelSpec,
+  ElementKind,
+  LoadedElement,
+  ResolvedDiagram,
+} from '@workspec/c4-model';
 
 interface C4ModelWire {
   elements: Record<ElementKind, Record<string, LoadedElement>>;

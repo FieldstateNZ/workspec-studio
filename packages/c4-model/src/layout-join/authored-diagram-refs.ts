@@ -19,7 +19,9 @@ function isFatDiagramNode(node: ThinDiagramNode | FatDiagramNode): node is FatDi
  * report's design-decisions section for the full rationale.
  */
 export function authoredNodeRefs(diagram: Diagram): readonly string[] {
-  return diagram.nodes.map((node) => (isFatDiagramNode(node) ? node.id : classifyThinNode(node).slug));
+  return diagram.nodes.map((node) =>
+    isFatDiagramNode(node) ? node.id : classifyThinNode(node).slug,
+  );
 }
 
 /** Every edge's raw `from`/`to`, as `"<from>-><to>"` — the same key format `.layout/` edge hints use. */

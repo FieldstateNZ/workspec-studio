@@ -34,7 +34,11 @@ export function panBy(camera: Camera, dx: number, dy: number): Camera {
  * for any container scaling); the caller derives it from the pointer event
  * and the SVG's client rect.
  */
-export function zoomAt(camera: Camera, cursor: { readonly x: number; readonly y: number }, factor: number): Camera {
+export function zoomAt(
+  camera: Camera,
+  cursor: { readonly x: number; readonly y: number },
+  factor: number,
+): Camera {
   const nextZoom = clampZoom(camera.zoom * factor);
   if (nextZoom === camera.zoom) return camera;
   // The content-space point currently under the cursor: p = (cursor - camera) / zoom.

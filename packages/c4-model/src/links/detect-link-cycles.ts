@@ -35,7 +35,9 @@ export function detectLinkCycles(elements: LoadedElements): readonly C4Diagnosti
   }
   for (const kind of ELEMENT_KINDS) {
     for (const loaded of elements.byKind[kind].values()) {
-      const targets = elementLinkTargets(loaded.element.data.links).filter((target) => allPaths.has(target));
+      const targets = elementLinkTargets(loaded.element.data.links).filter((target) =>
+        allPaths.has(target),
+      );
       graph.set(loaded.path, targets);
     }
   }

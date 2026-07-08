@@ -14,20 +14,20 @@ the public issue text and the real Enterprise code disagree.
 
 ## Artifacts & directories (normative)
 
-| Kind              | Directory                       | Schema URL                                                       |
-| ----------------- | -------------------------------- | ------------------------------------------------------------------ |
-| Actor              | `.workspec/actors/`               | `https://schema.workspec.io/v1alpha1/c4/actor.schema.json`          |
-| System (singleton) | `.workspec/system/`               | `https://schema.workspec.io/v1alpha1/c4/system.schema.json`         |
-| External system    | `.workspec/external-systems/`     | `https://schema.workspec.io/v1alpha1/c4/external-system.schema.json`|
-| Container          | `.workspec/containers/`           | `https://schema.workspec.io/v1alpha1/c4/container.schema.json`      |
-| Component          | `.workspec/components/`           | `https://schema.workspec.io/v1alpha1/c4/component.schema.json`      |
-| Database           | `.workspec/databases/`            | `https://schema.workspec.io/v1alpha1/c4/database.schema.json`       |
-| Queue              | `.workspec/queues/`                | `https://schema.workspec.io/v1alpha1/c4/queue.schema.json`          |
-| Domain             | `.workspec/domains/`               | `https://schema.workspec.io/v1alpha1/c4/domain.schema.json`         |
-| Feature            | `.workspec/features/`              | `https://schema.workspec.io/v1alpha1/c4/feature.schema.json`        |
-| Diagram            | `.workspec/diagrams/`              | `https://schema.workspec.io/v1alpha1/c4/diagram.schema.json`        |
-| Layout             | `.workspec/diagrams/.layout/`       | `https://schema.workspec.io/v1alpha1/c4/layout.schema.json`         |
-| Style spec (singleton) | `.workspec/spec.yaml`          | `https://schema.workspec.io/v1alpha1/c4/spec.schema.json`           |
+| Kind                   | Directory                     | Schema URL                                                           |
+| ---------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| Actor                  | `.workspec/actors/`           | `https://schema.workspec.io/v1alpha1/c4/actor.schema.json`           |
+| System (singleton)     | `.workspec/system/`           | `https://schema.workspec.io/v1alpha1/c4/system.schema.json`          |
+| External system        | `.workspec/external-systems/` | `https://schema.workspec.io/v1alpha1/c4/external-system.schema.json` |
+| Container              | `.workspec/containers/`       | `https://schema.workspec.io/v1alpha1/c4/container.schema.json`       |
+| Component              | `.workspec/components/`       | `https://schema.workspec.io/v1alpha1/c4/component.schema.json`       |
+| Database               | `.workspec/databases/`        | `https://schema.workspec.io/v1alpha1/c4/database.schema.json`        |
+| Queue                  | `.workspec/queues/`           | `https://schema.workspec.io/v1alpha1/c4/queue.schema.json`           |
+| Domain                 | `.workspec/domains/`          | `https://schema.workspec.io/v1alpha1/c4/domain.schema.json`          |
+| Feature                | `.workspec/features/`         | `https://schema.workspec.io/v1alpha1/c4/feature.schema.json`         |
+| Diagram                | `.workspec/diagrams/`         | `https://schema.workspec.io/v1alpha1/c4/diagram.schema.json`         |
+| Layout                 | `.workspec/diagrams/.layout/` | `https://schema.workspec.io/v1alpha1/c4/layout.schema.json`          |
+| Style spec (singleton) | `.workspec/spec.yaml`         | `https://schema.workspec.io/v1alpha1/c4/spec.schema.json`            |
 
 `class`, `interface`, and `function` are valid diagram node ref kinds (`C4_REF_KINDS`) but have no
 backing element schema or directory — Enterprise conformance note, not an oversight (see the drift
@@ -58,7 +58,7 @@ nodes:
   architect: { x: 80, y: 200, width: 240, height: 120 }
   __system__: { x: 400, y: 200 }
 edges:
-  "architect->__system__":
+  'architect->__system__':
     waypoints:
       - { x: 200, y: 220 }
       - { x: 300, y: 220 }
@@ -87,7 +87,12 @@ scope for this package — see the S3 (loader/resolution) and S4 (layout engine)
 ## Usage
 
 ```ts
-import { parseActorYaml, parseDiagramYaml, parseLayoutYaml, ActorElement } from '@workspec/c4-schema';
+import {
+  parseActorYaml,
+  parseDiagramYaml,
+  parseLayoutYaml,
+  ActorElement,
+} from '@workspec/c4-schema';
 
 const res = parseActorYaml(fileText);
 if (res.ok) {
@@ -175,9 +180,9 @@ committed files fall out of sync.
 
 ## Scripts
 
-| Script                                            | Does                                          |
+| Script                                             | Does                                           |
 | -------------------------------------------------- | ---------------------------------------------- |
-| `pnpm --filter @workspec/c4-schema run build`      | `tsc --emitDeclarationOnly` + tsup → `dist/`    |
+| `pnpm --filter @workspec/c4-schema run build`      | `tsc --emitDeclarationOnly` + tsup → `dist/`   |
 | `pnpm --filter @workspec/c4-schema run typecheck`  | `tsc --noEmit`                                 |
 | `pnpm --filter @workspec/c4-schema run test`       | vitest (schema, YAML mapping, drift, fixtures) |
 | `pnpm --filter @workspec/c4-schema run gen:schema` | regenerate `json-schema/c4/`                   |

@@ -58,7 +58,9 @@ export function resolveAutoPlacement(
     const magnitude = Math.ceil(attempt / 2) * NUDGE_STEP;
     const offset = (attempt % 2 === 1 ? 1 : -1) * magnitude;
     const candidate: Rect =
-      primaryAxis === 'y' ? { x: auto.x, y: auto.y + offset, ...size } : { x: auto.x + offset, y: auto.y, ...size };
+      primaryAxis === 'y'
+        ? { x: auto.x, y: auto.y + offset, ...size }
+        : { x: auto.x + offset, y: auto.y, ...size };
     if (!overlapsAny(candidate, placed)) return candidate;
   }
 
