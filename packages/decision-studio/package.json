@@ -1,7 +1,7 @@
 {
   "name": "@workspec/decision-studio",
   "version": "0.1.0-alpha.1",
-  "description": "WorkSpec Decision Studio — standalone CLI + localhost host shell. Run costed decisions from your working tree.",
+  "description": "WorkSpec Decision Studio \u2014 standalone CLI + localhost host shell. Run costed decisions from your working tree.",
   "keywords": [
     "architecture-decision-records",
     "adr",
@@ -9,10 +9,10 @@
     "yaml",
     "cli"
   ],
-  "homepage": "https://github.com/FieldstateNZ/workspec-decision-studio#readme",
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/decision-studio#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
     "directory": "packages/decision-studio"
   },
   "license": "Apache-2.0",

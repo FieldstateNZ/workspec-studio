@@ -1,7 +1,7 @@
 {
   "name": "@workspec/decision-schema",
   "version": "0.1.0-alpha.1",
-  "description": "Zod source of truth for WorkSpec Decision Studio artifacts — TS types, runtime validation, and generated JSON Schema.",
+  "description": "Zod source of truth for WorkSpec Decision Studio artifacts \u2014 TS types, runtime validation, and generated JSON Schema.",
   "keywords": [
     "zod",
     "json-schema",
@@ -9,10 +9,10 @@
     "architecture-decision-records",
     "schema"
   ],
-  "homepage": "https://github.com/FieldstateNZ/workspec-decision-studio#readme",
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/decision-schema#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FieldstateNZ/workspec-decision-studio.git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
     "directory": "packages/decision-schema"
   },
   "license": "Apache-2.0",
