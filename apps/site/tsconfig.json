@@ -9,10 +9,19 @@
     // from its registry build (dist + .d.ts) in node_modules, never workspace
     // source. The @workspec/c4-* packages are the documented, temporary
     // exception (workspace:* devDependencies — see docs/c4/drift-log.md
-    // entry 17): they resolve via the SAME node_modules mechanism (pnpm
-    // symlinks a `workspace:*` dep to the package's own dist + .d.ts), so
-    // this config needs no special case for them either.
+    // entry 17): they resolve through pnpm's symlink to the package's own
+    // dist + .d.ts, which only exists after a build — so they alone need the
+    // project references below, letting `tsc -b` build their declarations on
+    // demand (CI runs typecheck before build; without references a clean
+    // tree fails TS2307). Registry deps need none: published .d.ts ship in
+    // node_modules.
     "noEmit": true
   },
+  "references": [
+    { "path": "../../packages/c4-schema/tsconfig.build.json" },
+    { "path": "../../packages/c4-model/tsconfig.build.json" },
+    { "path": "../../packages/c4-layout/tsconfig.build.json" },
+    { "path": "../../packages/c4-ui/tsconfig.build.json" }
+  ],
   "include": ["src"]
 }

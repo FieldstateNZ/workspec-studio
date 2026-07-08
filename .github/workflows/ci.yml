@@ -37,8 +37,12 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Test
-        run: pnpm run test
-
+      # Build precedes Test: apps/site's /c4 demo tests import the c4
+      # packages' built dist through node_modules (workspace devDeps, no
+      # source aliases by design) — on a clean runner that JS only exists
+      # after the build stage.
       - name: Build
         run: pnpm run build
+
+      - name: Test
+        run: pnpm run test
