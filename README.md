@@ -50,9 +50,9 @@ imported with full git history from
 design, and the project's own dogfooded decision records (D1–D6) — live under
 [`docs/decisions/`](docs/decisions).
 
-Publishing is currently paused: the npm trusted publishers for the four `@workspec/decision-*`
-packages need re-registering against this repo before
-[`release.yml`](.github/workflows/release.yml) can publish (see the note at the top of that file).
+Releases publish via [`release.yml`](.github/workflows/release.yml) on a version tag (npm
+trusted publishing/OIDC with provenance) — see
+[`docs/decisions/RELEASING.md`](docs/decisions/RELEASING.md).
 
 ## C4 Diagrams module
 
@@ -68,9 +68,10 @@ Full docs, the `.layout/` contract, and CLI usage live under [`docs/c4/`](docs/c
 | `@workspec/c4-ui`      | `packages/c4-ui`      | Host-agnostic React components (interactive canvas + deterministic SVG export) |
 | `@workspec/c4-studio`  | `packages/c4-studio`  | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`) |
 
-The `@workspec/c4-*` packages are not yet published to npm (same trusted-publisher gate above);
-`apps/site`'s `/c4` page takes them as `workspace:*` devDependencies as a documented, temporary
-exception — see [`docs/c4/drift-log.md`](docs/c4/drift-log.md).
+The `@workspec/c4-*` library packages are published to npm at `0.1.0-alpha.0`; `@workspec/c4-studio`
+is not yet published (trusted publisher pending). `apps/site`'s `/c4` page still takes the c4
+packages as `workspace:*` devDependencies as a documented, temporary exception — they flip to
+registry pins as a follow-up — see [`docs/c4/drift-log.md`](docs/c4/drift-log.md).
 
 ## Architecture
 

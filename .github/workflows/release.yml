@@ -1,16 +1,8 @@
 name: Release (publish to npm)
 
-# BRETT-GATED: this workflow moved with the repo when Decision Studio was
-# imported into workspec-studio (S0b). Every npm trusted publisher was
-# registered against owner FieldstateNZ / repo workspec-decision-studio /
-# workflow release.yml — that registration does NOT follow the import. Each of
-# the four @workspec/decision-* packages needs its trusted publisher
-# re-registered on npmjs.com against owner FieldstateNZ / repo workspec-studio /
-# workflow release.yml before this workflow can publish anything. Do not
-# re-enable/tag a release until that's done.
-#
-# Publishes all four @workspec/* packages to npm when a version tag is pushed
-# (e.g. `v0.1.0-alpha.0`).
+# Publishes the four @workspec/decision-* packages to npm when a version tag
+# is pushed (e.g. `v0.1.0-alpha.1`). Trusted publishers are registered against
+# owner FieldstateNZ / repo workspec-studio / workflow release.yml.
 #
 # Auth is via npm TRUSTED PUBLISHING (OIDC) — there is NO `NPM_TOKEN` secret.
 # GitHub mints a short-lived id-token (`id-token: write` below) and npm exchanges
@@ -38,9 +30,6 @@ permissions:
 
 jobs:
   publish:
-    # BRETT-GATE enforcement: flip to `true` only after the npm trusted
-    # publishers are re-registered against this repo (see header note).
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,13 +38,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
-      # Trusted publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.
-      # Pin to an exact 11.x version for reproducible releases (bump deliberately);
-      # staying < 12 also avoids a future npm major that could drop Node 20.
+      # Trusted publishing (OIDC) requires npm >= 11.5.1; the runner's default
+      # npm is older. Pin to an exact 11.x version for reproducible releases
+      # (bump deliberately). Node 22 matches ci.yml — the suite is only ever
+      # verified on 22.
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@11.5.1
 
