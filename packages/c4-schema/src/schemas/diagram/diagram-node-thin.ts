@@ -8,7 +8,9 @@ const bareSlugNode = z
     position: DiagramPosition.optional().describe('Optional inline pinned position for this node.'),
   })
   .strict()
-  .describe('A bare-slug node reference, ambiguous over any C4_REF_KINDS kind.');
+  .describe(
+    'An untyped node reference: an object `{ slug, position? }` (never a plain string) whose kind is ambiguous over C4_REF_KINDS and resolved by the loader.',
+  );
 
 const typedRefNodes = C4_REF_KINDS.map((kind) =>
   z
