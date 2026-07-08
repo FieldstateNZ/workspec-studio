@@ -1,0 +1,7 @@
+{
+  "name": "@workspec-examples/postgres-managed-vs-self-hosted",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worked example: production Postgres as managed PaaS vs zone-redundant HA vs self-hosted on Kubernetes. Costed *.decision.yaml / *.catalog.yaml, decided.",
+  "license": "Apache-2.0"
+}

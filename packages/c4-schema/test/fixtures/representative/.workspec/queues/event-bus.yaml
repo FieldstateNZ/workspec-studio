@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/queue.schema.json
+type: queue
+title: Event Bus
+description: Fan-out queue for spec↔code reconciliation events.
+technology: Redis Streams

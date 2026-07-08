@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/diagram.schema.json
+title: System Context
+type: c4-context
+description: >
+  Who and what WorkSpec Studio talks to: the author writing artifacts and
+  code, the npm registry packages publish to, GitHub Pages serving the
+  product site, and WorkSpec Enterprise consuming the same published
+  packages.
+nodes:
+  - slug: author
+  - external-system: npm-registry
+  - external-system: github-pages
+  - external-system: workspec-enterprise
+edges:
+  - from: author
+    to: __system__
+    label: authors .workspec/ artifacts and code
+    category: identity
+  - from: __system__
+    to: npm-registry
+    label: publishes @workspec/* packages to
+    category: data
+  - from: __system__
+    to: github-pages
+    label: deploys the Studio site to
+    category: data
+  - from: __system__
+    to: workspec-enterprise
+    label: packages consumed directly by
+    category: data

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: mf-host
+description: >
+  Module-federation smoke host: mounts decision-ui's DecisionCard /
+  DecisionWorkspace and c4-ui's C4Diagram / C4Explorer as remotes over
+  in-memory data, proving a single shared React instance across both
+  boundaries. CI integration proof; never published.
+technology: Vite, module federation
+tags:
+  - ci-only

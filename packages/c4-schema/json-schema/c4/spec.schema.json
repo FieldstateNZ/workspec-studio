@@ -1,0 +1,125 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/c4/spec.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": {},
+  "description": "The singleton project style spec (lenient; the style compiler normalises).",
+  "properties": {
+    "connections": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "description": "Authored visual style for one edge category (lenient; the style compiler normalises).",
+        "properties": {
+          "accent": {
+            "description": "Accent color, e.g. \"#64748b\".",
+            "type": "string"
+          },
+          "style": {
+            "description": "Rendered line style. Known values: \"solid\", \"dashed\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "default": {},
+      "description": "Per-category edge visual style, keyed by category name. Absent categories use code defaults.",
+      "propertyNames": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "elements": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "description": "Authored visual style for one element kind (lenient; the style compiler normalises).",
+        "properties": {
+          "accent": {
+            "description": "Accent color, e.g. \"#4A90D9\" or \"hsl(214 88% 51%)\".",
+            "type": "string"
+          },
+          "icon": {
+            "description": "Icon name rendered on the node, e.g. \"user\", \"database\".",
+            "type": "string"
+          },
+          "shape": {
+            "description": "Rendered node shape. Known values: \"box\", \"cylinder\", \"pill\", \"hexagon\".",
+            "type": "string"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional visual variant. Known values: \"external\" (external-system styling)."
+          }
+        },
+        "type": "object"
+      },
+      "default": {},
+      "description": "Per-element-kind visual style, keyed by kind name. Absent kinds use code defaults.",
+      "propertyNames": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "source": {
+      "description": "Freeform provenance note: how or where this artifact was sourced from.",
+      "type": "string"
+    },
+    "surfaces": {
+      "description": "Optional per-theme surface/ink/page color overrides.",
+      "properties": {
+        "dark": {
+          "description": "Surface colors for the dark theme.",
+          "properties": {
+            "ink": {
+              "description": "Text/ink color used on the surface.",
+              "type": "string"
+            },
+            "page": {
+              "description": "Page (canvas) background color.",
+              "type": "string"
+            },
+            "surface": {
+              "description": "Node surface color for this theme.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "light": {
+          "description": "Surface colors for the light theme.",
+          "properties": {
+            "ink": {
+              "description": "Text/ink color used on the surface.",
+              "type": "string"
+            },
+            "page": {
+              "description": "Page (canvas) background color.",
+              "type": "string"
+            },
+            "surface": {
+              "description": "Node surface color for this theme.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "type": {
+      "description": "Artifact kind label: \"style\" (v2). Legacy files used \"spec\" — still accepted; the compiler upgrades.",
+      "type": "string"
+    },
+    "version": {
+      "description": "Style spec format version. Current is 2.",
+      "type": "number"
+    }
+  },
+  "title": "WorkSpec C4 Style Spec (v1alpha1)",
+  "type": "object"
+}

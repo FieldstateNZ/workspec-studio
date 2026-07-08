@@ -1,0 +1,652 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/c4/diagram.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "additionalProperties": false,
+      "description": "A thin diagram: nodes are slug references, not inline element data.",
+      "properties": {
+        "description": {
+          "description": "Optional prose description of what the diagram shows.",
+          "type": "string"
+        },
+        "edges": {
+          "description": "Connections between the diagram's nodes.",
+          "items": {
+            "additionalProperties": false,
+            "description": "An edge connecting two diagram nodes by slug.",
+            "properties": {
+              "category": {
+                "description": "Free string keying a `connections` entry in the project style spec (spec.yaml).",
+                "type": "string"
+              },
+              "from": {
+                "description": "Slug (or `__system__`) of the source node.",
+                "type": "string"
+              },
+              "label": {
+                "description": "Human-readable label shown on the edge.",
+                "type": "string"
+              },
+              "lens": {
+                "description": "Restricts which c4-container lens this edge appears under. Omit to show under both.",
+                "enum": [
+                  "logical",
+                  "deployment",
+                  "both"
+                ],
+                "type": "string"
+              },
+              "to": {
+                "description": "Slug (or `__system__`) of the target node.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "nodes": {
+          "description": "Slug references to the elements shown on this diagram.",
+          "items": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "description": "An untyped node reference: an object `{ slug, position? }` (never a plain string) whose kind is ambiguous over C4_REF_KINDS and resolved by the loader.",
+                "properties": {
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  },
+                  "slug": {
+                    "description": "The element slug this node references, e.g. \"architect\".",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "slug"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { actor: <slug> }.",
+                "properties": {
+                  "actor": {
+                    "description": "The actor element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "actor"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { system: <slug> }.",
+                "properties": {
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  },
+                  "system": {
+                    "description": "The system element slug this node references.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "system"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { external-system: <slug> }.",
+                "properties": {
+                  "external-system": {
+                    "description": "The external-system element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "external-system"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { container: <slug> }.",
+                "properties": {
+                  "container": {
+                    "description": "The container element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "container"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { component: <slug> }.",
+                "properties": {
+                  "component": {
+                    "description": "The component element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "component"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { database: <slug> }.",
+                "properties": {
+                  "database": {
+                    "description": "The database element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "database"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { queue: <slug> }.",
+                "properties": {
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  },
+                  "queue": {
+                    "description": "The queue element slug this node references.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "queue"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { domain: <slug> }.",
+                "properties": {
+                  "domain": {
+                    "description": "The domain element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "domain"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { feature: <slug> }.",
+                "properties": {
+                  "feature": {
+                    "description": "The feature element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "feature"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { class: <slug> }.",
+                "properties": {
+                  "class": {
+                    "description": "The class element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "class"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { interface: <slug> }.",
+                "properties": {
+                  "interface": {
+                    "description": "The interface element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "interface"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "A typed-ref node naming its kind explicitly: { function: <slug> }.",
+                "properties": {
+                  "function": {
+                    "description": "The function element slug this node references.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "additionalProperties": false,
+                    "description": "Optional inline pinned position for this node.",
+                    "properties": {
+                      "x": {
+                        "description": "X coordinate, top-left page coords.",
+                        "type": "number"
+                      },
+                      "y": {
+                        "description": "Y coordinate, top-left page coords.",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "function"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "source": {
+          "description": "Freeform provenance note: how or where this artifact was sourced from.",
+          "type": "string"
+        },
+        "title": {
+          "description": "Human-readable diagram title.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Diagram type, e.g. \"c4-context\", \"c4-container\", \"c4-component\".",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "type",
+        "nodes",
+        "edges"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "description": "A fat/legacy diagram: nodes carry inline element data.",
+      "properties": {
+        "description": {
+          "description": "Optional prose description of what the diagram shows.",
+          "type": "string"
+        },
+        "edges": {
+          "description": "Connections between the diagram's nodes.",
+          "items": {
+            "additionalProperties": false,
+            "description": "An edge connecting two diagram nodes by slug.",
+            "properties": {
+              "category": {
+                "description": "Free string keying a `connections` entry in the project style spec (spec.yaml).",
+                "type": "string"
+              },
+              "from": {
+                "description": "Slug (or `__system__`) of the source node.",
+                "type": "string"
+              },
+              "label": {
+                "description": "Human-readable label shown on the edge.",
+                "type": "string"
+              },
+              "lens": {
+                "description": "Restricts which c4-container lens this edge appears under. Omit to show under both.",
+                "enum": [
+                  "logical",
+                  "deployment",
+                  "both"
+                ],
+                "type": "string"
+              },
+              "to": {
+                "description": "Slug (or `__system__`) of the target node.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "nodes": {
+          "description": "Inline element data for every node shown on this diagram.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A fat/legacy diagram node carrying inline element data.",
+            "properties": {
+              "deployment_target": {
+                "description": "Node kind under the deployment lens (c4-container diagrams).",
+                "type": "string"
+              },
+              "description": {
+                "description": "Optional prose description shown on hover/detail.",
+                "type": "string"
+              },
+              "id": {
+                "description": "Stable node id, unique within the diagram.",
+                "type": "string"
+              },
+              "label": {
+                "description": "Human-readable label shown on the node.",
+                "type": "string"
+              },
+              "logical_type": {
+                "description": "Node kind under the logical lens (c4-container diagrams).",
+                "type": "string"
+              },
+              "tags": {
+                "description": "Free-text labels for filtering and grouping.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "description": "Element kind this node represents, e.g. \"container\", \"domain\".",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "type",
+              "label"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "source": {
+          "description": "Freeform provenance note: how or where this artifact was sourced from.",
+          "type": "string"
+        },
+        "tags": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "description": "Inline visual override for a diagram-level tag.",
+            "properties": {
+              "border": {
+                "description": "Border style override for nodes carrying this tag.",
+                "type": "string"
+              },
+              "color": {
+                "description": "Accent color for nodes carrying this tag, e.g. a hex or hsl value.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "description": "Diagram-level inline visual overrides, keyed by tag name.",
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "title": {
+          "description": "Human-readable diagram title.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Diagram type, e.g. \"c4-context\", \"c4-container\", \"c4-component\".",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "type",
+        "nodes",
+        "edges"
+      ],
+      "type": "object"
+    }
+  ],
+  "description": "A thin or fat diagram artifact.",
+  "title": "WorkSpec C4 Diagram (v1alpha1)"
+}

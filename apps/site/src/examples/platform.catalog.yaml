@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  id: platform
+  name: 'Hosting platform catalog'
+  currency: NZD
+  asOf: '2026-07-01'
+spec:
+  # Pricing modes are multipliers on a SKU's PAYG monthly list price.
+  # Committed modes bill 24×7 and ignore schedule; only non-committed modes
+  # (payg, spot) benefit from scheduling a line off.
+  pricingModes:
+    - id: payg
+      label: 'PAYG'
+      short: 'PAYG'
+      mult: 1.0
+      committed: false
+      note: 'Pay-as-you-go list price'
+    - id: sp1
+      label: '1yr Savings Plan'
+      short: '1Y SP'
+      mult: 0.72
+      committed: true
+      note: '1-year compute savings plan'
+    - id: sp3
+      label: '3yr Savings Plan'
+      short: '3Y SP'
+      mult: 0.56
+      committed: true
+      note: '3-year compute savings plan'
+    - id: ri1
+      label: '1yr Reserved'
+      short: '1Y RI'
+      mult: 0.66
+      committed: true
+      note: '1-year reserved instance'
+    - id: ri3
+      label: '3yr Reserved'
+      short: '3Y RI'
+      mult: 0.5
+      committed: true
+      note: '3-year reserved instance'
+    - id: spot
+      label: 'Spot'
+      short: 'SPOT'
+      mult: 0.18
+      committed: false
+      note: 'Interruptible spot capacity'
+  # Schedules are the share of the ~730-hour month a line actually runs.
+  schedules:
+    - id: always
+      label: '24×7'
+      pct: 1.0
+    - id: business
+      label: 'Business hrs'
+      pct: 0.3
+      note: 'Off nights + weekends'
+    - id: overnight
+      label: 'Overnight batch'
+      pct: 0.22
+    - id: preview
+      label: 'Scale-to-zero'
+      pct: 0.12
+  # SKUs are priced as a monthly PAYG list price per single unit.
+  skus:
+    - id: d4s_v5
+      label: 'D4s v5'
+      family: 'General compute'
+      price: 190
+    - id: d8s_v5
+      label: 'D8s v5'
+      family: 'General compute'
+      price: 380
+    - id: d16s_v5
+      label: 'D16s v5'
+      family: 'General compute'
+      price: 760
+    - id: b4ms
+      label: 'B4ms (burstable)'
+      family: 'Burstable'
+      price: 120
+    - id: p1v3
+      label: 'P1v3'
+      family: 'App Service plan'
+      price: 124
+    - id: p2v3
+      label: 'P2v3'
+      family: 'App Service plan'
+      price: 248
+    - id: i1v2
+      label: 'I1v2 (ASE)'
+      family: 'Isolated plan'
+      price: 305
+    - id: ase_stamp
+      label: 'ASE v3 stamp'
+      family: 'Isolated env fee'
+      price: 990
+    - id: ca_consumption
+      label: 'Container Apps (consumption)'
+      family: 'Serverless'
+      price: 0

@@ -1,0 +1,292 @@
+/* Bespoke component styles for @workspec/c4-ui. Every colour/spacing/font
+   value below is a @workspec/design token reference (var(--*)) — see
+   src/style/spec-defaults.ts for the ONE documented exception (the
+   Enterprise kind/category accent data), which never appears in this file. */
+
+.c4-root {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.c4-diagram {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  outline: none;
+  border-radius: var(--r-4);
+  overflow: hidden;
+}
+
+.c4-diagram:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.c4-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.c4-canvas:active {
+  cursor: grabbing;
+}
+
+/* ── C4 style-spec v2 token layer ──────────────────────────────────────────
+   Replicates WorkSpec Enterprise's `.c4-el` derivation verbatim
+   (artifacts/workspec/src/index.css, same section title): the renderer sets
+   `--c4-el-accent-raw` inline per node (the resolved spec-defaults accent);
+   everything else derives here. The surface is a soft, neutral-dominant tint
+   of the accent over the design system's elevated card token (text sits on
+   the tint, never the accent), so contrast is guaranteed for any hue in both
+   themes. Dark mode first lifts the accent toward white so it reads on the
+   dark surface (literal 22%, matching Enterprise's own literal). The
+   percentages are asserted against style/element-tints.ts (the same data
+   render-svg.ts computes from) by element-tints.test.ts. */
+.c4-node {
+  cursor: pointer;
+  --c4-el-accent: var(--c4-el-accent-raw);
+  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) 9%, var(--bg-elevated));
+  --c4-el-eyebrow: color-mix(in oklab, var(--c4-el-accent) 70%, var(--ink));
+  --c4-el-ink-dim: color-mix(in oklab, var(--ink) 60%, transparent);
+  --c4-el-border: color-mix(in oklab, var(--c4-el-accent) 28%, transparent);
+}
+
+.c4-root[data-theme='dark'] .c4-node {
+  --c4-el-accent: color-mix(in oklab, var(--c4-el-accent-raw), white 22%);
+  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) 14%, var(--bg-elevated));
+  --c4-el-eyebrow: var(--c4-el-accent);
+  --c4-el-ink-dim: color-mix(in oklab, var(--ink) 62%, transparent);
+  --c4-el-border: color-mix(in oklab, var(--c4-el-accent) 34%, transparent);
+}
+
+.c4-node[aria-disabled='true'] {
+  cursor: default;
+}
+
+/* Hover/focus affordance ring — an offset rect the canvas renders while the
+   node is hovered or keyboard-focused. Hover: a dashed accent outline
+   (Enterprise's C4NodeComponent hover treatment — `outline: 2px dashed
+   var(--el-accent)`, offset 2px); focus: the design system's solid focus
+   ring (decision-ui's `.ds-root :focus-visible` pattern — 2px solid
+   var(--accent)), drawn as an SVG stroke because CSS `outline` doesn't
+   render on SVG content. */
+.c4-node-ring {
+  fill: none;
+  stroke-width: 2;
+}
+
+.c4-node-hover .c4-node-ring {
+  stroke: var(--c4-el-accent);
+  stroke-dasharray: 4 3;
+}
+
+.c4-node-focus .c4-node-ring {
+  stroke: var(--accent);
+  stroke-dasharray: none;
+}
+
+.c4-node-title {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.c4-node-desc {
+  fill: var(--c4-el-ink-dim);
+  font-size: 11px;
+}
+
+.c4-node-tech {
+  fill: var(--c4-el-ink-dim);
+  font-size: 10px;
+}
+
+.c4-node-kind {
+  fill: var(--c4-el-eyebrow);
+  font-size: 10px;
+}
+
+.c4-edge-label {
+  fill: var(--ink-soft);
+  font-size: 11px;
+}
+
+.c4-write-error,
+.c4-explorer-error {
+  padding: var(--s-2) var(--s-3);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+  border-radius: var(--r-2);
+}
+
+.c4-explorer-loading {
+  padding: var(--s-2) var(--s-3);
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.c4-tooltip {
+  position: absolute;
+  transform: translate(-8px, calc(-100% - 8px));
+  z-index: 10;
+  pointer-events: none;
+  max-width: 260px;
+}
+
+.c4-tooltip-body {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  box-shadow: var(--sh-2);
+  padding: var(--s-3);
+}
+
+.c4-tooltip-kind {
+  color: var(--ink-fade);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.c4-tooltip-title {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: var(--s-1);
+}
+
+.c4-tooltip-desc {
+  color: var(--ink-soft);
+  font-size: 12px;
+  margin-top: var(--s-1);
+}
+
+.c4-tooltip-tech {
+  color: var(--ink-fade);
+  font-size: 11px;
+  margin-top: var(--s-1);
+}
+
+.c4-tooltip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+.c4-tooltip-tag {
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+  border-radius: var(--r-pill);
+  padding: 1px var(--s-2);
+  font-size: 10px;
+}
+
+.c4-links {
+  margin-top: var(--s-2);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.c4-links-lead {
+  color: var(--ink-fade);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.c4-lk {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+}
+
+.c4-lk-active {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.c4-lk-kind {
+  color: var(--ink-fade);
+  text-transform: capitalize;
+}
+
+.c4-explorer {
+  display: flex;
+  height: 100%;
+  min-height: 400px;
+  gap: var(--s-4);
+}
+
+.c4-explorer-tree {
+  flex: 0 0 220px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  padding-right: var(--s-3);
+}
+
+.c4-explorer-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.c4-tree-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-3);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.c4-tree-item:hover {
+  background: var(--bg-soft);
+}
+
+.c4-tree-item-active {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.c4-tree-item-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.c4-tree-item-type {
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+
+.c4-explorer-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.c4-explorer-pane .c4-diagram {
+  flex: 1 1 auto;
+}

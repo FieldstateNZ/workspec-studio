@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  id: postgres
+  name: 'Postgres platform catalog'
+  currency: NZD
+  asOf: '2026-07-01'
+spec:
+  # Pricing modes are multipliers on a SKU's PAYG monthly list price.
+  # Committed modes (reserved) bill 24×7 and ignore schedule; only non-committed
+  # modes (payg, spot) benefit from scheduling a line off.
+  pricingModes:
+    - id: payg
+      label: 'PAYG'
+      short: 'PAYG'
+      mult: 1.0
+      committed: false
+      note: 'Pay-as-you-go list price'
+    - id: ri1
+      label: '1yr Reserved'
+      short: '1Y RI'
+      mult: 0.65
+      committed: true
+      note: '1-year reserved capacity'
+    - id: ri3
+      label: '3yr Reserved'
+      short: '3Y RI'
+      mult: 0.55
+      committed: true
+      note: '3-year reserved capacity'
+    - id: spot
+      label: 'Spot'
+      short: 'SPOT'
+      mult: 0.2
+      committed: false
+      note: 'Interruptible spot capacity (non-prod only)'
+  # Schedules are the share of the ~730-hour month a line actually runs.
+  schedules:
+    - id: always
+      label: '24×7'
+      pct: 1.0
+    - id: business
+      label: 'Business hrs'
+      pct: 0.35
+      note: 'Off nights + weekends'
+  # SKUs are priced as a monthly PAYG list price per single unit.
+  skus:
+    - id: pg_flex_d4
+      label: 'Flexible Server (4 vCore)'
+      family: 'Managed Postgres'
+      price: 520
+      unit: 'instance / month'
+    - id: pg_flex_d8
+      label: 'Flexible Server (8 vCore)'
+      family: 'Managed Postgres'
+      price: 1040
+      unit: 'instance / month'
+    - id: pg_replica_d4
+      label: 'Read replica (4 vCore)'
+      family: 'Managed Postgres'
+      price: 520
+      unit: 'replica / month'
+    - id: vm_d8s_v5
+      label: 'D8s v5 node'
+      family: 'Self-host compute'
+      price: 380
+      unit: 'node / month'
+    - id: vm_d4s_v5
+      label: 'D4s v5 node'
+      family: 'Self-host compute'
+      price: 190
+      unit: 'node / month'

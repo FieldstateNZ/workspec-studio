@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/component.schema.json
+type: component
+title: Diagram Editor
+description: React canvas component for authoring C4 diagrams.
+technology: React

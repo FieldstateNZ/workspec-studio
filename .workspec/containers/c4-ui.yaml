@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: c4-ui
+description: >
+  Host-agnostic React components for interactive C4 diagrams — the
+  interactive canvas, the standalone deterministic SVG renderer, and the
+  host contract — a standalone library and a module-federation remote.
+technology: React
+tags:
+  - c4
+  - published

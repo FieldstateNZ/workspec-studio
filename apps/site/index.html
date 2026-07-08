@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WorkSpec Studio — free workbench over your WorkSpec artifacts</title>
+    <meta
+      name="description"
+      content="WorkSpec Studio: costed architecture decisions and C4 diagrams as reviewable YAML artifacts that live in your repo and version with git. Free, standalone, git-native — the same packages WorkSpec Enterprise consumes."
+    />
+    <script>
+      // No-flash theming (see @workspec/design docs/theming.md): set BOTH
+      // WorkSpec theme signals — the data-aesthetic/data-theme attribute pair
+      // (activates the token palette) and the .dark class (activates
+      // Tailwind's dark: variant) — synchronously, before any stylesheet or
+      // app bundle loads. The site follows prefers-color-scheme; main.tsx
+      // keeps the signals in sync when the OS preference changes.
+      (function () {
+        var root = document.documentElement;
+        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-aesthetic', 'console');
+        root.setAttribute('data-theme', dark ? 'dark' : 'light');
+        root.classList.toggle('dark', dark);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

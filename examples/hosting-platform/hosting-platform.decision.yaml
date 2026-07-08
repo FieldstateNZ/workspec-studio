@@ -1,0 +1,412 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/decision.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Decision
+metadata:
+  id: dec-hosting
+  title: 'Hosting platform for the data and delivery services'
+  status: exploring
+  created: '2026-07-01'
+  deciders:
+    - 'Platform Engineering'
+spec:
+  context: >-
+    The data-management and delivery services need a consolidated hosting
+    platform. The delivery service runs on App Service today; the data
+    warehouse and batch jobs are outgrowing it. We need a like-for-like
+    comparison of where these workloads should run — costed across dev / test /
+    prod and weighed on ops, scale, isolation and lock-in.
+  catalog: ./platform.catalog.yaml
+  currency: NZD
+  environments:
+    - dev
+    - test
+    - prod
+  criteria:
+    - id: opsBurden
+      label: 'Ops burden'
+      hint: 'Day-2 operational load (higher = lighter)'
+      weight: 0.5
+    - id: scaleCeiling
+      label: 'Scale ceiling'
+      hint: 'How far it scales before re-platforming'
+      weight: 2
+    - id: isolation
+      label: 'Isolation / compliance'
+      hint: 'Tenancy + compliance posture'
+      weight: 0.5
+    - id: migration
+      label: 'Migration effort'
+      hint: 'Effort to get there (higher = easier)'
+      weight: 0.3
+    - id: lockIn
+      label: 'Lock-in'
+      hint: 'Portability off the platform (higher = freer)'
+      weight: 0.5
+  options:
+    # ── AKS ─────────────────────────────────────────────────────────────────
+    - id: aks
+      name: 'AKS'
+      archetype: 'Azure Kubernetes Service'
+      summary: >-
+        One cluster, multi-tenant node pools. Non-prod scheduled off; Spot for
+        batch; steady prod reservable.
+      tag: 'current direction'
+      environments: [dev, test, prod]
+      complete: true
+      lines:
+        - id: sys
+          group: compute
+          label: 'System node pool'
+          flat: false
+          sku: d4s_v5
+          mode: payg
+          schedule: always
+          tag: nonprod-compute
+          qty: { dev: 1, test: 1, prod: 2 }
+        - id: work
+          group: compute
+          label: 'Workload pool (application services)'
+          flat: false
+          sku: d8s_v5
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { dev: 1, test: 1, prod: 4 }
+        - id: mesh
+          group: compute
+          label: 'Ingress / mesh pool'
+          flat: false
+          sku: d4s_v5
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { dev: 1, test: 1, prod: 2 }
+        - id: batch
+          group: compute
+          label: 'Batch pool (overnight ETL)'
+          flat: false
+          sku: d4s_v5
+          mode: payg
+          schedule: overnight
+          tag: batch
+          qty: { dev: 0, test: 0, prod: 2 }
+        - id: pg
+          group: data
+          label: 'Postgres Flexible Server'
+          flat: true
+          tag: db
+          amount: { dev: 90, test: 90, prod: 220 }
+          estimate: false
+        - id: sql
+          group: data
+          label: 'SQL pool (analytics warehouse)'
+          flat: true
+          amount: { dev: 0, test: 60, prod: 240 }
+          estimate: true
+        - id: paas
+          group: platform
+          label: 'Shared PaaS (cache, bus, storage)'
+          flat: true
+          amount: { dev: 30, test: 40, prod: 110 }
+          estimate: false
+        - id: log
+          group: platform
+          label: 'Log Analytics'
+          flat: true
+          amount: { dev: 25, test: 30, prod: 85 }
+          estimate: false
+        - id: defender
+          group: platform
+          label: 'Defender for Containers'
+          flat: true
+          tag: defender
+          amount: { dev: 0, test: 0, prod: 120 }
+          estimate: false
+        - id: net
+          group: platform
+          label: 'Networking (egress, LB, NAT)'
+          flat: true
+          amount: { dev: 20, test: 20, prod: 65 }
+          estimate: true
+      levers:
+        - id: reserveProd
+          label: 'Reserve steady prod'
+          hint: '3yr RI on the always-on prod workload pool'
+          enabled: false
+          patch:
+            - match: { tags: [steady-prod] }
+              set: { mode: ri3 }
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod-compute] }
+              set: { schedule: business }
+        - id: spotBatch
+          label: 'Spot for batch'
+          hint: 'Interruptible capacity for batch pool'
+          enabled: true
+          patch:
+            - match: { tags: [batch] }
+              set: { mode: spot, schedule: overnight }
+      scores:
+        opsBurden:
+          score: 2
+          note: 'Cluster ops, upgrades, capacity planning fall on the team.'
+        scaleCeiling:
+          score: 5
+          note: 'Effectively unbounded; node pools scale independently.'
+        isolation:
+          score: 4
+          note: 'Namespace + network policy; not a hard tenancy boundary.'
+        migration:
+          score: 2
+          note: 'The delivery service must be containerised and re-platformed off App Service.'
+        lockIn:
+          score: 4
+          note: 'Standard Kubernetes — portable across clouds with effort.'
+    # ── App Service ─────────────────────────────────────────────────────────
+    - id: appsvc
+      name: 'App Service'
+      archetype: 'Azure App Service (multi-tenant)'
+      summary: >-
+        Status quo for the delivery service. PaaS plans per app, simple ops.
+        Weaker density and scale story at platform size.
+      tag: 'status quo'
+      environments: [dev, test, prod]
+      complete: true
+      lines:
+        - id: p1
+          group: compute
+          label: 'P1v3 plan (web + API)'
+          flat: false
+          sku: p1v3
+          mode: payg
+          schedule: always
+          tag: nonprod-compute
+          qty: { dev: 1, test: 1, prod: 3 }
+        - id: p2
+          group: compute
+          label: 'P2v3 plan (workers)'
+          flat: false
+          sku: p2v3
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { dev: 0, test: 1, prod: 1 }
+        - id: pg
+          group: data
+          label: 'Postgres Flexible Server'
+          flat: true
+          tag: db
+          amount: { dev: 90, test: 90, prod: 180 }
+          estimate: false
+        - id: paas
+          group: platform
+          label: 'Shared PaaS (cache, bus, storage)'
+          flat: true
+          amount: { dev: 25, test: 30, prod: 80 }
+          estimate: false
+        - id: log
+          group: platform
+          label: 'Log Analytics'
+          flat: true
+          amount: { dev: 20, test: 20, prod: 55 }
+          estimate: false
+        - id: net
+          group: platform
+          label: 'Networking (egress, LB)'
+          flat: true
+          amount: { dev: 15, test: 15, prod: 40 }
+          estimate: true
+      levers:
+        - id: reserveProd
+          label: 'Reserve steady prod'
+          hint: '3yr RI on the always-on prod workers plan'
+          enabled: false
+          patch:
+            - match: { tags: [steady-prod] }
+              set: { mode: ri3 }
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod-compute] }
+              set: { schedule: business }
+      scores:
+        opsBurden:
+          score: 5
+          note: 'Fully managed PaaS; minimal day-2 burden.'
+        scaleCeiling:
+          score: 3
+          note: 'Scales per-plan; platform-wide density gets expensive.'
+        isolation:
+          score: 2
+          note: 'Shared multi-tenant infrastructure.'
+        migration:
+          score: 5
+          note: 'The delivery service already runs here — zero migration.'
+        lockIn:
+          score: 2
+          note: 'Azure-specific PaaS contract.'
+    # ── Isolated App Service (ASE) ──────────────────────────────────────────
+    - id: ase
+      name: 'Isolated App Service (ASE)'
+      archetype: 'App Service Environment v3'
+      summary: >-
+        Single-tenant isolation and compliance posture. Higher fixed floor from
+        the ASE stamp fee.
+      tag: 'compliance play'
+      environments: [test, prod]
+      complete: true
+      lines:
+        - id: stamp
+          group: compute
+          label: 'ASE v3 stamp fee'
+          flat: false
+          sku: ase_stamp
+          mode: payg
+          schedule: always
+          qty: { dev: 0, test: 1, prod: 1 }
+        - id: i1
+          group: compute
+          label: 'I1v2 instances'
+          flat: false
+          sku: i1v2
+          mode: payg
+          schedule: always
+          tag: steady-prod
+          qty: { dev: 0, test: 1, prod: 4 }
+        - id: pg
+          group: data
+          label: 'Postgres Flexible (private)'
+          flat: true
+          tag: db
+          amount: { dev: 0, test: 110, prod: 240 }
+          estimate: false
+        - id: paas
+          group: platform
+          label: 'Private PaaS + endpoints'
+          flat: true
+          amount: { dev: 0, test: 60, prod: 140 }
+          estimate: true
+        - id: log
+          group: platform
+          label: 'Log Analytics + Defender'
+          flat: true
+          amount: { dev: 0, test: 50, prod: 150 }
+          estimate: false
+        - id: net
+          group: platform
+          label: 'Networking (private link, FW)'
+          flat: true
+          amount: { dev: 0, test: 60, prod: 160 }
+          estimate: true
+      levers:
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: false
+          patch:
+            - match: { tags: [nonprod-compute] }
+              set: { schedule: business }
+      scores:
+        opsBurden:
+          score: 4
+          note: 'Managed runtime, but network + stamp ops add overhead.'
+        scaleCeiling:
+          score: 4
+          note: 'Strong, within a single isolated stamp.'
+        isolation:
+          score: 5
+          note: 'Dedicated single-tenant environment — best compliance story.'
+        migration:
+          score: 3
+          note: 'Lift the delivery service onto ASE; mostly config, some networking.'
+        lockIn:
+          score: 2
+          note: 'Azure-specific, deepest PaaS coupling.'
+    # ── Azure Container Apps ────────────────────────────────────────────────
+    - id: aca
+      name: 'Azure Container Apps'
+      archetype: 'Azure Container Apps (serverless)'
+      summary: >-
+        Serverless containers with scale-to-zero for spiky and preview
+        workloads. Less control than AKS.
+      tag: 'serverless'
+      environments: [dev, test, prod]
+      complete: false
+      lines:
+        - id: api
+          group: compute
+          label: 'API + web (consumption)'
+          flat: true
+          tag: nonprod-compute
+          amount: { dev: 40, test: 60, prod: 320 }
+          estimate: true
+        - id: work
+          group: compute
+          label: 'Workers (scale-to-zero)'
+          flat: true
+          tag: batch
+          amount: { dev: 10, test: 20, prod: 140 }
+          estimate: true
+        - id: pg
+          group: data
+          label: 'Postgres Flexible Server'
+          flat: true
+          tag: db
+          amount: { dev: 90, test: 90, prod: 180 }
+          estimate: false
+        - id: paas
+          group: platform
+          label: 'Shared PaaS'
+          flat: true
+          amount: { dev: 25, test: 30, prod: 80 }
+          estimate: true
+        - id: log
+          group: platform
+          label: 'Log Analytics'
+          flat: true
+          amount: { dev: 20, test: 20, prod: 55 }
+          estimate: true
+      levers:
+        # Matches the flat `api` line (tag nonprod-compute); `set.schedule` is a
+        # no-op on flat lines, so this lever does not change ACA's cost — it is
+        # kept to preserve the prototype's default lever state.
+        - id: scheduleNonProd
+          label: 'Schedule non-prod'
+          hint: 'Dev + test idle overnight & weekends'
+          enabled: true
+          patch:
+            - match: { tags: [nonprod-compute] }
+              set: { schedule: business }
+      scores:
+        opsBurden:
+          score: 4
+          note: 'Managed control plane; less to run than AKS.'
+        scaleCeiling:
+          score: 4
+          note: 'Scales well; ceiling below raw AKS for stateful work.'
+        isolation:
+          score: 3
+          note: 'Per-app envs; softer than ASE.'
+        migration:
+          score: 3
+          note: 'Containerise, but no cluster to operate.'
+        lockIn:
+          score: 3
+          note: 'KEDA/Dapr conventions; moderately portable.'
+  links:
+    - kind: deployment
+      label: 'deploy/hosting-platform'
+    - kind: feature
+      label: 'FEAT-204 Unified warehouse'
+    - kind: feature
+      label: 'FEAT-218 Batch ETL'
+    - kind: system-requirement
+      label: 'SYSREQ-31 Multi-env parity'
+    - kind: system-requirement
+      label: 'SYSREQ-44 Data residency (NZ)'

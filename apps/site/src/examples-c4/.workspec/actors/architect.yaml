@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/actor.schema.json
+title: Architect
+description: Designs systems in WorkSpec and reviews proposed changes.
+tags:
+  - human
+links:
+  - adr: "~/docs/architecture/README.md"

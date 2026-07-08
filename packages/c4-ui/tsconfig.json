@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as decision-ui and
+    // packages/c4-*.
+    "outDir": ".typecheck",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // Needed for the handful of test-only files that read the package's own
+    // source with `node:fs` (the zero-local-tokens grep and the shared-module
+    // assertion) — mirrors packages/c4-layout's tsconfig.json.
+    "types": ["node"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+  },
+  // TS Project References: let `tsc -b` type-check against the sibling
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // siblings' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
+  "references": [
+    { "path": "../c4-schema/tsconfig.build.json" },
+    { "path": "../c4-model/tsconfig.build.json" },
+    { "path": "../c4-layout/tsconfig.build.json" }
+  ],
+  "include": ["src"]
+}

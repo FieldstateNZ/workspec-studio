@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/domain.schema.json
+title: Billing
+description: Everything to do with pricing, invoicing, and payment reconciliation.
+tags:
+  - core

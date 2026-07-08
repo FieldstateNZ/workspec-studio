@@ -1,0 +1,76 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/c4/system.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The singleton system element: the C4 \"System\" box for the project itself.",
+  "properties": {
+    "current_phase": {
+      "description": "Freeform current-phase label, distinct from `phase`.",
+      "type": "string"
+    },
+    "description": {
+      "description": "Fuller prose description of what the system is and does.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "links": {
+      "description": "Cross-references to other artifacts or docs: exactly one {<linkType>: <pathRef>} pair per entry, plus an optional cardinality key ({from, to, label?}). Path refs must start with \"~/\" or \"@workspace/\".",
+      "items": {
+        "additionalProperties": {},
+        "propertyNames": {
+          "description": "The link type, e.g. \"adr\", \"runbook\" — or \"cardinality\" for the optional cardinality key.",
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "phase": {
+      "description": "Current lifecycle phase of the project.",
+      "enum": [
+        "discovery",
+        "delivery",
+        "archived"
+      ],
+      "type": "string"
+    },
+    "slice_prefix": {
+      "description": "Prefix used when naming delivery slices for this project.",
+      "type": "string"
+    },
+    "source": {
+      "description": "Freeform provenance note: how or where this artifact was sourced from.",
+      "type": "string"
+    },
+    "status": {
+      "description": "Freeform status note.",
+      "type": "string"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Short one-line summary, distinct from the fuller `description`. May be explicitly null."
+    },
+    "title": {
+      "description": "Human-readable project/system name.",
+      "type": "string"
+    },
+    "type": {
+      "const": "system",
+      "description": "Redundant kind literal; inferred from directory when absent.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "description"
+  ],
+  "title": "WorkSpec C4 System (v1alpha1)",
+  "type": "object"
+}

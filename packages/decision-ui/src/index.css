@@ -1,0 +1,72 @@
+/* The package stylesheet build entry (compiled by @tailwindcss/cli into
+   dist/styles.css for the lib build, and by @tailwindcss/vite for the
+   module-federation remote — both targets compile the SAME entry).
+
+   Deliberately NOT `@import 'tailwindcss'`: that would include preflight, a
+   GLOBAL reset, and this CSS is injected into pages the package does not own
+   (bundleAllCSS attaches it to every federated expose). Theme + utilities
+   layers only — the same no-preflight composition @workspec/design itself
+   uses for its embeddable components.css — plus a scoped preflight stand-in
+   below, so the remote stays self-contained WITHOUT resetting the host page.
+   The S6 constraint was never "no Tailwind", only "no dependence on a host's
+   Tailwind build".
+
+   Layer order matters: the scoped preflight stand-in sits in `base` and the
+   bespoke component styles in `components`, both BELOW `utilities`, so the
+   adopted @workspec/design components' utility classes (and call-site
+   overrides) always win — unlayered rules would silently beat every utility
+   in the v4 cascade (the exact `a { color:… }`-vs-`.text-primary-foreground`
+   bug upstream documents in its token extraction notes).
+
+   `@import '@workspec/design/tailwind'` is the WorkSpec preset: the
+   `@theme inline` utility→token mapping, the `dark` custom variant, and
+   tokens.css (the attribute-activated palettes, inert outside
+   `[data-aesthetic][data-theme]` scopes and useful to hosts that theme by
+   attribute instead of the provider's inline tokens). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@import './styles.css' layer(components);
+
+/* Scoped stand-in for the preflight rules the adopted components rely on:
+   box-sizing + zero-width solid borders (the `border-*` utilities assume
+   preflight's reset) and the form-control normalisation (without it, native
+   button/input UA styles — white ButtonFace backgrounds, UA fonts — bleed
+   through any component that doesn't explicitly set a background). Scoped
+   under .ds-root so the host page is never touched — the whole point of
+   skipping real preflight. */
+@layer base {
+  /* Default border colour follows the shadcn/WorkSpec convention (--line),
+     since the components' bare `border-*` width utilities assume a themed
+     default rather than CSS's currentcolor. */
+  .ds-root *,
+  .ds-root *::before,
+  .ds-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .ds-root button,
+  .ds-root input,
+  .ds-root select,
+  .ds-root textarea {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+  }
+}
+
+/* Tailwind v4's automatic content detection skips node_modules, which is
+   where the adopted @workspec/design components live — `@source` is the
+   documented mechanism for scanning them anyway. The bundled dist JS still
+   contains the components' literal utility-class strings (esbuild does not
+   rewrite string literals), so scanning the built output works the same way
+   any published-package consumer's build would. This package's own sources
+   are scanned explicitly too, so the build does not depend on the compiler's
+   working directory. */
+@source '../node_modules/@workspec/design/dist/components';
+@source './';

@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/diagram.schema.json
+title: Container
+type: c4-container
+description: The Ledger's domains, containers, database, and event bus.
+nodes:
+  - domain: billing
+  - container: api-server
+  - database: primary-db
+  - queue: event-bus
+edges:
+  - from: api-server
+    to: primary-db
+    label: reads/writes
+    category: data
+    lens: deployment
+  - from: billing
+    to: event-bus
+    label: publishes events
+    category: interaction
+    lens: logical
+  - from: api-server
+    to: event-bus
+    label: publishes/consumes
+    lens: both

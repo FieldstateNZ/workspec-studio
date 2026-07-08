@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: c4-layout
+description: >
+  Deterministic ELK-based auto-layout for resolved C4 diagrams, with
+  pinned-node/mixed-mode support and .layout/ file round-tripping.
+technology: TypeScript, elkjs
+tags:
+  - c4
+  - published

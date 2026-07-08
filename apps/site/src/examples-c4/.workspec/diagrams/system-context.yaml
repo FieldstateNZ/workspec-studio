@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/diagram.schema.json
+title: System Context
+type: c4-context
+description: The Ledger's actors and external systems.
+nodes:
+  - slug: architect
+  - external-system: payment-gateway
+edges:
+  - from: architect
+    to: __system__
+    label: designs systems in
+    category: identity
+  - from: __system__
+    to: payment-gateway
+    label: settles invoices via
+    category: data

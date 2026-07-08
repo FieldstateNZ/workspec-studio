@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: API Server
+description: Express API serving the WorkSpec web client and MCP server.
+technology: Node.js
+tags:
+  - backend

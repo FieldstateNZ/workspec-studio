@@ -1,0 +1,316 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`hosting-platform conformance snapshot > matches the committed golden snapshot 1`] = `
+{
+  "byOption": {
+    "aca": {
+      "activeEnvs": [
+        "dev",
+        "test",
+        "prod",
+      ],
+      "annual": 14160,
+      "complete": false,
+      "headroom": 0,
+      "lineRows": [
+        {
+          "envCosts": {
+            "dev": 40,
+            "prod": 320,
+            "test": 60,
+          },
+          "lineId": "api",
+          "monthly": 420,
+        },
+        {
+          "envCosts": {
+            "dev": 10,
+            "prod": 140,
+            "test": 20,
+          },
+          "lineId": "work",
+          "monthly": 170,
+        },
+        {
+          "envCosts": {
+            "dev": 90,
+            "prod": 180,
+            "test": 90,
+          },
+          "lineId": "pg",
+          "monthly": 360,
+        },
+        {
+          "envCosts": {
+            "dev": 25,
+            "prod": 80,
+            "test": 30,
+          },
+          "lineId": "paas",
+          "monthly": 135,
+        },
+        {
+          "envCosts": {
+            "dev": 20,
+            "prod": 55,
+            "test": 20,
+          },
+          "lineId": "log",
+          "monthly": 95,
+        },
+      ],
+      "monthly": 1180,
+      "perEnv": {
+        "dev": 185,
+        "prod": 775,
+        "test": 220,
+      },
+    },
+    "aks": {
+      "activeEnvs": [
+        "dev",
+        "test",
+        "prod",
+      ],
+      "annual": 54336.576,
+      "complete": true,
+      "headroom": 950,
+      "lineRows": [
+        {
+          "envCosts": {
+            "dev": 57,
+            "prod": 114,
+            "test": 57,
+          },
+          "lineId": "sys",
+          "monthly": 228,
+        },
+        {
+          "envCosts": {
+            "dev": 380,
+            "prod": 1520,
+            "test": 380,
+          },
+          "lineId": "work",
+          "monthly": 2280,
+        },
+        {
+          "envCosts": {
+            "dev": 190,
+            "prod": 380,
+            "test": 190,
+          },
+          "lineId": "mesh",
+          "monthly": 760,
+        },
+        {
+          "envCosts": {
+            "dev": 0,
+            "prod": 15.047999999999998,
+            "test": 0,
+          },
+          "lineId": "batch",
+          "monthly": 15.047999999999998,
+        },
+        {
+          "envCosts": {
+            "dev": 90,
+            "prod": 220,
+            "test": 90,
+          },
+          "lineId": "pg",
+          "monthly": 400,
+        },
+        {
+          "envCosts": {
+            "dev": 0,
+            "prod": 240,
+            "test": 60,
+          },
+          "lineId": "sql",
+          "monthly": 300,
+        },
+        {
+          "envCosts": {
+            "dev": 30,
+            "prod": 110,
+            "test": 40,
+          },
+          "lineId": "paas",
+          "monthly": 180,
+        },
+        {
+          "envCosts": {
+            "dev": 25,
+            "prod": 85,
+            "test": 30,
+          },
+          "lineId": "log",
+          "monthly": 140,
+        },
+        {
+          "envCosts": {
+            "dev": 0,
+            "prod": 120,
+            "test": 0,
+          },
+          "lineId": "defender",
+          "monthly": 120,
+        },
+        {
+          "envCosts": {
+            "dev": 20,
+            "prod": 65,
+            "test": 20,
+          },
+          "lineId": "net",
+          "monthly": 105,
+        },
+      ],
+      "monthly": 4528.048,
+      "perEnv": {
+        "dev": 792,
+        "prod": 2869.048,
+        "test": 867,
+      },
+    },
+    "appsvc": {
+      "activeEnvs": [
+        "dev",
+        "test",
+        "prod",
+      ],
+      "annual": 16104,
+      "complete": true,
+      "headroom": 124,
+      "lineRows": [
+        {
+          "envCosts": {
+            "dev": 37.199999999999996,
+            "prod": 111.6,
+            "test": 37.199999999999996,
+          },
+          "lineId": "p1",
+          "monthly": 186,
+        },
+        {
+          "envCosts": {
+            "dev": 0,
+            "prod": 248,
+            "test": 248,
+          },
+          "lineId": "p2",
+          "monthly": 496,
+        },
+        {
+          "envCosts": {
+            "dev": 90,
+            "prod": 180,
+            "test": 90,
+          },
+          "lineId": "pg",
+          "monthly": 360,
+        },
+        {
+          "envCosts": {
+            "dev": 25,
+            "prod": 80,
+            "test": 30,
+          },
+          "lineId": "paas",
+          "monthly": 135,
+        },
+        {
+          "envCosts": {
+            "dev": 20,
+            "prod": 55,
+            "test": 20,
+          },
+          "lineId": "log",
+          "monthly": 95,
+        },
+        {
+          "envCosts": {
+            "dev": 15,
+            "prod": 40,
+            "test": 15,
+          },
+          "lineId": "net",
+          "monthly": 70,
+        },
+      ],
+      "monthly": 1342,
+      "perEnv": {
+        "dev": 187.2,
+        "prod": 714.6,
+        "test": 440.2,
+      },
+    },
+    "ase": {
+      "activeEnvs": [
+        "test",
+        "prod",
+      ],
+      "annual": 53700,
+      "complete": true,
+      "headroom": 1105,
+      "lineRows": [
+        {
+          "envCosts": {
+            "prod": 990,
+            "test": 990,
+          },
+          "lineId": "stamp",
+          "monthly": 1980,
+        },
+        {
+          "envCosts": {
+            "prod": 1220,
+            "test": 305,
+          },
+          "lineId": "i1",
+          "monthly": 1525,
+        },
+        {
+          "envCosts": {
+            "prod": 240,
+            "test": 110,
+          },
+          "lineId": "pg",
+          "monthly": 350,
+        },
+        {
+          "envCosts": {
+            "prod": 140,
+            "test": 60,
+          },
+          "lineId": "paas",
+          "monthly": 200,
+        },
+        {
+          "envCosts": {
+            "prod": 150,
+            "test": 50,
+          },
+          "lineId": "log",
+          "monthly": 200,
+        },
+        {
+          "envCosts": {
+            "prod": 160,
+            "test": 60,
+          },
+          "lineId": "net",
+          "monthly": 220,
+        },
+      ],
+      "monthly": 4475,
+      "perEnv": {
+        "prod": 2900,
+        "test": 1575,
+      },
+    },
+  },
+  "cheapestId": "appsvc",
+}
+`;

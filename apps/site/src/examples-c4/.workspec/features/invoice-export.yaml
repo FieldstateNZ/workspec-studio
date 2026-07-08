@@ -1,0 +1,3 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/feature.schema.json
+title: Invoice Export
+description: Exports approved invoices as PDF and CSV.

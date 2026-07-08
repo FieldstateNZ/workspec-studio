@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.workspec.io/v1alpha1/catalog.schema.json",
+  "title": "WorkSpec Catalog (v1alpha1)",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant."
+    },
+    "kind": {
+      "type": "string",
+      "const": "Catalog",
+      "description": "Artifact kind discriminant."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "description": "Stable catalog id, e.g. \"platform\"."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional human-readable catalog name."
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ISO 4217 currency code for all prices, e.g. \"NZD\"."
+        },
+        "asOf": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Date the prices were captured, ISO 8601 (e.g. \"2026-07-01\"). Kept as a string so YAML does not coerce it to a date."
+        }
+      },
+      "required": [
+        "id",
+        "currency",
+        "asOf"
+      ],
+      "additionalProperties": false,
+      "description": "Catalog identity and provenance."
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "pricingModes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                "description": "Stable id referenced by a SKU line's `mode`, e.g. \"payg\", \"ri3\"."
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable name, e.g. \"3yr Reserved\"."
+              },
+              "short": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional short badge label, e.g. \"3Y RI\"."
+              },
+              "mult": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Multiplier applied to the SKU PAYG monthly list price. 1.0 = PAYG list; 0.5 = half price."
+              },
+              "committed": {
+                "type": "boolean",
+                "description": "If true the mode bills 24×7 and ignores schedule (reserved/committed capacity); only non-committed modes benefit from scheduling a line off."
+              },
+              "note": {
+                "type": "string",
+                "description": "Optional freeform note explaining the mode."
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "mult",
+              "committed"
+            ],
+            "additionalProperties": false,
+            "description": "A pricing mode: a named multiplier on a SKU's PAYG list price."
+          },
+          "minItems": 1,
+          "description": "Available pricing modes referenced by SKU lines."
+        },
+        "schedules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                "description": "Stable id referenced by a SKU line's `schedule`, e.g. \"always\", \"business\"."
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable name, e.g. \"Business hrs\"."
+              },
+              "pct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Share of the ~730-hour month the line actually runs, 0..1. 1 = 24×7; 0.30 ≈ business hours."
+              },
+              "note": {
+                "type": "string",
+                "description": "Optional freeform note explaining the schedule."
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "pct"
+            ],
+            "additionalProperties": false,
+            "description": "A schedule preset: the share of the month a line actually runs."
+          },
+          "minItems": 1,
+          "description": "Available schedule presets referenced by SKU lines."
+        },
+        "skus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                "description": "Stable id referenced by a SKU line's `sku`, e.g. \"d4s_v5\"."
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable name, e.g. \"D4s v5\"."
+              },
+              "family": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Grouping family for display, e.g. \"General compute\"."
+              },
+              "price": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Monthly PAYG list price for a single unit, in the catalog currency."
+              },
+              "unit": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional unit label for the price, e.g. \"instance / month\"."
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "family",
+              "price"
+            ],
+            "additionalProperties": false,
+            "description": "A SKU: a priced catalogue item, quoted as a monthly PAYG list price."
+          },
+          "minItems": 1,
+          "description": "Priced catalogue items referenced by SKU lines."
+        }
+      },
+      "required": [
+        "pricingModes",
+        "schedules",
+        "skus"
+      ],
+      "additionalProperties": false,
+      "description": "The priced tables the engine reads."
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "description": "A WorkSpec catalog artifact: the simple engine pricing model (pricing modes, schedules, SKUs)."
+}

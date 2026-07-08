@@ -1,0 +1,36 @@
+{
+  "name": "@workspec/mf-host",
+  "version": "0.0.0",
+  "private": true,
+  "description": "S6 smoke host: a minimal Vite app that consumes @workspec/decision-ui and @workspec/c4-ui as module-federation remotes and mounts DecisionCard + DecisionWorkspace + C4Explorer + C4Diagram over in-memory data. CI integration proof; never published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "build:remote": "pnpm --filter @workspec/decision-ui build:mf",
+    "build:remote:c4": "pnpm --filter @workspec/c4-ui build:mf",
+    "serve": "tsx serve.ts",
+    "smoke": "pnpm build:remote && pnpm build:remote:c4 && pnpm build && playwright test",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "^1.16.12",
+    "@playwright/test": "1.56.1",
+    "@tanstack/react-query": "^5.62.7",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@workspec/c4-layout": "workspace:*",
+    "@workspec/c4-model": "workspace:*",
+    "@workspec/c4-schema": "workspace:*",
+    "@workspec/c4-ui": "workspace:*",
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/decision-ui": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0"
+  }
+}

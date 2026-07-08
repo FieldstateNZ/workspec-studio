@@ -1,0 +1,5 @@
+title: System Context
+type: c4-context
+description: Top-level system context — the project's actors and external systems.
+nodes: []
+edges: []

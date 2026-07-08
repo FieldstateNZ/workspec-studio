@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  // TS Project References: let `tsc -b` type-check against the workspace
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // packages' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
+  "references": [
+    { "path": "../../packages/decision-schema/tsconfig.build.json" },
+    { "path": "../../packages/decision-ui/tsconfig.build.json" },
+    { "path": "../../packages/c4-schema/tsconfig.build.json" },
+    { "path": "../../packages/c4-model/tsconfig.build.json" },
+    { "path": "../../packages/c4-layout/tsconfig.build.json" },
+    { "path": "../../packages/c4-ui/tsconfig.build.json" }
+  ],
+  "include": ["src", "serve.ts", "vite.config.ts", "playwright.config.ts", "tests"]
+}

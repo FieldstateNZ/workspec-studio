@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/system.schema.json
+title: Fieldstate Ledger
+summary: Cost tracking and invoicing platform.
+description: >
+  The Fieldstate Ledger tracks project costs across environments and
+  produces customer invoices from approved decisions.
+phase: delivery
+slice_prefix: ledger

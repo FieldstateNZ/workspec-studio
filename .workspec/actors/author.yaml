@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/actor.schema.json
+title: WorkSpec Author
+description: >
+  A developer who writes *.decision.yaml / *.catalog.yaml artifacts and
+  .workspec/ C4 trees, and who contributes to the packages in this monorepo.
+tags:
+  - human

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: decision-engine
+description: >
+  Pure, normative cost engine: computes per-environment and annual costs for
+  a decision's options and renders the shared deterministic ADR Markdown. No
+  IO, no DOM.
+technology: TypeScript
+tags:
+  - decisions
+  - published

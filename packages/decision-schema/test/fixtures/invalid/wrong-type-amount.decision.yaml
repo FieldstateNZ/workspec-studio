@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/decision.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Decision
+metadata:
+  id: dec-min
+  title: "Minimal"
+  status: exploring
+spec:
+  context: "ctx"
+  catalog: ./x.catalog.yaml
+  currency: NZD
+  environments: [dev, prod]
+  criteria:
+    - id: cost
+      label: "Cost"
+      weight: 1
+  options:
+    - id: a
+      name: "A"
+      environments: [dev, prod]
+      lines:
+        - id: l1
+          label: "Line 1"
+          flat: true
+          amount: { dev: 10, prod: "lots" }
+      scores:
+        cost: { score: 3 }

@@ -1,0 +1,530 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`representative fixture tree > resolves cleanly (one expected dangling-link), its layout joined, and matches the committed snapshot 1`] = `
+{
+  "diagnostics": [
+    {
+      "code": "dangling-link",
+      "file": ".workspec/actors/architect.yaml",
+      "message": "links entry "~/docs/architecture/README.md" does not resolve to a file in the tree",
+      "severity": "warning",
+      "slug": "architect",
+    },
+  ],
+  "diagrams": [
+    {
+      "description": "The Ledger's domains, containers, database, and event bus.",
+      "layout": null,
+      "lensViews": {
+        "deployment": {
+          "edges": [
+            {
+              "category": "data",
+              "dangling": false,
+              "from": "api-server",
+              "label": "reads/writes",
+              "lens": "deployment",
+              "to": "primary-db",
+            },
+            {
+              "category": null,
+              "dangling": false,
+              "from": "api-server",
+              "label": "publishes/consumes",
+              "lens": "both",
+              "to": "event-bus",
+            },
+          ],
+          "nodes": [
+            {
+              "dangling": false,
+              "description": "Everything to do with pricing, invoicing, and payment reconciliation.",
+              "injected": false,
+              "kind": "domain",
+              "nodeId": "billing",
+              "position": null,
+              "slug": "billing",
+              "tags": [
+                "core",
+              ],
+              "technology": null,
+              "title": "Billing",
+            },
+            {
+              "dangling": false,
+              "description": "Express API serving the WorkSpec web client and MCP server.",
+              "injected": false,
+              "kind": "container",
+              "nodeId": "api-server",
+              "position": null,
+              "slug": "api-server",
+              "tags": [
+                "backend",
+              ],
+              "technology": "Node.js",
+              "title": "API Server",
+            },
+            {
+              "dangling": false,
+              "description": "Postgres database holding all WorkSpec artifacts and app state.",
+              "injected": false,
+              "kind": "database",
+              "nodeId": "primary-db",
+              "position": null,
+              "slug": "primary-db",
+              "tags": [],
+              "technology": "PostgreSQL",
+              "title": "Primary Database",
+            },
+            {
+              "dangling": false,
+              "description": "Fan-out queue for spec↔code reconciliation events.",
+              "injected": false,
+              "kind": "queue",
+              "nodeId": "event-bus",
+              "position": null,
+              "slug": "event-bus",
+              "tags": [],
+              "technology": "Redis Streams",
+              "title": "Event Bus",
+            },
+          ],
+        },
+        "logical": {
+          "edges": [
+            {
+              "category": "interaction",
+              "dangling": false,
+              "from": "billing",
+              "label": "publishes events",
+              "lens": "logical",
+              "to": "event-bus",
+            },
+            {
+              "category": null,
+              "dangling": false,
+              "from": "api-server",
+              "label": "publishes/consumes",
+              "lens": "both",
+              "to": "event-bus",
+            },
+          ],
+          "nodes": [
+            {
+              "dangling": false,
+              "description": "Everything to do with pricing, invoicing, and payment reconciliation.",
+              "injected": false,
+              "kind": "domain",
+              "nodeId": "billing",
+              "position": null,
+              "slug": "billing",
+              "tags": [
+                "core",
+              ],
+              "technology": null,
+              "title": "Billing",
+            },
+            {
+              "dangling": false,
+              "description": "Express API serving the WorkSpec web client and MCP server.",
+              "injected": false,
+              "kind": "container",
+              "nodeId": "api-server",
+              "position": null,
+              "slug": "api-server",
+              "tags": [
+                "backend",
+              ],
+              "technology": "Node.js",
+              "title": "API Server",
+            },
+            {
+              "dangling": false,
+              "description": "Postgres database holding all WorkSpec artifacts and app state.",
+              "injected": false,
+              "kind": "database",
+              "nodeId": "primary-db",
+              "position": null,
+              "slug": "primary-db",
+              "tags": [],
+              "technology": "PostgreSQL",
+              "title": "Primary Database",
+            },
+            {
+              "dangling": false,
+              "description": "Fan-out queue for spec↔code reconciliation events.",
+              "injected": false,
+              "kind": "queue",
+              "nodeId": "event-bus",
+              "position": null,
+              "slug": "event-bus",
+              "tags": [],
+              "technology": "Redis Streams",
+              "title": "Event Bus",
+            },
+          ],
+        },
+      },
+      "path": ".workspec/diagrams/container.yaml",
+      "raw": {
+        "description": "The Ledger's domains, containers, database, and event bus.",
+        "edges": [
+          {
+            "category": "data",
+            "from": "api-server",
+            "label": "reads/writes",
+            "lens": "deployment",
+            "to": "primary-db",
+          },
+          {
+            "category": "interaction",
+            "from": "billing",
+            "label": "publishes events",
+            "lens": "logical",
+            "to": "event-bus",
+          },
+          {
+            "from": "api-server",
+            "label": "publishes/consumes",
+            "lens": "both",
+            "to": "event-bus",
+          },
+        ],
+        "nodes": [
+          {
+            "domain": "billing",
+          },
+          {
+            "container": "api-server",
+          },
+          {
+            "database": "primary-db",
+          },
+          {
+            "queue": "event-bus",
+          },
+        ],
+        "title": "Container",
+        "type": "c4-container",
+      },
+      "slug": "container",
+      "title": "Container",
+      "type": "c4-container",
+      "view": null,
+    },
+    {
+      "description": "The Ledger's actors and external systems.",
+      "layout": {
+        "data": {
+          "edges": {
+            "architect->__system__": {
+              "waypoints": [
+                {
+                  "x": 200,
+                  "y": 220,
+                },
+                {
+                  "x": 300,
+                  "y": 220,
+                },
+              ],
+            },
+          },
+          "nodes": {
+            "__system__": {
+              "x": 400,
+              "y": 200,
+            },
+            "architect": {
+              "height": 120,
+              "width": 240,
+              "x": 80,
+              "y": 200,
+            },
+          },
+          "version": 1,
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1,
+          },
+        },
+        "path": ".workspec/diagrams/.layout/system-context.yaml",
+      },
+      "lensViews": null,
+      "path": ".workspec/diagrams/system-context.yaml",
+      "raw": {
+        "description": "The Ledger's actors and external systems.",
+        "edges": [
+          {
+            "category": "identity",
+            "from": "architect",
+            "label": "designs systems in",
+            "to": "__system__",
+          },
+          {
+            "category": "data",
+            "from": "__system__",
+            "label": "settles invoices via",
+            "to": "payment-gateway",
+          },
+        ],
+        "nodes": [
+          {
+            "slug": "architect",
+          },
+          {
+            "external-system": "payment-gateway",
+          },
+        ],
+        "title": "System Context",
+        "type": "c4-context",
+      },
+      "slug": "system-context",
+      "title": "System Context",
+      "type": "c4-context",
+      "view": {
+        "edges": [
+          {
+            "category": "identity",
+            "dangling": false,
+            "from": "architect",
+            "label": "designs systems in",
+            "lens": null,
+            "to": "main-system",
+          },
+          {
+            "category": "data",
+            "dangling": false,
+            "from": "main-system",
+            "label": "settles invoices via",
+            "lens": null,
+            "to": "payment-gateway",
+          },
+        ],
+        "nodes": [
+          {
+            "dangling": false,
+            "description": "The Fieldstate Ledger tracks project costs across environments and produces customer invoices from approved decisions.
+",
+            "injected": true,
+            "kind": "system",
+            "nodeId": "main-system",
+            "position": null,
+            "slug": "main-system",
+            "tags": [],
+            "technology": null,
+            "title": "Fieldstate Ledger",
+          },
+          {
+            "dangling": false,
+            "description": "Designs systems in WorkSpec and reviews proposed changes.",
+            "injected": false,
+            "kind": "actor",
+            "nodeId": "architect",
+            "position": null,
+            "slug": "architect",
+            "tags": [
+              "human",
+            ],
+            "technology": null,
+            "title": "Architect",
+          },
+          {
+            "dangling": false,
+            "description": "Third-party processor used to settle customer invoices.",
+            "injected": false,
+            "kind": "external-system",
+            "nodeId": "payment-gateway",
+            "position": null,
+            "slug": "payment-gateway",
+            "tags": [
+              "vendor",
+            ],
+            "technology": null,
+            "title": "Payment Gateway",
+          },
+        ],
+      },
+    },
+  ],
+  "elements": {
+    "actor": {
+      "architect": {
+        "element": {
+          "data": {
+            "description": "Designs systems in WorkSpec and reviews proposed changes.",
+            "links": [
+              {
+                "adr": "~/docs/architecture/README.md",
+              },
+            ],
+            "tags": [
+              "human",
+            ],
+            "title": "Architect",
+          },
+          "kind": "actor",
+        },
+        "path": ".workspec/actors/architect.yaml",
+        "slug": "architect",
+      },
+    },
+    "component": {
+      "diagram-editor": {
+        "element": {
+          "data": {
+            "description": "React canvas component for authoring C4 diagrams.",
+            "technology": "React",
+            "title": "Diagram Editor",
+            "type": "component",
+          },
+          "kind": "component",
+        },
+        "path": ".workspec/components/diagram-editor.yaml",
+        "slug": "diagram-editor",
+      },
+    },
+    "container": {
+      "api-server": {
+        "element": {
+          "data": {
+            "description": "Express API serving the WorkSpec web client and MCP server.",
+            "tags": [
+              "backend",
+            ],
+            "technology": "Node.js",
+            "title": "API Server",
+            "type": "container",
+          },
+          "kind": "container",
+        },
+        "path": ".workspec/containers/api-server.yaml",
+        "slug": "api-server",
+      },
+    },
+    "database": {
+      "primary-db": {
+        "element": {
+          "data": {
+            "description": "Postgres database holding all WorkSpec artifacts and app state.",
+            "technology": "PostgreSQL",
+            "title": "Primary Database",
+            "type": "database",
+          },
+          "kind": "database",
+        },
+        "path": ".workspec/databases/primary-db.yaml",
+        "slug": "primary-db",
+      },
+    },
+    "domain": {
+      "billing": {
+        "element": {
+          "data": {
+            "description": "Everything to do with pricing, invoicing, and payment reconciliation.",
+            "tags": [
+              "core",
+            ],
+            "title": "Billing",
+          },
+          "kind": "domain",
+        },
+        "path": ".workspec/domains/billing.yaml",
+        "slug": "billing",
+      },
+    },
+    "external-system": {
+      "payment-gateway": {
+        "element": {
+          "data": {
+            "description": "Third-party processor used to settle customer invoices.",
+            "tags": [
+              "vendor",
+            ],
+            "title": "Payment Gateway",
+          },
+          "kind": "external-system",
+        },
+        "path": ".workspec/external-systems/payment-gateway.yaml",
+        "slug": "payment-gateway",
+      },
+    },
+    "feature": {
+      "invoice-export": {
+        "element": {
+          "data": {
+            "description": "Exports approved invoices as PDF and CSV.",
+            "title": "Invoice Export",
+          },
+          "kind": "feature",
+        },
+        "path": ".workspec/features/invoice-export.yaml",
+        "slug": "invoice-export",
+      },
+    },
+    "queue": {
+      "event-bus": {
+        "element": {
+          "data": {
+            "description": "Fan-out queue for spec↔code reconciliation events.",
+            "technology": "Redis Streams",
+            "title": "Event Bus",
+            "type": "queue",
+          },
+          "kind": "queue",
+        },
+        "path": ".workspec/queues/event-bus.yaml",
+        "slug": "event-bus",
+      },
+    },
+    "system": {
+      "main-system": {
+        "element": {
+          "data": {
+            "description": "The Fieldstate Ledger tracks project costs across environments and produces customer invoices from approved decisions.
+",
+            "phase": "delivery",
+            "slice_prefix": "ledger",
+            "summary": "Cost tracking and invoicing platform.",
+            "title": "Fieldstate Ledger",
+          },
+          "kind": "system",
+        },
+        "path": ".workspec/system/main-system.yaml",
+        "slug": "main-system",
+      },
+    },
+  },
+  "spec": {
+    "data": {
+      "connections": {
+        "data": {
+          "accent": "#4CAF50",
+          "style": "solid",
+        },
+        "interaction": {
+          "accent": "#64748b",
+          "style": "solid",
+        },
+      },
+      "elements": {
+        "actor": {
+          "accent": "#4A90D9",
+          "icon": "user",
+          "shape": "box",
+        },
+        "external-system": {
+          "accent": "#64748b",
+          "icon": "external-link",
+          "shape": "box",
+          "variant": "external",
+        },
+      },
+      "type": "style",
+      "version": 2,
+    },
+    "path": ".workspec/spec.yaml",
+  },
+}
+`;

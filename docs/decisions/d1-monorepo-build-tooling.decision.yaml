@@ -1,0 +1,126 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/decision.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Decision
+metadata:
+  id: dec-d1-monorepo-tooling
+  title: 'D1 — Monorepo structure & build tooling'
+  status: decided
+  created: '2026-07-01'
+  deciders:
+    - 'Fieldstate Dev Lead'
+spec:
+  context: >-
+    The four packages (schema ← engine ← ui ← studio) need a monorepo layout, a
+    build, and a task runner. Costs below are the ongoing monthly carrying effort
+    of each choice (config drift, upgrades, CI wiring) in loaded engineer-days;
+    one-off setup was roughly comparable across all three, so it is not costed.
+  catalog: ./decisions.catalog.yaml
+  currency: NZD
+  environments:
+    - ongoing
+  criteria:
+    - id: simplicity
+      label: 'Config simplicity'
+      hint: 'Cognitive + config overhead to carry (higher = simpler)'
+      weight: 1.5
+    - id: buildSpeed
+      label: 'Build speed'
+      hint: 'Incremental build + test throughput'
+      weight: 1.0
+    - id: ecosystemFit
+      label: 'TS/ESM fit'
+      hint: 'First-class TS strict, ESM, and .d.ts output'
+      weight: 1.0
+    - id: noVendorLockin
+      label: 'No paid SaaS'
+      hint: 'Avoids a paid remote-cache dependency (higher = freer)'
+      weight: 0.8
+  options:
+    - id: pnpm-tsup
+      name: 'pnpm workspaces + tsup'
+      archetype: 'pnpm workspace, per-package tsup, Vitest'
+      summary: >-
+        pnpm workspaces for the dependency graph, tsup (esbuild) per package for
+        ESM + .d.ts, Vitest at the root. No task-runner service, no remote cache.
+      tag: 'chosen'
+      environments: [ongoing]
+      complete: true
+      lines:
+        - id: maint
+          group: effort
+          label: 'Config + upgrade maintenance'
+          flat: false
+          sku: eng_day
+          mode: payg
+          schedule: always
+          qty: { ongoing: 1 }
+      scores:
+        simplicity: { score: 5, note: 'Plain pnpm + one tsup config per package.' }
+        buildSpeed:
+          { score: 4, note: 'esbuild is fast; no cross-package caching, but the graph is small.' }
+        ecosystemFit: { score: 5, note: 'tsup does ESM + .d.ts + sourcemaps out of the box.' }
+        noVendorLockin: { score: 5, note: 'Zero SaaS; everything runs locally and in CI.' }
+    - id: turborepo
+      name: 'pnpm + Turborepo'
+      archetype: 'pnpm workspace + turbo task graph + remote cache'
+      summary: >-
+        Turborepo orchestrates the task graph with a remote cache. Faster CI on a
+        large graph, at the cost of a turbo.json to maintain and (for real gains)
+        a paid remote-cache tier.
+      environments: [ongoing]
+      complete: true
+      lines:
+        - id: maint
+          group: effort
+          label: 'turbo.json + pipeline maintenance'
+          flat: false
+          sku: eng_day
+          mode: payg
+          schedule: always
+          qty: { ongoing: 1.5 }
+        - id: cache
+          group: tooling
+          label: 'Remote cache seats'
+          flat: false
+          sku: saas_seat
+          mode: payg
+          schedule: always
+          qty: { ongoing: 4 }
+      scores:
+        simplicity:
+          { score: 3, note: 'Extra pipeline config to keep in step with package scripts.' }
+        buildSpeed: { score: 5, note: 'Remote cache shines on big graphs.' }
+        ecosystemFit: { score: 4, note: 'Delegates the actual build to tsup/tsc anyway.' }
+        noVendorLockin: { score: 2, note: 'Real speed-up wants a paid remote cache.' }
+    - id: nx
+      name: 'Nx'
+      archetype: 'Nx integrated monorepo'
+      summary: >-
+        Nx brings generators, an affected-graph, and plugins. Powerful for a big
+        org monorepo, but heavier config and concepts than four small packages
+        need.
+      environments: [ongoing]
+      complete: true
+      lines:
+        - id: maint
+          group: effort
+          label: 'Nx config + plugin maintenance'
+          flat: false
+          sku: eng_day
+          mode: payg
+          schedule: always
+          qty: { ongoing: 2.5 }
+      scores:
+        simplicity: { score: 2, note: 'More concepts (executors, plugins) than this repo needs.' }
+        buildSpeed: { score: 5, note: 'Affected-graph + cache is excellent at scale.' }
+        ecosystemFit: { score: 4, note: 'Strong TS support via plugins.' }
+        noVendorLockin: { score: 3, note: 'OSS core; Nx Cloud optional.' }
+  outcome:
+    option: pnpm-tsup
+    rationale: >-
+      We accept no cross-package build cache in exchange for the lowest config
+      surface and zero SaaS dependency. The graph is four packages — pnpm + tsup
+      builds it in seconds, and there is nothing extra to keep in step. Turbo/Nx
+      earn their keep on large graphs we do not have.
+    decidedBy: 'Fieldstate Dev Lead'
+    decidedAt: '2026-07-01'

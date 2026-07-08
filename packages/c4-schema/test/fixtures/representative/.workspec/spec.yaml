@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/spec.schema.json
+type: style
+version: 2
+elements:
+  actor:
+    accent: "#4A90D9"
+    icon: user
+    shape: box
+  external-system:
+    accent: "#64748b"
+    icon: external-link
+    shape: box
+    variant: external
+connections:
+  interaction:
+    accent: "#64748b"
+    style: solid
+  data:
+    accent: "#4CAF50"
+    style: solid

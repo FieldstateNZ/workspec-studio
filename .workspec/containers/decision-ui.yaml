@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: decision-ui
+description: >
+  Host-agnostic React views for the Decisions module (Options / Compare /
+  Catalog / ADR) — a standalone library and a module-federation remote.
+technology: React
+tags:
+  - decisions
+  - published

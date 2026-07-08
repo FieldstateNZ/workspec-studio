@@ -1,0 +1,114 @@
+/* Host-chrome styles for the standalone shell. Uses the WorkSpec design
+   tokens (available because the shell renders inside `.ds-root`, where the
+   provider binds the palette inline), so the chrome themes together with the
+   workspace. This CSS belongs to the host, not the UI package — the UI
+   package stays chrome-free for module federation. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.ds-root.dsh-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dsh-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.dsh-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dsh-glyph {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+.dsh-wmk {
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.dsh-wmk span {
+  color: var(--ink-fade);
+  font-weight: 500;
+}
+.dsh-spacer {
+  flex: 1;
+}
+
+.dsh-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dsh-picker-lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+.dsh-picker select {
+  appearance: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: var(--r-3);
+  cursor: pointer;
+}
+
+.dsh-iconbtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-3);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.dsh-iconbtn:hover {
+  color: var(--ink);
+  border-color: var(--line-2);
+  background: var(--bg-soft);
+}
+
+.dsh-main {
+  flex: 1;
+  overflow-y: auto;
+}
+.dsh-empty {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 48px 28px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}

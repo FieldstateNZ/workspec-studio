@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/container.schema.json
+type: container
+title: decision-studio
+description: >
+  Standalone CLI (workspec-decisions) and localhost host shell for costed
+  architecture decisions — validate, render-adr, and serve subcommands over
+  a working tree of *.decision.yaml / *.catalog.yaml files.
+technology: Node.js, Express
+tags:
+  - decisions
+  - published

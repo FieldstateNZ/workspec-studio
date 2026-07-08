@@ -1,0 +1,51 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/c4/actor.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An actor element: a human role or persona that interacts with the system.",
+  "properties": {
+    "description": {
+      "description": "What this actor does and why it interacts with the system.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "links": {
+      "description": "Cross-references to other artifacts or docs: exactly one {<linkType>: <pathRef>} pair per entry, plus an optional cardinality key ({from, to, label?}). Path refs must start with \"~/\" or \"@workspace/\".",
+      "items": {
+        "additionalProperties": {},
+        "propertyNames": {
+          "description": "The link type, e.g. \"adr\", \"runbook\" — or \"cardinality\" for the optional cardinality key.",
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "source": {
+      "description": "Freeform provenance note: how or where this artifact was sourced from.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Free-text labels for filtering and grouping.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "title": {
+      "description": "Human-readable name of the actor.",
+      "type": "string"
+    },
+    "type": {
+      "const": "actor",
+      "description": "Redundant kind literal; inferred from directory when absent.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "description"
+  ],
+  "title": "WorkSpec C4 Actor (v1alpha1)",
+  "type": "object"
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+  },
+  "references": [
+    { "path": "../c4-schema/tsconfig.build.json" },
+    { "path": "../c4-model/tsconfig.build.json" },
+    { "path": "../c4-layout/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  // test-only helpers (imported exclusively by *.test.ts/*.test.tsx): excluding
+  // them keeps their @testing-library/test-fixture-only devDep type references
+  // out of the published dist/ tree, mirroring decision-ui's tsconfig.build.json.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-utils.ts", "src/test-helpers/**"]
+}

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/external-system.schema.json
+title: WorkSpec Enterprise
+description: >
+  The commercial WorkSpec product. It consumes the same published
+  @workspec/* packages this monorepo builds directly (module-federation
+  remotes, the shared artifact schemas) rather than forking or duplicating
+  them — Enterprise is a future consumer of this code, not a separate
+  implementation.
+tags:
+  - vendor

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/c4/system.schema.json
+title: WorkSpec Studio
+summary: The open-source WorkSpec workbench family monorepo.
+description: >
+  One pnpm monorepo holding every free WorkSpec module — Decisions and C4
+  Diagrams today — publishing @workspec/* packages that WorkSpec Enterprise
+  consumes directly rather than duplicating. Every package here is
+  Enterprise-grade by constitution: Enterprise is a future consumer of this
+  code, not a separate implementation.
+phase: delivery
+slice_prefix: S
