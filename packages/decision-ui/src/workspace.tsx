@@ -29,7 +29,7 @@ import { Button, Lbl } from '@workspec/design/components';
 import { resolveCatalogRef } from './host.js';
 import { LinksBlock } from './links.js';
 import { OptionCard } from './option-card.js';
-import { Icon } from './primitives.js';
+import { DecisionStatusPill, Icon } from './primitives.js';
 
 /** Props for {@link DecisionWorkspace}. */
 export interface DecisionWorkspaceProps {
@@ -103,7 +103,6 @@ function WorkspaceView(props: {
   const recommendedId = useMemo(() => recommend(result, draft), [result, draft]);
   const cheapestId = result.cheapestId;
 
-  const decided = draft.metadata.status === 'decided';
   const options = draft.spec.options;
 
   return (
@@ -116,10 +115,7 @@ function WorkspaceView(props: {
           <LinksBlock links={draft.spec.links ?? []} resolve={resolveLink} />
         </div>
         <div className="ds-actions">
-          <span className={`ds-status ds-status-${draft.metadata.status}`}>
-            <span className="ds-status-dot" aria-hidden="true" />
-            {decided ? 'Decided' : 'Exploring'}
-          </span>
+          <DecisionStatusPill status={draft.metadata.status} />
           {navigate !== undefined && (
             <>
               <Button

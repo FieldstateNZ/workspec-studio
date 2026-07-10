@@ -6,7 +6,9 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
-import { Chip as DesignChip } from '@workspec/design/components';
+import { Chip as DesignChip, Status } from '@workspec/design/components';
+import type { StatusTone } from '@workspec/design/components';
+import type { Decision } from '@workspec/decision-schema';
 
 /**
  * Per-option accent, mapping option ids to WorkSpec artifact-type tokens so
@@ -124,6 +126,48 @@ export function Flag(props: {
 
 function cn(...parts: (string | undefined)[]): string {
   return parts.filter((p) => p !== undefined && p !== '').join(' ');
+}
+
+// ── Decision status pill ────────────────────────────────────────────────────────
+
+/**
+ * A decision's lifecycle status. Derived from the schema's `metadata.status`
+ * enum (the source of truth) so the pill stays in sync if the schema ever
+ * adds or renames a status, instead of duplicating the union here.
+ */
+export type DecisionLifecycleStatus = Decision['metadata']['status'];
+
+const DECISION_STATUS_TONE: Record<DecisionLifecycleStatus, StatusTone> = {
+  exploring: 'warn',
+  decided: 'accent',
+  superseded: 'muted',
+};
+
+const DECISION_STATUS_LABEL: Record<DecisionLifecycleStatus, string> = {
+  exploring: 'Exploring',
+  decided: 'Decided',
+  superseded: 'Superseded',
+};
+
+/**
+ * The decision lifecycle status pill — one shared shape (the design
+ * system's `Status`) for the four lifecycle call sites (card, workspace,
+ * compare, adr) that used to each hand-roll their own `ds-status`/
+ * `ds-status-dot` markup. A caller can override the visible label (adr.tsx's
+ * "Proposed / Accepted / Superseded" ADR terminology) while still sharing the
+ * tone. (catalog.tsx reaches for the design `Status` directly instead — its
+ * editable/read-only indicator is a different, non-lifecycle state, not this
+ * pill.)
+ */
+export function DecisionStatusPill(props: {
+  status: DecisionLifecycleStatus;
+  label?: string;
+}): ReactElement {
+  return (
+    <Status tone={DECISION_STATUS_TONE[props.status]}>
+      {props.label ?? DECISION_STATUS_LABEL[props.status]}
+    </Status>
+  );
 }
 
 // ── Criteria dots ──────────────────────────────────────────────────────────────

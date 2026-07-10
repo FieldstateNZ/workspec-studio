@@ -29,7 +29,7 @@ import { Button, Card, Lbl, Textarea } from '@workspec/design/components';
 import { decide, reopen, setRationale, suggestRationale } from './decide.js';
 import { repositoryId, resolveCatalogRef } from './host.js';
 import { money } from './format.js';
-import { Flag, Icon } from './primitives.js';
+import { DecisionStatusPill, Flag, Icon } from './primitives.js';
 
 /** Props for {@link DecisionAdr}. */
 export interface DecisionAdrProps {
@@ -207,10 +207,7 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
         <div className="ds-adr-doc">
           <div className="ds-docmeta">
             <span className="ds-doc-id">{model.id}</span>
-            <span className={`ds-status ds-status-${statusClass}`}>
-              <span className="ds-status-dot" aria-hidden="true" />
-              {statusWord}
-            </span>
+            <DecisionStatusPill status={statusClass} label={statusWord} />
           </div>
           <h1 className="ds-adr-title">{model.title}</h1>
           <div className="ds-adr-sub">

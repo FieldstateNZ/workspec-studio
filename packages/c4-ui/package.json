@@ -51,7 +51,7 @@
     "@workspec/c4-schema": "workspace:*",
     "@workspec/c4-model": "workspace:*",
     "@workspec/c4-layout": "workspace:*",
-    "@workspec/design": "0.1.0-alpha.0",
+    "@workspec/design": "0.1.0-alpha.1",
     "lucide-react": "^0.545.0"
   },
   "devDependencies": {

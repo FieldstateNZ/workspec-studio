@@ -5,9 +5,11 @@
 // repository README and the Decisions module's own positioning so none of the
 // three ever drift apart.
 import type { ReactElement } from 'react';
-import { Button, Lbl } from '@workspec/design/components';
+import { Button, Lbl, Status } from '@workspec/design/components';
+import type { StatusTone } from '@workspec/design/components';
 
 import { Link } from './router.js';
+import { SiteNav } from './nav.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio';
 
@@ -19,6 +21,14 @@ interface Module {
   readonly blurb: string;
   readonly cta: string;
 }
+
+// The same Status pill decision-ui uses for a decision's lifecycle (Site
+// Review UX pass, finding 08 — "two status languages") — a bare mono label
+// here, a dot pill there, for what's conceptually the same idiom.
+const STATUS_TONE: Record<Module['status'], StatusTone> = {
+  live: 'accent',
+  'in progress': 'warn',
+};
 
 const MODULES: readonly Module[] = [
   {
@@ -34,7 +44,7 @@ const MODULES: readonly Module[] = [
     key: 'c4',
     name: 'C4 Diagrams',
     status: 'in progress',
-    href: '/c4',
+    href: '/c4/demo',
     blurb:
       'Browse, validate, and render C4 architecture trees — actors, systems, containers, components — straight from the .workspec/ files already in your repo.',
     cta: 'Try the demo',
@@ -44,16 +54,7 @@ const MODULES: readonly Module[] = [
 export function StudioHome(): ReactElement {
   return (
     <div className="site">
-      <header className="nav">
-        <span className="brand">
-          WorkSpec <strong>Studio</strong>
-        </span>
-        <nav className="nav-links">
-          <Link href="/decisions">Decisions</Link>
-          <Link href="/c4">C4 Diagrams</Link>
-          <a href={REPO_URL}>GitHub</a>
-        </nav>
-      </header>
+      <SiteNav repoUrl={REPO_URL} />
 
       <main>
         <section className="hero">
@@ -71,7 +72,9 @@ export function StudioHome(): ReactElement {
         <section className="modules" aria-label="WorkSpec Studio modules">
           {MODULES.map((mod) => (
             <article key={mod.key} className="feature module-card">
-              <Lbl className="module-status">{mod.status}</Lbl>
+              <Status tone={STATUS_TONE[mod.status]} className="module-status">
+                {mod.status}
+              </Status>
               <h2>{mod.name}</h2>
               <p>{mod.blurb}</p>
               <Button asChild>

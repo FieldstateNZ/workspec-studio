@@ -14,6 +14,7 @@ import {
   Button,
   Input,
   Lbl,
+  Status,
   Switch,
   Tabs,
   TabsContent,
@@ -223,10 +224,9 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
           </p>
         </div>
         <div className="ds-actions">
-          <span className={`ds-status ds-status-${editable ? 'decided' : 'exploring'}`}>
-            <span className="ds-status-dot" aria-hidden="true" />
+          <Status tone={editable ? 'accent' : 'muted'}>
             {editable ? 'Editable · reprices live' : 'Read-only'}
-          </span>
+          </Status>
         </div>
       </div>
 

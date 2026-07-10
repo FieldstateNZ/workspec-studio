@@ -17,7 +17,7 @@
     "@workspec/decision-engine": "0.1.0-alpha.0",
     "@workspec/decision-schema": "0.1.0-alpha.0",
     "@workspec/decision-ui": "0.1.0-alpha.0",
-    "@workspec/design": "0.1.0-alpha.0",
+    "@workspec/design": "0.1.0-alpha.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

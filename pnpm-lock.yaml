@@ -99,8 +99,8 @@ importers:
         specifier: 0.1.0-alpha.0
         version: 0.1.0-alpha.0(@tanstack/react-query@5.101.2(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@workspec/design':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.1
+        version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -187,7 +187,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/c4-model:
     dependencies:
@@ -206,7 +206,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/c4-schema:
     dependencies:
@@ -312,8 +312,8 @@ importers:
         specifier: workspace:*
         version: link:../c4-schema
       '@workspec/design':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.1
+        version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@18.3.1)
@@ -508,8 +508,8 @@ importers:
         specifier: workspace:*
         version: link:../decision-schema
       '@workspec/design':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.1
+        version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
     devDependencies:
       '@module-federation/vite':
         specifier: ^1.16.12
@@ -2511,8 +2511,8 @@ packages:
       react: ^18.3.0
       react-dom: ^18.3.0
 
-  '@workspec/design@0.1.0-alpha.0':
-    resolution: {integrity: sha512-UoRkoLH1NdhO3mBCtLpbxOlTthYuXEgY2Z32iKRQx9dchrxBQ48nBcGbRjuWUwKtorI5On5j60sayainE7B9CA==}
+  '@workspec/design@0.1.0-alpha.1':
+    resolution: {integrity: sha512-xHHywIv0kOvpKy+vvAqjTwfCEj27SfIaDXNSgeokwU2BWe7XsTrSXDJ1r2YrcYsncs6MNx4NoHq2ikpHX3O63g==}
     engines: {node: '>=20'}
     peerDependencies:
       react: '>=18.0.0'
@@ -6261,7 +6261,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@workspec/design@0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+  '@workspec/design@0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
     dependencies:
       '@radix-ui/react-accordion': 1.2.16(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-alert-dialog': 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
