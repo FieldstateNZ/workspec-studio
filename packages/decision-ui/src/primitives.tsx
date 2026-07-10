@@ -151,11 +151,13 @@ const DECISION_STATUS_LABEL: Record<DecisionLifecycleStatus, string> = {
 
 /**
  * The decision lifecycle status pill — one shared shape (the design
- * system's `Status`) for the five call sites (card, workspace, compare, adr,
- * plus catalog's differently-worded editable/read-only reuse of the same
- * pill) that used to each hand-roll their own `ds-status`/`ds-status-dot`
- * markup. A caller can override the visible label (adr.tsx's "Proposed /
- * Accepted / Superseded" ADR terminology) while still sharing the tone.
+ * system's `Status`) for the four lifecycle call sites (card, workspace,
+ * compare, adr) that used to each hand-roll their own `ds-status`/
+ * `ds-status-dot` markup. A caller can override the visible label (adr.tsx's
+ * "Proposed / Accepted / Superseded" ADR terminology) while still sharing the
+ * tone. (catalog.tsx reaches for the design `Status` directly instead — its
+ * editable/read-only indicator is a different, non-lifecycle state, not this
+ * pill.)
  */
 export function DecisionStatusPill(props: {
   status: DecisionLifecycleStatus;
