@@ -185,12 +185,10 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
 
   return (
     <div className="ds-wrap ds-wide">
-      <div className="ds-dechead" style={{ marginBottom: 16 }}>
+      <div className="ds-dechead">
         <div className="ds-dechead-meta">
           <Lbl>Decision record · derived from the cost models</Lbl>
-          <h1 className="ds-dechead-title" style={{ fontSize: 22 }}>
-            {`ADR · ${model.title}`}
-          </h1>
+          <h1 className="ds-dechead-title ds-dechead-title-sub">{`ADR · ${model.title}`}</h1>
         </div>
         <div className="ds-actions">
           {navigate !== undefined && (

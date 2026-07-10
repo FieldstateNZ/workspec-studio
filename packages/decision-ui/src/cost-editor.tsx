@@ -308,7 +308,7 @@ export function CostEditor(props: CostEditorProps): ReactElement {
                             <td key={e} className="ds-num">
                               <div className="ds-qtycell">
                                 <Input
-                                  className="h-7 w-11 px-0 text-center font-mono text-[11px]"
+                                  className="h-9 w-16 px-1.5 text-center font-mono text-[13px]"
                                   type="number"
                                   min={0}
                                   aria-label={`${line.label} ${e} quantity`}
@@ -324,7 +324,7 @@ export function CostEditor(props: CostEditorProps): ReactElement {
                         return (
                           <td key={e} className={amt ? 'ds-num' : 'ds-num ds-zero'}>
                             <Input
-                              className="h-7 w-[60px] px-0 text-center font-mono text-[11px]"
+                              className="h-9 w-16 px-1.5 text-center font-mono text-[13px]"
                               type="number"
                               min={0}
                               aria-label={`${line.label} ${e} amount`}
