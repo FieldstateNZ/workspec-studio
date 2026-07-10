@@ -4,11 +4,12 @@
 // `style/spec-defaults.ts`, `style/marker-id.ts`) so the two renderers cannot
 // draw a diagram differently — see `render-svg.shared-modules.test.ts`, which
 // asserts both this file and `c4-diagram.tsx` import each of those modules.
-// Node colours follow the same Enterprise `.c4-el` accent derivation the
-// canvas gets from styles.css's color-mix layer, computed in code here
-// (style/color-mix.ts over style/element-tints.ts — same percentages,
-// asserted in sync by element-tints.test.ts) because a standalone SVG's
-// attributes cannot use CSS `color-mix()`.
+// Node colours follow the same accent derivation the canvas gets from
+// styles.css's color-mix layer — both read the same @workspec/design
+// `--el-tint-*` tokens (style/element-tints.ts's `elementTintsFor` for this
+// file, the CSS custom properties directly for styles.css) — computed in
+// code here (style/color-mix.ts) because a standalone SVG's attributes
+// cannot use CSS `color-mix()`.
 
 import type { PositionedDiagram, PositionedEdge, PositionedNode } from '@workspec/c4-layout';
 import type { Spec } from '@workspec/c4-schema';
@@ -20,7 +21,7 @@ import { truncateLabel } from './geometry/truncate-label.js';
 import { THEMES } from './themes.js';
 import type { ThemeName, TokenName } from './themes.js';
 import { WHITE, formatHex, formatRgba, mixOklab, parseCssColor } from './style/color-mix.js';
-import { ELEMENT_TINTS } from './style/element-tints.js';
+import { elementTintsFor } from './style/element-tints.js';
 import { markerIdFor, uniqueAccents } from './style/marker-id.js';
 import { resolveConnectionStyle, resolveElementStyle } from './style/spec-defaults.js';
 
@@ -57,12 +58,12 @@ interface NodePalette {
 }
 
 /**
- * Computes a node's palette per the Enterprise `.c4-el` derivation
- * (ELEMENT_TINTS): lift the accent toward white in dark, tint the elevated
- * surface with it, alpha it for the border, mix it into ink for the eyebrow.
- * An accent this module can't parse (an exotic authored spec.yaml value —
- * see style/color-mix.ts) falls back to flat theme surfaces with the raw
- * accent string passed through for the identity stripe, documented in
+ * Computes a node's palette per the shared "typed element" derivation
+ * (`elementTintsFor`): lift the accent toward white in dark, tint the
+ * elevated surface with it, alpha it for the border, mix it into ink for the
+ * eyebrow. An accent this module can't parse (an exotic authored spec.yaml
+ * value — see style/color-mix.ts) falls back to flat theme surfaces with the
+ * raw accent string passed through for the identity stripe, documented in
  * docs/c4/drift-log.md entry 14.
  */
 function nodePaletteFor(
@@ -70,7 +71,7 @@ function nodePaletteFor(
   theme: ThemeName,
   tokens: Readonly<Record<TokenName, string>>,
 ): NodePalette {
-  const tints = ELEMENT_TINTS[theme];
+  const tints = elementTintsFor(theme, tokens);
   const accentRgb = parseCssColor(rawAccent, tokens);
   const bgRgb = parseCssColor(tokens['--bg-elevated'], tokens);
   const inkRgb = parseCssColor(tokens['--ink'], tokens);

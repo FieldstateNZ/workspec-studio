@@ -89,8 +89,9 @@ describe('C4Diagram — representative fixture render', () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} />);
     const architect = screen.getByRole('button', { name: /actor: Architect/i });
-    // The actor default accent from style/spec-defaults.ts (Enterprise DEFAULT_ELEMENT_STYLES).
-    expect(architect.style.getPropertyValue('--c4-el-accent-raw')).toBe('#4A90D9');
+    // The actor default accent from style/spec-defaults.ts — a @workspec/design token
+    // reference now (Site Review UX pass, finding 01/02), not the raw Enterprise hex.
+    expect(architect.style.getPropertyValue('--c4-el-accent-raw')).toBe('var(--el-actor)');
   });
 });
 

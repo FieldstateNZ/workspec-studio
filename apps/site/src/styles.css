@@ -79,8 +79,36 @@
   }
   .nav-links {
     display: flex;
+    align-items: center;
     gap: 1.25rem;
     font-size: 0.95rem;
+  }
+
+  /* The site's Dark/Light control (Site Review UX pass, finding 04). */
+  .theme-toggle {
+    display: inline-flex;
+    gap: 4px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .theme-toggle-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-fade);
+    cursor: pointer;
+  }
+  .theme-toggle-btn-active {
+    border-color: var(--line-2);
+    background: var(--bg-elevated);
+    color: var(--ink);
   }
 
   .hero {

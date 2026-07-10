@@ -2,7 +2,7 @@
 // / ADR) from the PUBLISHED @workspec/decision-ui against a MemoryRepository
 // seeded with both worked examples. Everything — lever toggles, cost edits,
 // compare, the decide flow — runs in memory; nothing leaves the browser.
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   DecisionApp,
@@ -10,38 +10,21 @@ import {
   createInertLinkResolver,
 } from '@workspec/decision-ui';
 import { Button } from '@workspec/design/components';
-import type { DecisionStudioHost, ThemeName } from '@workspec/decision-ui';
+import { useTheme } from '@workspec/design';
+import type { DecisionStudioHost } from '@workspec/decision-ui';
 import '@workspec/decision-ui/styles.css';
 
 import { DEMO_EXAMPLES, createDemoRepository } from './seed.js';
 import { downloadText, renderAdr } from './export-adr.js';
-import { Link } from './router.js';
-
-const COLOR_SCHEME_QUERY = '(prefers-color-scheme: dark)';
-
-// Follow the OS colour scheme so the embedded studio matches the rest of the
-// page (which is theme-aware via `prefers-color-scheme`). Falls back to dark
-// where `matchMedia` is unavailable (e.g. jsdom).
-function useSystemTheme(): ThemeName {
-  const supported = typeof window !== 'undefined' && typeof window.matchMedia === 'function';
-  const [dark, setDark] = useState<boolean>(() =>
-    supported ? window.matchMedia(COLOR_SCHEME_QUERY).matches : true,
-  );
-  useEffect(() => {
-    if (!supported) return;
-    const mql = window.matchMedia(COLOR_SCHEME_QUERY);
-    const onChange = (event: MediaQueryListEvent): void => setDark(event.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, [supported]);
-  return dark ? 'dark' : 'light';
-}
+import { DemoBar } from './demo-bar.js';
 
 export function Demo(): ReactElement {
   const [exampleKey, setExampleKey] = useState<string>(DEMO_EXAMPLES[0]?.key ?? 'hosting');
   // Bumping this token discards every in-browser edit by rebuilding the repo.
   const [resetToken, setResetToken] = useState(0);
-  const theme = useSystemTheme();
+  // The shell's own Dark/Light preference (Site Review UX pass, finding 03) —
+  // never this component's own OS-preference listener.
+  const theme = useTheme();
 
   const repository = useMemo(() => createDemoRepository(), [resetToken]);
   const host: DecisionStudioHost = useMemo(
@@ -67,39 +50,39 @@ export function Demo(): ReactElement {
 
   return (
     <div className="demo">
-      <header className="demo-bar">
-        <Link
-          href="/decisions"
-          className="demo-home"
-          aria-label="Back to the WorkSpec Decision Studio page"
-        >
-          ← WorkSpec Decision Studio
-        </Link>
-        {/* A toggle button group, not an ARIA tablist — these switch the seeded
-            example, they don't reveal tabpanels. */}
-        <div className="demo-examples" role="group" aria-label="Worked examples">
-          {DEMO_EXAMPLES.map((example) => (
-            <Button
-              key={example.key}
-              size="sm"
-              variant={example.key === active.key ? 'default' : 'secondary'}
-              className="rounded-full"
-              aria-pressed={example.key === active.key}
-              onClick={() => setExampleKey(example.key)}
-            >
-              {example.label}
+      <DemoBar
+        backHref="/decisions"
+        backText="WorkSpec Decision Studio"
+        backAriaLabel="Back to the WorkSpec Decision Studio page"
+        middle={
+          // A toggle button group, not an ARIA tablist — these switch the
+          // seeded example, they don't reveal tabpanels.
+          <div className="demo-examples" role="group" aria-label="Worked examples">
+            {DEMO_EXAMPLES.map((example) => (
+              <Button
+                key={example.key}
+                size="sm"
+                variant={example.key === active.key ? 'default' : 'secondary'}
+                className="rounded-full"
+                aria-pressed={example.key === active.key}
+                onClick={() => setExampleKey(example.key)}
+              >
+                {example.label}
+              </Button>
+            ))}
+          </div>
+        }
+        actions={
+          <>
+            <Button size="sm" onClick={() => void onExportAdr()}>
+              Export ADR
             </Button>
-          ))}
-        </div>
-        <div className="demo-actions">
-          <Button size="sm" onClick={() => void onExportAdr()}>
-            Export ADR
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setResetToken((n) => n + 1)}>
-            Reset
-          </Button>
-        </div>
-      </header>
+            <Button size="sm" variant="secondary" onClick={() => setResetToken((n) => n + 1)}>
+              Reset
+            </Button>
+          </>
+        }
+      />
 
       <p className="demo-note" role="note">
         Changes live only in your browser — the real thing writes <code>*.decision.yaml</code> files

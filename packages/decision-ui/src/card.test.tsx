@@ -32,7 +32,7 @@ describe('DecisionCard — compact read-only summary', () => {
         selector: '.ds-card-title',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Exploring', { selector: '.ds-status' })).toBeInTheDocument();
+    expect(screen.getByText('Exploring')).toBeInTheDocument();
     expect(
       screen.getByText('Recommended', { selector: '.ds-card-choice-lab' }),
     ).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('DecisionCard — compact read-only summary', () => {
       host: createTestHost(repository),
     });
 
-    expect(await screen.findByText('Decided', { selector: '.ds-status' })).toBeInTheDocument();
+    expect(await screen.findByText('Decided')).toBeInTheDocument();
     expect(screen.getByText('Chosen', { selector: '.ds-card-choice-lab' })).toBeInTheDocument();
     expect(screen.getByText('App Service', { selector: '.ds-card-choice-nm' })).toBeInTheDocument();
     expect(screen.getByText('$16,104', { selector: '.ds-card-cost-v' })).toBeInTheDocument();

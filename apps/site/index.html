@@ -13,14 +13,34 @@
       // WorkSpec theme signals — the data-aesthetic/data-theme attribute pair
       // (activates the token palette) and the .dark class (activates
       // Tailwind's dark: variant) — synchronously, before any stylesheet or
-      // app bundle loads. The site follows prefers-color-scheme; main.tsx
-      // keeps the signals in sync when the OS preference changes.
+      // app bundle loads. A stored preference wins; otherwise this follows
+      // prefers-color-scheme. main.tsx's initTheme() keeps the signals in
+      // sync afterward through @workspec/design's single setTheme() (Site
+      // Review UX pass, finding 03/04/05) — this script is a byte-for-byte
+      // copy of @workspec/design's exported NO_FLASH_SCRIPT constant (it
+      // can't `import` one: this has to run synchronously before any script
+      // tag, module or otherwise, so it's necessarily hand-placed here, not
+      // pulled in at build time — see that constant's own doc comment).
       (function () {
-        var root = document.documentElement;
-        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var root = document.documentElement,
+          theme = 'dark';
+        try {
+          var stored = JSON.parse(localStorage.getItem('workspec.theme'));
+          theme =
+            stored && (stored.theme === 'light' || stored.theme === 'dark')
+              ? stored.theme
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+        } catch (e) {
+          theme =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        }
         root.setAttribute('data-aesthetic', 'console');
-        root.setAttribute('data-theme', dark ? 'dark' : 'light');
-        root.classList.toggle('dark', dark);
+        root.setAttribute('data-theme', theme);
+        root.classList.toggle('dark', theme === 'dark');
       })();
     </script>
   </head>

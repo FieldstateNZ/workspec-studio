@@ -36,31 +36,30 @@
 }
 
 /* ── C4 style-spec v2 token layer ──────────────────────────────────────────
-   Replicates WorkSpec Enterprise's `.c4-el` derivation verbatim
-   (artifacts/workspec/src/index.css, same section title): the renderer sets
-   `--c4-el-accent-raw` inline per node (the resolved spec-defaults accent);
-   everything else derives here. The surface is a soft, neutral-dominant tint
-   of the accent over the design system's elevated card token (text sits on
-   the tint, never the accent), so contrast is guaranteed for any hue in both
-   themes. Dark mode first lifts the accent toward white so it reads on the
-   dark surface (literal 22%, matching Enterprise's own literal). The
-   percentages are asserted against style/element-tints.ts (the same data
-   render-svg.ts computes from) by element-tints.test.ts. */
+   The renderer sets `--c4-el-accent-raw` inline per node (the resolved
+   spec-defaults accent); everything else derives here from
+   @workspec/design's shared `--el-tint-*` tokens (the SAME derivation rule
+   Decisions' option-card uses — Site Review UX pass, finding 02), so surface/
+   border/eyebrow/ink-dim already resolve correctly per theme with no
+   [data-theme='dark'] override needed for them. The surface is a soft,
+   neutral-dominant tint of the accent over the design system's elevated card
+   token (text sits on the tint, never the accent), so contrast is guaranteed
+   for any hue in both themes. Dark mode still separately lifts the accent
+   itself toward white first (literal 22%, c4-ui's own mechanism — see
+   style/element-tints.ts — for adapting a single-value accent to the dark
+   canvas, unrelated to the shared tint tokens) so it reads on the dark
+   surface. */
 .c4-node {
   cursor: pointer;
   --c4-el-accent: var(--c4-el-accent-raw);
-  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) 9%, var(--bg-elevated));
-  --c4-el-eyebrow: color-mix(in oklab, var(--c4-el-accent) 70%, var(--ink));
-  --c4-el-ink-dim: color-mix(in oklab, var(--ink) 60%, transparent);
-  --c4-el-border: color-mix(in oklab, var(--c4-el-accent) 28%, transparent);
+  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-surface), var(--bg-elevated));
+  --c4-el-eyebrow: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-eyebrow), var(--ink));
+  --c4-el-ink-dim: color-mix(in oklab, var(--ink) var(--el-tint-ink-dim), transparent);
+  --c4-el-border: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-border), transparent);
 }
 
 .c4-root[data-theme='dark'] .c4-node {
   --c4-el-accent: color-mix(in oklab, var(--c4-el-accent-raw), white 22%);
-  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) 14%, var(--bg-elevated));
-  --c4-el-eyebrow: var(--c4-el-accent);
-  --c4-el-ink-dim: color-mix(in oklab, var(--ink) 62%, transparent);
-  --c4-el-border: color-mix(in oklab, var(--c4-el-accent) 34%, transparent);
 }
 
 .c4-node[aria-disabled='true'] {

@@ -22,7 +22,7 @@ import { decide, reopen, suggestRationale } from './decide.js';
 import { resolveCatalogRef } from './host.js';
 import { money } from './format.js';
 import { Button, Lbl } from '@workspec/design/components';
-import { Dots, Flag, Icon, optAccent } from './primitives.js';
+import { DecisionStatusPill, Dots, Flag, Icon, optAccent } from './primitives.js';
 
 /** Props for {@link DecisionCompare}. */
 export interface DecisionCompareProps {
@@ -140,10 +140,7 @@ function CompareView(props: {
           <h1 className="ds-dechead-title ds-dechead-title-sub">{decision.metadata.title}</h1>
         </div>
         <div className="ds-actions">
-          <span className={`ds-status ds-status-${decision.metadata.status}`}>
-            <span className="ds-status-dot" aria-hidden="true" />
-            {decided ? 'Decided' : 'Exploring'}
-          </span>
+          <DecisionStatusPill status={decision.metadata.status} />
           {navigate !== undefined && (
             <Button
               variant="secondary"

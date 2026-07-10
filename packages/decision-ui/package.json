@@ -49,7 +49,7 @@
   "dependencies": {
     "@workspec/decision-engine": "workspace:*",
     "@workspec/decision-schema": "workspace:*",
-    "@workspec/design": "0.1.0-alpha.0"
+    "@workspec/design": "0.1.0-alpha.1"
   },
   "devDependencies": {
     "@module-federation/vite": "^1.16.12",

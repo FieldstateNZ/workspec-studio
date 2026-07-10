@@ -1,22 +1,24 @@
-// The accent→surface/border/eyebrow derivation percentages, mirroring
-// WorkSpec Enterprise's `.c4-el` CSS token layer verbatim
-// (`artifacts/workspec/src/index.css`, "C4 style-spec v2 token layer"):
-// the node surface is a soft, neutral-dominant tint of the accent over
-// `--bg-elevated`, the border is the accent at partial alpha, the eyebrow
-// (kind text) is accent-dominant ink, and dark mode first lifts the accent
-// toward white so it reads on the dark surface. Percentages are derivation
-// DATA (Enterprise conformance, like style/spec-defaults.ts), not colours —
-// the actual colour inputs are @workspec/design tokens and the spec-defaults
-// accents.
-//
-// Consumed by two renderers that must stay in sync:
-// - `src/styles.css` declares the same derivation as literal CSS
-//   `color-mix(in oklab, ...)` rules on `.c4-node` (the interactive canvas)
-//   — `element-tints.test.ts` asserts the stylesheet's percentages match
-//   these constants, so they cannot silently drift.
+// The accent -> surface/border/eyebrow derivation percentages — sourced from
+// @workspec/design's `--el-tint-*` tokens (the shared "typed element" grammar
+// promoted there from this package so Decisions' option-card can use the
+// exact same rule; see the Site Review UX pass, finding 02). Consumed by two
+// renderers that must stay in sync:
+// - `src/styles.css` declares the derivation as literal CSS
+//   `color-mix(in oklab, ...)` rules on `.c4-node`, referencing the tokens
+//   directly — nothing to keep in sync there, the browser resolves them.
 // - `src/render-svg.ts` computes the equivalent mixes in code (via
 //   `style/color-mix.ts`) because a standalone SVG's attributes cannot use
-//   CSS `color-mix()`.
+//   CSS `color-mix()`; `elementTintsFor` below reads the SAME tokens'
+//   literal per-theme values for that computation, so there is one source
+//   of truth (`@workspec/design`), not two hand-kept-in-sync ones.
+//
+// `accentLiftPct` is NOT one of the shared tokens: it's this package's own
+// mechanism for adapting a single-value accent — a spec-defaults default or
+// an author's spec.yaml override, either way one value that has to work on
+// both themes — for the dark canvas. It stays local, unrelated to Decisions'
+// grammar.
+
+import type { ThemeName, TokenName } from '../themes.js';
 
 export interface ElementTintSet {
   /** Accent share of the node surface mix (rest is `--bg-elevated`). */
@@ -31,7 +33,23 @@ export interface ElementTintSet {
   readonly accentLiftPct: number;
 }
 
-export const ELEMENT_TINTS: Readonly<Record<'light' | 'dark', ElementTintSet>> = {
-  light: { surfacePct: 9, borderPct: 28, eyebrowPct: 70, inkDimPct: 60, accentLiftPct: 0 },
-  dark: { surfacePct: 14, borderPct: 34, eyebrowPct: 100, inkDimPct: 62, accentLiftPct: 22 },
-};
+const ACCENT_LIFT_PCT: Readonly<Record<ThemeName, number>> = { light: 0, dark: 22 };
+
+function pct(value: string | undefined): number {
+  const parsed = value !== undefined ? Number.parseFloat(value) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/** This theme's derivation percentages, read from the supplied token map (`THEMES[theme]`). */
+export function elementTintsFor(
+  theme: ThemeName,
+  tokens: Readonly<Record<TokenName, string>>,
+): ElementTintSet {
+  return {
+    surfacePct: pct(tokens['--el-tint-surface']),
+    borderPct: pct(tokens['--el-tint-border']),
+    eyebrowPct: pct(tokens['--el-tint-eyebrow']),
+    inkDimPct: pct(tokens['--el-tint-ink-dim']),
+    accentLiftPct: ACCENT_LIFT_PCT[theme],
+  };
+}

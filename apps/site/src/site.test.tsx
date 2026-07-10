@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 
 import { C4 } from './c4.js';
+import { C4Demo } from './c4-demo.js';
 import { Decisions } from './decisions.js';
 import { Demo } from './demo.js';
 import { renderAdr } from './export-adr.js';
@@ -19,7 +20,10 @@ describe('Studio landing page (/)', () => {
       'href',
       '/decisions',
     );
-    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute('href', '/c4');
+    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute(
+      'href',
+      '/c4/demo',
+    );
   });
 });
 
@@ -37,8 +41,8 @@ describe('decisions module page (/decisions)', () => {
   });
 });
 
-describe('c4 module page (/c4) — pitch + live in-browser demo', () => {
-  it('states what the module is and links each package to its GitHub source', () => {
+describe('c4 module page (/c4) — pitch, no embedded demo', () => {
+  it('states what the module is, links each package to its GitHub source, and routes to /c4/demo', () => {
     render(<C4 />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       /browse, validate, and render c4 architecture trees/i,
@@ -55,10 +59,25 @@ describe('c4 module page (/c4) — pitch + live in-browser demo', () => {
     // The old "coming soon, nothing to click through" stub copy is gone.
     expect(screen.queryByText(/not live yet/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/nothing to click through here yet/i)).not.toBeInTheDocument();
+    // The live explorer moved to its own full-page route (finding 06) —
+    // every "demo" link here points at it, none embed it inline.
+    const demoLinks = screen.getAllByRole('link', { name: /demo/i });
+    expect(demoLinks.length).toBeGreaterThan(0);
+    for (const link of demoLinks) {
+      expect(link).toHaveAttribute('href', '/c4/demo');
+    }
   });
 
-  it('mounts a real C4Explorer over the representative example tree', async () => {
+  it('nav lists both modules, matching Decisions’ nav (finding 07)', () => {
     render(<C4 />);
+    expect(screen.getByRole('link', { name: 'Decisions' })).toHaveAttribute('href', '/decisions');
+    expect(screen.getByRole('link', { name: 'C4 Diagrams' })).toHaveAttribute('href', '/c4');
+  });
+});
+
+describe('c4 demo page (/c4/demo) — full-page demo shell, same pattern as Decisions’', () => {
+  it('mounts a real C4Explorer over the representative example tree', async () => {
+    render(<C4Demo />);
     expect(screen.getByText(/loading the demo tree/i)).toBeInTheDocument();
 
     // The explorer's tree nav lists both diagrams from the seeded tree.
@@ -72,7 +91,7 @@ describe('c4 module page (/c4) — pitch + live in-browser demo', () => {
 
   it('drill-down works: switching the tree nav swaps the rendered diagram', async () => {
     const user = userEvent.setup();
-    render(<C4 />);
+    render(<C4Demo />);
 
     await screen.findByText('Architect'); // system-context is showing first
 
@@ -83,6 +102,13 @@ describe('c4 module page (/c4) — pitch + live in-browser demo', () => {
     expect(screen.getByText('Primary Database')).toBeInTheDocument();
     // …and the system-context-only element is gone.
     expect(screen.queryByText('Payment Gateway')).not.toBeInTheDocument();
+  });
+
+  it('has the same demo-bar shell as Decisions’ demo — a back link, no embed chrome', () => {
+    render(<C4Demo />);
+    expect(
+      screen.getByRole('link', { name: 'Back to the WorkSpec C4 Diagrams page' }),
+    ).toHaveAttribute('href', '/c4');
   });
 });
 

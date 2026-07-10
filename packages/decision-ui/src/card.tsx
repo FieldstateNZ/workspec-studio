@@ -20,6 +20,7 @@ import { Card, Lbl } from '@workspec/design/components';
 import { useCatalog, useDecision } from './context.js';
 import { resolveCatalogRef } from './host.js';
 import { money } from './format.js';
+import { DecisionStatusPill } from './primitives.js';
 
 /** Props for {@link DecisionCard}. */
 export interface DecisionCardProps {
@@ -82,7 +83,6 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
   const cost = featuredId !== null ? result.byOption[featuredId] : undefined;
   const hasChoice = featured !== undefined && cost !== undefined && cost.complete;
 
-  const statusLabel = decided ? 'Decided' : superseded ? 'Superseded' : 'Exploring';
   const statusClass = decided ? 'decided' : superseded ? 'superseded' : 'exploring';
   const choiceLabel = decided ? 'Chosen' : 'Recommended';
 
@@ -90,10 +90,7 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
     <Card className="ds-card">
       <div className="ds-card-head">
         <Lbl>{`Decision · ${decision.metadata.id}`}</Lbl>
-        <span className={`ds-status ds-status-${statusClass}`}>
-          <span className="ds-status-dot" aria-hidden="true" />
-          {statusLabel}
-        </span>
+        <DecisionStatusPill status={statusClass} />
       </div>
 
       <h3 className="ds-card-title">{decision.metadata.title}</h3>

@@ -1,25 +1,14 @@
 // The C4 Diagrams module page (`/c4`): pitch copy (same design language as
-// `/decisions`) plus a live in-browser demo — `C4Explorer` over a
-// `MemorySource` seeded with the representative example tree (see
-// `c4-seed.ts`). Read-only: `capabilities: { editLayout: false }`, no
-// `source` — this is a showcase, not an editor.
-//
-// Dependency note: the four `@workspec/c4-*` packages (plus `@workspec/design`
-// via `c4-ui`) are `workspace:*` **devDependencies** here — a deliberate,
-// temporary exception to this app's registry-pins-only rule (see
-// `package.json`'s devDependencies block and `docs/c4/drift-log.md` entry 17).
-// They are not yet published to npm; the decisions demo's registry pins are
-// untouched.
-import { useEffect, useMemo, useState } from 'react';
+// `/decisions`), a CTA into the full-page demo at `/c4/demo` (see
+// `c4-demo.tsx`), and the packages list. Used to embed the live `C4Explorer`
+// directly in a 640px box here — split out (Site Review UX pass, finding
+// 06) so C4's demo gets the same full-page shell Decisions' does, instead of
+// reading as a "widget" bolted onto a marketing page.
 import type { ReactElement } from 'react';
-import type { C4Model } from '@workspec/c4-model';
-import { C4Explorer, createInertLinkResolver } from '@workspec/c4-ui';
-import type { C4StudioHost, ThemeName } from '@workspec/c4-ui';
-import '@workspec/c4-ui/styles.css';
-import { Lbl } from '@workspec/design/components';
+import { Button, Lbl } from '@workspec/design/components';
 
-import { loadDemoModel } from './c4-seed.js';
 import { Link } from './router.js';
+import { SiteNav } from './nav.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
 
@@ -60,63 +49,14 @@ const PACKAGES: readonly C4Package[] = [
   },
 ];
 
-const COLOR_SCHEME_QUERY = '(prefers-color-scheme: dark)';
-
-function useSystemTheme(): ThemeName {
-  const supported = typeof window !== 'undefined' && typeof window.matchMedia === 'function';
-  const [dark, setDark] = useState<boolean>(() =>
-    supported ? window.matchMedia(COLOR_SCHEME_QUERY).matches : true,
-  );
-  useEffect(() => {
-    if (!supported) return;
-    const mql = window.matchMedia(COLOR_SCHEME_QUERY);
-    const onChange = (event: MediaQueryListEvent): void => setDark(event.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, [supported]);
-  return dark ? 'dark' : 'light';
-}
-
-const host: C4StudioHost = {
-  linkResolver: createInertLinkResolver(),
-  // Read-only showcase: no `source`, so drag-to-pin never activates even if a
-  // future edit accidentally flipped this to `true`.
-  capabilities: { editLayout: false },
-};
-
 export function C4(): ReactElement {
-  const theme = useSystemTheme();
-  const [model, setModel] = useState<C4Model | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadDemoModel().then(
-      (loaded) => {
-        if (!cancelled) setModel(loaded);
-      },
-      (err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const diagramCount = useMemo(() => model?.diagrams.length ?? 0, [model]);
-
   return (
     <div className="site">
-      <header className="nav">
-        <span className="brand">
-          <Link href="/">WorkSpec Studio</Link> · <strong>C4 Diagrams</strong>
-        </span>
-        <nav className="nav-links">
-          <Link href="/decisions">Decisions</Link>
-          <a href={REPO_URL}>GitHub</a>
-        </nav>
-      </header>
+      <SiteNav
+        current="C4 Diagrams"
+        repoUrl={REPO_URL}
+        extras={<Link href="/c4/demo">Live demo</Link>}
+      />
 
       <main>
         <section className="hero">
@@ -128,36 +68,27 @@ export function C4(): ReactElement {
             into one architecture model, and lays diagrams out deterministically — the same artifact
             family WorkSpec Enterprise renders today, as a free standalone workbench.
           </p>
+          <div className="cta-row">
+            <Button asChild>
+              <Link href="/c4/demo">Try the live demo</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <a href={REPO_URL}>View on GitHub</a>
+            </Button>
+          </div>
         </section>
 
-        <section className="demo-embed" aria-label="C4 explorer demo">
+        <section className="closing">
           <h2>See it move</h2>
-          <p className="c4-demo-note" role="note">
-            A live <code>C4Explorer</code> running entirely in your browser against a representative
-            example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} — no install, no
-            signup, read-only. <code>npx @workspec/c4-studio serve</code> gives you the same
-            explorer with drag-to-pin over your own repo.
+          <p>
+            A live <code>C4Explorer</code> running entirely in your browser against a
+            representative example tree — no install, no signup, read-only.{' '}
+            <code>npx @workspec/c4-studio serve</code> gives you the same explorer with
+            drag-to-pin over your own repo.
           </p>
-          {error !== null ? (
-            <div className="c4-demo-error" role="alert">
-              Could not load the demo tree: {error}
-            </div>
-          ) : model === null ? (
-            <div className="c4-demo-loading">Loading the demo tree…</div>
-          ) : (
-            <div className="c4-demo-stage">
-              {/* The discovery order (alphabetical by filename) puts
-                  "container" before "system-context" — pin the more natural
-                  entry point explicitly rather than leave the demo's first
-                  impression to filename sort order. */}
-              <C4Explorer
-                model={model}
-                host={host}
-                theme={theme}
-                initialDiagramSlug="system-context"
-              />
-            </div>
-          )}
+          <Button asChild>
+            <Link href="/c4/demo">Open the live demo</Link>
+          </Button>
         </section>
 
         <section className="feature">

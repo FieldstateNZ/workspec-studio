@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { Button, Lbl } from '@workspec/design/components';
 
 import { Link } from './router.js';
+import { SiteNav } from './nav.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-decision-studio';
 const NPM_URL = 'https://www.npmjs.com/package/@workspec/decision-studio';
@@ -15,16 +16,16 @@ const NPM_URL = 'https://www.npmjs.com/package/@workspec/decision-studio';
 export function Decisions(): ReactElement {
   return (
     <div className="site">
-      <header className="nav">
-        <span className="brand">
-          <Link href="/">WorkSpec Studio</Link> · <strong>Decisions</strong>
-        </span>
-        <nav className="nav-links">
-          <Link href="/decisions/demo">Live demo</Link>
-          <a href={REPO_URL}>GitHub</a>
-          <a href={NPM_URL}>npm</a>
-        </nav>
-      </header>
+      <SiteNav
+        current="Decisions"
+        repoUrl={REPO_URL}
+        extras={
+          <>
+            <Link href="/decisions/demo">Live demo</Link>
+            <a href={NPM_URL}>npm</a>
+          </>
+        }
+      />
 
       <main>
         <section className="hero">
