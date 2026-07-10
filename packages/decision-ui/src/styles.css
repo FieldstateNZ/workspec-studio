@@ -71,7 +71,7 @@
   max-width: 760px;
 }
 /* secondary view headers (ADR / Compare) — a tier below the Options hero */
-.ds-root .ds-dechead-title-sub {
+.ds-root .ds-dechead-title.ds-dechead-title-sub {
   font-size: 24px;
 }
 .ds-root .ds-ctx {
@@ -231,7 +231,7 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--s-8);
-  padding: var(--s-6) 28px var(--s-6) 30px;
+  padding: var(--s-6) var(--s-8);
   cursor: pointer;
   align-items: flex-start;
   width: 100%;
@@ -482,7 +482,7 @@
   background: var(--bg);
 }
 .ds-root .ds-editor-inner {
-  padding: 28px 30px 30px;
+  padding: var(--s-8);
   display: grid;
   grid-template-columns: 1fr 288px;
   gap: var(--s-8);
@@ -762,7 +762,7 @@
 .ds-root .ds-levers {
   background: var(--bg-soft);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-4);
   padding: var(--s-5);
   align-self: start;
 }
