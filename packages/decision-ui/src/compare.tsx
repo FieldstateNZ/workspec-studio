@@ -134,12 +134,10 @@ function CompareView(props: {
 
   return (
     <div className="ds-wrap ds-wide">
-      <div className="ds-dechead" style={{ marginBottom: 14 }}>
+      <div className="ds-dechead">
         <div className="ds-dechead-meta">
           <Lbl>Compare · like-for-like · same workloads on each platform</Lbl>
-          <h1 className="ds-dechead-title" style={{ fontSize: 22 }}>
-            {decision.metadata.title}
-          </h1>
+          <h1 className="ds-dechead-title ds-dechead-title-sub">{decision.metadata.title}</h1>
         </div>
         <div className="ds-actions">
           <span className={`ds-status ds-status-${decision.metadata.status}`}>
