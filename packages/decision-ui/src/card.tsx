@@ -72,7 +72,6 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
 
   const status = decision.metadata.status;
   const decided = status === 'decided';
-  const superseded = status === 'superseded';
   const outcome = decision.spec.outcome;
 
   // Decided → the recorded winner; otherwise the engine's recommended option.
@@ -83,14 +82,13 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
   const cost = featuredId !== null ? result.byOption[featuredId] : undefined;
   const hasChoice = featured !== undefined && cost !== undefined && cost.complete;
 
-  const statusClass = decided ? 'decided' : superseded ? 'superseded' : 'exploring';
   const choiceLabel = decided ? 'Chosen' : 'Recommended';
 
   return (
     <Card className="ds-card">
       <div className="ds-card-head">
         <Lbl>{`Decision · ${decision.metadata.id}`}</Lbl>
-        <DecisionStatusPill status={statusClass} />
+        <DecisionStatusPill status={status} />
       </div>
 
       <h3 className="ds-card-title">{decision.metadata.title}</h3>

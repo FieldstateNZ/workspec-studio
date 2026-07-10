@@ -24,19 +24,20 @@
       (function () {
         var root = document.documentElement,
           theme = 'dark';
+        // Mirrors @workspec/design systemTheme(): no matchMedia → 'dark'
+        // (never a light-first flash in limited/test hosts).
+        function sys() {
+          return typeof window.matchMedia === 'function' &&
+            !window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'light'
+            : 'dark';
+        }
         try {
           var stored = JSON.parse(localStorage.getItem('workspec.theme'));
           theme =
-            stored && (stored.theme === 'light' || stored.theme === 'dark')
-              ? stored.theme
-              : window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
+            stored && (stored.theme === 'light' || stored.theme === 'dark') ? stored.theme : sys();
         } catch (e) {
-          theme =
-            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
+          theme = sys();
         }
         root.setAttribute('data-aesthetic', 'console');
         root.setAttribute('data-theme', theme);

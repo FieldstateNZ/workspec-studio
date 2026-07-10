@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { Chip as DesignChip, Status } from '@workspec/design/components';
 import type { StatusTone } from '@workspec/design/components';
+import type { Decision } from '@workspec/decision-schema';
 
 /**
  * Per-option accent, mapping option ids to WorkSpec artifact-type tokens so
@@ -129,8 +130,12 @@ function cn(...parts: (string | undefined)[]): string {
 
 // ── Decision status pill ────────────────────────────────────────────────────────
 
-/** A decision's lifecycle status. */
-export type DecisionLifecycleStatus = 'exploring' | 'decided' | 'superseded';
+/**
+ * A decision's lifecycle status. Derived from the schema's `metadata.status`
+ * enum (the source of truth) so the pill stays in sync if the schema ever
+ * adds or renames a status, instead of duplicating the union here.
+ */
+export type DecisionLifecycleStatus = Decision['metadata']['status'];
 
 const DECISION_STATUS_TONE: Record<DecisionLifecycleStatus, StatusTone> = {
   exploring: 'warn',
