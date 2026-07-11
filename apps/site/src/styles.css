@@ -226,26 +226,340 @@
     border-top: 1px solid var(--line);
   }
 
-  /* ── Studio landing: module cards ──────────────────────────────────────────
-     Reuses .feature's existing block (border-top rule, h2/p rhythm) side by
-     side instead of stacked — same tokens, no new visual language. */
-  .modules {
+  /* ── HOME (Studio redesign, round 3, slice S2 — "Home" mockup screen,
+     lines 74–181) ────────────────────────────────────────────────────────
+     The Studio landing page's own 1280px column — deliberately NOT `.site`
+     (62rem), which stays reserved for the /decisions and /c4 marketing
+     pitch pages. Every class below is scoped to studio-home.tsx; nothing
+     here is consumed by another page. See that file for the section-by-
+     section mockup line references. */
+
+  .home-hero {
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 72px var(--s-8) 0;
+  }
+  .home-hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  /* mono eyebrow row: `workspec-studio` (accent) / `architecture workbench` */
+  .home-eyebrow {
     display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-fade);
+  }
+  .home-eyebrow-accent {
+    color: var(--accent);
+  }
+  .home-eyebrow-sep {
+    color: var(--line-2);
+  }
+
+  .home-title {
+    font-size: 46px;
+    font-weight: 650;
+    letter-spacing: -0.028em;
+    line-height: 1.08;
+    margin: var(--s-5) 0 0;
+    max-width: 16ch;
+  }
+  .home-lede {
+    font-size: 16.5px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    max-width: 52ch;
+    margin: var(--s-5) 0 0;
+  }
+
+  .home-cta-row {
+    display: flex;
+    gap: var(--s-3);
+    margin-top: var(--s-8);
+    align-items: center;
     flex-wrap: wrap;
-    gap: 1.5rem;
-    padding: 1rem 0 0;
-    border-top: 1px solid var(--line);
   }
-  .module-card {
-    flex: 1 1 260px;
-    padding: 1.5rem;
+  .home-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    height: 42px;
+    padding: 0 22px;
+    border-radius: var(--r-4);
+    cursor: pointer;
+  }
+  .home-cta:hover {
+    text-decoration: none;
+  }
+  .home-cta-primary {
+    border: 1px solid var(--accent);
+    color: var(--on-accent);
+    background: var(--accent);
+  }
+  .home-cta-primary:hover {
+    filter: brightness(1.08);
+  }
+  .home-cta-outline {
+    font-weight: 500;
+    /* 20px, not the primary's 22px — the mockup differentiates the pair. */
+    padding: 0 var(--s-5);
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    background: transparent;
+  }
+  .home-cta-outline:hover {
+    background: var(--bg-soft);
+  }
+
+  /* The hero's terminal card — an illustrative `c4-studio serve` session,
+     not a live embed (see studio-home.tsx's header comment on copy). */
+  .home-terminal {
+    background: var(--panel-dark);
     border: 1px solid var(--line);
-    border-top: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--bg-elevated);
+    border-radius: var(--r-5);
+    padding: var(--s-5) var(--s-6);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 2.1;
+    box-shadow: var(--sh-2);
   }
-  .module-status {
-    margin-bottom: 0.5rem;
+  .home-terminal-dots {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .home-terminal-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--line-2);
+  }
+  .home-terminal-cmd {
+    color: var(--ink);
+  }
+  .home-terminal-soft {
+    color: var(--ink-soft);
+  }
+  .home-terminal-muted {
+    color: var(--ink-muted);
+  }
+  .home-terminal-url {
+    color: var(--accent);
+  }
+
+  /* Shared "section header row" pattern: mono label, a flex-1 rule, and a
+     right-aligned mono note — used by both the Modules and the element
+     grammar strips below. */
+  .home-strip-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    margin-bottom: var(--s-5);
+  }
+  .home-strip-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .home-strip-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .home-strip-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  .home-modules {
+    max-width: 1280px;
+    margin: var(--s-16) auto 0;
+    width: 100%;
+    padding: 0 var(--s-8);
+  }
+  .home-module-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-5);
+  }
+  /* Whole-card-clickable via the "stretched link" technique: the real <a>
+     is the footer CTA text (.home-module-cta); its ::after covers the full
+     card. That keeps exactly one, real, keyboard-reachable link per card
+     instead of a non-keyboard onClick div — hover/focus feedback still
+     reads as "the whole card responds" because :hover/:focus-within on the
+     card itself fire whenever the pointer/focus is anywhere inside it. */
+  .home-module-card {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: var(--r-5);
+    background: var(--bg-elevated);
+    overflow: hidden;
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+  .home-module-card:hover {
+    border-color: var(--line-2);
+    transform: translateY(-1px);
+  }
+  .home-module-card:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .home-module-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--module-accent);
+  }
+  .home-module-body {
+    padding: 24px 26px 24px 29px;
+  }
+  .home-module-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
+  .home-module-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--module-eyebrow);
+  }
+  .home-module-status {
+    margin-left: auto;
+  }
+  .home-module-title {
+    font-size: 20px;
+    font-weight: 620;
+    letter-spacing: -0.015em;
+    margin: var(--s-3) 0 0;
+  }
+  .home-module-blurb {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 44ch;
+    margin: 10px 0 0;
+  }
+  .home-module-cta {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .home-module-cta:hover {
+    text-decoration: none;
+  }
+  .home-module-cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .home-grammar {
+    max-width: 1280px;
+    margin: var(--s-16) auto 0;
+    width: 100%;
+    padding: 0 var(--s-8) var(--s-20);
+  }
+  .home-grammar-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  .home-grammar-card {
+    position: relative;
+    border: 1px solid color-mix(in oklab, var(--grammar-accent) var(--el-tint-border), transparent);
+    border-radius: 10px;
+    background: color-mix(
+      in oklab,
+      var(--grammar-accent) var(--el-tint-surface),
+      var(--bg-elevated)
+    );
+    overflow: hidden;
+  }
+  .home-grammar-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--grammar-accent);
+  }
+  .home-grammar-body {
+    padding: 12px 14px 12px 17px;
+  }
+  .home-grammar-eyebrow {
+    font-family: var(--mono);
+    /* House 10px floor — the mockup's own eyebrow here is 9.5px. */
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    /* The mockup's static 70% blend, deliberately NOT var(--el-tint-eyebrow):
+       that token's dark value (100%) is paired with c4-ui's 22% accent-lift
+       step, which these static cards don't apply. */
+    color: color-mix(in oklab, var(--grammar-accent) 70%, var(--ink));
+  }
+  .home-grammar-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-top: var(--s-1);
+  }
+  .home-grammar-caption {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    max-width: 76ch;
+    margin: var(--s-4) 0 0;
+  }
+
+  /* Full-bleed divider + centered row — same pattern as .nav-bar/.nav-inner.
+     margin-top:auto pins the footer to the viewport bottom on short pages via
+     the .home-shell flex column (the mockup's sticky-footer structure); tall
+     pages already end with .home-grammar's own var(--s-20) bottom padding. */
+  .home-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .home-foot {
+    border-top: 1px solid var(--line);
+    margin-top: auto;
+  }
+  .home-foot-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    padding: 18px var(--s-8);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .home-foot-sep {
+    color: var(--line-2);
+  }
+  .home-foot-spacer {
+    flex: 1;
   }
 
   h2 {
@@ -302,34 +616,16 @@
     gap: 1.25rem;
   }
 
-  /* ── Demo chrome (the bar + banner around the embedded studio) ────────────── */
+  /* ── Demo chrome (banner + stage around the embedded studio) ──────────────── */
   .demo {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
-  .demo-bar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 1.25rem;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg-elevated);
-  }
-  .demo-home {
-    font-weight: 600;
-    white-space: nowrap;
-  }
   .demo-examples {
     display: flex;
     gap: 0.4rem;
     flex-wrap: wrap;
-  }
-  .demo-actions {
-    margin-left: auto;
-    display: flex;
-    gap: 0.5rem;
   }
   .demo-note {
     margin: 0;
@@ -345,6 +641,127 @@
   .demo-stage {
     flex: 1;
     min-height: 0;
+  }
+
+  /* ── WORKBENCH bar (Studio redesign, round 3 — "workbench bar (shared demo
+     shell)" mockup screen, lines 186-200) ───────────────────────────────────
+     Sits directly under the shell nav on both demo routes. Replaces the old
+     `.demo-bar`/`.demo-home`/`.demo-actions` back-link chrome — the shell
+     nav's brand + pills already carry the module signal, so this bar is now
+     pure module-workbench chrome: segmented module tabs, a mono crumb, and
+     module actions. See demo-bar.tsx's WorkbenchBar. */
+  .wb-bar {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+  .wb-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    /* Below ~800px the crumb/switcher run out of room — wrap the bar's rows
+       rather than let labels wrap inside their own pills. */
+    flex-wrap: wrap;
+    gap: var(--s-4);
+    padding: 10px var(--s-8);
+  }
+  /* Segmented Decisions / C4 Model tabs — these NAVIGATE between
+     `/decisions/demo` and `/c4/demo` (Link + aria-current), not an ARIA
+     tablist. */
+  .wb-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-4);
+    padding: 3px;
+  }
+  .wb-tab {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px var(--s-4);
+    border-radius: var(--r-3);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  .wb-tab:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .wb-tab-active {
+    border-color: var(--line);
+    background: var(--bg-elevated);
+    color: var(--ink);
+  }
+  /* The mono crumb: "example ▸ <value>" — the value is a static name (C4) or
+     the worked-example switcher (Decisions; see demo.tsx). */
+  .wb-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+  }
+  .wb-crumb-eyebrow {
+    color: var(--ink-fade);
+  }
+  .wb-crumb-sep {
+    color: var(--line-2);
+  }
+  .wb-crumb-value {
+    color: var(--ink-soft);
+  }
+  .wb-spacer {
+    flex: 1;
+  }
+  .wb-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+  }
+  /* Export ADR — bordered. */
+  .wb-action {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 0 14px;
+    height: var(--s-8);
+    border-radius: var(--r-3);
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .wb-action:hover {
+    background: var(--bg-elevated);
+  }
+  /* Reset — borderless. */
+  .wb-action-ghost {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 0 14px;
+    height: var(--s-8);
+    border-radius: var(--r-3);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .wb-action-ghost:hover {
+    color: var(--ink);
   }
 
   /* ── The /c4 page's EMBEDDED demo (unlike /decisions/demo, this sits inside

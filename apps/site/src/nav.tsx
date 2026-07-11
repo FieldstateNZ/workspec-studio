@@ -16,16 +16,18 @@ import { ThemeToggle } from './theme-toggle.js';
 interface NavItem {
   readonly label: string;
   readonly href: string;
-  readonly route: Route;
+  readonly routes: readonly Route[];
 }
 
-// The three pitch pages SiteNav mounts on (round 3 scope) each resolve to
-// exactly one of these routes, so a plain equality check is enough — no
-// need to treat a module's own demo route as "still active" here.
+// Studio redesign, round 3 (S3) — the module pills also need to light on a
+// module's own demo route (`/decisions/demo`, `/c4/demo`), not just its pitch
+// page, so each item now matches a SET of routes rather than exactly one.
+// Home deliberately matches only 'studio-home' — it must stay unlit on every
+// demo route, same as it does on the pitch pages.
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Home', href: '/', route: 'studio-home' },
-  { label: 'Decisions', href: '/decisions', route: 'decisions' },
-  { label: 'C4 Model', href: '/c4', route: 'c4' },
+  { label: 'Home', href: '/', routes: ['studio-home'] },
+  { label: 'Decisions', href: '/decisions', routes: ['decisions', 'decisions-demo'] },
+  { label: 'C4 Model', href: '/c4', routes: ['c4', 'c4-demo'] },
 ];
 
 export function SiteNav(props: { repoUrl: string; extras?: ReactNode }): ReactElement {
@@ -40,16 +42,19 @@ export function SiteNav(props: { repoUrl: string; extras?: ReactNode }): ReactEl
           <span className="brand-sub">/ studio</span>
         </Link>
         <nav className="nav-links">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={route === item.route ? 'nav-pill nav-pill-active' : 'nav-pill'}
-              aria-current={route === item.route ? 'page' : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = item.routes.includes(route);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={active ? 'nav-pill nav-pill-active' : 'nav-pill'}
+                aria-current={active ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
         <span className="nav-spacer" />
         <a className="nav-github" href={repoUrl}>

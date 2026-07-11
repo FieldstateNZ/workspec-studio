@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 
@@ -18,17 +18,56 @@ afterEach(() => {
   window.history.pushState({}, '', '/');
 });
 
+// On a demo route, "Decisions" and "C4 Model" each appear TWICE: once as the
+// shell nav's pill (to the module's pitch page) and once as the workbench
+// bar's module tab (to the OTHER module's demo route) — same accessible
+// name, different `href`. Disambiguate by href rather than relying on
+// document order.
+function findLink(name: string, href: string): HTMLElement {
+  const match = screen
+    .getAllByRole('link', { name })
+    .find((link) => link.getAttribute('href') === href);
+  if (match === undefined) throw new Error(`no link named "${name}" with href "${href}"`);
+  return match;
+}
+
 describe('Studio landing page (/)', () => {
-  it('renders the family pitch and links into both module pages', () => {
+  it('renders the hero pitch and both hero CTAs into the module pitch pages', () => {
     render(<StudioHome />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /workbench over the workspec artifacts/i,
+      /one typed graph\. two lenses/i,
     );
-    expect(screen.getByRole('link', { name: /open decisions/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /open the studio/i })).toHaveAttribute(
       'href',
       '/decisions',
     );
-    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute('href', '/c4/demo');
+    expect(screen.getByRole('link', { name: /explore the c4 model/i })).toHaveAttribute(
+      'href',
+      '/c4',
+    );
+  });
+
+  it('renders both module cards, each linking to its own pitch page', () => {
+    render(<StudioHome />);
+    expect(screen.getByRole('link', { name: /open the workbench/i })).toHaveAttribute(
+      'href',
+      '/decisions',
+    );
+    expect(screen.getByRole('link', { name: /open the explorer/i })).toHaveAttribute('href', '/c4');
+    // Both modules carry the mockup's "live" pill — the @workspec/c4-* family
+    // (c4-studio included) is on npm at 0.1.0-alpha, verified against the
+    // registry during round-3 review.
+    expect(screen.getAllByText('live')).toHaveLength(2);
+    expect(screen.queryByText('in progress')).not.toBeInTheDocument();
+  });
+
+  it('states the real license and links out to the schema registry', () => {
+    render(<StudioHome />);
+    expect(screen.getByText(/apache-2\.0/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /schema registry/i })).toHaveAttribute(
+      'href',
+      'https://schema.workspec.io/',
+    );
   });
 
   it('marks the Home nav pill active, leaving Decisions / C4 Model inactive', () => {
@@ -112,22 +151,23 @@ describe('c4 demo page (/c4/demo) — full-page demo shell, same pattern as Deci
     render(<C4Demo />);
     expect(screen.getByText(/loading the demo tree/i)).toBeInTheDocument();
 
-    // The explorer's tree nav lists both diagrams from the seeded tree.
-    expect(await screen.findByRole('button', { name: /system context/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^container/i })).toBeInTheDocument();
+    // The explorer's level tabs list both diagrams from the seeded tree
+    // (c4-ui's workbench layout: canonical levels numbered, not a tree nav).
+    expect(await screen.findByRole('button', { name: '1 · Context' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '2 · Container' })).toBeInTheDocument();
 
     // The default (first) diagram's canvas rendered its elements.
     expect(await screen.findByText('Architect')).toBeInTheDocument();
     expect(screen.getByText('Payment Gateway')).toBeInTheDocument();
   });
 
-  it('drill-down works: switching the tree nav swaps the rendered diagram', async () => {
+  it('drill-down works: switching the level tabs swaps the rendered diagram', async () => {
     const user = userEvent.setup();
     render(<C4Demo />);
 
     await screen.findByText('Architect'); // system-context is showing first
 
-    await user.click(screen.getByRole('button', { name: /^container/i }));
+    await user.click(screen.getByRole('button', { name: '2 · Container' }));
 
     // The container diagram's own elements now render…
     expect(await screen.findByText('Billing')).toBeInTheDocument();
@@ -136,11 +176,33 @@ describe('c4 demo page (/c4/demo) — full-page demo shell, same pattern as Deci
     expect(screen.queryByText('Payment Gateway')).not.toBeInTheDocument();
   });
 
-  it('has the same demo-bar shell as Decisions’ demo — a back link, no embed chrome', () => {
+  it('renders the shell nav above the workbench bar, both agreeing C4 Model is active (Studio redesign, round 3)', () => {
+    window.history.pushState({}, '', '/c4/demo');
     render(<C4Demo />);
-    expect(
-      screen.getByRole('link', { name: 'Back to the WorkSpec C4 Diagrams page' }),
-    ).toHaveAttribute('href', '/c4');
+
+    // Shell nav: the C4 Model pitch-page pill lights; Home / Decisions don't.
+    const shellC4Pill = findLink('C4 Model', '/c4');
+    expect(shellC4Pill).toHaveClass('nav-pill-active');
+    expect(shellC4Pill).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(findLink('Decisions', '/decisions')).not.toHaveClass('nav-pill-active');
+
+    // Workbench bar: its OWN module tab (a different link, to the demo
+    // route) also lights; the Decisions tab crosses over to the other demo.
+    const wbNav = screen.getByRole('navigation', { name: 'Studio' });
+    const wbC4Tab = within(wbNav).getByRole('link', { name: 'C4 Model' });
+    expect(wbC4Tab).toHaveClass('wb-tab-active');
+    expect(wbC4Tab).toHaveAttribute('aria-current', 'page');
+    const wbDecisionsTab = within(wbNav).getByRole('link', { name: 'Decisions' });
+    expect(wbDecisionsTab).toHaveAttribute('href', '/decisions/demo');
+    expect(wbDecisionsTab).not.toHaveClass('wb-tab-active');
+  });
+
+  it('shows the demo tree’s name in the workbench bar’s crumb and leaves the actions slot empty', () => {
+    render(<C4Demo />);
+    expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /export adr/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^reset$/i })).not.toBeInTheDocument();
   });
 });
 
@@ -155,6 +217,45 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
     expect(
       await screen.findByRole('heading', { name: /hosting platform for the data/i }),
     ).toBeInTheDocument();
+  });
+
+  it('renders the shell nav above the workbench bar, both agreeing Decisions is active (Studio redesign, round 3)', () => {
+    window.history.pushState({}, '', '/decisions/demo');
+    render(<Demo />);
+
+    // Shell nav: the Decisions pitch-page pill lights; Home / C4 Model don't.
+    const shellDecisionsPill = findLink('Decisions', '/decisions');
+    expect(shellDecisionsPill).toHaveClass('nav-pill-active');
+    expect(shellDecisionsPill).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(findLink('C4 Model', '/c4')).not.toHaveClass('nav-pill-active');
+
+    // Workbench bar: its OWN module tab (a different link, to the demo
+    // route) also lights; the C4 Model tab crosses over to the other demo.
+    const wbNav = screen.getByRole('navigation', { name: 'Studio' });
+    const wbDecisionsTab = within(wbNav).getByRole('link', { name: 'Decisions' });
+    expect(wbDecisionsTab).toHaveClass('wb-tab-active');
+    expect(wbDecisionsTab).toHaveAttribute('aria-current', 'page');
+    const wbC4Tab = within(wbNav).getByRole('link', { name: 'C4 Model' });
+    expect(wbC4Tab).toHaveAttribute('href', '/c4/demo');
+    expect(wbC4Tab).not.toHaveClass('wb-tab-active');
+  });
+
+  it('keeps the worked-example switcher and module actions in the workbench bar', async () => {
+    render(<Demo />);
+    await screen.findByText('Compare'); // wait for the published DecisionApp to mount
+
+    const switcher = screen.getByRole('group', { name: /worked examples/i });
+    expect(within(switcher).getByRole('button', { name: 'Hosting platform' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      within(switcher).getByRole('button', { name: 'Managed vs self-hosted Postgres' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+
+    expect(screen.getByRole('button', { name: 'Export ADR' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
   });
 });
 

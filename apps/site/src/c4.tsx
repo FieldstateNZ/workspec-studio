@@ -96,7 +96,7 @@ export function C4(): ReactElement {
 
           <section className="feature">
             <h2>The packages so far</h2>
-            <p className="muted">Source on GitHub, npm publish pending.</p>
+            <p className="muted">Source on GitHub, on npm at 0.1.0-alpha.</p>
             <ul>
               {PACKAGES.map((pkg) => (
                 <li key={pkg.name}>
