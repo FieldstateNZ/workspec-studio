@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 
 import { C4 } from './c4.js';
@@ -9,6 +9,14 @@ import { Demo } from './demo.js';
 import { renderAdr } from './export-adr.js';
 import { DEMO_EXAMPLES, createDemoRepository } from './seed.js';
 import { StudioHome } from './studio-home.js';
+
+// The shell nav's active pill now tracks the route SiteNav reads via
+// useRoute() (Studio redesign, round 3), not a per-page `current` prop —
+// each describe block below pushes its own page's path before rendering, so
+// reset it after every test rather than let it leak into the next one.
+afterEach(() => {
+  window.history.pushState({}, '', '/');
+});
 
 describe('Studio landing page (/)', () => {
   it('renders the family pitch and links into both module pages', () => {
@@ -20,10 +28,17 @@ describe('Studio landing page (/)', () => {
       'href',
       '/decisions',
     );
-    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute(
-      'href',
-      '/c4/demo',
-    );
+    expect(screen.getByRole('link', { name: /try the demo/i })).toHaveAttribute('href', '/c4/demo');
+  });
+
+  it('marks the Home nav pill active, leaving Decisions / C4 Model inactive', () => {
+    window.history.pushState({}, '', '/');
+    render(<StudioHome />);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Decisions' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Decisions' })).not.toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'C4 Model' })).not.toHaveClass('nav-pill-active');
   });
 });
 
@@ -38,6 +53,14 @@ describe('decisions module page (/decisions)', () => {
     for (const link of demoLinks) {
       expect(link).toHaveAttribute('href', '/decisions/demo');
     }
+  });
+
+  it('marks the Decisions nav pill active, leaving Home / C4 Model inactive', () => {
+    window.history.pushState({}, '', '/decisions');
+    render(<Decisions />);
+    expect(screen.getByRole('link', { name: 'Decisions' })).toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'C4 Model' })).not.toHaveClass('nav-pill-active');
   });
 });
 
@@ -68,10 +91,19 @@ describe('c4 module page (/c4) — pitch, no embedded demo', () => {
     }
   });
 
-  it('nav lists both modules, matching Decisions’ nav (finding 07)', () => {
+  it('nav lists Home, Decisions, and C4 Model, matching Decisions’ nav (finding 07)', () => {
     render(<C4 />);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Decisions' })).toHaveAttribute('href', '/decisions');
-    expect(screen.getByRole('link', { name: 'C4 Diagrams' })).toHaveAttribute('href', '/c4');
+    expect(screen.getByRole('link', { name: 'C4 Model' })).toHaveAttribute('href', '/c4');
+  });
+
+  it('marks the C4 Model nav pill active, leaving Home / Decisions inactive', () => {
+    window.history.pushState({}, '', '/c4');
+    render(<C4 />);
+    expect(screen.getByRole('link', { name: 'C4 Model' })).toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Decisions' })).not.toHaveClass('nav-pill-active');
   });
 });
 

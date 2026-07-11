@@ -61,45 +61,112 @@
     margin: 0 0 1rem;
   }
 
-  .nav {
+  /* ── Shell nav (Studio redesign, round 3 — "Shell nav" mockup screen) ─────
+     A full-width sticky bar OUTSIDE `.site`'s 62rem column — the mockup's
+     1280px inner container is wider than the marketing column, so the nav
+     no longer nests inside it (see studio-home.tsx / decisions.tsx / c4.tsx,
+     which now render <SiteNav /> as a sibling of `.site`, not a child). */
+  .nav-bar {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--line);
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--s-4);
+    padding: 13px var(--s-8);
   }
   .brand {
-    font-size: 1.05rem;
-    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
   }
-  .brand strong {
-    font-weight: 700;
+  .brand:hover {
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--r-1);
+    background: var(--accent);
+  }
+  .brand-word {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+  }
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-fade);
   }
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    font-size: 0.95rem;
+    gap: var(--s-1);
+    margin-left: var(--s-4);
+  }
+  /* Home / Decisions / C4 Model pills — the active one (current route, not a
+     per-page prop) carries the module signal the old brand crumb used to. */
+  .nav-pill {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px var(--s-3);
+    border-radius: var(--r-3);
+    color: var(--ink-soft);
+  }
+  .nav-pill:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-pill-active {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+  .nav-spacer {
+    flex: 1;
+  }
+  /* GitHub (every page) + a page's own extras (npm, Live demo) — same quiet
+     mono treatment, appended in DOM order after GitHub. */
+  .nav-github,
+  .nav-extra {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+  .nav-github:hover,
+  .nav-extra:hover {
+    color: var(--ink);
+    text-decoration: none;
   }
 
-  /* The site's Dark/Light control (Site Review UX pass, finding 04). */
+  /* The site's Dark/Light control (Site Review UX pass, finding 04; restyled
+     to the mockup's segmented-control spec in round 3). */
   .theme-toggle {
     display: inline-flex;
-    gap: 4px;
+    gap: var(--s-1);
     background: var(--bg-soft);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: var(--r-4);
     padding: 3px;
   }
   .theme-toggle-btn {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    padding: 6px 14px;
-    border-radius: 6px;
+    padding: 5px var(--s-3);
+    border-radius: var(--r-3);
     border: 1px solid transparent;
     background: transparent;
     color: var(--ink-fade);

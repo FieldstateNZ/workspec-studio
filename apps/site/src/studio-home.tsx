@@ -1,6 +1,8 @@
 // The Studio-level landing page (`/`). One product, one site: WorkSpec Studio
 // modules as paths. Composed entirely from the existing marketing chrome
-// (`.site` / `.nav` / `.hero` / `.feature` styles) — no new visual language,
+// (`.site` / `.hero` / `.feature` styles), with the shared shell nav (Studio
+// redesign, round 3) rendered as a full-width sibling above the `.site`
+// column rather than nested inside it — no new visual language otherwise,
 // just a family pitch and cards routing into each module. Copy tracks the
 // repository README and the Decisions module's own positioning so none of the
 // three ever drift apart.
@@ -53,55 +55,56 @@ const MODULES: readonly Module[] = [
 
 export function StudioHome(): ReactElement {
   return (
-    <div className="site">
+    <>
       <SiteNav repoUrl={REPO_URL} />
+      <div className="site">
+        <main>
+          <section className="hero">
+            <Lbl>Free · standalone · git-native</Lbl>
+            <h1>One workbench over the WorkSpec artifacts already living in your repo.</h1>
+            <p className="lede">
+              WorkSpec Studio is the open-source home for every free WorkSpec module — costed
+              decisions, C4 architecture diagrams, and whatever ships next. Every module reads and
+              writes plain YAML artifacts that version with git: no database, no lock-in. WorkSpec
+              Enterprise consumes the exact same packages published from here, so nothing here is a
+              second-class trial of a paid product.
+            </p>
+          </section>
 
-      <main>
-        <section className="hero">
-          <Lbl>Free · standalone · git-native</Lbl>
-          <h1>One workbench over the WorkSpec artifacts already living in your repo.</h1>
-          <p className="lede">
-            WorkSpec Studio is the open-source home for every free WorkSpec module — costed
-            decisions, C4 architecture diagrams, and whatever ships next. Every module reads and
-            writes plain YAML artifacts that version with git: no database, no lock-in. WorkSpec
-            Enterprise consumes the exact same packages published from here, so nothing here is a
-            second-class trial of a paid product.
-          </p>
-        </section>
+          <section className="modules" aria-label="WorkSpec Studio modules">
+            {MODULES.map((mod) => (
+              <article key={mod.key} className="feature module-card">
+                <Status tone={STATUS_TONE[mod.status]} className="module-status">
+                  {mod.status}
+                </Status>
+                <h2>{mod.name}</h2>
+                <p>{mod.blurb}</p>
+                <Button asChild>
+                  <Link href={mod.href}>{mod.cta}</Link>
+                </Button>
+              </article>
+            ))}
+          </section>
 
-        <section className="modules" aria-label="WorkSpec Studio modules">
-          {MODULES.map((mod) => (
-            <article key={mod.key} className="feature module-card">
-              <Status tone={STATUS_TONE[mod.status]} className="module-status">
-                {mod.status}
-              </Status>
-              <h2>{mod.name}</h2>
-              <p>{mod.blurb}</p>
-              <Button asChild>
-                <Link href={mod.href}>{mod.cta}</Link>
-              </Button>
-            </article>
-          ))}
-        </section>
+          <section className="feature">
+            <h2>Open core</h2>
+            <p>
+              Every package in this monorepo is Enterprise-grade by constitution — WorkSpec
+              Enterprise is a future consumer of this code, not a separate implementation. The
+              artifact schemas are shared, so files you author here come alive with richer context
+              inside Enterprise’s graph, with no forks and one source of truth.
+            </p>
+          </section>
+        </main>
 
-        <section className="feature">
-          <h2>Open core</h2>
-          <p>
-            Every package in this monorepo is Enterprise-grade by constitution — WorkSpec Enterprise
-            is a future consumer of this code, not a separate implementation. The artifact schemas
-            are shared, so files you author here come alive with richer context inside Enterprise’s
-            graph, with no forks and one source of truth.
-          </p>
-        </section>
-      </main>
-
-      <footer className="foot">
-        <span>Apache-2.0 © 2026 Fieldstate</span>
-        <span className="foot-links">
-          <a href={REPO_URL}>GitHub</a>
-          <a href="https://schema.workspec.io/">Schema registry</a>
-        </span>
-      </footer>
-    </div>
+        <footer className="foot">
+          <span>Apache-2.0 © 2026 Fieldstate</span>
+          <span className="foot-links">
+            <a href={REPO_URL}>GitHub</a>
+            <a href="https://schema.workspec.io/">Schema registry</a>
+          </span>
+        </footer>
+      </div>
+    </>
   );
 }
