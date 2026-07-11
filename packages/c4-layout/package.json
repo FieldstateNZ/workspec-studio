@@ -1,6 +1,6 @@
 {
   "name": "@workspec/c4-layout",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Deterministic ELK-based auto-layout for resolved WorkSpec C4 diagrams, with pinned-node/mixed-mode support and .layout/ round-tripping. No IO assumptions, no DOM, runs in Node and the browser.",
   "keywords": [
     "c4",
