@@ -3,8 +3,9 @@
 //
 // Components receive already-loaded `@workspec/c4-model`/`@workspec/c4-layout`
 // data as props — there is no repository fetch, no global, no ambient theme.
-// `C4Diagram` renders one positioned diagram view; `C4Explorer` adds tree
-// navigation and per-diagram layout orchestration over a whole `C4Model`.
+// `C4Diagram` renders one positioned diagram view; `C4Explorer` adds
+// segmented level-tab navigation, per-diagram layout orchestration, and a
+// click-to-select element detail rail over a whole `C4Model`.
 // `renderSvg` produces a standalone, deterministic SVG string from the same
 // geometry/style modules the interactive canvas uses.
 //

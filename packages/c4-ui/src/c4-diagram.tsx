@@ -1,8 +1,10 @@
 // The interactive C4 canvas: renders one positioned diagram view (elements
 // styled per kind, orthogonal category-coloured edges), and supports hover
-// tooltips, click/Enter drill-down, wheel/drag pan-zoom, and (when the host
-// grants `editLayout` and supplies a `source`) basic drag-to-pin. See the
-// package README for the full interaction contract.
+// tooltips, click/Enter drill-down, click-to-select (a persistent accent
+// ring plus `onSelect`, independent of drill-down — `C4Explorer`'s detail
+// rail is built on this), wheel/drag pan-zoom, and (when the host grants
+// `editLayout` and supplies a `source`) basic drag-to-pin. See the package
+// README for the full interaction contract.
 
 import type { CSSProperties, KeyboardEvent, PointerEvent, ReactElement, WheelEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -45,6 +47,23 @@ export interface C4DiagramProps {
   host?: C4StudioHost | undefined;
   /** Called when the user drills down on a node with a resolved slug (click, or Enter while focused). The caller decides whether that slug maps to another diagram. */
   onNavigate?: ((diagramSlug: string) => void) | undefined;
+  /**
+   * The `nodeId` of the persistently-selected node, or `null`/omitted for
+   * none. Purely presentational here (renders the accent selection ring) —
+   * the caller (typically `C4Explorer`, driving its detail rail) owns the
+   * selection state; this component never selects on its own initiative.
+   */
+  selectedNodeId?: string | null | undefined;
+  /**
+   * Called when the user activates a node (click, or Enter while focused) —
+   * with that node — or clicks the canvas background (with `null`, to
+   * clear). Independent of `onNavigate`: a consumer that wants "click drills
+   * down immediately" keeps using `onNavigate` alone; a consumer that wants
+   * "click selects, something else (e.g. a detail rail's own button)
+   * decides whether/when to drill" uses `onSelect` instead, or both at once
+   * if it wants both effects from the same click.
+   */
+  onSelect?: ((node: PositionedNode | null) => void) | undefined;
   /** Elements keyed by `elementKey(kind, slug)`, for the hover tooltip's Links section. Omit to render tooltips without a Links row. */
   elementsByKindAndSlug?: ReadonlyMap<string, LoadedElement> | undefined;
   /** Layout flow direction — must match whatever direction produced `diagram`, so a dragged node's recomputed edge routes agree with the rest. Defaults to `'LR'`. */
@@ -68,6 +87,8 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     spec,
     host,
     onNavigate,
+    selectedNodeId = null,
+    onSelect,
     elementsByKindAndSlug,
     direction = 'LR',
     theme,
@@ -104,9 +125,16 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     originY: number;
     moved: boolean;
   } | null>(null);
-  const panRef = useRef<{ startClientX: number; startClientY: number; camera: Camera } | null>(
-    null,
-  );
+  const panRef = useRef<{
+    startClientX: number;
+    startClientY: number;
+    camera: Camera;
+    // Same drag-vs-click distinction as `dragRef.moved` below, for the
+    // background instead of a node: a pointerup with no meaningful movement
+    // since pointerdown is a click on empty canvas, which clears the
+    // selection instead of being (falsely) treated as a completed pan.
+    moved: boolean;
+  } | null>(null);
 
   function pixelsToViewboxScale(): { sx: number; sy: number } {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -127,6 +155,7 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
   }
 
   function activate(node: PositionedNode): void {
+    onSelect?.(node);
     if (node.slug !== null) onNavigate?.(node.slug);
   }
 
@@ -153,8 +182,15 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
   }
 
   function onNodePointerDown(event: PointerEvent<SVGGElement>, node: PositionedNode): void {
-    if (!editable) return;
+    // Stop propagation unconditionally — a node's own pointerdown/up (below)
+    // must never fall through to the background pan/select-clear handlers,
+    // whether or not `editable` grants drag-to-pin. Previously this only
+    // stopped propagation on the editable path, so a read-only click would
+    // bubble to `onBackgroundPointerDown`/`onBackgroundPointerUp` — harmless
+    // before there was background behaviour to trigger, but exactly the kind
+    // of node-click-also-clears-selection bug `onSelect` would otherwise hit.
     event.stopPropagation();
+    if (!editable) return;
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
@@ -212,10 +248,13 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
   }
 
   function onNodePointerUp(event: PointerEvent<SVGGElement>, node: PositionedNode): void {
+    // See onNodePointerDown: stop propagation unconditionally, before the
+    // early return below, so a read-only (non-editable) click's pointerup
+    // never reaches the background handler either.
+    event.stopPropagation();
     const drag = dragRef.current;
     dragRef.current = null;
     if (!drag) return;
-    event.stopPropagation();
     if (!drag.moved) {
       activate(node);
       return;
@@ -230,7 +269,12 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     } catch {
       // See onNodePointerDown.
     }
-    panRef.current = { startClientX: event.clientX, startClientY: event.clientY, camera };
+    panRef.current = {
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      camera,
+      moved: false,
+    };
   }
 
   function onBackgroundPointerMove(event: PointerEvent<SVGSVGElement>): void {
@@ -239,11 +283,20 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     const { sx, sy } = pixelsToViewboxScale();
     const dx = (event.clientX - pan.startClientX) * sx;
     const dy = (event.clientY - pan.startClientY) * sy;
+    if (
+      Math.abs(event.clientX - pan.startClientX) + Math.abs(event.clientY - pan.startClientY) >
+      DRAG_THRESHOLD
+    ) {
+      pan.moved = true;
+    }
     setCamera(panBy(pan.camera, dx, dy));
   }
 
+  /** A background pointerup that never moved (a plain click on empty canvas) clears the selection; a completed pan leaves it alone. */
   function onBackgroundPointerUp(): void {
+    const pan = panRef.current;
     panRef.current = null;
+    if (pan && !pan.moved) onSelect?.(null);
   }
 
   function onWheel(event: WheelEvent<SVGSVGElement>): void {
@@ -292,6 +345,13 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
             1 / ZOOM_FACTOR,
           ),
         );
+        break;
+      case 'Escape':
+        // Clears the selection when focus is on the canvas itself. A
+        // consumer whose selected-node UI lives OUTSIDE this component (e.g.
+        // `C4Explorer`'s detail rail) still needs its own Escape handler for
+        // when focus is over there instead — this only covers the canvas.
+        onSelect?.(null);
         break;
       default:
         break;
@@ -397,11 +457,25 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                 const Icon = iconFor(style.icon);
                 const isHovered = hoveredId === node.nodeId;
                 const isFocused = focusedId === node.nodeId;
+                const isSelected = selectedNodeId !== null && selectedNodeId === node.nodeId;
+                // "Drillable" (an `onNavigate` target) vs "interactive" (worth a
+                // pointer cursor / non-disabled a11y state) diverge now that a
+                // node can also be SELECTED regardless of whether it resolves to
+                // another diagram: any node is interactive when the consumer
+                // wants selection (`onSelect`), even one `onNavigate` would never
+                // fire for.
                 const drillable = node.slug !== null;
+                const interactive = drillable || onSelect !== undefined;
                 const nodeClasses = ['c4-node'];
                 if (isHovered) nodeClasses.push('c4-node-hover');
                 if (isFocused) nodeClasses.push('c4-node-focus');
+                if (isSelected) nodeClasses.push('c4-node-selected');
                 const ringRadius = (shape.kind === 'rect' ? shape.rx : BOX_CORNER_RADIUS) + 3;
+                // The persistent selection ring sits further outside the node
+                // than the hover/focus ring (offset 5 vs 3) so a selected AND
+                // hovered node shows both, concentric, without overlapping.
+                const selectedRingRadius =
+                  (shape.kind === 'rect' ? shape.rx : BOX_CORNER_RADIUS) + 5;
                 return (
                   <g
                     key={node.nodeId}
@@ -409,7 +483,7 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                     role="button"
                     tabIndex={0}
                     aria-label={`${node.kind ?? 'element'}: ${node.title}`}
-                    aria-disabled={!drillable}
+                    aria-disabled={!interactive}
                     // The Enterprise `.c4-el` pattern: the resolved accent rides in
                     // as a custom property; surface/border/eyebrow derive from it in
                     // styles.css's `.c4-node` color-mix layer.
@@ -521,6 +595,35 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                         rx={ringRadius}
                         ry={ringRadius}
                       />
+                    )}
+                    {/* The persistent selection ring — stays on the node until it's
+                        deselected (background click / Escape / a diagram switch),
+                        unlike the hover/focus ring above which only shows while that
+                        transient state holds. Two concentric strokes approximate the
+                        design's CSS `border` + soft `box-shadow` halo with plain SVG
+                        strokes: an accent-solid inner ring and a wider, softer outer
+                        one, rather than reaching for absolutely-positioned divs. */}
+                    {isSelected && (
+                      <>
+                        <rect
+                          className="c4-node-ring-selected-outer"
+                          x={node.x - 8}
+                          y={node.y - 8}
+                          width={node.width + 16}
+                          height={node.height + 16}
+                          rx={selectedRingRadius + 3}
+                          ry={selectedRingRadius + 3}
+                        />
+                        <rect
+                          className="c4-node-ring-selected-inner"
+                          x={node.x - 5}
+                          y={node.y - 5}
+                          width={node.width + 10}
+                          height={node.height + 10}
+                          rx={selectedRingRadius}
+                          ry={selectedRingRadius}
+                        />
+                      </>
                     )}
                   </g>
                 );

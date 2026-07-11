@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadSyntheticModel } from './synthetic-model.js';
+import { loadAmbiguousLevelModel, loadSyntheticModel } from './synthetic-model.js';
 
 describe('loadSyntheticModel', () => {
   it('loads with no diagnostics', async () => {
@@ -28,5 +28,21 @@ describe('loadSyntheticModel', () => {
     const container = model.diagrams.find((d) => d.slug === 'ledger');
     const billingNode = container?.lensViews?.logical.nodes.find((n) => n.kind === 'domain');
     expect(billingNode?.slug).toBe('billing');
+  });
+});
+
+describe('loadAmbiguousLevelModel', () => {
+  it('loads with no diagnostics', async () => {
+    const model = await loadAmbiguousLevelModel();
+    expect(model.diagnostics).toEqual([]);
+  });
+
+  it('has one c4-context diagram and TWO c4-container diagrams (the ambiguous case)', async () => {
+    const model = await loadAmbiguousLevelModel();
+    const byType = new Map<string, number>();
+    for (const d of model.diagrams) byType.set(d.type, (byType.get(d.type) ?? 0) + 1);
+    expect(byType.get('c4-context')).toBe(1);
+    expect(byType.get('c4-container')).toBe(2);
+    expect(byType.get('c4-component')).toBeUndefined();
   });
 });

@@ -26,20 +26,35 @@ function darkBlock(): string {
   return stylesCss.slice(start, end);
 }
 
+/**
+ * Strips ALL whitespace before comparing. Prettier is free to wrap a long
+ * `color-mix(...)` argument list onto multiple lines (it did, for the
+ * surface derivation below, once the file grew past its printWidth) — these
+ * assertions care about which tokens the formula references, not which
+ * lines `pnpm format` happens to put them on.
+ */
+function collapse(text: string): string {
+  return text.replace(/\s+/g, '');
+}
+
 describe('styles.css .c4-node derivation references the shared @workspec/design tokens', () => {
   it('surface, eyebrow, ink-dim, and border read --el-tint-* (already theme-scoped by the token)', () => {
-    const css = lightBlock();
+    const css = collapse(lightBlock());
     expect(css).toContain(
-      'color-mix(in oklab, var(--c4-el-accent) var(--el-tint-surface), var(--bg-elevated))',
+      collapse(
+        'color-mix(in oklab, var(--c4-el-accent) var(--el-tint-surface), var(--bg-elevated))',
+      ),
     );
     expect(css).toContain(
-      'color-mix(in oklab, var(--c4-el-accent) var(--el-tint-eyebrow), var(--ink))',
+      collapse('color-mix(in oklab, var(--c4-el-accent) var(--el-tint-eyebrow), var(--ink))'),
     );
-    expect(css).toContain('color-mix(in oklab, var(--ink) var(--el-tint-ink-dim), transparent)');
     expect(css).toContain(
-      'color-mix(in oklab, var(--c4-el-accent) var(--el-tint-border), transparent)',
+      collapse('color-mix(in oklab, var(--ink) var(--el-tint-ink-dim), transparent)'),
     );
-    expect(css).toContain('--c4-el-accent: var(--c4-el-accent-raw)');
+    expect(css).toContain(
+      collapse('color-mix(in oklab, var(--c4-el-accent) var(--el-tint-border), transparent)'),
+    );
+    expect(css).toContain(collapse('--c4-el-accent: var(--c4-el-accent-raw)'));
   });
 
   it('dark theme overrides only the accent lift — surface/border/eyebrow/ink-dim adapt via the token itself, not a second rule', () => {

@@ -5,10 +5,10 @@
 // every shape (box/cylinder/pill), an external-system (dashed variant), all
 // four built-in connection categories, and a three-level drill-down chain
 // (context → container → component) via the slug-matches-a-diagram-slug
-// convention `C4Explorer.handleNavigate` implements — `__system__`'s
-// resolved slug is the system element's own slug ("ledger"), which is also
-// the c4-container diagram's slug; the "billing" domain's slug is also the
-// c4-component diagram's slug.
+// convention `C4Explorer`'s detail rail implements with its "Open … view"
+// drill button — `__system__`'s resolved slug is the system element's own
+// slug ("ledger"), which is also the c4-container diagram's slug; the
+// "billing" domain's slug is also the c4-component diagram's slug.
 
 import { createMemorySource, loadC4Model } from '@workspec/c4-model';
 import type { C4Model } from '@workspec/c4-model';
@@ -129,4 +129,52 @@ edges:
 /** Loads the synthetic representative model through the real `@workspec/c4-model` pipeline. */
 export async function loadSyntheticModel(): Promise<C4Model> {
   return loadC4Model(createMemorySource(TREE));
+}
+
+// A second, deliberately-ambiguous tree: ONE `c4-context` diagram plus TWO
+// `c4-container` diagrams (and no `c4-component` diagram at all) — exercises
+// `C4Explorer`'s level-tab derivation's fallback branch (a canonical type
+// with more than one diagram can't be uniquely numbered, so BOTH container
+// diagrams fall back to their own titles instead of either claiming
+// "2 · Container"), alongside the ordinary case `loadSyntheticModel` covers
+// (exactly one diagram per canonical type).
+const AMBIGUOUS_TREE: Record<string, string> = {
+  '.workspec/actors/user.yaml': `
+title: User
+description: A person who uses the system.
+`,
+  '.workspec/containers/api.yaml': `
+type: container
+title: API
+description: The backend API.
+`,
+  '.workspec/diagrams/context.yaml': `
+title: System Context
+type: c4-context
+description: The lone c4-context diagram — gets the numbered "1 · Context" tab.
+nodes:
+  - slug: user
+edges: []
+`,
+  '.workspec/diagrams/container-a.yaml': `
+title: Container View A
+type: c4-container
+description: First of two c4-container diagrams — ambiguous, falls back to its own title.
+nodes:
+  - container: api
+edges: []
+`,
+  '.workspec/diagrams/container-b.yaml': `
+title: Container View B
+type: c4-container
+description: Second of two c4-container diagrams — same fallback.
+nodes:
+  - container: api
+edges: []
+`,
+};
+
+/** Loads {@link AMBIGUOUS_TREE} through the real `@workspec/c4-model` pipeline. */
+export async function loadAmbiguousLevelModel(): Promise<C4Model> {
+  return loadC4Model(createMemorySource(AMBIGUOUS_TREE));
 }
