@@ -52,7 +52,11 @@
 .c4-node {
   cursor: pointer;
   --c4-el-accent: var(--c4-el-accent-raw);
-  --c4-el-surface: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-surface), var(--bg-elevated));
+  --c4-el-surface: color-mix(
+    in oklab,
+    var(--c4-el-accent) var(--el-tint-surface),
+    var(--bg-elevated)
+  );
   --c4-el-eyebrow: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-eyebrow), var(--ink));
   --c4-el-ink-dim: color-mix(in oklab, var(--ink) var(--el-tint-ink-dim), transparent);
   --c4-el-border: color-mix(in oklab, var(--c4-el-accent) var(--el-tint-border), transparent);
@@ -86,6 +90,24 @@
 .c4-node-focus .c4-node-ring {
   stroke: var(--accent);
   stroke-dasharray: none;
+}
+
+/* The persistent selection ring (`selectedNodeId` on `C4Diagram`) — unlike
+   the hover/focus ring above, this stays until the node is explicitly
+   deselected. Two concentric strokes stand in for the design's CSS
+   `border` + soft `box-shadow` halo (an outer, wider, translucent stroke
+   plus an inner, solid-accent one) since SVG has no spread-shadow
+   primitive — see the two `<rect>`s this pairs with in c4-diagram.tsx. */
+.c4-node-selected .c4-node-ring-selected-inner {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.c4-node-selected .c4-node-ring-selected-outer {
+  fill: none;
+  stroke: var(--accent-soft);
+  stroke-width: 3;
 }
 
 .c4-node-title {
@@ -225,57 +247,88 @@
   text-transform: capitalize;
 }
 
+/* ── C4Explorer — workbench layout ───────────────────────────────────────────
+   A header row (segmented level tabs + crumb + hint) over a body row (canvas
+   pane + detail rail). Replaces the earlier left tree-nav sidebar (Site
+   Review UX pass follow-up: the S4 workbench-layout upgrade) — every diagram
+   is still reachable, just as a segmented tab instead of a list item, and
+   selecting an element now has somewhere to show up (the rail) instead of
+   only a hover tooltip. */
 .c4-explorer {
   display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 400px;
   gap: var(--s-4);
 }
 
-.c4-explorer-tree {
-  flex: 0 0 220px;
-  overflow-y: auto;
-  border-right: 1px solid var(--line);
-  padding-right: var(--s-3);
+.c4-explorer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex-wrap: wrap;
 }
 
-.c4-explorer-tree ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+/* The segmented level-tab group — a toggle button group (role="group" +
+   aria-pressed per button), NOT an ARIA tablist: these switch which diagram
+   is loaded into the SAME canvas/rail below, they don't reveal separate
+   tabpanels. Mirrors apps/site's `.demo-examples` toggle-group convention. */
+.c4-level-tabs {
+  display: inline-flex;
   gap: var(--s-1);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  padding: var(--s-1);
 }
 
-.c4-tree-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  padding: var(--s-2) var(--s-3);
+.c4-level-tab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--s-1) var(--s-3);
   border-radius: var(--r-3);
-  color: var(--ink-soft);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-fade);
   cursor: pointer;
 }
 
-.c4-tree-item:hover {
-  background: var(--bg-soft);
+.c4-level-tab:hover {
+  color: var(--ink-soft);
 }
 
-.c4-tree-item-active {
-  background: var(--accent-soft);
+.c4-level-tab-active {
+  border-color: var(--line-2);
+  background: var(--bg-elevated);
   color: var(--ink);
 }
 
-.c4-tree-item-title {
-  font-size: 13px;
-  font-weight: 500;
+.c4-crumb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
 }
 
-.c4-tree-item-type {
-  font-size: 10px;
+.c4-explorer-spacer {
+  flex: 1 1 auto;
+}
+
+.c4-explorer-hint {
+  font-family: var(--mono);
+  font-size: 11px;
   color: var(--ink-fade);
+}
+
+/* Body: the canvas pane and the detail rail, side by side. */
+.c4-explorer-body {
+  display: flex;
+  gap: var(--s-5);
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .c4-explorer-pane {
@@ -284,8 +337,132 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-5);
 }
 
 .c4-explorer-pane .c4-diagram {
   flex: 1 1 auto;
+}
+
+/* ── Detail rail — click-to-select's destination ─────────────────────────── */
+.c4-detail-rail {
+  width: 300px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-5);
+  background: var(--bg-elevated);
+  padding: var(--s-6);
+  align-self: stretch;
+  overflow-y: auto;
+}
+
+.c4-detail-empty {
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-5);
+  padding: var(--s-8) var(--s-5);
+  text-align: center;
+}
+
+.c4-detail-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+
+.c4-detail-empty-copy {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  margin: var(--s-3) 0 0;
+}
+
+/* The selected element's own accent, staged through the SAME raw-custom-
+   property + dark-mode-lift pattern `.c4-node` uses (see the C4 style-spec
+   token layer above), so the rail's kind eyebrow always matches the
+   element's on-canvas identity colour exactly — just softened (75% instead
+   of the canvas's 100%) for a larger, longer-lived label. */
+.c4-rail-selected {
+  --c4-el-accent: var(--c4-el-accent-raw);
+}
+
+.c4-root[data-theme='dark'] .c4-rail-selected {
+  --c4-el-accent: color-mix(in oklab, var(--c4-el-accent-raw), white 22%);
+}
+
+.c4-rail-kind {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--c4-el-accent) 75%, var(--ink));
+}
+
+.c4-rail-name {
+  font-size: 19px;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  margin-top: var(--s-2);
+}
+
+.c4-rail-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: var(--s-3) 0 0;
+}
+
+.c4-rail-tech {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+
+.c4-rail-tech-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+  flex: 0 0 auto;
+}
+
+.c4-rail-tech-value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* The rail reuses `.c4-links`/`.c4-lk*` (links.tsx's `LinksBlock`) verbatim
+   for its links section — same "Traces to" vocabulary and inert-vs-active
+   rendering rule as the hover tooltip, just with more room to breathe. */
+.c4-detail-rail .c4-links {
+  margin-top: var(--s-5);
+}
+
+.c4-rail-drill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 var(--s-4);
+  height: 36px;
+  border-radius: var(--r-4);
+  border: 1px solid var(--accent);
+  color: var(--on-accent);
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.c4-rail-drill:hover {
+  filter: brightness(1.08);
 }

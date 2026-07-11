@@ -44,12 +44,14 @@ test.describe('MF smoke — host consumes the @workspec/decision-ui remote', () 
     const hostVersion = await probe.getAttribute('data-host-react-version');
     expect(remoteVersion).toBe(hostVersion);
 
-    // ── 3. C4Diagram (single diagram) and C4Explorer (tree nav + canvas) render
-    //       the in-memory C4 model's elements. ─────────────────────────────────
+    // ── 3. C4Diagram (single diagram) and C4Explorer (level tabs + canvas)
+    //       render the in-memory C4 model's elements. The explorer's control is
+    //       the workbench level tab ("1 · Context"), not the old title-named
+    //       tree-nav button (c4-ui round-3 redesign). ──────────────────────────
     await expect(page.locator('#c4-diagram-mount').getByText('Architect')).toBeVisible();
     await expect(page.locator('#c4-diagram-mount').getByText('Payment Gateway')).toBeVisible();
     await expect(
-      page.locator('#c4-explorer-mount').getByRole('button', { name: /System Context/i }),
+      page.locator('#c4-explorer-mount').getByRole('button', { name: '1 · Context' }),
     ).toBeVisible();
     await expect(page.locator('#c4-explorer-mount').getByText('Architect')).toBeVisible();
 

@@ -12,7 +12,9 @@ export function ThemeToggle(): ReactElement {
     <span className="theme-toggle" role="group" aria-label="Theme">
       <button
         type="button"
-        className={theme === 'dark' ? 'theme-toggle-btn theme-toggle-btn-active' : 'theme-toggle-btn'}
+        className={
+          theme === 'dark' ? 'theme-toggle-btn theme-toggle-btn-active' : 'theme-toggle-btn'
+        }
         aria-pressed={theme === 'dark'}
         onClick={() => setTheme('dark')}
       >

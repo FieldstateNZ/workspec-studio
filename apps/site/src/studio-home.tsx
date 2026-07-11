@@ -1,11 +1,17 @@
-// The Studio-level landing page (`/`). One product, one site: WorkSpec Studio
-// modules as paths. Composed entirely from the existing marketing chrome
-// (`.site` / `.nav` / `.hero` / `.feature` styles) — no new visual language,
-// just a family pitch and cards routing into each module. Copy tracks the
-// repository README and the Decisions module's own positioning so none of the
-// three ever drift apart.
-import type { ReactElement } from 'react';
-import { Button, Lbl, Status } from '@workspec/design/components';
+// The Studio-level landing page (`/`) — Studio redesign, round 3, slice S2.
+// Reproduces the Claude Design mockup's "Home" screen (WorkSpec Studio.dc.html,
+// lines 74–181) structure and values verbatim, below the shared shell nav (S1).
+// The mockup's 1280px column is wider than the marketing `.site` shell the
+// /decisions and /c4 pitch pages still use, so this page gets its own `.home`
+// class rather than reusing `.site` — see styles.css's HOME section.
+//
+// Copy is the mockup's approved design voice EXCEPT where it would misstate a
+// fact about this repo: the mockup's recurring "one spec.yaml" shorthand is
+// replaced with the real substrate (a `.workspec/` tree of artifacts, matching
+// decisions.tsx / c4.tsx's own positioning copy), and its "MIT" footer becomes
+// this repo's actual Apache-2.0 license.
+import type { CSSProperties, ReactElement } from 'react';
+import { Status } from '@workspec/design/components';
 import type { StatusTone } from '@workspec/design/components';
 
 import { Link } from './router.js';
@@ -15,92 +21,213 @@ const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio';
 
 interface Module {
   readonly key: string;
+  readonly eyebrow: string;
   readonly name: string;
   readonly status: 'live' | 'in progress';
   readonly href: string;
   readonly blurb: string;
   readonly cta: string;
+  /** `--module-accent`: the card's accent-bar / rail color. */
+  readonly accent: string;
+  /** `--module-eyebrow`: the eyebrow text color (per mockup, only the C4
+   *  card's eyebrow gets the tinted-toward-ink treatment — Decisions' reads
+   *  the accent straight). */
+  readonly eyebrowColor: string;
 }
 
 // The same Status pill decision-ui uses for a decision's lifecycle (Site
 // Review UX pass, finding 08 — "two status languages") — a bare mono label
-// here, a dot pill there, for what's conceptually the same idiom.
+// there, this dot-pill here, for what's conceptually the same idiom.
 const STATUS_TONE: Record<Module['status'], StatusTone> = {
   live: 'accent',
   'in progress': 'warn',
 };
 
+// Both cards carry the mockup's "live" pill: the whole @workspec/c4-* family
+// (including the c4-studio CLI the terminal card demos) has shipped to npm at
+// 0.1.0-alpha — verified against the registry during round-3 review, which
+// caught the earlier "not published yet" premise as stale. The 'in progress'
+// tone stays in the union for whatever module ships next.
 const MODULES: readonly Module[] = [
   {
     key: 'decisions',
+    eyebrow: 'module · decisions',
     name: 'Decisions',
     status: 'live',
     href: '/decisions',
     blurb:
-      'Cost architecture decisions across dev / test / prod, weigh them on the criteria that matter, and record the outcome as an ADR — all as reviewable *.decision.yaml files that version with git.',
-    cta: 'Open Decisions',
+      "Weigh options with a live cost model and optimisation levers, score the criteria that aren't cost, then write the ADR.",
+    cta: 'Open the workbench',
+    accent: 'var(--accent)',
+    eyebrowColor: 'var(--accent)',
   },
   {
     key: 'c4',
-    name: 'C4 Diagrams',
-    status: 'in progress',
-    href: '/c4/demo',
+    eyebrow: 'module · c4',
+    name: 'C4 Model',
+    status: 'live',
+    href: '/c4',
     blurb:
-      'Browse, validate, and render C4 architecture trees — actors, systems, containers, components — straight from the .workspec/ files already in your repo.',
-    cta: 'Try the demo',
+      "Context → container → component, rendered from your repo's .workspec/ tree. Every element cross-links to the decisions that shaped it.",
+    cta: 'Open the explorer',
+    accent: 'var(--el-system)',
+    // 70% to ink is the mockup's static blend, deliberately NOT
+    // var(--el-tint-eyebrow): that token's dark value (100%) is paired with
+    // c4-ui's 22% accent-lift step, which these static cards don't apply.
+    eyebrowColor: 'color-mix(in oklab, var(--el-system) 70%, var(--ink))',
   },
+];
+
+interface GrammarSample {
+  readonly key: string;
+  readonly kind: string;
+  readonly name: string;
+  /** The token var() this sample's accent, surface tint, and border tint
+   *  all derive from — one accent, one derivation rule (see the closing
+   *  caption below). */
+  readonly accentVar: string;
+}
+
+const GRAMMAR_SAMPLES: readonly GrammarSample[] = [
+  { key: 'feature', kind: 'feature', name: 'invoice-export', accentVar: '--type-feature' },
+  { key: 'persona', kind: 'persona', name: 'ops-engineer', accentVar: '--type-persona' },
+  { key: 'scenario', kind: 'scenario', name: 'SLA-99.9', accentVar: '--type-scenario' },
+  { key: 'actor', kind: 'actor', name: 'Author', accentVar: '--el-actor' },
+  { key: 'system', kind: 'system', name: 'WorkSpec Studio', accentVar: '--el-system' },
 ];
 
 export function StudioHome(): ReactElement {
   return (
-    <div className="site">
+    // .home-shell is the mockup's sticky-footer structure: a min-height:100vh
+    // flex column so the footer's margin-top:auto pins it to the viewport
+    // bottom even when the content runs short.
+    <div className="home-shell">
       <SiteNav repoUrl={REPO_URL} />
-
-      <main>
-        <section className="hero">
-          <Lbl>Free · standalone · git-native</Lbl>
-          <h1>One workbench over the WorkSpec artifacts already living in your repo.</h1>
-          <p className="lede">
-            WorkSpec Studio is the open-source home for every free WorkSpec module — costed
-            decisions, C4 architecture diagrams, and whatever ships next. Every module reads and
-            writes plain YAML artifacts that version with git: no database, no lock-in. WorkSpec
-            Enterprise consumes the exact same packages published from here, so nothing here is a
-            second-class trial of a paid product.
-          </p>
+      <main className="home">
+        <section className="home-hero" aria-label="WorkSpec Studio">
+          <div className="home-hero-grid">
+            <div>
+              <div className="home-eyebrow">
+                <span className="home-eyebrow-accent">workspec-studio</span>
+                <span className="home-eyebrow-sep">/</span>
+                <span>architecture workbench</span>
+              </div>
+              <h1 className="home-title">One typed graph. Two lenses.</h1>
+              <p className="home-lede">
+                A workbench over the artifacts already in your repo. Author C4 diagrams and
+                architecture decisions as YAML; the studio renders them as one product — every
+                option, node, link and status is a typed element with one look, on either theme.
+              </p>
+              <div className="home-cta-row">
+                <Link href="/decisions" className="home-cta home-cta-primary">
+                  Open the studio <span aria-hidden="true">→</span>
+                </Link>
+                <Link href="/c4" className="home-cta home-cta-outline">
+                  Explore the C4 model
+                </Link>
+              </div>
+            </div>
+            <div
+              className="home-terminal"
+              role="group"
+              aria-label="Example: starting the C4 module locally"
+            >
+              <div className="home-terminal-dots" aria-hidden="true">
+                <span className="home-terminal-dot" />
+                <span className="home-terminal-dot" />
+                <span className="home-terminal-dot" />
+              </div>
+              <div className="home-terminal-line home-terminal-cmd">
+                <code>$ npx @workspec/c4-studio serve</code>
+              </div>
+              <div className="home-terminal-line home-terminal-soft">
+                watching .workspec/ — 42 elements · 4 decisions · 3 diagrams
+              </div>
+              <div className="home-terminal-line home-terminal-soft">
+                studio → <span className="home-terminal-url">http://localhost:4242</span>
+              </div>
+              <div className="home-terminal-line home-terminal-muted">
+                no account needed — your working tree is the login
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section className="modules" aria-label="WorkSpec Studio modules">
-          {MODULES.map((mod) => (
-            <article key={mod.key} className="feature module-card">
-              <Status tone={STATUS_TONE[mod.status]} className="module-status">
-                {mod.status}
-              </Status>
-              <h2>{mod.name}</h2>
-              <p>{mod.blurb}</p>
-              <Button asChild>
-                <Link href={mod.href}>{mod.cta}</Link>
-              </Button>
-            </article>
-          ))}
+        <section className="home-modules" aria-label="WorkSpec Studio modules">
+          <div className="home-strip-head">
+            <span className="home-strip-label">Modules</span>
+            <span className="home-strip-rule" aria-hidden="true" />
+            <span className="home-strip-note">two lenses over one .workspec/ tree</span>
+          </div>
+          <div className="home-module-grid">
+            {MODULES.map((mod) => (
+              <article
+                key={mod.key}
+                className="home-module-card"
+                style={
+                  {
+                    '--module-accent': mod.accent,
+                    '--module-eyebrow': mod.eyebrowColor,
+                  } as CSSProperties
+                }
+              >
+                <div className="home-module-body">
+                  <div className="home-module-head">
+                    <span className="home-module-eyebrow">{mod.eyebrow}</span>
+                    <Status tone={STATUS_TONE[mod.status]} className="home-module-status">
+                      {mod.status}
+                    </Status>
+                  </div>
+                  <h2 className="home-module-title">{mod.name}</h2>
+                  <p className="home-module-blurb">{mod.blurb}</p>
+                  <Link href={mod.href} className="home-module-cta">
+                    {mod.cta} <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
-        <section className="feature">
-          <h2>Open core</h2>
-          <p>
-            Every package in this monorepo is Enterprise-grade by constitution — WorkSpec Enterprise
-            is a future consumer of this code, not a separate implementation. The artifact schemas
-            are shared, so files you author here come alive with richer context inside Enterprise’s
-            graph, with no forks and one source of truth.
+        <section className="home-grammar" aria-label="One element grammar">
+          <div className="home-strip-head">
+            <span className="home-strip-label">One element grammar</span>
+            <span className="home-strip-rule" aria-hidden="true" />
+            <span className="home-strip-note">
+              accent → tinted surface → tinted border → eyebrow
+            </span>
+          </div>
+          <ul className="home-grammar-grid">
+            {GRAMMAR_SAMPLES.map((sample) => (
+              <li
+                key={sample.key}
+                className="home-grammar-card"
+                style={{ '--grammar-accent': `var(${sample.accentVar})` } as CSSProperties}
+              >
+                <div className="home-grammar-body">
+                  <div className="home-grammar-eyebrow">{sample.kind}</div>
+                  <div className="home-grammar-name">{sample.name}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="home-grammar-caption">
+            A decision option and a C4 node are visibly siblings — one accent token, one derivation
+            rule, in light or dark.
           </p>
         </section>
       </main>
 
-      <footer className="foot">
-        <span>Apache-2.0 © 2026 Fieldstate</span>
-        <span className="foot-links">
-          <a href={REPO_URL}>GitHub</a>
+      <footer className="home-foot">
+        <div className="home-foot-inner">
+          <span>© 2026 workspec</span>
+          <span className="home-foot-sep" aria-hidden="true">
+            ·
+          </span>
+          <span>Apache-2.0</span>
+          <span className="home-foot-spacer" />
           <a href="https://schema.workspec.io/">Schema registry</a>
-        </span>
+        </div>
       </footer>
     </div>
   );

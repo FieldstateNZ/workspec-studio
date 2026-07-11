@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { layoutDiagram } from '@workspec/c4-layout';
-import type { PositionedDiagram } from '@workspec/c4-layout';
+import type { PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
 import type { C4Model, ResolvedDiagram } from '@workspec/c4-model';
 import { THEME_TOKENS } from '@workspec/design';
 import { C4Diagram } from './c4-diagram.js';
 import { elementKey } from './element-key.js';
 import type { C4StudioHost } from './host.js';
+import { firePointer } from './test-helpers/fire-pointer.js';
 import { loadSyntheticModel } from './test-helpers/synthetic-model.js';
 
 async function loadContext(): Promise<{
@@ -29,25 +30,38 @@ function readOnlyHost(): C4StudioHost {
   return { capabilities: { editLayout: false } };
 }
 
-/**
- * jsdom has no native `PointerEvent` constructor, so
- * `@testing-library/dom`'s `fireEvent.pointerDown`/etc. (which resolve their
- * event constructor via `window.PointerEvent || window.Event`) silently fall
- * back to a plain `Event` — and a plain `Event`'s constructor ignores
- * `clientX`/`clientY` init properties entirely (they're only defined on
- * `MouseEvent`/`PointerEvent`). This dispatches a plain `Event` with
- * `clientX`/`clientY`/`pointerId` set as OWN properties beforehand instead,
- * which React's event system reads off the native event the same way
- * regardless of its real constructor.
- */
-function firePointer(
-  element: Element,
-  type: 'pointerdown' | 'pointermove' | 'pointerup',
-  props: { clientX: number; clientY: number; pointerId?: number },
-): void {
-  const event = new Event(type, { bubbles: true, cancelable: true });
-  Object.assign(event, { pointerId: 1, ...props });
-  fireEvent(element, event);
+/** A one-node diagram whose sole node never resolved to an element (`slug: null`, `dangling: true`) — shared by the "no resolved slug" onNavigate/onSelect tests below. */
+function unresolvedNodeFixture(): { diagram: PositionedDiagram; resolved: ResolvedDiagram } {
+  const node: PositionedNode = {
+    nodeId: 'x',
+    slug: null,
+    kind: 'container',
+    title: 'Unresolved',
+    description: null,
+    technology: null,
+    tags: [],
+    position: null,
+    injected: false,
+    dangling: true,
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 110,
+    pinned: false,
+  };
+  const diagram: PositionedDiagram = { nodes: [node], edges: [] };
+  const resolved: ResolvedDiagram = {
+    slug: 'x-diagram',
+    path: '.workspec/diagrams/x-diagram.yaml',
+    title: 'X',
+    type: 'c4-context',
+    description: null,
+    raw: { title: 'X', type: 'c4-context', nodes: [], edges: [] },
+    view: { nodes: diagram.nodes, edges: [] },
+    lensViews: null,
+    layout: null,
+  };
+  return { diagram, resolved };
 }
 
 describe('C4Diagram — representative fixture render', () => {
@@ -246,42 +260,162 @@ describe('C4Diagram — drill-down', () => {
 
   it('does not call onNavigate for a node with no resolved slug', () => {
     const onNavigate = vi.fn();
-    const diagram: PositionedDiagram = {
-      nodes: [
-        {
-          nodeId: 'x',
-          slug: null,
-          kind: 'container',
-          title: 'Unresolved',
-          description: null,
-          technology: null,
-          tags: [],
-          position: null,
-          injected: false,
-          dangling: true,
-          x: 0,
-          y: 0,
-          width: 300,
-          height: 110,
-          pinned: false,
-        },
-      ],
-      edges: [],
-    };
-    const resolved: ResolvedDiagram = {
-      slug: 'x-diagram',
-      path: '.workspec/diagrams/x-diagram.yaml',
-      title: 'X',
-      type: 'c4-context',
-      description: null,
-      raw: { title: 'X', type: 'c4-context', nodes: [], edges: [] },
-      view: { nodes: diagram.nodes, edges: [] },
-      lensViews: null,
-      layout: null,
-    };
+    const { diagram, resolved } = unresolvedNodeFixture();
     render(<C4Diagram diagram={diagram} resolved={resolved} onNavigate={onNavigate} />);
     fireEvent.click(screen.getByRole('button', { name: /Unresolved/i }));
     expect(onNavigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('C4Diagram — click-to-select (independent of drill-down)', () => {
+  it('clicking a node calls onSelect with that node — onNavigate need not even be supplied', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'ledger', slug: 'ledger' });
+  });
+
+  it('a click fires BOTH onSelect and onNavigate when both are supplied — two independent effects from one click', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const onNavigate = vi.fn();
+    render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        onSelect={onSelect}
+        onNavigate={onNavigate}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledWith('ledger');
+  });
+
+  it('Enter on a focused node also selects (not just drills)', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
+
+    const node = screen.getByRole('button', { name: /external-system: Payment Gateway/i });
+    node.focus();
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'gateway' });
+  });
+
+  it('a node with no resolved slug is still selectable (interactive, not aria-disabled) when onSelect is supplied, even though onNavigate never fires for it', () => {
+    const onSelect = vi.fn();
+    const { diagram, resolved } = unresolvedNodeFixture();
+    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
+
+    const node = screen.getByRole('button', { name: /Unresolved/i });
+    expect(node).toHaveAttribute('aria-disabled', 'false');
+    fireEvent.click(node);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('a plain click on the canvas background (no drag) calls onSelect(null), clearing the selection', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
+    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
+
+    firePointer(svg, 'pointerdown', { clientX: 50, clientY: 50 });
+    firePointer(svg, 'pointerup', { clientX: 50, clientY: 50 });
+    expect(onSelect).toHaveBeenCalledWith(null);
+  });
+
+  it('a real pan drag on the background does NOT call onSelect(null) — only a click-without-movement clears', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
+    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
+
+    firePointer(svg, 'pointerdown', { clientX: 0, clientY: 0 });
+    firePointer(svg, 'pointermove', { clientX: 200, clientY: 200 });
+    firePointer(svg, 'pointerup', { clientX: 200, clientY: 200 });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('a node click never reaches the background handler (no stray onSelect(null) from the same click)', async () => {
+    // Regression guard for the propagation fix in onNodePointerDown/Up:
+    // clicking a node used to leave its pointerdown/up free to bubble to
+    // the SVG background in the non-editable path (nothing consumed it
+    // before there was background behaviour to trigger) — which would now
+    // sneak in a spurious onSelect(null) around the node's own onSelect(node).
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
+
+    const node = screen.getByRole('button', { name: /system: Ledger/i });
+    firePointer(node, 'pointerdown', { clientX: 10, clientY: 10 });
+    firePointer(node, 'pointerup', { clientX: 10, clientY: 10 });
+    expect(onSelect).not.toHaveBeenCalledWith(null);
+  });
+
+  it('with an EDITABLE host (editLayout + source): a plain click selects, a real drag does not touch the selection', async () => {
+    // The editable path routes clicks through the pointer drag-vs-click
+    // detection (onNodePointerUp) instead of the plain onClick handler —
+    // selection must behave identically there: a no-movement click
+    // activates (selects), a real drag writes layout WITHOUT selecting.
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const host: C4StudioHost = {
+      capabilities: { editLayout: true },
+      source: {
+        listFiles: async () => [],
+        readFile: async () => '',
+        writeFile: async () => undefined,
+        exists: async () => false,
+      },
+    };
+    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} onSelect={onSelect} />);
+    const node = screen.getByRole('button', { name: /system: Ledger/i });
+
+    // A real drag: no selection change at all.
+    firePointer(node, 'pointerdown', { clientX: 0, clientY: 0 });
+    firePointer(node, 'pointermove', { clientX: 200, clientY: 0 });
+    firePointer(node, 'pointerup', { clientX: 200, clientY: 0 });
+    expect(onSelect).not.toHaveBeenCalled();
+
+    // A plain click (no meaningful movement): selects the node.
+    firePointer(node, 'pointerdown', { clientX: 10, clientY: 10 });
+    firePointer(node, 'pointerup', { clientX: 10, clientY: 10 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'ledger' });
+  });
+
+  it('Escape while the canvas container has focus calls onSelect(null)', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
+    const outer = container.querySelector('.c4-diagram') as HTMLElement;
+    fireEvent.keyDown(outer, { key: 'Escape' });
+    expect(onSelect).toHaveBeenCalledWith(null);
+  });
+
+  it('selectedNodeId renders the persistent selection ring on the matching node, and nothing on others', async () => {
+    const { resolved, diagram } = await loadContext();
+    render(<C4Diagram diagram={diagram} resolved={resolved} selectedNodeId="ledger" />);
+
+    const selectedNode = screen.getByRole('button', { name: /system: Ledger/i });
+    expect(selectedNode).toHaveClass('c4-node-selected');
+    expect(selectedNode.querySelector('.c4-node-ring-selected-inner')).not.toBeNull();
+    expect(selectedNode.querySelector('.c4-node-ring-selected-outer')).not.toBeNull();
+
+    const otherNode = screen.getByRole('button', { name: /actor: Architect/i });
+    expect(otherNode).not.toHaveClass('c4-node-selected');
+    expect(otherNode.querySelector('.c4-node-ring-selected-inner')).toBeNull();
   });
 });
 

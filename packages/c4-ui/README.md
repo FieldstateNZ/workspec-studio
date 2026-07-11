@@ -19,7 +19,7 @@ import '@workspec/c4-ui/styles.css';
 
 const model = await loadC4Model(createFsSource('/path/to/repo'));
 
-// The full tree-nav + canvas experience over a whole model:
+// The full workbench (level tabs + canvas + detail rail) over a whole model:
 <C4Explorer model={model} theme="dark" />;
 
 // Or drive a single diagram view directly:
@@ -38,14 +38,40 @@ const positioned = await layoutDiagram({
   shape), orthogonal category-coloured edges with relationship labels. Interactive: hover tooltip
   (title, kind, description, technology, tags, and a Links section when `elementsByKindAndSlug` is
   supplied), click/Enter drill-down (`onNavigate(slug)` — called with the clicked node's own
-  resolved slug; the caller decides whether that slug maps anywhere), wheel/drag pan-zoom, keyboard
-  (arrow keys pan, `+`/`-` zoom, `Enter` drills down a focused node). ARIA roles/labels on every
-  node and edge.
-- **`C4Explorer`** — a left tree nav over every diagram in a `C4Model` plus a `C4Diagram` pane. Owns
-  navigation state and calls `@workspec/c4-layout`'s `layoutDiagram` per selection (race-guarded —
-  an in-flight layout for an abandoned selection never clobbers the current one). Shows a lens
-  toggle (`@workspec/design`'s `LensToggle`) for a `c4-container` diagram's logical/deployment split.
-  Implements drill-down by looking up whether the clicked slug names another diagram in the model.
+  resolved slug; the caller decides whether that slug maps anywhere), click/Enter-to-select
+  (`onSelect(node | null)` — called with the activated node, or with `null` on a plain background
+  click/Escape; renders a persistent accent ring via `selectedNodeId`), wheel/drag pan-zoom, keyboard
+  (arrow keys pan, `+`/`-` zoom, `Enter` drills down AND selects a focused node, `Escape` clears the
+  selection). `onNavigate` and `onSelect` are independent — a host can wire one, the other, or both
+  from the same click; `C4Explorer` (below) wires only `onSelect`, so its clicks never drill down on
+  their own. ARIA roles/labels on every node and edge.
+- **`C4Explorer`** — a workbench over every diagram in a `C4Model`: a header row of segmented C4-level
+  tabs (`role="group"` + `aria-pressed`, a toggle button group, not an ARIA tablist) — one numbered
+  tab per canonical level (`1 · Context` / `2 · Container` / `3 · Component`) when the model has
+  exactly one diagram of that type, falling back to the diagram's own title (appended after the
+  numbered tabs) for an off-scheme diagram type or a second diagram sharing an already-claimed
+  level — plus a mono `diagrams ▸ <slug>` crumb, over a canvas pane and a detail rail (an `aside`
+  labelled "Element details"). Owns navigation state (which diagram, which lens for a
+  `c4-container` diagram, which element is selected) and calls `@workspec/c4-layout`'s
+  `layoutDiagram` per selection (race-guarded — an in-flight layout for an abandoned selection never
+  clobbers the current one). Shows a lens toggle (`@workspec/design`'s `LensToggle`) for a
+  `c4-container` diagram's logical/deployment split.
+
+  Clicking an element populates the rail (kind, name, description, a `Tech` row when the element
+  carries a technology, its links via the SAME `LinksBlock`/`LinkResolver` the hover tooltip uses)
+  instead of navigating; clicking the canvas background, switching diagrams, or pressing `Escape`
+  clears it. Drill-down is a deliberate second step: when the selected element's own slug names
+  another diagram in the model (the model's only drill-down signal — there is no separate "parent
+  diagram"/"scope" field in `@workspec/c4-model` to consult), the rail shows an explicit
+  "Open container/component view →" button; clicking it switches diagrams. An element with no such
+  match shows no drill button.
+
+  > **Breaking DOM change (workbench layout):** the left tree-nav sidebar was replaced by the
+  > segmented level tabs — the `.c4-explorer-tree`/`.c4-tree-item*` classes and the
+  > diagram-title-named nav buttons no longer exist. Anything selecting against that markup
+  > (tests, CSS overrides, automation) must target the level-tab buttons and the detail rail
+  > instead. `C4Explorer`'s props are unchanged.
+
 - **`renderSvg(diagram, options?)`** — a standalone, deterministic SVG string: no React runtime, no
   external stylesheet, every colour resolved to a literal theme-token value (or a `spec.yaml`/
   Enterprise-default accent). Built from the SAME geometry/style modules `C4Diagram` uses
@@ -107,6 +133,8 @@ to the constants so the two renderers cannot drift.
 `pnpm test` (Vitest + jsdom + React Testing Library). Component/fixture tests load a hand-authored,
 representative `.workspec/` tree through the real `@workspec/c4-model` pipeline
 (`createMemorySource` + `loadC4Model`), never a hand-typed lookalike `C4Model` shape — see
-`src/test-helpers/synthetic-model.ts`, which also sets up a three-level drill-down chain
-(context → container → component) via the slug-matches-a-diagram-slug convention
-`C4Explorer.handleNavigate` implements.
+`src/test-helpers/synthetic-model.ts`'s `loadSyntheticModel`, which also sets up a three-level
+drill-down chain (context → container → component) via the slug-matches-a-diagram-slug convention
+`C4Explorer`'s detail rail implements its "Open container/component view" button with, and
+`loadAmbiguousLevelModel`, which covers the level-tab derivation's fallback branch (two diagrams
+sharing one canonical C4 type, so neither can be numbered unambiguously).

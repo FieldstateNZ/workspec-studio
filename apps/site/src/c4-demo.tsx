@@ -21,7 +21,18 @@ import '@workspec/c4-ui/styles.css';
 import { useTheme } from '@workspec/design';
 
 import { loadDemoModel } from './c4-seed.js';
-import { DemoBar } from './demo-bar.js';
+import { WorkbenchBar } from './demo-bar.js';
+import { SiteNav } from './nav.js';
+
+// Same GitHub target C4's own pitch page (c4.tsx) links to — the c4-*
+// packages aren't published, so this points at package source, not npm.
+const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
+
+// The representative example tree's own system title (see
+// `examples-c4/.workspec/system/main-system.yaml`) — the workbench bar's
+// static crumb names it (Studio redesign, round 3), same as Decisions' crumb
+// names the active worked example.
+const DEMO_TREE_NAME = 'Fieldstate Ledger';
 
 const host: C4StudioHost = {
   linkResolver: createInertLinkResolver(),
@@ -56,16 +67,13 @@ export function C4Demo(): ReactElement {
 
   return (
     <div className="demo">
-      <DemoBar
-        backHref="/c4"
-        backText="WorkSpec C4 Diagrams"
-        backAriaLabel="Back to the WorkSpec C4 Diagrams page"
-      />
+      <SiteNav repoUrl={REPO_URL} />
+      <WorkbenchBar crumb={<span className="wb-crumb-value">{DEMO_TREE_NAME}</span>} />
 
       <p className="demo-note" role="note">
         A live <code>C4Explorer</code> running entirely in your browser against a representative
-        example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} — no install, no
-        signup, read-only.{' '}
+        example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} — no install, no signup,
+        read-only.{' '}
         <span className="demo-blurb">
           <code>npx @workspec/c4-studio serve</code> gives you the same explorer with drag-to-pin
           over your own repo.

@@ -51,69 +51,73 @@ const PACKAGES: readonly C4Package[] = [
 
 export function C4(): ReactElement {
   return (
-    <div className="site">
+    <>
       <SiteNav
-        current="C4 Diagrams"
         repoUrl={REPO_URL}
-        extras={<Link href="/c4/demo">Live demo</Link>}
+        extras={
+          <Link className="nav-extra" href="/c4/demo">
+            Live demo
+          </Link>
+        }
       />
+      <div className="site">
+        <main>
+          <section className="hero">
+            <Lbl>Free · standalone · git-native</Lbl>
+            <h1>Browse, validate, and render C4 architecture trees from your repo.</h1>
+            <p className="lede">
+              The C4 module reads the actors, systems, containers, components, and diagrams already
+              described as YAML under your repo’s <code>.workspec/</code> directory, resolves them
+              into one architecture model, and lays diagrams out deterministically — the same
+              artifact family WorkSpec Enterprise renders today, as a free standalone workbench.
+            </p>
+            <div className="cta-row">
+              <Button asChild>
+                <Link href="/c4/demo">Try the live demo</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <a href={REPO_URL}>View on GitHub</a>
+              </Button>
+            </div>
+          </section>
 
-      <main>
-        <section className="hero">
-          <Lbl>Free · standalone · git-native</Lbl>
-          <h1>Browse, validate, and render C4 architecture trees from your repo.</h1>
-          <p className="lede">
-            The C4 module reads the actors, systems, containers, components, and diagrams already
-            described as YAML under your repo’s <code>.workspec/</code> directory, resolves them
-            into one architecture model, and lays diagrams out deterministically — the same artifact
-            family WorkSpec Enterprise renders today, as a free standalone workbench.
-          </p>
-          <div className="cta-row">
+          <section className="closing">
+            <h2>See it move</h2>
+            <p>
+              A live <code>C4Explorer</code> running entirely in your browser against a
+              representative example tree — no install, no signup, read-only.{' '}
+              <code>npx @workspec/c4-studio serve</code> gives you the same explorer with
+              drag-to-pin over your own repo.
+            </p>
             <Button asChild>
-              <Link href="/c4/demo">Try the live demo</Link>
+              <Link href="/c4/demo">Open the live demo</Link>
             </Button>
-            <Button asChild variant="secondary">
-              <a href={REPO_URL}>View on GitHub</a>
-            </Button>
-          </div>
-        </section>
+          </section>
 
-        <section className="closing">
-          <h2>See it move</h2>
-          <p>
-            A live <code>C4Explorer</code> running entirely in your browser against a
-            representative example tree — no install, no signup, read-only.{' '}
-            <code>npx @workspec/c4-studio serve</code> gives you the same explorer with
-            drag-to-pin over your own repo.
-          </p>
-          <Button asChild>
-            <Link href="/c4/demo">Open the live demo</Link>
-          </Button>
-        </section>
+          <section className="feature">
+            <h2>The packages so far</h2>
+            <p className="muted">Source on GitHub, on npm at 0.1.0-alpha.</p>
+            <ul>
+              {PACKAGES.map((pkg) => (
+                <li key={pkg.name}>
+                  <a href={pkg.source}>
+                    <code>{pkg.name}</code>
+                  </a>{' '}
+                  — {pkg.blurb}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </main>
 
-        <section className="feature">
-          <h2>The packages so far</h2>
-          <p className="muted">Source on GitHub, npm publish pending.</p>
-          <ul>
-            {PACKAGES.map((pkg) => (
-              <li key={pkg.name}>
-                <a href={pkg.source}>
-                  <code>{pkg.name}</code>
-                </a>{' '}
-                — {pkg.blurb}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </main>
-
-      <footer className="foot">
-        <span>Apache-2.0 © 2026 Fieldstate</span>
-        <span className="foot-links">
-          <Link href="/">WorkSpec Studio</Link>
-          <a href={REPO_URL}>GitHub</a>
-        </span>
-      </footer>
-    </div>
+        <footer className="foot">
+          <span>Apache-2.0 © 2026 Fieldstate</span>
+          <span className="foot-links">
+            <Link href="/">WorkSpec Studio</Link>
+            <a href={REPO_URL}>GitHub</a>
+          </span>
+        </footer>
+      </div>
+    </>
   );
 }

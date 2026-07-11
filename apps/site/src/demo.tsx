@@ -16,7 +16,12 @@ import '@workspec/decision-ui/styles.css';
 
 import { DEMO_EXAMPLES, createDemoRepository } from './seed.js';
 import { downloadText, renderAdr } from './export-adr.js';
-import { DemoBar } from './demo-bar.js';
+import { WorkbenchBar } from './demo-bar.js';
+import { SiteNav } from './nav.js';
+
+// Same source Decisions' own pitch page (decisions.tsx) links GitHub to — the
+// demo shares the module's identity, so it shares its repo target too.
+const REPO_URL = 'https://github.com/FieldstateNZ/workspec-decision-studio';
 
 export function Demo(): ReactElement {
   const [exampleKey, setExampleKey] = useState<string>(DEMO_EXAMPLES[0]?.key ?? 'hosting');
@@ -50,13 +55,13 @@ export function Demo(): ReactElement {
 
   return (
     <div className="demo">
-      <DemoBar
-        backHref="/decisions"
-        backText="WorkSpec Decision Studio"
-        backAriaLabel="Back to the WorkSpec Decision Studio page"
-        middle={
+      <SiteNav repoUrl={REPO_URL} />
+      <WorkbenchBar
+        crumb={
           // A toggle button group, not an ARIA tablist — these switch the
-          // seeded example, they don't reveal tabpanels.
+          // seeded example, they don't reveal tabpanels. It sits where the
+          // mockup's static crumb value would go: the active-styled pill IS
+          // the "active example" signal (Studio redesign, round 3).
           <div className="demo-examples" role="group" aria-label="Worked examples">
             {DEMO_EXAMPLES.map((example) => (
               <Button
@@ -74,12 +79,16 @@ export function Demo(): ReactElement {
         }
         actions={
           <>
-            <Button size="sm" onClick={() => void onExportAdr()}>
+            <button type="button" className="wb-action" onClick={() => void onExportAdr()}>
               Export ADR
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setResetToken((n) => n + 1)}>
+            </button>
+            <button
+              type="button"
+              className="wb-action-ghost"
+              onClick={() => setResetToken((n) => n + 1)}
+            >
               Reset
-            </Button>
+            </button>
           </>
         }
       />
