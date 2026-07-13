@@ -1,0 +1,26 @@
+[
+  {
+    "request": {
+      "method": "PATCH",
+      "url": "https://management.azure.com/subscriptions/sub-1/resourcegroups/rg1/providers/microsoft.compute/virtualmachines/vm1/providers/Microsoft.Resources/tags/default?api-version=2024-11-01",
+      "body": { "operation": "Merge", "properties": { "tags": { "env": "prod", "team": "atrium" } } }
+    },
+    "response": { "status": 200, "headers": {}, "body": { "properties": { "tags": { "env": "prod", "team": "atrium" } } } }
+  },
+  {
+    "request": {
+      "method": "PATCH",
+      "url": "https://management.azure.com/subscriptions/sub-1/resourcegroups/rg1/providers/microsoft.compute/virtualmachines/vm2/providers/Microsoft.Resources/tags/default?api-version=2024-11-01",
+      "body": { "operation": "Delete", "properties": { "tags": { "owner": "alice" } } }
+    },
+    "response": { "status": 200, "headers": {}, "body": { "properties": { "tags": {} } } }
+  },
+  {
+    "request": {
+      "method": "PATCH",
+      "url": "https://management.azure.com/subscriptions/sub-1/resourcegroups/rg1/providers/microsoft.compute/virtualmachines/vm3/providers/Microsoft.Resources/tags/default?api-version=2024-11-01",
+      "body": { "operation": "Merge", "properties": { "tags": { "env": "staging" } } }
+    },
+    "response": { "status": 500, "headers": {}, "body": { "error": { "code": "InternalServerError", "message": "simulated failure" } } }
+  }
+]

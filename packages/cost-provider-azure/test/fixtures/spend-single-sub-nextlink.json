@@ -1,0 +1,76 @@
+[
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://management.azure.com/subscriptions/sub-A/providers/Microsoft.CostManagement/query?api-version=2024-08-01",
+      "body": {
+        "type": "ActualCost",
+        "timeframe": "Custom",
+        "timePeriod": { "from": "2024-01-01T00:00:00.000Z", "to": "2024-01-31T23:59:59.999Z" },
+        "dataset": {
+          "granularity": "None",
+          "aggregation": { "totalCost": { "name": "Cost", "function": "Sum" } },
+          "grouping": [
+            { "type": "Dimension", "name": "ResourceId" },
+            { "type": "Dimension", "name": "ServiceName" }
+          ]
+        }
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": {
+        "properties": {
+          "columns": [
+            { "name": "Cost", "type": "Number" },
+            { "name": "ResourceId", "type": "String" },
+            { "name": "ServiceName", "type": "String" },
+            { "name": "Currency", "type": "String" }
+          ],
+          "rows": [
+            [100.5, "/subscriptions/sub-A/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/VM1", "Virtual Machines", "NZD"],
+            [5.25, "", "Reservations", "NZD"]
+          ],
+          "nextLink": "https://management.azure.com/subscriptions/sub-A/providers/Microsoft.CostManagement/query?api-version=2024-08-01&$skiptoken=PAGE2"
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://management.azure.com/subscriptions/sub-A/providers/Microsoft.CostManagement/query?api-version=2024-08-01&$skiptoken=PAGE2",
+      "body": {
+        "type": "ActualCost",
+        "timeframe": "Custom",
+        "timePeriod": { "from": "2024-01-01T00:00:00.000Z", "to": "2024-01-31T23:59:59.999Z" },
+        "dataset": {
+          "granularity": "None",
+          "aggregation": { "totalCost": { "name": "Cost", "function": "Sum" } },
+          "grouping": [
+            { "type": "Dimension", "name": "ResourceId" },
+            { "type": "Dimension", "name": "ServiceName" }
+          ]
+        }
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": {
+        "properties": {
+          "columns": [
+            { "name": "Cost", "type": "Number" },
+            { "name": "ResourceId", "type": "String" },
+            { "name": "ServiceName", "type": "String" },
+            { "name": "Currency", "type": "String" }
+          ],
+          "rows": [
+            [42.0, "/subscriptions/sub-A/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/stg1", "Storage", "NZD"]
+          ]
+        }
+      }
+    }
+  }
+]

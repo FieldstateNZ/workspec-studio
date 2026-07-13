@@ -1,0 +1,24 @@
+[
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://management.azure.com/subscriptions/sub-1/providers/Microsoft.CostManagement/query?api-version=2024-08-01"
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": {
+        "properties": {
+          "columns": [
+            { "name": "Cost", "type": "Number" },
+            { "name": "ResourceId", "type": "String" },
+            { "name": "ServiceName", "type": "String" }
+          ],
+          "rows": [
+            [10.0, "/subscriptions/sub-1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm1", "Virtual Machines"]
+          ]
+        }
+      }
+    }
+  }
+]

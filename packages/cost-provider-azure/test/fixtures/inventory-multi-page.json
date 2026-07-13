@@ -1,0 +1,67 @@
+[
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2022-10-01",
+      "body": {
+        "subscriptions": ["sub-1"],
+        "query": "Resources | project id, name, type, location, resourceGroup, subscriptionId, tags | order by id asc"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": {
+        "data": [
+          {
+            "id": "/subscriptions/sub-1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b",
+            "name": "vm-b",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "australiaeast",
+            "resourceGroup": "rg1",
+            "subscriptionId": "sub-1",
+            "tags": { "env": "prod" }
+          },
+          {
+            "id": "/subscriptions/sub-1/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/STG1",
+            "name": "stg1",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "australiaeast",
+            "resourceGroup": "rg1",
+            "subscriptionId": "sub-1",
+            "tags": null
+          }
+        ],
+        "$skipToken": "TOKEN1"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2022-10-01",
+      "body": {
+        "subscriptions": ["sub-1"],
+        "query": "Resources | project id, name, type, location, resourceGroup, subscriptionId, tags | order by id asc",
+        "options": { "$skipToken": "TOKEN1" }
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": {
+        "data": [
+          {
+            "id": "/subscriptions/sub-1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a",
+            "name": "vm-a",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "australiaeast",
+            "resourceGroup": "rg1",
+            "subscriptionId": "sub-1",
+            "tags": {}
+          }
+        ]
+      }
+    }
+  }
+]

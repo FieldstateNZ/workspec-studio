@@ -3,7 +3,10 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo",
+    // Node-only package end to end (see tsconfig.json) — `types: ["node"]`
+    // is NOT reset here, unlike cost-provider/cost-schema's build configs.
+    "types": ["node"]
   },
   "references": [
     { "path": "../cost-provider/tsconfig.build.json" },
