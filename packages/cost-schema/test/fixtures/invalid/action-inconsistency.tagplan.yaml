@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/tagplan.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: TagPlan
+metadata:
+  id: demo
+spec:
+  baselineAsOf: "2026-07-01T00:00:00Z"
+  tagMapping:
+    product: fs-product
+  entries:
+    - resourceId: /subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-a
+      tag: fs-product
+      current: stale-value
+      desired: workspec
+      action: add

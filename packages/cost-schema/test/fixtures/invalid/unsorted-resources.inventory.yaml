@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/inventory.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Inventory
+metadata:
+  id: demo
+spec:
+  asOf: "2026-07-01T00:00:00Z"
+  scope:
+    subscriptions:
+      - sub-1
+  resources:
+    - id: /subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-b
+      name: vm-b
+      type: Microsoft.Compute/virtualMachines
+      location: australiaeast
+      resourceGroup: rg
+      subscription: sub-1
+    - id: /subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-a
+      name: vm-a
+      type: Microsoft.Compute/virtualMachines
+      location: australiaeast
+      resourceGroup: rg
+      subscription: sub-1

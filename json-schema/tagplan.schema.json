@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.workspec.io/v1alpha1/tagplan.schema.json",
+  "title": "WorkSpec TagPlan (v1alpha1)",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant."
+    },
+    "kind": {
+      "type": "string",
+      "const": "TagPlan",
+      "description": "Artifact kind discriminant."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "description": "Stable tag-plan id, e.g. \"prod-2026-07\"."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional human-readable name."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "description": "TagPlan identity."
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "baselineAsOf": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 UTC timestamp: the Inventory `asOf` this plan was computed against (the drift-check anchor)."
+        },
+        "tagMapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[^<>%&\\\\?/]*$",
+            "description": "A resource tag name: 1-512 characters, must not contain < > % & \\ ? / (Azure rule)."
+          },
+          "propertyNames": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+          },
+          "description": "Dimension id → tag name mapping, e.g. { product: \"fs-product\" }. Must not be empty."
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "resourceId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Resource id this entry concerns (matches an Inventory resource id)."
+              },
+              "tag": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "pattern": "^[^<>%&\\\\?/]*$",
+                "description": "Tag name."
+              },
+              "current": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "A resource tag value: at most 256 characters. No character restriction."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Current tag value, or null if the tag is not currently set."
+              },
+              "desired": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "A resource tag value: at most 256 characters. No character restriction."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Desired tag value, or null if the tag should not be set."
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "change",
+                  "remove",
+                  "noop"
+                ],
+                "description": "The tagging action this entry represents: add (current null, desired set), change (both set and different), remove (current set, desired null), or noop (equal)."
+              }
+            },
+            "required": [
+              "resourceId",
+              "tag",
+              "current",
+              "desired",
+              "action"
+            ],
+            "additionalProperties": false,
+            "description": "One resource × tag entry in the tag plan."
+          },
+          "description": "One entry per resource × tag. MUST be sorted ascending by (resourceId, tag) — the sort-order contract (see README)."
+        }
+      },
+      "required": [
+        "baselineAsOf",
+        "tagMapping",
+        "entries"
+      ],
+      "additionalProperties": false,
+      "description": "The tag plan body."
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "description": "A WorkSpec tag-plan artifact: the tagging actions needed to converge on an attribution result."
+}

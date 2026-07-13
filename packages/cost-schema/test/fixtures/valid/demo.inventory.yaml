@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/inventory.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Inventory
+metadata:
+  id: demo
+spec:
+  asOf: 2026-07-01T00:00:00Z
+  scope:
+    subscriptions:
+      - 11111111-1111-1111-1111-111111111111
+  resources:
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-growth/providers/Microsoft.Web/sites/app-growth-web
+      name: app-growth-web
+      type: Microsoft.Web/sites
+      location: australiaeast
+      resourceGroup: rg-growth
+      subscription: 11111111-1111-1111-1111-111111111111
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-platform/providers/Microsoft.Compute/virtualMachines/vm-api-01
+      name: vm-api-01
+      type: Microsoft.Compute/virtualMachines
+      location: australiaeast
+      resourceGroup: rg-platform
+      subscription: 11111111-1111-1111-1111-111111111111
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-platform/providers/Microsoft.Compute/virtualMachines/vm-api-02
+      name: vm-api-02
+      type: Microsoft.Compute/virtualMachines
+      location: australiaeast
+      resourceGroup: rg-platform
+      subscription: 11111111-1111-1111-1111-111111111111
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Sql/servers/sql-shared-01
+      name: sql-shared-01
+      type: Microsoft.Sql/servers
+      location: australiaeast
+      resourceGroup: rg-shared
+      subscription: 11111111-1111-1111-1111-111111111111
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Storage/storageAccounts/stshared001
+      name: stshared001
+      type: Microsoft.Storage/storageAccounts
+      location: australiaeast
+      resourceGroup: rg-shared
+      subscription: 11111111-1111-1111-1111-111111111111
+      tags:
+        fs-product: atrium
+        fs-team: platform

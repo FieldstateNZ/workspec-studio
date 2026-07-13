@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/attribution.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Attribution
+metadata:
+  id: demo
+spec:
+  dimensions:
+    - id: product
+      label: Product
+      values: [atrium, workspec]
+  rules:
+    - id: r1
+      name: Rule 1
+      match: {}

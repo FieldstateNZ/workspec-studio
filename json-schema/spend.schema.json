@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.workspec.io/v1alpha1/spend.schema.json",
+  "title": "WorkSpec Spend (v1alpha1)",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant."
+    },
+    "kind": {
+      "type": "string",
+      "const": "Spend",
+      "description": "Artifact kind discriminant."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "description": "Stable spend id, e.g. \"prod-2026-06\"."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional human-readable name."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "description": "Spend identity."
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "resourceId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Provider resource id this row is attributed to (matches an Inventory resource id). Required unless `unresolved` is true."
+              },
+              "amount": {
+                "type": "number",
+                "description": "Spend amount for the period. Negative values are allowed (credits/refunds)."
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$",
+                "description": "ISO 4217 currency code, e.g. \"NZD\"."
+              },
+              "period": {
+                "type": "string",
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "description": "Billing period, ISO month \"YYYY-MM\"."
+              },
+              "serviceCategory": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Provider service/category, e.g. \"Virtual Machines\"."
+              },
+              "unresolved": {
+                "type": "boolean",
+                "const": true,
+                "description": "Marks a row the provider could not match to an inventory resource. When true, `resourceId` must be absent and `sourceLabel` is required."
+              },
+              "sourceLabel": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Free-text provider line description. Required when `unresolved`; harmless optional provenance alongside `resourceId` otherwise."
+              }
+            },
+            "required": [
+              "amount",
+              "currency",
+              "period",
+              "serviceCategory"
+            ],
+            "additionalProperties": false,
+            "description": "One spend row: an amount for a period, attributed to a resource (or left unresolved)."
+          },
+          "description": "Spend rows. MUST be sorted ascending by (resourceId ?? sourceLabel, period, serviceCategory) — the sort-order contract (see README)."
+        }
+      },
+      "required": [
+        "rows"
+      ],
+      "additionalProperties": false,
+      "description": "The spend body."
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "description": "A WorkSpec spend artifact: billed rows for a period."
+}
