@@ -246,6 +246,12 @@ zoom has no renderable meaning.
     entry to the published semver range and move it from `devDependencies` to `dependencies`,
     the same shape `decision-*` already has.
 
+    **Resolved 2026-07-11:** the c4 family published to npm at `v0.1.0-alpha.2` (the
+    `release.yml` tag flow), and `apps/site` now pins all four packages at that version in
+    `dependencies` — the `_LOUD_NOTICE_devDependencies_c4_packages` block, the `tsconfig.json`
+    project references it required, and the README caveat are gone with it. The site is back
+    to registry-pins-only with no exceptions.
+
 18. **The `render` CLI command has no `--lens` flag.** `@workspec/c4-model` resolves a
     `c4-container` diagram to `lensViews.{logical,deployment}`, never a single `view` — see
     entry 11 above and `preferred-type.ts`. `packages/c4-studio/src/render-diagram.ts` always

@@ -6,12 +6,10 @@
 // full-page workbench, C4 got a 640px box embedded in marketing copy) so
 // both modules' demos are the same route pattern and the same shell.
 //
-// Dependency note: the four `@workspec/c4-*` packages (plus `@workspec/design`
-// via `c4-ui`) are `workspace:*` **devDependencies** here — a deliberate,
-// temporary exception to this app's registry-pins-only rule (see
-// `package.json`'s devDependencies block and `docs/c4/drift-log.md` entry 17).
-// They are not yet published to npm; the decisions demo's registry pins are
-// untouched.
+// Dependency note: the four `@workspec/c4-*` packages are registry pins in
+// `dependencies`, same as `@workspec/decision-*` — the temporary workspace
+// exception was retired when the c4 family published at v0.1.0-alpha.2 (see
+// `docs/c4/drift-log.md` entry 17).
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { C4Model } from '@workspec/c4-model';

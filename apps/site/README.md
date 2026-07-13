@@ -31,15 +31,10 @@ That makes the site a **living integration test of the published artifacts**: if
 running `npm install`. The vendored `src/examples/*.yaml` are a verbatim copy of
 the repo's `examples/`, and validate against the published schema's `apiVersion`.
 
-**Deliberate, temporary exception — the four `@workspec/c4-*` packages (plus
-`@workspec/design`, transitively via `c4-ui`) are `workspace:*` devDependencies, not registry
-pins.** They aren't published to npm yet (the same trusted-publisher registration gate
-blocking `@workspec/decision-*` releases — see the root README), so a registry pin is
-impossible today; leaving `/c4` a permanent stub instead felt worse than a documented,
-one-line-reversible exception. See the loud notice in `package.json` and
-`docs/c4/drift-log.md` entry 17 for the full rationale. **The decisions demo's registry pins
-are untouched** — this exception is scoped exclusively to the c4 packages, and flips to a
-normal registry pin (moved into `dependencies`) the moment they publish.
+The four `@workspec/c4-*` packages are registry pins in `dependencies`, exactly like
+`@workspec/decision-*`. (They spent one release cycle as a documented `workspace:*`
+devDependency exception while unpublished — retired at v0.1.0-alpha.2; the history lives in
+`docs/c4/drift-log.md` entry 17.)
 
 ## Develop
 
