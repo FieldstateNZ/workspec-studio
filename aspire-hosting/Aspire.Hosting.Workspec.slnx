@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/aspire-hosting-core/">
+    <Project Path="aspire-hosting-core/Aspire.Hosting.Workspec.Core.csproj" />
+  </Folder>
+  <Folder Name="/aspire-hosting-tests/">
+    <Project Path="aspire-hosting-tests/Aspire.Hosting.Workspec.Tests.csproj" />
+  </Folder>
+</Solution>
