@@ -5,23 +5,13 @@
     "jsx": "react-jsx",
     "types": ["vite/client"],
     // The site is a living test of the PUBLISHED packages: no `paths` override
-    // here, unlike the workspace packages — @workspec/decision-* resolves
-    // from its registry build (dist + .d.ts) in node_modules, never workspace
-    // source. The @workspec/c4-* packages are the documented, temporary
-    // exception (workspace:* devDependencies — see docs/c4/drift-log.md
-    // entry 17): they resolve through pnpm's symlink to the package's own
-    // dist + .d.ts, which only exists after a build — so they alone need the
-    // project references below, letting `tsc -b` build their declarations on
-    // demand (CI runs typecheck before build; without references a clean
-    // tree fails TS2307). Registry deps need none: published .d.ts ship in
-    // node_modules.
+    // here, unlike the workspace packages — every @workspec/* dependency
+    // resolves from its registry build (dist + .d.ts) in node_modules, never
+    // workspace source, and published .d.ts need no project references. The
+    // former @workspec/c4-* workspace exception (and its references block)
+    // was retired when the c4 family shipped at v0.1.0-alpha.2 — see
+    // docs/c4/drift-log.md entry 17.
     "noEmit": true
   },
-  "references": [
-    { "path": "../../packages/c4-schema/tsconfig.build.json" },
-    { "path": "../../packages/c4-model/tsconfig.build.json" },
-    { "path": "../../packages/c4-layout/tsconfig.build.json" },
-    { "path": "../../packages/c4-ui/tsconfig.build.json" }
-  ],
   "include": ["src"]
 }

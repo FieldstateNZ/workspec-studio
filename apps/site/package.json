@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions and /c4, each with its own in-browser demo). Consumes the PUBLISHED @workspec/decision-* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/c4-* packages are a temporary workspace-devDependency exception (not yet published) — see docs/c4/drift-log.md.",
-  "_LOUD_NOTICE_devDependencies_c4_packages": "The four @workspec/c4-* entries in devDependencies below are workspace:* — NOT registry pins like every @workspec/decision-* dependency above. The c4 packages aren't published to npm yet; this is a deliberate, TEMPORARY exception to this app's registry-pins-only rule, scoped ONLY to c4 (the decisions demo's pins are untouched). See docs/c4/drift-log.md entry 17 and this package's README.md. Flip each to a published semver range and move it up into \"dependencies\" at first publish — a one-line change per package.",
+  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions and /c4, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -14,6 +13,10 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.7",
+    "@workspec/c4-layout": "0.1.0-alpha.2",
+    "@workspec/c4-model": "0.1.0-alpha.2",
+    "@workspec/c4-schema": "0.1.0-alpha.2",
+    "@workspec/c4-ui": "0.1.0-alpha.2",
     "@workspec/decision-engine": "0.1.0-alpha.0",
     "@workspec/decision-schema": "0.1.0-alpha.0",
     "@workspec/decision-ui": "0.1.0-alpha.0",
@@ -34,10 +37,6 @@
     "tailwindcss": "^4.1.14",
     "typescript": "^5.7.2",
     "vite": "^7.0.0",
-    "vitest": "^3.2.4",
-    "@workspec/c4-layout": "workspace:*",
-    "@workspec/c4-model": "workspace:*",
-    "@workspec/c4-schema": "workspace:*",
-    "@workspec/c4-ui": "workspace:*"
+    "vitest": "^3.2.4"
   }
 }
