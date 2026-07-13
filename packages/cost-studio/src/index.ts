@@ -29,6 +29,11 @@ export const COST_STUDIO_DEPENDENCIES = [
 // ── Filesystem repository (implements the C4 CostRepositoryPort) ───────────
 export { FsRepository, ArtifactValidationError } from './fs-repository.js';
 
+// ── Host shell: the Express app + the serve command (C5b) ──────────────────
+export { createServer } from './server.js';
+export type { CreateServerOptions } from './server.js';
+export { runServe } from './serve.js';
+
 // ── CLI entry (also the executable's `run`) ───────────────────────────────────
 export { run } from './cli.js';
 export type { CliIO, RunDeps } from './cli.js';

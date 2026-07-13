@@ -117,12 +117,28 @@ describe('run: help + dispatch', () => {
     }
   });
 
+  it('lists "serve" in the help but does NOT run it as the bare-command default', async () => {
+    const cap = captureIO();
+    const code = await run([], cap.io);
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('serve');
+    expect(cap.out()).not.toMatch(/Cost Studio · serving/);
+  });
+
   it('errors, prints help, and exits 2 on an unknown command', async () => {
     const cap = captureIO();
     const code = await run(['frobnicate'], cap.io);
     expect(code).toBe(2);
     expect(cap.err()).toContain('unknown command "frobnicate"');
     expect(cap.out()).toContain('workspec-cost');
+  });
+
+  it('serve --help prints serve usage without binding a socket', async () => {
+    const cap = captureIO();
+    const code = await run(['serve', '--help'], cap.io);
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('run the localhost Cost Studio host');
+    expect(cap.err()).toBe('');
   });
 });
 
