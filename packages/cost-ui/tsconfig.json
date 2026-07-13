@@ -12,6 +12,7 @@
     "outDir": ".typecheck",
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
   },
   // TS Project References: let `tsc -b` type-check against the sibling
