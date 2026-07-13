@@ -1,0 +1,83 @@
+{
+  "version": "workspec-graph/v1",
+  "apphost": {
+    "name": "workspec-sample-apphost"
+  },
+  "resources": [
+    {
+      "name": "api-enterprise",
+      "kind": "executable",
+      "typeName": "ExecutableResource",
+      "image": null,
+      "command": "pnpm",
+      "workingDirectory": "/workspec-fixture/artifacts/api-server",
+      "endpoints": [
+        {
+          "name": "http",
+          "scheme": "http",
+          "port": 6001,
+          "targetPort": 6001,
+          "external": true
+        }
+      ],
+      "parent": null,
+      "references": [
+        {
+          "target": "postgres-enterprise",
+          "via": "wait",
+          "label": null
+        },
+        {
+          "target": "workspec-db",
+          "via": "connection-string",
+          "label": null
+        }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "db-password",
+      "kind": "parameter",
+      "typeName": "ParameterResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "postgres-enterprise",
+      "kind": "container",
+      "typeName": "ContainerResource",
+      "image": "docker.io/library/postgres:17",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [
+        {
+          "name": "tcp",
+          "scheme": "tcp",
+          "port": 5432,
+          "targetPort": 5432,
+          "external": false
+        }
+      ],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "workspec-db",
+      "kind": "unknown",
+      "typeName": "ConnectionStringResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": "postgres-enterprise",
+      "references": [],
+      "properties": {}
+    }
+  ]
+}
