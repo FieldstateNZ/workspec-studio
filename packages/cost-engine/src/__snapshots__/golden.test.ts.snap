@@ -1,0 +1,4976 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden: fieldstate-azure demo estate > conformance snapshot > matches the committed golden snapshot (attribute + plan) 1`] = `
+{
+  "attribute": {
+    "coverage": [
+      {
+        "attributedSpend": 10691,
+        "dimensionId": "product",
+        "isPrimary": true,
+        "ratio": 0.8120774781617927,
+        "totalSpend": 13165,
+        "unattributedCount": 20,
+        "unattributedSpend": 2474,
+      },
+      {
+        "attributedSpend": 13165,
+        "dimensionId": "costType",
+        "isPrimary": false,
+        "ratio": 1,
+        "totalSpend": 13165,
+        "unattributedCount": 0,
+        "unattributedSpend": 0,
+      },
+      {
+        "attributedSpend": 13165,
+        "dimensionId": "client",
+        "isPrimary": false,
+        "ratio": 1,
+        "totalSpend": 13165,
+        "unattributedCount": 0,
+        "unattributedSpend": 0,
+      },
+    ],
+    "crossTabs": [
+      {
+        "cells": [
+          {
+            "amount": 319,
+            "colKey": "capex",
+            "rowKey": "atrium",
+          },
+          {
+            "amount": 3024,
+            "colKey": "opex",
+            "rowKey": "atrium",
+          },
+          {
+            "amount": 2474,
+            "colKey": "opex",
+            "rowKey": "unattributed",
+          },
+          {
+            "amount": 1433,
+            "colKey": "opex",
+            "rowKey": "coffers",
+          },
+          {
+            "amount": 2154,
+            "colKey": "opex",
+            "rowKey": "shared",
+          },
+          {
+            "amount": 3408,
+            "colKey": "opex",
+            "rowKey": "workspec",
+          },
+          {
+            "amount": 353,
+            "colKey": "capex",
+            "rowKey": "workspec",
+          },
+        ],
+        "colDimensionId": "costType",
+        "rowDimensionId": "product",
+      },
+      {
+        "cells": [
+          {
+            "amount": 3343,
+            "colKey": "internal",
+            "rowKey": "atrium",
+          },
+          {
+            "amount": 795,
+            "colKey": "acme-dairy",
+            "rowKey": "unattributed",
+          },
+          {
+            "amount": 520,
+            "colKey": "kauri-health",
+            "rowKey": "unattributed",
+          },
+          {
+            "amount": 1159,
+            "colKey": "internal",
+            "rowKey": "unattributed",
+          },
+          {
+            "amount": 1433,
+            "colKey": "internal",
+            "rowKey": "coffers",
+          },
+          {
+            "amount": 2154,
+            "colKey": "internal",
+            "rowKey": "shared",
+          },
+          {
+            "amount": 3761,
+            "colKey": "internal",
+            "rowKey": "workspec",
+          },
+        ],
+        "colDimensionId": "client",
+        "rowDimensionId": "product",
+      },
+    ],
+    "diagnostics": [],
+    "orphans": {
+      "rows": [],
+      "totalAmount": 0,
+    },
+    "primaryDimensionId": "product",
+    "resolutions": [
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r2",
+            "value": "atrium",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod",
+        "trace": [
+          {
+            "ruleId": "r2",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "acme-dairy",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "acme-dairy",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "acme-dairy",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "acme-dairy",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "acme-dairy",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "kauri-health",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "kauri-health",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r6",
+            "value": "kauri-health",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal",
+        "trace": [
+          {
+            "ruleId": "r6",
+            "shadowed": [],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "client",
+                "winnerRuleId": "r6",
+              },
+            ],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r3",
+            "value": "coffers",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod",
+        "trace": [
+          {
+            "ruleId": "r3",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "override",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 7,
+        "overrideTrace": {
+          "tookDimensions": [
+            "product",
+          ],
+        },
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+        },
+        "didNotMatchCount": 7,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02",
+        "trace": [
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "split",
+            "parts": [
+              {
+                "ratio": 0.4,
+                "value": "atrium",
+              },
+              {
+                "ratio": 0.6,
+                "value": "workspec",
+              },
+            ],
+            "provenance": "r4",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared",
+        "trace": [
+          {
+            "ruleId": "r4",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r5",
+            "shadowed": [
+              {
+                "dimensionId": "product",
+                "winnerRuleId": "r4",
+              },
+            ],
+            "tookDimensions": [],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r5",
+            "value": "shared",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups",
+        "trace": [
+          {
+            "ruleId": "r5",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r7",
+            "value": "capex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 5,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r7",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [
+              {
+                "dimensionId": "costType",
+                "winnerRuleId": "r7",
+              },
+            ],
+            "tookDimensions": [
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+      {
+        "assignments": {
+          "client": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "internal",
+          },
+          "costType": {
+            "kind": "value",
+            "provenance": "r8",
+            "value": "opex",
+          },
+          "product": {
+            "kind": "value",
+            "provenance": "r1",
+            "value": "workspec",
+          },
+        },
+        "didNotMatchCount": 6,
+        "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod",
+        "trace": [
+          {
+            "ruleId": "r1",
+            "shadowed": [],
+            "tookDimensions": [
+              "product",
+            ],
+          },
+          {
+            "ruleId": "r8",
+            "shadowed": [],
+            "tookDimensions": [
+              "costType",
+              "client",
+            ],
+          },
+        ],
+      },
+    ],
+    "resourceSpend": {
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner": 40,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview": 30,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev": 98,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev": 25,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev": 3,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore": 18,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev": 70,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev": 35,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod": 160,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod": 75,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod": 540,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod": 120,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod": 8,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs": 240,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod": 260,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media": 210,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore": 130,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod": 380,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod": 165,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs": 130,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg": 310,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai": 60,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs": 55,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod": 240,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg": 260,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles": 70,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal": 190,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs": 170,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis": 120,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod": 460,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod": 95,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod": 8,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs": 180,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore": 85,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export": 25,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod": 290,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint": 30,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01": 280,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins": 310,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg": 98,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai": 40,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb": 36,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial": 220,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019": 180,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore": 25,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage": 45,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs": 15,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01": 95,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02": 95,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana": 90,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr": 160,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared": 1840,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv": 12,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall": 620,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion": 138,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns": 4,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn": 140,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs": 420,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups": 260,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev": 35,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview": 28,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev": 98,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev": 30,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev": 3,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore": 22,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev": 12,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev": 85,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev": 40,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod": 210,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod": 190,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod": 620,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod": 140,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod": 8,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod": 36,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs": 310,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets": 60,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore": 95,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod": 45,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod": 410,
+      "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod": 180,
+    },
+    "rollups": [
+      {
+        "buckets": [
+          {
+            "amount": 3343,
+            "key": "atrium",
+          },
+          {
+            "amount": 2474,
+            "key": "unattributed",
+          },
+          {
+            "amount": 1433,
+            "key": "coffers",
+          },
+          {
+            "amount": 2154,
+            "key": "shared",
+          },
+          {
+            "amount": 3761,
+            "key": "workspec",
+          },
+        ],
+        "dimensionId": "product",
+      },
+      {
+        "buckets": [
+          {
+            "amount": 672,
+            "key": "capex",
+          },
+          {
+            "amount": 12493,
+            "key": "opex",
+          },
+        ],
+        "dimensionId": "costType",
+      },
+      {
+        "buckets": [
+          {
+            "amount": 11850,
+            "key": "internal",
+          },
+          {
+            "amount": 795,
+            "key": "acme-dairy",
+          },
+          {
+            "amount": 520,
+            "key": "kauri-health",
+          },
+        ],
+        "dimensionId": "client",
+      },
+    ],
+    "ruleStats": {
+      "r1": {
+        "matched": 21,
+        "ruleId": "r1",
+        "won": 21,
+      },
+      "r2": {
+        "matched": 19,
+        "ruleId": "r2",
+        "won": 19,
+      },
+      "r3": {
+        "matched": 9,
+        "ruleId": "r3",
+        "won": 9,
+      },
+      "r4": {
+        "matched": 1,
+        "ruleId": "r4",
+        "won": 1,
+      },
+      "r5": {
+        "matched": 10,
+        "ruleId": "r5",
+        "won": 9,
+      },
+      "r6": {
+        "matched": 8,
+        "ruleId": "r6",
+        "won": 8,
+      },
+      "r7": {
+        "matched": 17,
+        "ruleId": "r7",
+        "won": 17,
+      },
+      "r8": {
+        "matched": 80,
+        "ruleId": "r8",
+        "won": 80,
+      },
+    },
+    "totals": {
+      "currencies": [
+        "USD",
+      ],
+      "inventorySpend": 13165,
+      "orphanSpend": 0,
+      "resourcesWithoutSpend": 0,
+      "totalSpend": 13165,
+      "unresolvedSpend": 0,
+    },
+  },
+  "plan": {
+    "apiVersion": "workspec.io/v1alpha1",
+    "kind": "TagPlan",
+    "metadata": {
+      "id": "fieldstate-azure-2026-07",
+    },
+    "spec": {
+      "baselineAsOf": "2026-07-07T00:00:00Z",
+      "entries": [
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media",
+          "tag": "fs-client",
+        },
+        {
+          "action": "noop",
+          "current": "opex",
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "noop",
+          "current": "atrium",
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "atrium",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "acme-dairy",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "acme-dairy",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "acme-dairy",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "acme-dairy",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "acme-dairy",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "kauri-health",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "kauri-health",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "kauri-health",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "coffers",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "remove",
+          "current": "workspec",
+          "desired": null,
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec:60|atrium:40",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "change",
+          "current": "workspec",
+          "desired": "shared",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "capex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "change",
+          "current": "platform",
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "noop",
+          "current": "workspec",
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod",
+          "tag": "fs-product",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "internal",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod",
+          "tag": "fs-client",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "opex",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod",
+          "tag": "fs-cost-type",
+        },
+        {
+          "action": "add",
+          "current": null,
+          "desired": "workspec",
+          "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod",
+          "tag": "fs-product",
+        },
+      ],
+      "tagMapping": {
+        "client": "fs-client",
+        "costType": "fs-cost-type",
+        "product": "fs-product",
+      },
+    },
+  },
+}
+`;

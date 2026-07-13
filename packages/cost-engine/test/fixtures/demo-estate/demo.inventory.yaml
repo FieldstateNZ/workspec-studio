@@ -1,0 +1,518 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/inventory.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Inventory
+metadata:
+  id: fieldstate-azure
+spec:
+  asOf: 2026-07-07T00:00:00Z
+  scope:
+    subscriptions:
+      - 00000000-0000-0000-0000-000000000001
+  resources:
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner
+      name: atrium-e2e-runner
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview
+      name: atrium-preview
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev
+      name: atrium-pg-dev
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev
+      name: atrium-ai-dev
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev
+      name: atrium-kv-dev
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore
+      name: atriumdevstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev
+      name: atrium-api-dev
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev
+      name: atrium-web-dev
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-atrium-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod
+      name: atrium-redis-prod
+      type: Redis
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod
+      name: atrium-cdn-prod
+      type: CDN
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod
+      name: atrium-pg-prod
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod
+      name: atrium-ai-prod
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod
+      name: atrium-kv-prod
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs
+      name: atrium-logs
+      type: Log Analytics
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod
+      name: atrium-search-prod
+      type: AI Search
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media
+      name: atrium-media
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        fs-cost-type: opex
+        fs-product: atrium
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore
+      name: atriumprodstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod
+      name: atrium-api-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod
+      name: atrium-web-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-atrium-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs
+      name: acme-jobs
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-client-acme
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: acme-dairy
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg
+      name: acme-pg
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-client-acme
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: acme-dairy
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai
+      name: acme-ai
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-client-acme
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: acme-dairy
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs
+      name: acmedocs
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-client-acme
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: acme-dairy
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod
+      name: acme-portal-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-client-acme
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: acme-dairy
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg
+      name: kauri-pg
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-client-kauri
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: kauri-health
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles
+      name: kaurifiles
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-client-kauri
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: kauri-health
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal
+      name: kauri-portal
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-client-kauri
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        client: kauri-health
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs
+      name: coffers-ledger-jobs
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis
+      name: coffers-redis
+      type: Redis
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod
+      name: coffers-pg-prod
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod
+      name: coffers-ai-prod
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod
+      name: coffers-kv-prod
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs
+      name: coffers-logs
+      type: Log Analytics
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore
+      name: coffersprodstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export
+      name: coffers-export
+      type: Functions
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod
+      name: coffers-api-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-coffers-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint
+      name: old-cdn-endpoint
+      type: CDN
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01
+      name: vm-dc01
+      type: VM
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      name: vm-old-jenkins
+      type: VM
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg
+      name: demo-pg
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai
+      name: legacy-ai
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb
+      name: unnamed-lb
+      type: Load balancer
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial
+      name: sqldb-trial
+      type: SQL DB
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019
+      name: backupvault2019
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore
+      name: scratchstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage
+      name: test123storage
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        fs-product: workspec
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs
+      name: tempfuncs
+      type: Functions
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01
+      name: legacy-web-01
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02
+      name: legacy-web-02
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-legacy-misc
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana
+      name: core-grafana
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr
+      name: fieldstateacr
+      type: Registry
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared
+      name: aks-shared
+      type: AKS cluster
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv
+      name: core-kv
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall
+      name: core-firewall
+      type: Firewall
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion
+      name: core-bastion
+      type: Bastion
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns
+      name: core-dns
+      type: DNS zone
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn
+      name: core-vpn
+      type: VPN gateway
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs
+      name: core-logs
+      type: Log Analytics
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups
+      name: corebackups
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-shared-core
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        fs-product: workspec
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev
+      name: workspec-jobs-dev
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview
+      name: workspec-preview
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev
+      name: workspec-pg-dev
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev
+      name: workspec-ai-dev
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev
+      name: workspec-kv-dev
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore
+      name: workspecdevstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev
+      name: workspec-func-dev
+      type: Functions
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev
+      name: workspec-api-dev
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev
+      name: workspec-web-dev
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-workspec-dev
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod
+      name: workspec-jobs-prod
+      type: Container App
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod
+      name: workspec-redis-prod
+      type: Redis
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod
+      name: workspec-pg-prod
+      type: PostgreSQL
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod
+      name: workspec-ai-prod
+      type: App Insights
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod
+      name: workspec-kv-prod
+      type: Key Vault
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod
+      name: workspec-lb-prod
+      type: Load balancer
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs
+      name: workspec-logs
+      type: Log Analytics
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        fs-product: platform
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets
+      name: workspecassets
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore
+      name: workspecprodstore
+      type: Storage
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod
+      name: workspec-func-prod
+      type: Functions
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod
+      name: workspec-api-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001
+      tags:
+        fs-product: workspec
+    - id: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod
+      name: workspec-web-prod
+      type: App Service
+      location: australiaeast
+      resourceGroup: rg-workspec-prod
+      subscription: 00000000-0000-0000-0000-000000000001

@@ -9,7 +9,15 @@
     // (never read by anything) keeps `tsc -b`'s self-bootstrap working
     // without polluting `dist/` — same shadow-emit split as packages/c4-*.
     "outDir": ".typecheck",
-    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Explicit, rather than relying on TypeScript's automatic `@types/*`
+    // discovery: under this package's pinned `typescript@^6.0.3` +
+    // `@types/node@^24`, automatic discovery of the global `node:fs`-style
+    // ambient module declarations does not kick in (same fix as
+    // cost-schema's tsconfig.json — see its comment for the verified detail).
+    // Needed because the golden test and gen script load fixtures via
+    // `node:fs`/`node:url`.
+    "types": ["node"]
   },
   // TS Project References: let `tsc -b` type-check against the sibling
   // packages' real TypeScript source (building their declarations on
@@ -17,9 +25,6 @@
   // siblings' *build* configs — only those emit to the `dist/` layout their
   // package.json "types" fields advertise, which is what lets tsc map the
   // imports back to source.
-  "references": [
-    { "path": "../cost-provider/tsconfig.build.json" },
-    { "path": "../cost-schema/tsconfig.build.json" }
-  ],
+  "references": [{ "path": "../cost-schema/tsconfig.build.json" }],
   "include": ["src"]
 }

@@ -1,0 +1,407 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/spend.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Spend
+metadata:
+  id: fieldstate-azure-2026-07
+spec:
+  rows:
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner
+      amount: 40
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview
+      amount: 30
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev
+      amount: 98
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev
+      amount: 25
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev
+      amount: 3
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore
+      amount: 18
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev
+      amount: 70
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev
+      amount: 35
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod
+      amount: 160
+      currency: USD
+      period: 2026-07
+      serviceCategory: Redis
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod
+      amount: 75
+      currency: USD
+      period: 2026-07
+      serviceCategory: CDN
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod
+      amount: 540
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod
+      amount: 120
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod
+      amount: 8
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs
+      amount: 240
+      currency: USD
+      period: 2026-07
+      serviceCategory: Log Analytics
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod
+      amount: 260
+      currency: USD
+      period: 2026-07
+      serviceCategory: AI Search
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media
+      amount: 210
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore
+      amount: 130
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod
+      amount: 380
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod
+      amount: 165
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs
+      amount: 130
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg
+      amount: 310
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai
+      amount: 60
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs
+      amount: 55
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod
+      amount: 240
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg
+      amount: 260
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles
+      amount: 70
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal
+      amount: 190
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs
+      amount: 170
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis
+      amount: 120
+      currency: USD
+      period: 2026-07
+      serviceCategory: Redis
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod
+      amount: 460
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod
+      amount: 95
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod
+      amount: 8
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs
+      amount: 180
+      currency: USD
+      period: 2026-07
+      serviceCategory: Log Analytics
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore
+      amount: 85
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export
+      amount: 25
+      currency: USD
+      period: 2026-07
+      serviceCategory: Functions
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod
+      amount: 290
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint
+      amount: 30
+      currency: USD
+      period: 2026-07
+      serviceCategory: CDN
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01
+      amount: 280
+      currency: USD
+      period: 2026-07
+      serviceCategory: VM
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      amount: 310
+      currency: USD
+      period: 2026-07
+      serviceCategory: VM
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg
+      amount: 98
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai
+      amount: 40
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb
+      amount: 36
+      currency: USD
+      period: 2026-07
+      serviceCategory: Load balancer
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial
+      amount: 220
+      currency: USD
+      period: 2026-07
+      serviceCategory: SQL DB
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019
+      amount: 180
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore
+      amount: 25
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage
+      amount: 45
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs
+      amount: 15
+      currency: USD
+      period: 2026-07
+      serviceCategory: Functions
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01
+      amount: 95
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02
+      amount: 95
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana
+      amount: 90
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr
+      amount: 160
+      currency: USD
+      period: 2026-07
+      serviceCategory: Registry
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared
+      amount: 1840
+      currency: USD
+      period: 2026-07
+      serviceCategory: AKS cluster
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv
+      amount: 12
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall
+      amount: 620
+      currency: USD
+      period: 2026-07
+      serviceCategory: Firewall
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion
+      amount: 138
+      currency: USD
+      period: 2026-07
+      serviceCategory: Bastion
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns
+      amount: 4
+      currency: USD
+      period: 2026-07
+      serviceCategory: DNS zone
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn
+      amount: 140
+      currency: USD
+      period: 2026-07
+      serviceCategory: VPN gateway
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs
+      amount: 420
+      currency: USD
+      period: 2026-07
+      serviceCategory: Log Analytics
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups
+      amount: 260
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev
+      amount: 35
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview
+      amount: 28
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev
+      amount: 98
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev
+      amount: 30
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev
+      amount: 3
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore
+      amount: 22
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev
+      amount: 12
+      currency: USD
+      period: 2026-07
+      serviceCategory: Functions
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev
+      amount: 85
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev
+      amount: 40
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod
+      amount: 210
+      currency: USD
+      period: 2026-07
+      serviceCategory: Container App
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod
+      amount: 190
+      currency: USD
+      period: 2026-07
+      serviceCategory: Redis
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod
+      amount: 620
+      currency: USD
+      period: 2026-07
+      serviceCategory: PostgreSQL
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod
+      amount: 140
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Insights
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod
+      amount: 8
+      currency: USD
+      period: 2026-07
+      serviceCategory: Key Vault
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod
+      amount: 36
+      currency: USD
+      period: 2026-07
+      serviceCategory: Load balancer
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs
+      amount: 310
+      currency: USD
+      period: 2026-07
+      serviceCategory: Log Analytics
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets
+      amount: 60
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore
+      amount: 95
+      currency: USD
+      period: 2026-07
+      serviceCategory: Storage
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod
+      amount: 45
+      currency: USD
+      period: 2026-07
+      serviceCategory: Functions
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod
+      amount: 410
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod
+      amount: 180
+      currency: USD
+      period: 2026-07
+      serviceCategory: App Service
