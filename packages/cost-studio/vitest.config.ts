@@ -9,6 +9,9 @@ export default defineConfig({
       '@workspec/cost-engine': fileURLToPath(
         new URL('../cost-engine/src/index.ts', import.meta.url),
       ),
+      '@workspec/cost-provider-azure': fileURLToPath(
+        new URL('../cost-provider-azure/src/index.ts', import.meta.url),
+      ),
       '@workspec/cost-provider': fileURLToPath(
         new URL('../cost-provider/src/index.ts', import.meta.url),
       ),
