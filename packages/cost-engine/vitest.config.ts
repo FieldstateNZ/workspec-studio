@@ -6,9 +6,6 @@ export default defineConfig({
   // run without a prior build.
   resolve: {
     alias: {
-      '@workspec/cost-provider': fileURLToPath(
-        new URL('../cost-provider/src/index.ts', import.meta.url),
-      ),
       '@workspec/cost-schema': fileURLToPath(
         new URL('../cost-schema/src/index.ts', import.meta.url),
       ),

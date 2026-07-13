@@ -1,7 +1,7 @@
 {
   "name": "@workspec/cost-engine",
   "version": "0.1.0-alpha.0",
-  "description": "Pure, normative cost attribution engine for WorkSpec Cost Attribution. No IO, no DOM, no React. C0 bootstrap: package identity export only — the engine lands in a later slice.",
+  "description": "Pure, normative cost attribution engine for WorkSpec Cost Attribution. No IO, no DOM, no React.",
   "keywords": [
     "cost-attribution",
     "pure-function",
@@ -37,15 +37,17 @@
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "gen:fixtures": "tsx scripts/gen-demo-fixtures.ts"
   },
   "dependencies": {
-    "@workspec/cost-provider": "workspace:^",
     "@workspec/cost-schema": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "fast-check": "^3.23.1",
     "tsup": "^8.5.1",
+    "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }

@@ -381,9 +381,6 @@ importers:
 
   packages/cost-engine:
     dependencies:
-      '@workspec/cost-provider':
-        specifier: workspace:^
-        version: link:../cost-provider
       '@workspec/cost-schema':
         specifier: workspace:^
         version: link:../cost-schema
@@ -391,9 +388,15 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.2
+      fast-check:
+        specifier: ^3.23.1
+        version: 3.23.2
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
