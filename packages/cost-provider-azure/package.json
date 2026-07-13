@@ -1,7 +1,7 @@
 {
   "name": "@workspec/cost-provider-azure",
   "version": "0.1.0-alpha.0",
-  "description": "Azure Cost Management implementation of the WorkSpec Cost Attribution provider contract. C0 bootstrap: package identity export only — the Azure adapter lands in a later slice.",
+  "description": "Azure Cost Management implementation of the WorkSpec Cost Attribution provider contract — Resource Graph inventory, Cost Management spend, ARM tag apply, and drift verification, over plain REST.",
   "keywords": [
     "cost-attribution",
     "provider",
@@ -15,6 +15,9 @@
   },
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "files": [
     "dist",
     "README.md",
@@ -37,15 +40,18 @@
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "live-check": "tsx scripts/live-check.ts"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@workspec/cost-provider": "workspace:^",
     "@workspec/cost-schema": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "tsup": "^8.5.1",
+    "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }

@@ -9,7 +9,15 @@
     // (never read by anything) keeps `tsc -b`'s self-bootstrap working
     // without polluting `dist/` — same shadow-emit split as packages/c4-*.
     "outDir": ".typecheck",
-    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Explicit, rather than relying on TypeScript's automatic `@types/*`
+    // discovery: under this package's pinned `typescript@^6.0.3` +
+    // `@types/node@^24`, automatic discovery of the global `node:fs`-style
+    // ambient module declarations does not kick in — needed here because
+    // `src/browser-safety.test.ts` reaches for `node:fs`/`node:path`/etc to
+    // statically scan this package's own source graph (same pattern as
+    // packages/cost-schema and packages/c4-model).
+    "types": ["node"]
   },
   // TS Project Reference: lets `tsc -b` type-check against cost-schema's real
   // TypeScript source (building its declarations on demand), so `typecheck`

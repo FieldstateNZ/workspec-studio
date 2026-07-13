@@ -1,7 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    // "." (not "src"): this config's `include` covers the top-level `test/`
+    // recorded-fixture suite alongside `src/` — same shape as
+    // packages/c4-model's tsconfig.json.
+    "rootDir": ".",
     // Deliberately NOT "dist": this config includes the test files, so a
     // `tsc -b` typecheck of it would emit *.test.d.ts into the published
     // tree (`files: ["dist"]` ships everything under dist/ in the npm
@@ -9,7 +12,14 @@
     // (never read by anything) keeps `tsc -b`'s self-bootstrap working
     // without polluting `dist/` — same shadow-emit split as packages/c4-*.
     "outDir": ".typecheck",
-    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Unlike cost-provider/cost-schema's split (`["node"]` for typecheck,
+    // `[]` for build, to gate browser-safety), this package is explicitly
+    // Node-only end to end — it uses `@azure/identity`, global `fetch`, and
+    // targets `engines.node >= 22` — so `types: ["node"]` stays set in BOTH
+    // this config and tsconfig.build.json. There is no browser-safety
+    // surface here to protect.
+    "types": ["node"]
   },
   // TS Project References: let `tsc -b` type-check against the sibling
   // packages' real TypeScript source (building their declarations on
@@ -21,5 +31,5 @@
     { "path": "../cost-provider/tsconfig.build.json" },
     { "path": "../cost-schema/tsconfig.build.json" }
   ],
-  "include": ["src"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }

@@ -17,6 +17,9 @@ export default defineConfig({
   test: {
     name: 'cost-provider-azure',
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    // `test/**` carries the recorded-fixture suite (multi-page inventory,
+    // spend mapping, retry/backoff, apply grouping, drift detection,
+    // byte-stability) — same split as packages/c4-model.
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'test/**/*.test.ts'],
   },
 });
