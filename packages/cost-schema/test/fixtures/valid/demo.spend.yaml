@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/spend.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Spend
+metadata:
+  id: demo
+spec:
+  rows:
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-growth/providers/Microsoft.Web/sites/app-growth-web
+      amount: 95.25
+      currency: NZD
+      period: 2026-06
+      serviceCategory: App Service
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-platform/providers/Microsoft.Compute/virtualMachines/vm-api-01
+      amount: 420.5
+      currency: NZD
+      period: 2026-06
+      serviceCategory: Virtual Machines
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-platform/providers/Microsoft.Compute/virtualMachines/vm-api-02
+      amount: 410
+      currency: NZD
+      period: 2026-06
+      serviceCategory: Virtual Machines
+      sourceLabel: Reserved instance amortization
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Sql/servers/sql-shared-01
+      amount: 640
+      currency: NZD
+      period: 2026-06
+      serviceCategory: Database
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Storage/storageAccounts/stshared001
+      amount: 18.4
+      currency: NZD
+      period: 2026-06
+      serviceCategory: Storage
+    - amount: 250
+      currency: NZD
+      period: 2026-06
+      serviceCategory: Support
+      unresolved: true
+      sourceLabel: Azure Support Plan

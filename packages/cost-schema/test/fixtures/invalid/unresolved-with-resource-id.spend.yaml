@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/spend.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Spend
+metadata:
+  id: demo
+spec:
+  rows:
+    - resourceId: /subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-a
+      amount: 10
+      currency: NZD
+      period: "2026-06"
+      serviceCategory: Compute
+      unresolved: true
+      sourceLabel: "Unmatched provider line"

@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/attribution.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Attribution
+metadata:
+  id: demo
+spec:
+  dimensions:
+    - id: product
+      label: Product
+      values:
+        - atrium
+        - workspec
+        - shared
+    - id: team
+      label: Team
+      values:
+        - platform
+        - growth
+  rules:
+    - id: r1
+      name: Platform resource group to the platform team
+      match:
+        resourceGroup: rg-platform
+      assign:
+        team: platform
+    - id: r2
+      name: Growth resource group to the growth team
+      match:
+        resourceGroup: rg-growth
+      assign:
+        team: growth
+    - id: r3
+      name: Shared resource group to the platform team (subscription scoped)
+      match:
+        resourceGroup: rg-shared
+        subscription: 11111111-1111-1111-1111-111111111111
+      assign:
+        team: platform
+    - id: r4
+      name: API VMs to the workspec product
+      match:
+        nameGlob: vm-api-*
+      assign:
+        product: workspec
+    - id: r5
+      name: Web sites to the atrium product
+      match:
+        resourceType: Microsoft.Web/sites
+      assign:
+        product: atrium
+    - id: r6
+      name: Product read from the fs-product tag when present
+      match:
+        tagExists: fs-product
+      fromTag:
+        product: fs-product
+    - id: r7
+      name: Platform team via exact tag match
+      match:
+        tagEquals:
+          name: fs-team
+          value: platform
+      assign:
+        team: platform
+    - id: r8
+      name: Shared cost fallback split
+      match: {}
+      split:
+        product:
+          atrium: 0.4
+          shared: 0.6
+  overrides:
+    - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Sql/servers/sql-shared-01
+      assign:
+        product: shared
+        team: platform
