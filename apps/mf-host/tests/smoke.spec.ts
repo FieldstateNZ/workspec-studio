@@ -1,20 +1,32 @@
 import { expect, test } from '@playwright/test';
 
-// S6/S5 integration smoke: the host loads the decision-ui AND c4-ui remotes
-// over module federation and mounts DecisionCard + DecisionWorkspace +
-// C4Diagram + C4Explorer. Proven:
+// S6/S5/C6 integration smoke: the host loads the decision-ui, c4-ui, AND
+// cost-ui remotes over module federation and mounts DecisionCard +
+// DecisionWorkspace + C4Diagram + C4Explorer + AttributionWorkbench +
+// CostReport + CostInventory + TagPlanView. Proven:
 //   1. DecisionCard renders the correct golden cost (the recommended AKS annual,
 //      $54,336.58) — the remote computes it with the bundled engine over the
 //      MemoryRepository the host seeded from the hosting-platform fixtures.
 //   2. C4Diagram/C4Explorer render the in-memory C4 model's elements.
-//   3. There is exactly ONE React instance across BOTH remote boundaries —
+//   3. AttributionWorkbench renders its coverage meter and resource table over
+//      the inline cost estate (see ../src/cost-seed.ts), CostReport renders its
+//      stat cards, clicking the first resource row opens its cascade, and
+//      clicking a rule's reorder button writes through `useWriteAttribution`
+//      and visibly reorders the rail. Each of these interactions runs
+//      entirely through the remote's own hooks (`useState`/`useMutation`), so
+//      they only work with a single shared React — a read path AND a write
+//      path, both proven. CostInventory and TagPlanView render their own
+//      views (stock-take table, tag-plan review) over the same estate.
+//   4. There is exactly ONE React instance across ALL THREE remote boundaries —
 //      proven by each remote's own reactProbe canary (remote's React ===
-//      host's stamped React) AND by DecisionWorkspace's/C4Explorer's hooks
-//      running without an "invalid hook call" (which a second React copy
-//      would throw).
+//      host's stamped React) AND by DecisionWorkspace's/C4Explorer's/
+//      AttributionWorkbench's hooks running without an "invalid hook call"
+//      (which a second React copy would throw).
 
-test.describe('MF smoke — host consumes the @workspec/decision-ui remote', () => {
-  test('DecisionCard shows the golden cost and React is a single instance', async ({ page }) => {
+test.describe('MF smoke — host consumes the decision-ui, c4-ui, and cost-ui remotes', () => {
+  test('host mounts decision, c4 and cost remotes on one React instance (reads + a cost write)', async ({
+    page,
+  }) => {
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
@@ -61,7 +73,63 @@ test.describe('MF smoke — host consumes the @workspec/decision-ui remote', () 
     const c4RemoteVersion = await c4Probe.getAttribute('data-remote-react-version');
     expect(c4RemoteVersion).toBe(hostVersion);
 
-    // ── 4. No duplicate-React / invalid-hook errors leaked to the console. ─────
+    // ── 4a. AttributionWorkbench renders: the coverage meter is visible over
+    //        the inline cost estate seeded by the host (../src/cost-seed.ts). ──
+    const coverageTrack = page.locator('#cost-workbench-mount .cost-coverage-track');
+    await expect(coverageTrack).toBeVisible();
+    await expect(page.locator('#cost-workbench-mount .cost-coverage-figure')).toBeVisible();
+
+    // ── 4b. End-to-end interaction through the singleton React: click the
+    //        first resource row and its cascade appears. Only possible if the
+    //        remote's `useState` (selectedResourceId) is the SAME React the
+    //        rest of the page runs — a second React copy would throw
+    //        "invalid hook call" the moment this click re-renders. ───────────
+    const firstRow = page.locator('#cost-workbench-mount .cost-table-row').first();
+    await expect(firstRow).toBeVisible();
+    const cascade = page.locator('#cost-workbench-mount .cost-cascade').first();
+    await expect(cascade).toBeHidden();
+    await firstRow.click();
+    await expect(cascade).toBeVisible();
+    await expect(cascade.locator('.cost-cascade-row').first()).toBeVisible();
+
+    // ── 4c. CostReport renders its stat cards over the same estate. ───────────
+    await expect(page.locator('#cost-report-mount .cost-stat-eyebrow').first()).toHaveText(
+      'Total spend',
+    );
+
+    // ── 4d. cost-ui's own reactProbe: same single-instance proof, independently. ─
+    const costProbe = page.locator('#cost-react-probe');
+    await expect(costProbe).toHaveAttribute('data-same-instance', 'true');
+    const costRemoteVersion = await costProbe.getAttribute('data-remote-react-version');
+    expect(costRemoteVersion).toBe(hostVersion);
+
+    // ── 4e. Write-path proof: click rule r1's reorder-down button (the ▼ next
+    //        to rule 1 — equivalently rule 2's ▲, both swap the same pair) and
+    //        assert the rail's visible order changes. This exercises
+    //        `useWriteAttribution`'s mutation through the remote's own
+    //        `useMutation` hook against the host's in-memory repository — a
+    //        real write across the MF seam, not just a read — and the
+    //        existing console-error tracking confirms the mutation raised
+    //        nothing. ──────────────────────────────────────────────────────
+    const errorsBeforeReorder = consoleErrors.length;
+    const railRuleIds = page.locator('#cost-workbench-mount .cost-rule-row .cost-rule-id');
+    await expect(railRuleIds.first()).toHaveText('r1');
+    await page.getByRole('button', { name: 'Move rule r1 down' }).click();
+    await expect(railRuleIds.first()).toHaveText('r2');
+    const reorderErrors = consoleErrors.slice(errorsBeforeReorder);
+    expect(reorderErrors, `unexpected console errors from the rule-reorder write:\n${reorderErrors.join('\n')}`).toEqual(
+      [],
+    );
+
+    // ── 4f. CostInventory renders its stock-take table over the same estate,
+    //        as a fourth cost-ui view sharing the one CostStudioProvider. ─────
+    await expect(page.locator('#cost-inventory-mount .cost-inventory-table')).toBeVisible();
+
+    // ── 4g. TagPlanView renders its plan header + action counts over the
+    //        inline TagPlan seed (../src/cost-seed.ts). ───────────────────────
+    await expect(page.locator('#cost-tagplan-mount .cost-plan-counts')).toBeVisible();
+
+    // ── 5. No duplicate-React / invalid-hook errors leaked to the console. ─────
     const reactErrors = consoleErrors.filter((text) =>
       /invalid hook call|copies of react|two copies of react|hooks can only be called/i.test(text),
     );

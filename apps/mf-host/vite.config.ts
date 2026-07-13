@@ -2,20 +2,21 @@ import { federation } from '@module-federation/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// The S6 smoke HOST: a minimal Vite app that consumes @workspec/decision-ui
-// AND @workspec/c4-ui as module-federation remotes. It declares the SAME
-// shared singletons each remote declares (react / react-dom /
-// react/jsx-runtime, plus @tanstack/react-query for decision-ui) — the host
-// owns one copy of each and the remotes borrow them, so there is exactly one
-// React across every boundary. That is what lets each remote's hooks run and
-// (for decision-ui) the provider's QueryClient reach the views' `useQuery`.
+// The S6 smoke HOST: a minimal Vite app that consumes @workspec/decision-ui,
+// @workspec/c4-ui, AND @workspec/cost-ui as module-federation remotes. It
+// declares the SAME shared singletons each remote declares (react /
+// react-dom / react/jsx-runtime, plus @tanstack/react-query for decision-ui
+// and cost-ui) — the host owns one copy of each and the remotes borrow them,
+// so there is exactly one React across every boundary. That is what lets
+// each remote's hooks run and (for decision-ui/cost-ui) the provider's
+// QueryClient reach the views' `useQuery`.
 //
 // Each remote entry is a root-relative URL: the smoke server (serve.ts)
-// serves the decision-ui remote under `/remote/` and the c4-ui remote under
-// `/remote-c4/`, both on the same origin, so no port is baked into this
-// build. Remote type consumption is disabled (`dts: false`) — neither remote
-// is running at build time; types come from the hand-written
-// `src/remotes.d.ts`.
+// serves the decision-ui remote under `/remote/`, the c4-ui remote under
+// `/remote-c4/`, and the cost-ui remote under `/remote-cost/`, all on the
+// same origin, so no port is baked into this build. Remote type consumption
+// is disabled (`dts: false`) — none of the remotes are running at build
+// time; types come from the hand-written `src/remotes.d.ts`.
 
 const REACT_RANGE = '^18.3';
 const REACT_QUERY_RANGE = '^5.0.0';
@@ -35,6 +36,11 @@ export default defineConfig({
           type: 'module',
           name: 'c4Ui',
           entry: '/remote-c4/remoteEntry.js',
+        },
+        costStudio: {
+          type: 'module',
+          name: 'costStudio',
+          entry: '/remote-cost/remoteEntry.js',
         },
       },
       shared: {
