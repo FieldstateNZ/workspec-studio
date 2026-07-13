@@ -351,6 +351,93 @@ describe('validate', () => {
     expect(cap.err()).toContain('a.attribution.yaml: warning: [orphan-spend-row]');
     expect(cap.err()).toContain('artifact(s) OK');
   });
+
+  it('--json prints the diagnostics array to stdout, text diagnostics still on stderr', async () => {
+    const cap = captureIO();
+    const code = await run(['validate', '--json'], cap.io, { repository: createMemoryRepository() });
+    expect(code).toBe(0);
+    const parsed: unknown[] = JSON.parse(cap.out());
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveLength(0);
+    expect(cap.err()).toBe('validate: 0 artifact(s) OK\n');
+  });
+
+  it('--json reports a structured parse-error diagnostic on a schema violation', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'cost-studio-validate-json-'));
+    try {
+      await writeFile(
+        join(dir, 'bad.inventory.yaml'),
+        [
+          '# yaml-language-server: $schema=x',
+          'apiVersion: workspec.io/v1alpha1',
+          'kind: Inventory',
+          'metadata:',
+          '  id: estate',
+          'spec:',
+          '  asOf: "2026-07-01T00:00:00.000Z"',
+          '  scope:',
+          '    subscriptions: [sub-1]',
+          '  resources:',
+          '    - id: b',
+          '      name: B',
+          '      type: t',
+          '      location: l',
+          '      resourceGroup: rg',
+          '      subscription: sub-1',
+          '    - id: a', // out of order
+          '      name: A',
+          '      type: t',
+          '      location: l',
+          '      resourceGroup: rg',
+          '      subscription: sub-1',
+          '',
+        ].join('\n'),
+      );
+      const cap = captureIO();
+      const code = await run(['validate', '--dir', dir, '--json'], cap.io, {
+        repository: new FsRepository(dir),
+      });
+      expect(code).toBe(1);
+      const parsed = JSON.parse(cap.out()) as { severity: string; code: string }[];
+      expect(parsed.length).toBeGreaterThan(0);
+      expect(parsed.every((d) => d.severity === 'error' && d.code === 'parse-error')).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('--json reports engine diagnostics with their own code and warning severity', async () => {
+    const inventory = makeInventory();
+    const attribution = makeAttribution();
+    const spend: Spend = {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Spend',
+      metadata: { id: 'spend-with-orphan' },
+      spec: {
+        rows: [
+          {
+            resourceId: 'res-unknown',
+            amount: 5,
+            currency: 'NZD',
+            period: '2026-07',
+            serviceCategory: 'Misc',
+          },
+        ],
+      },
+    };
+    const repository = createMemoryRepository({
+      inventories: { 'i.inventory.yaml': inventory },
+      attributions: { 'a.attribution.yaml': attribution },
+      spends: { 's.spend.yaml': spend },
+    });
+    const cap = captureIO();
+    const code = await run(['validate', '--json'], cap.io, { repository });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(cap.out()) as { severity: string; code: string; file: string }[];
+    expect(parsed).toContainEqual(
+      expect.objectContaining({ severity: 'warning', code: 'orphan-spend-row', file: 'a.attribution.yaml' }),
+    );
+  });
 });
 
 describe('report', () => {

@@ -45,16 +45,30 @@ command options.
 const VALIDATE_HELP = `workspec-decisions validate — validate all artifacts under a directory
 
 Usage:
-  workspec-decisions validate [--dir <path>]
+  workspec-decisions validate [--dir <path>] [--json]
 
 Options:
   --dir <path>   Directory to scan (default: current directory).
+  --json         Also print the diagnostics array as JSON to stdout.
 
 Zod-validates every *.decision.yaml and *.catalog.yaml, then checks each
 decision's authored SKU-line references against its catalog. Dangling
 references inside levers are reported as (non-fatal) warnings. Prints
 "file:line:col: message" diagnostics and exits non-zero on any error.
 `;
+
+/** One machine-readable validate finding — mirrors `@workspec/c4-model`'s `C4Diagnostic` shape. */
+export interface ValidateDiagnostic {
+  readonly severity: 'error' | 'warning';
+  readonly code: string;
+  readonly message: string;
+  /** Ref (repo-relative path) of the artifact this diagnostic is about. */
+  readonly file: string;
+  /** 1-based source line inside `file`, when known. */
+  readonly line?: number;
+  /** 1-based source column, present only alongside `line`. */
+  readonly col?: number;
+}
 
 const RENDER_HELP = `workspec-decisions render-adr — render a decision as a Markdown ADR
 
@@ -86,10 +100,15 @@ function reportReadError(ref: string, error: unknown, io: CliIO): void {
 
 async function runValidate(argv: string[], io: CliIO): Promise<number> {
   let dir: string;
+  let json: boolean;
   try {
     const { values } = parseArgs({
       args: argv,
-      options: { dir: { type: 'string' }, help: { type: 'boolean', short: 'h' } },
+      options: {
+        dir: { type: 'string' },
+        json: { type: 'boolean' },
+        help: { type: 'boolean', short: 'h' },
+      },
       allowPositionals: false,
     });
     if (values.help === true) {
@@ -97,6 +116,7 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
       return 0;
     }
     dir = values.dir ?? process.cwd();
+    json = values.json === true;
   } catch (error) {
     io.err(`validate: ${(error as Error).message}\n`);
     return 2;
@@ -106,6 +126,7 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
   let errorCount = 0;
   let warningCount = 0;
   let fileCount = 0;
+  const diagnostics: ValidateDiagnostic[] = [];
 
   // Catalogs first — validate each independently and cache the valid ones so a
   // decision's ref-check reuses them.
@@ -118,6 +139,14 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
     } else {
       for (const issue of parsed.errors) {
         io.err(issueDiagnostic(ref, issue));
+        diagnostics.push({
+          severity: 'error',
+          code: 'parse-error',
+          message: issue.message,
+          file: ref,
+          line: issue.line,
+          col: issue.col,
+        });
         errorCount += 1;
       }
     }
@@ -130,6 +159,14 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
     if (!parsed.ok) {
       for (const issue of parsed.errors) {
         io.err(issueDiagnostic(ref, issue));
+        diagnostics.push({
+          severity: 'error',
+          code: 'parse-error',
+          message: issue.message,
+          file: ref,
+          line: issue.line,
+          col: issue.col,
+        });
         errorCount += 1;
       }
       continue; // an invalid decision cannot be ref-checked
@@ -144,6 +181,14 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
       } catch (error) {
         const why = error instanceof ArtifactValidationError ? 'is invalid' : 'cannot be read';
         io.err(`${ref}:1:1: error: referenced catalog "${catalogRef}" ${why}\n`);
+        diagnostics.push({
+          severity: 'error',
+          code: 'dangling-catalog-ref',
+          message: `referenced catalog "${catalogRef}" ${why}`,
+          file: ref,
+          line: 1,
+          col: 1,
+        });
         errorCount += 1;
         continue;
       }
@@ -163,6 +208,14 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
             : ['spec', 'options'];
         const pos = locate(path);
         io.err(`${ref}:${pos.line}:${pos.col}: error: ${refError.message}\n`);
+        diagnostics.push({
+          severity: 'error',
+          code: `dangling-${refError.field}-ref`,
+          message: refError.message,
+          file: ref,
+          line: pos.line,
+          col: pos.col,
+        });
         errorCount += 1;
       }
     }
@@ -174,10 +227,20 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
       for (const warning of warnings) {
         const pos = locate(warning.path);
         io.err(`${ref}:${pos.line}:${pos.col}: warning: ${warning.message}\n`);
+        diagnostics.push({
+          severity: 'warning',
+          code: `dangling-lever-${warning.field}-ref`,
+          message: warning.message,
+          file: ref,
+          line: pos.line,
+          col: pos.col,
+        });
         warningCount += 1;
       }
     }
   }
+
+  if (json) io.out(`${JSON.stringify(diagnostics)}\n`);
 
   if (errorCount === 0) {
     const suffix = warningCount > 0 ? `, ${warningCount} warning(s)` : '';

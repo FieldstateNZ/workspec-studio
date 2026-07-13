@@ -114,10 +114,11 @@ existing inventory.
 const VALIDATE_HELP = `workspec-cost validate — validate all cost artifacts under a directory
 
 Usage:
-  workspec-cost validate [--dir <path>]
+  workspec-cost validate [--dir <path>] [--json]
 
 Options:
   --dir <path>   Directory to scan (default: current directory).
+  --json         Also print the diagnostics array as JSON to stdout.
 
 Zod-validates every inventory/spend/attribution/tag-plan artifact. When at
 least one inventory and one attribution are present, also runs the
@@ -125,6 +126,19 @@ attribution engine over every (inventory, attribution) pairing (joining any
 spends found) and prints its diagnostics as non-fatal warnings. Prints
 "ref:line:col: error: message" diagnostics and exits non-zero on any error.
 `;
+
+/** One machine-readable validate finding — mirrors `@workspec/c4-model`'s `C4Diagnostic` shape. */
+export interface ValidateDiagnostic {
+  readonly severity: 'error' | 'warning';
+  readonly code: string;
+  readonly message: string;
+  /** Ref (repo-relative path) of the artifact this diagnostic is about. */
+  readonly file: string;
+  /** 1-based source line inside `file`, when known. */
+  readonly line?: number;
+  /** 1-based source column, present only alongside `line`. */
+  readonly col?: number;
+}
 
 const REPORT_HELP = `workspec-cost report — coverage headline + rollup by dimension
 
@@ -177,13 +191,42 @@ function issueDiagnostic(ref: string, issue: ParseIssue): string {
   return `${ref}:${loc}: error: ${issue.message}${path}\n`;
 }
 
-/** Prints located diagnostics for a failed read; returns the number of errors reported. */
-function reportReadError(ref: string, error: unknown, io: CliIO): number {
+/**
+ * Prints located diagnostics for a failed read; returns the number of errors
+ * reported. When `diagnostics` is given, also appends a machine-readable
+ * `ValidateDiagnostic` per issue (used by `validate --json`; other callers
+ * omit it and just get the printed text + count).
+ */
+function reportReadError(
+  ref: string,
+  error: unknown,
+  io: CliIO,
+  diagnostics?: ValidateDiagnostic[],
+): number {
   if (error instanceof ArtifactValidationError) {
-    for (const issue of error.issues) io.err(issueDiagnostic(ref, issue));
+    for (const issue of error.issues) {
+      io.err(issueDiagnostic(ref, issue));
+      diagnostics?.push({
+        severity: 'error',
+        code: 'parse-error',
+        message: issue.message,
+        file: ref,
+        line: issue.line,
+        col: issue.col,
+      });
+    }
     return error.issues.length;
   }
-  io.err(`${ref}:1:1: error: ${(error as Error).message}\n`);
+  const message = (error as Error).message;
+  io.err(`${ref}:1:1: error: ${message}\n`);
+  diagnostics?.push({
+    severity: 'error',
+    code: 'read-error',
+    message,
+    file: ref,
+    line: 1,
+    col: 1,
+  });
   return 1;
 }
 
@@ -314,11 +357,15 @@ async function runStocktake(argv: string[], io: CliIO, deps: RunDeps | undefined
 // ── validate ─────────────────────────────────────────────────────────────
 
 async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
-  let values: { dir?: string; help?: boolean };
+  let values: { dir?: string; json?: boolean; help?: boolean };
   try {
     ({ values } = parseArgs({
       args: argv,
-      options: { dir: { type: 'string' }, help: { type: 'boolean', short: 'h' } },
+      options: {
+        dir: { type: 'string' },
+        json: { type: 'boolean' },
+        help: { type: 'boolean', short: 'h' },
+      },
       allowPositionals: false,
     }));
   } catch (error) {
@@ -344,13 +391,14 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
 
   let errorCount = 0;
   let warningCount = 0;
+  const diagnostics: ValidateDiagnostic[] = [];
 
   const validInventories: { ref: string; data: Inventory }[] = [];
   for (const { ref } of invRefs) {
     try {
       validInventories.push({ ref, data: await repository.readInventory(ref) });
     } catch (error) {
-      errorCount += reportReadError(ref, error, io);
+      errorCount += reportReadError(ref, error, io, diagnostics);
     }
   }
 
@@ -359,7 +407,7 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
     try {
       validSpends.push(await repository.readSpend(ref));
     } catch (error) {
-      errorCount += reportReadError(ref, error, io);
+      errorCount += reportReadError(ref, error, io, diagnostics);
     }
   }
 
@@ -368,7 +416,7 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
     try {
       validAttributions.push({ ref, data: await repository.readAttribution(ref) });
     } catch (error) {
-      errorCount += reportReadError(ref, error, io);
+      errorCount += reportReadError(ref, error, io, diagnostics);
     }
   }
 
@@ -376,7 +424,7 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
     try {
       await repository.readTagPlan(ref);
     } catch (error) {
-      errorCount += reportReadError(ref, error, io);
+      errorCount += reportReadError(ref, error, io, diagnostics);
     }
   }
 
@@ -387,11 +435,19 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
         const suffix = validInventories.length > 1 ? ` (inventory: ${inv.ref})` : '';
         for (const diagnostic of result.diagnostics) {
           io.err(`${attr.ref}: warning: [${diagnostic.code}] ${diagnostic.message}${suffix}\n`);
+          diagnostics.push({
+            severity: 'warning',
+            code: diagnostic.code,
+            message: `${diagnostic.message}${suffix}`,
+            file: attr.ref,
+          });
           warningCount += 1;
         }
       }
     }
   }
+
+  if (values.json === true) io.out(`${JSON.stringify(diagnostics)}\n`);
 
   if (errorCount === 0) {
     const suffix = warningCount > 0 ? `, ${warningCount} warning(s)` : '';

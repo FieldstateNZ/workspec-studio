@@ -154,6 +154,32 @@ describe('validate', () => {
     expect(cap.err()).toMatch(/warning: lever "reserve" sets unknown pricing mode "no_such_mode"/);
     expect(cap.err()).toMatch(/2 artifact\(s\) OK, 1 warning\(s\)/);
   });
+
+  it('--json prints the diagnostics array to stdout, text diagnostics still on stderr', async () => {
+    const cap = captureIO();
+    const code = await run(['validate', '--dir', HOSTING_DIR, '--json'], cap.io);
+    expect(code).toBe(0);
+    const parsed: unknown[] = JSON.parse(cap.out());
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveLength(0);
+    expect(cap.err()).toMatch(/validate: 2 artifact\(s\) OK/);
+  });
+
+  it('--json reports a structured parse-error diagnostic on the invalid fixtures', async () => {
+    const cap = captureIO();
+    const code = await run(['validate', '--dir', INVALID_DIR, '--json'], cap.io);
+    expect(code).not.toBe(0);
+    const parsed = JSON.parse(cap.out()) as {
+      severity: string;
+      code: string;
+      message: string;
+      file: string;
+      line?: number;
+      col?: number;
+    }[];
+    expect(parsed.length).toBeGreaterThan(0);
+    expect(parsed.every((d) => d.severity === 'error' && d.code === 'parse-error')).toBe(true);
+  });
 });
 
 describe('render-adr', () => {

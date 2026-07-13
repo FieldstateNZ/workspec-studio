@@ -46,7 +46,7 @@ skips the drift line.
 ### `validate`
 
 ```
-workspec-cost validate [--dir <dir>]
+workspec-cost validate [--dir <dir>] [--json]
 ```
 
 Zod-validates every inventory/spend/attribution/tag-plan artifact under `--dir` (default: the
@@ -54,7 +54,8 @@ current directory), printing `ref:line:col: error: message` diagnostics and exit
 schema error. When at least one inventory and one attribution are present, additionally runs the
 attribution engine (`@workspec/cost-engine`) over every (inventory, attribution) pairing — joining
 any spends found — and prints its diagnostics as non-fatal `ref: warning: [code] message` lines
-(exit stays `0` when only warnings fire). Nothing to validate exits `0` quietly.
+(exit stays `0` when only warnings fire). Nothing to validate exits `0` quietly. `--json` prints the
+same diagnostics as a `{severity, code, message, file, line?, col?}[]` array to stdout.
 
 ### `report`
 

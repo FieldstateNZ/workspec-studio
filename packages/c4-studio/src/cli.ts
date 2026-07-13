@@ -1,19 +1,24 @@
-// The C4 Studio CLI — three subcommands over a `.workspec/` working tree:
+// The C4 Studio CLI — four subcommands over a `.workspec/` working tree:
 // `validate` (CI-friendly diagnostics), `render` (one diagram to a standalone
-// SVG), and `serve` (the localhost host shell, the DEFAULT command).
+// SVG), `import-aspire` (project a .NET Aspire apphost graph into the tree),
+// and `serve` (the localhost host shell, the DEFAULT command).
 //
 // `run(argv, io)` is the testable entry point: it returns a process exit code
 // and writes through an injectable IO (defaulting to the real streams), so
 // tests can drive it and capture output without spawning a process. `bin.ts`
 // is the only thing that touches `process`.
 
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import type { C4Diagnostic } from '@workspec/c4-model';
 import { loadC4Model } from '@workspec/c4-model';
 import { createFsSource } from '@workspec/c4-model/fs';
 import type { ThemeName } from '@workspec/c4-ui';
+import type { AspireDiagnostic } from './aspire/diagnostics.js';
+import { parseAspireGraph } from './aspire/graph-schema.js';
+import { checkAspireGraph } from './aspire/check.js';
+import { scaffoldAspireGraph } from './aspire/scaffold.js';
 import { renderDiagramToSvg } from './render-diagram.js';
 import { runServe } from './serve.js';
 
@@ -34,9 +39,10 @@ Usage:
   workspec-c4 [command] [options]
 
 Commands:
-  serve      Run the localhost host shell over a directory (DEFAULT command).
-  validate   Validate every element/diagram/layout under a directory (CI-friendly).
-  render     Render one diagram to a standalone SVG.
+  serve           Run the localhost host shell over a directory (DEFAULT command).
+  validate        Validate every element/diagram/layout under a directory (CI-friendly).
+  render          Render one diagram to a standalone SVG.
+  import-aspire   Project a .NET Aspire apphost resource graph into a .workspec/ tree.
 
 With no command, "serve" runs. Run "workspec-c4 <command> --help" for command options.
 `;
@@ -194,6 +200,115 @@ async function runRender(argv: string[], io: CliIO): Promise<number> {
   return 0;
 }
 
+const IMPORT_ASPIRE_HELP = `workspec-c4 import-aspire — project an Aspire apphost resource graph into a .workspec/ tree
+
+Usage:
+  workspec-c4 import-aspire --graph <file> [--dir <path>] [--mode scaffold|check] [--json]
+
+Options:
+  --graph <file>   Path to a "workspec-graph/v1" JSON dump (required).
+  --dir <path>     Directory containing .workspec/ to write/check (default: current directory).
+  --mode <mode>    "scaffold" (default): write the tree. "check": report drift, write nothing.
+  --json           Also print the diagnostics array as JSON to stdout ("check" mode only).
+
+Maps every non-parameter Aspire resource to a container/database/queue/
+external-system element (see docs/aspire-hosting/import-mapping.md for the
+classification table), tags every generated element "aspire-managed", and
+(re)generates "diagrams/aspire-container.yaml" — including "contains" edges
+synthesized from each resource's parent field. "scaffold" is idempotent — a
+second run against the same graph writes nothing new — and never touches a
+hand-authored file occupying an element's path or the reserved diagram slug.
+"check" writes nothing and exits 0 clean / 1 on drift / 2 on a usage error
+(a missing/invalid --graph).
+`;
+
+function formatAspireDiagnostic(diagnostic: AspireDiagnostic): string {
+  const slugSuffix = diagnostic.slug !== undefined ? ` (${diagnostic.slug})` : '';
+  return `${diagnostic.file}: [${diagnostic.severity}] ${diagnostic.code} ${diagnostic.message}${slugSuffix}\n`;
+}
+
+async function runImportAspire(argv: string[], io: CliIO): Promise<number> {
+  let values: { graph?: string; dir?: string; mode?: string; json?: boolean; help?: boolean };
+  try {
+    ({ values } = parseArgs({
+      args: argv,
+      options: {
+        graph: { type: 'string' },
+        dir: { type: 'string' },
+        mode: { type: 'string' },
+        json: { type: 'boolean' },
+        help: { type: 'boolean', short: 'h' },
+      },
+      allowPositionals: false,
+    }));
+  } catch (error) {
+    io.err(`import-aspire: ${(error as Error).message}\n`);
+    return 2;
+  }
+  if (values.help === true) {
+    io.out(IMPORT_ASPIRE_HELP);
+    return 0;
+  }
+
+  const mode = values.mode ?? 'scaffold';
+  if (mode !== 'scaffold' && mode !== 'check') {
+    io.err(`import-aspire: invalid --mode "${mode}" (expected "scaffold" or "check")\n`);
+    return 2;
+  }
+  if (values.graph === undefined) {
+    io.err('import-aspire: --graph <file> is required\n');
+    return 2;
+  }
+
+  let graphText: string;
+  try {
+    graphText = await readFile(resolve(process.cwd(), values.graph), 'utf8');
+  } catch (error) {
+    io.err(`import-aspire: cannot read --graph "${values.graph}": ${(error as Error).message}\n`);
+    return 2;
+  }
+
+  const parsed = parseAspireGraph(graphText);
+  if (!parsed.ok) {
+    io.err(`import-aspire: ${parsed.message}\n`);
+    return 2;
+  }
+
+  const dir = values.dir ?? process.cwd();
+  const source = createFsSource(dir);
+
+  if (mode === 'scaffold') {
+    const report = await scaffoldAspireGraph(source, parsed.data);
+    let changed = 0;
+    for (const file of report.files) {
+      if (file.action === 'unchanged') continue;
+      changed += 1;
+      io.err(`import-aspire: ${file.action} ${file.path}\n`);
+    }
+    if (report.skippedParameters.length > 0) {
+      io.err(`import-aspire: skipped ${report.skippedParameters.length} parameter resource(s)\n`);
+    }
+    io.err(
+      `import-aspire: ${changed} file(s) changed, ${report.files.length - changed} unchanged\n`,
+    );
+    return 0;
+  }
+
+  const diagnostics = await checkAspireGraph(source, parsed.data);
+  for (const diagnostic of diagnostics) io.err(formatAspireDiagnostic(diagnostic));
+  if (values.json === true) io.out(`${JSON.stringify(diagnostics)}\n`);
+
+  if (diagnostics.length === 0) {
+    io.err('import-aspire: clean — the tree matches the Aspire graph\n');
+    return 0;
+  }
+  const errorCount = diagnostics.filter((d) => d.severity === 'error').length;
+  io.err(
+    `import-aspire: ${diagnostics.length} drift finding(s) (${errorCount} error(s)) against the Aspire graph\n`,
+  );
+  return 1;
+}
+
 /**
  * The CLI entry point. Parses `argv` (already stripped of `node` + script),
  * dispatches to a subcommand, and resolves to the process exit code. Writes
@@ -208,6 +323,8 @@ export async function run(argv: string[], io: CliIO = defaultIO): Promise<number
       return runValidate(rest, io);
     case 'render':
       return runRender(rest, io);
+    case 'import-aspire':
+      return runImportAspire(rest, io);
     case undefined:
       // No subcommand → start the host (the default command).
       return runServe(rest, io);

@@ -172,6 +172,105 @@ describe('render', () => {
   });
 });
 
+describe('import-aspire', () => {
+  const SAMPLE_GRAPH = repoPath('c4-studio/test/fixtures/aspire/sample-graph.json');
+
+  it('prints help', async () => {
+    const cap = captureIO();
+    const code = await run(['import-aspire', '--help'], cap.io);
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('import-aspire');
+    expect(cap.out()).toContain('--graph');
+  });
+
+  it('exits 2 when --graph is missing', async () => {
+    const cap = captureIO();
+    const code = await run(['import-aspire', '--dir', dir], cap.io);
+    expect(code).toBe(2);
+    expect(cap.err()).toMatch(/--graph <file> is required/);
+  });
+
+  it('exits 2 on an invalid --mode', async () => {
+    const cap = captureIO();
+    const code = await run(
+      ['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir, '--mode', 'bogus'],
+      cap.io,
+    );
+    expect(code).toBe(2);
+    expect(cap.err()).toMatch(/invalid --mode "bogus"/);
+  });
+
+  it('exits 2 with a clear message when --graph does not resolve to a file', async () => {
+    const cap = captureIO();
+    const code = await run(
+      ['import-aspire', '--graph', join(dir, 'nope.json'), '--dir', dir],
+      cap.io,
+    );
+    expect(code).toBe(2);
+    expect(cap.err()).toMatch(/cannot read --graph/);
+  });
+
+  it('exits 2 with a clear message on an unsupported graph version', async () => {
+    const badGraph = join(dir, 'bad.json');
+    await writeFile(badGraph, JSON.stringify({ version: 'workspec-graph/v9', apphost: { name: 'x' }, resources: [] }));
+    const cap = captureIO();
+    const code = await run(['import-aspire', '--graph', badGraph, '--dir', dir], cap.io);
+    expect(code).toBe(2);
+    expect(cap.err()).toMatch(/unsupported graph version/);
+  });
+
+  it('--mode scaffold (default) writes a tree that validate confirms is zero-diagnostic, and is idempotent', async () => {
+    const first = captureIO();
+    const firstCode = await run(['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir], first.io);
+    expect(firstCode).toBe(0);
+    expect(first.err()).toMatch(/file\(s\) changed/);
+
+    const validateCap = captureIO();
+    const validateCode = await run(['validate', '--dir', dir], validateCap.io);
+    expect(validateCode).toBe(0);
+    expect(validateCap.err()).not.toMatch(/warning|error/);
+
+    const second = captureIO();
+    const secondCode = await run(['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir], second.io);
+    expect(secondCode).toBe(0);
+    expect(second.err()).toMatch(/0 file\(s\) changed/);
+  });
+
+  it('--mode check reports clean (exit 0) against a tree it just scaffolded', async () => {
+    await run(['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir], captureIO().io);
+    const cap = captureIO();
+    const code = await run(['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir, '--mode', 'check'], cap.io);
+    expect(code).toBe(0);
+    expect(cap.err()).toMatch(/clean/);
+  });
+
+  it('--mode check --json reports drift diagnostics as JSON on stdout, exit 1, text still on stderr', async () => {
+    await run(['import-aspire', '--graph', SAMPLE_GRAPH, '--dir', dir], captureIO().io);
+
+    const smallerGraph = join(dir, 'smaller.json');
+    const graphText = await readFile(SAMPLE_GRAPH, 'utf8');
+    const parsedGraph = JSON.parse(graphText) as { resources: { name: string }[] };
+    await writeFile(
+      smallerGraph,
+      JSON.stringify({
+        ...JSON.parse(graphText),
+        resources: parsedGraph.resources.filter((r) => r.name !== 'worker'),
+      }),
+    );
+
+    const cap = captureIO();
+    const code = await run(
+      ['import-aspire', '--graph', smallerGraph, '--dir', dir, '--mode', 'check', '--json'],
+      cap.io,
+    );
+    expect(code).toBe(1);
+    expect(cap.err()).toMatch(/drift finding/);
+    const parsed = JSON.parse(cap.out()) as { severity: string; code: string }[];
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toContainEqual(expect.objectContaining({ code: 'element-orphaned' }));
+  });
+});
+
 describe('dispatch', () => {
   it('prints help for the help command and exits zero', async () => {
     const cap = captureIO();
