@@ -8,6 +8,7 @@
   "references": [
     { "path": "../cost-engine/tsconfig.build.json" },
     { "path": "../cost-provider/tsconfig.build.json" },
+    { "path": "../cost-provider-azure/tsconfig.build.json" },
     { "path": "../cost-schema/tsconfig.build.json" },
     { "path": "../cost-ui/tsconfig.build.json" }
   ],

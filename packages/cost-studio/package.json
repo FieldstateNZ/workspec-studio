@@ -1,7 +1,7 @@
 {
   "name": "@workspec/cost-studio",
   "version": "0.1.0-alpha.0",
-  "description": "WorkSpec Cost Attribution — standalone CLI + localhost host shell. C0 bootstrap: a help-stub CLI only — real commands land in a later slice.",
+  "description": "WorkSpec Cost Attribution — standalone CLI + localhost host shell. workspec-cost stocktakes a cloud estate, validates/reports on cost artifacts, and computes/applies tag plans.",
   "keywords": [
     "cost-attribution",
     "cli"
@@ -44,6 +44,7 @@
   "dependencies": {
     "@workspec/cost-engine": "workspace:^",
     "@workspec/cost-provider": "workspace:^",
+    "@workspec/cost-provider-azure": "workspace:^",
     "@workspec/cost-schema": "workspace:^",
     "@workspec/cost-ui": "workspace:^"
   },

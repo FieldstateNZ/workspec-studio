@@ -141,3 +141,15 @@ export {
   buildAllJsonSchemas,
   serializeJsonSchema,
 } from './json-schema.js';
+
+// ── Repository port (storage abstraction) + in-memory test double ──────────
+export { COST_REPOSITORY_METHODS, createMemoryRepository } from './repository.js';
+export type {
+  Ref,
+  InventoryRef,
+  SpendRef,
+  AttributionRef,
+  TagPlanRef,
+  CostRepositoryPort,
+  MemoryRepositorySeed,
+} from './repository.js';
