@@ -1,11 +1,14 @@
 {
   "name": "@workspec/cost-schema",
   "version": "0.1.0-alpha.0",
-  "description": "Zod source of truth for WorkSpec Cost Attribution artifacts (pricing catalogs, usage records, allocation rules). C0 bootstrap: package identity export only — the real schemas land in a later slice.",
+  "description": "Zod source of truth for WorkSpec Cost Attribution artifacts (Inventory, Spend, Attribution, TagPlan) — TS types, runtime validation, generated JSON Schema, and byte-stable YAML serialization.",
   "keywords": [
     "zod",
+    "json-schema",
+    "yaml",
     "schema",
-    "cost-attribution"
+    "cost-attribution",
+    "finops"
   ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/cost-schema#readme",
   "repository": {
