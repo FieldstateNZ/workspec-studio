@@ -1,0 +1,56 @@
+{
+  "name": "@workspec/cost-studio",
+  "version": "0.1.0-alpha.0",
+  "description": "WorkSpec Cost Attribution — standalone CLI + localhost host shell. C0 bootstrap: a help-stub CLI only — real commands land in a later slice.",
+  "keywords": [
+    "cost-attribution",
+    "cli"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/cost-studio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/cost-studio"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "workspec-cost": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/cost-engine": "workspace:^",
+    "@workspec/cost-provider": "workspace:^",
+    "@workspec/cost-schema": "workspace:^",
+    "@workspec/cost-ui": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

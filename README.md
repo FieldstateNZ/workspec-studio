@@ -5,10 +5,11 @@ product, publishing packages that WorkSpec Enterprise consumes directly rather t
 duplicating. Every package here is Enterprise-grade by constitution: Enterprise is a future
 consumer of this code.
 
-| Module      | Status      | Where                                                 |
-| ----------- | ----------- | ----------------------------------------------------- |
-| Decisions   | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`    |
-| C4 Diagrams | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/` |
+| Module           | Status      | Where                                                 |
+| ---------------- | ----------- | ----------------------------------------------------- |
+| Decisions        | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`    |
+| C4 Diagrams      | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/` |
+| Cost Attribution | in progress | `packages/cost-*`                                     |
 
 ## Layout
 
