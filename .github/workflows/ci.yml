@@ -46,3 +46,20 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+  dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build --configuration Release aspire-hosting/Aspire.Hosting.Workspec.slnx
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build aspire-hosting/Aspire.Hosting.Workspec.slnx

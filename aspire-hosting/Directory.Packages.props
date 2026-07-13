@@ -1,0 +1,28 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Latest stable 13.x line as of 2026-07-14 (verified against nuget.org).
+         Aspire.Hosting.Testing is pinned here for future slices (A1+ hosting
+         integration tests via DistributedApplicationTestingBuilder) — A0's
+         smoke test doesn't consume it yet. -->
+    <PackageVersion Include="Aspire.Hosting" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- xunit test stack: matches what the locally installed .NET 10 SDK's
+         own "xUnit Test Project" / "Aspire Test Project (xUnit)" templates
+         generate (dotnet new xunit / dotnet new aspire-xunit) — classic
+         xunit v2 + VSTest, not xunit.v3/Microsoft.Testing.Platform, is still
+         the SDK's own default on .NET 10. -->
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+</Project>
