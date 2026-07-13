@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as packages/c4-*.
+    "outDir": ".typecheck",
+    "types": ["node"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+  },
+  // TS Project References: let `tsc -b` type-check against the sibling
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // siblings' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
+  "references": [
+    { "path": "../cost-engine/tsconfig.build.json" },
+    { "path": "../cost-provider/tsconfig.build.json" },
+    { "path": "../cost-schema/tsconfig.build.json" },
+    { "path": "../cost-ui/tsconfig.build.json" }
+  ],
+  "include": ["src"]
+}

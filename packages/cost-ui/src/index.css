@@ -1,0 +1,15 @@
+/* The package stylesheet build entry, compiled by @tailwindcss/cli into
+   dist/styles.css (see the package.json `build` script).
+
+   C0 bootstrap: no real components yet (those land starting a later slice),
+   so this stays the minimal composition — the WorkSpec preset's theme +
+   utilities layers, ready for the views this package will ship. Mirrors the
+   layer discipline of packages/decision-ui/src/index.css and
+   packages/c4-ui/src/index.css; the @source scan for @workspec/design's
+   adopted components and the scoped preflight stand-in get added once this
+   package actually renders any. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@source './';

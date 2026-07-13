@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+  },
+  "references": [
+    { "path": "../cost-engine/tsconfig.build.json" },
+    { "path": "../cost-provider/tsconfig.build.json" },
+    { "path": "../cost-schema/tsconfig.build.json" },
+    { "path": "../cost-ui/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
