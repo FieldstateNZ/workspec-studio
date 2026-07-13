@@ -1,0 +1,96 @@
+{
+  "version": "workspec-graph/v1",
+  "apphost": { "name": "Ledger AppHost" },
+  "resources": [
+    {
+      "name": "api-server",
+      "kind": "project",
+      "typeName": "ProjectResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": "../artifacts/api-server",
+      "endpoints": [
+        { "name": "http", "scheme": "http", "port": 6001, "targetPort": 6001, "external": true }
+      ],
+      "parent": null,
+      "references": [
+        { "target": "ledger-db", "via": "connection-string", "label": null },
+        { "target": "event-bus", "via": "wait", "label": null },
+        { "target": "invoice-archive", "via": "relationship", "label": "archives invoices in" }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "postgres-enterprise",
+      "kind": "container",
+      "typeName": "PostgresServerResource",
+      "image": "docker.io/library/postgres:17",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "ledger-db",
+      "kind": "container",
+      "typeName": "PostgresDatabaseResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": "postgres-enterprise",
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "event-bus",
+      "kind": "container",
+      "typeName": "RabbitMQServerResource",
+      "image": "docker.io/library/rabbitmq:3",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "invoice-archive",
+      "kind": "azure",
+      "typeName": "AzureStorageResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "worker",
+      "kind": "executable",
+      "typeName": "ExecutableResource",
+      "image": null,
+      "command": "pnpm",
+      "workingDirectory": "../artifacts/worker",
+      "endpoints": [],
+      "parent": null,
+      "references": [{ "target": "event-bus", "via": "endpoint", "label": null }],
+      "properties": {}
+    },
+    {
+      "name": "environment-name",
+      "kind": "parameter",
+      "typeName": "ParameterResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    }
+  ]
+}

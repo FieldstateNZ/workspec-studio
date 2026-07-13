@@ -46,6 +46,22 @@ the diagrams that do exist. A `c4-container` diagram (which resolves to a logica
 lens pair, never a single view) always renders its **logical** lens — reach the deployment
 lens through the interactive `serve` explorer's lens toggle.
 
+### `import-aspire --graph <file> [--dir <path>] [--mode scaffold|check] [--json]`
+
+Projects a `workspec-graph/v1` JSON resource graph (dumped by a .NET Aspire apphost) into a
+`.workspec/` tree: each non-parameter resource becomes a container/database/queue/external-system
+element (classified by `typeName`/`kind` — see
+[`docs/aspire-hosting/import-mapping.md`](../../docs/aspire-hosting/import-mapping.md) for the full
+table), every generated element is tagged `aspire-managed`, and the whole graph is laid out into
+one generated `diagrams/aspire-container.yaml` (parent/child containment, which the producer
+captures only in each resource's `parent` field, is synthesized into `contains` edges).
+`--mode scaffold` (default) writes the tree and is idempotent — a second run against the same
+graph changes nothing, and a hand-authored file occupying an element's path or the reserved
+`aspire-container` diagram slug is never overwritten. `--mode check` writes nothing and reports drift
+(`element-missing`, `element-orphaned`, `edge-missing`, `edge-orphaned`, `field-drift`) between the
+graph and the tree, exiting `0` clean / `1` on drift / `2` on a usage error; `--json` prints the
+diagnostics array to stdout in the same shape `validate --json` does.
+
 ### `serve [--dir <path>] [--port <n>] [--host <addr>]` — the DEFAULT command
 
 Runs the localhost host shell over `--dir` (default: current directory) on `--port` (default

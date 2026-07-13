@@ -76,7 +76,7 @@ starts the host on the current directory.
 npx @workspec/decision-studio serve --dir examples/hosting-platform
 ```
 
-### `validate [--dir <path>]`
+### `validate [--dir <path>] [--json]`
 
 Discovers every `*.decision.yaml` and `*.catalog.yaml` under `--dir` (default:
 current directory) by a recursive walk (skipping `node_modules`, `dist`, `.git`,
@@ -89,6 +89,8 @@ SKU-line references against the catalog it points at.
 - Dangling references **inside levers** (`set.mode`, `set.schedule`, or
   `addLines`) are reported as **warnings** (non-fatal): the engine falls back to
   PAYG / 24×7 for those, so a typo degrades rather than breaks.
+- `--json` additionally prints the diagnostics as a
+  `{severity, code, message, file, line?, col?}[]` array to stdout.
 
 ```sh
 # In CI, fail the build on any invalid decision or catalog:
