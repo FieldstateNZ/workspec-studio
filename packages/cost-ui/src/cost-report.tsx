@@ -77,16 +77,27 @@ export function CostReport(props: CostReportProps): ReactElement {
         amount: b.amount,
         share: result.totals.inventorySpend === 0 ? 0 : (b.amount / result.totals.inventorySpend) * 100,
       }));
+    // Amount descending, but `unattributed` is always pinned last regardless
+    // of its amount — it's a "fix me" signal, not a spend rank to compete on.
+    rows.sort((a, b) => {
+      if (a.key === 'unattributed') return 1;
+      if (b.key === 'unattributed') return -1;
+      return b.amount - a.amount;
+    });
     return rows;
   }, [primaryRollup, result]);
 
   const maxProductAmount = productRows.reduce((max, r) => Math.max(max, Math.abs(r.amount)), 0);
 
   const capexAmount = costTypeRollup?.buckets.find((b) => b.key === 'capex')?.amount ?? 0;
-  const opexAmount = (costTypeRollup?.buckets ?? [])
-    .filter((b) => b.key !== 'capex')
-    .reduce((sum, b) => sum + b.amount, 0);
-  const capexOpexTotal = capexAmount + opexAmount;
+  const opexAmount = costTypeRollup?.buckets.find((b) => b.key === 'opex')?.amount ?? 0;
+  // The actual capex + opex buckets, not "everything" — a host dimension
+  // with other declared costType values, or spend left unattributed on
+  // costType, must not silently fold into the opex figure. That remainder
+  // (if any) is rendered into the ratio bar in `--ink-fade` below, but never
+  // added to either displayed figure.
+  const costTypeTotal = (costTypeRollup?.buckets ?? []).reduce((sum, b) => sum + b.amount, 0);
+  const otherCostTypeAmount = Math.max(0, costTypeTotal - capexAmount - opexAmount);
 
   const crossTabColKeys = useMemo(() => {
     if (!crossTab || !secondDimension) return [];
@@ -166,8 +177,14 @@ export function CostReport(props: CostReportProps): ReactElement {
             <div className="cost-ratio-track">
               <div
                 className="cost-ratio-fill-capex"
-                style={{ width: capexOpexTotal === 0 ? '0%' : `${(capexAmount / capexOpexTotal) * 100}%` }}
+                style={{ width: costTypeTotal === 0 ? '0%' : `${(capexAmount / costTypeTotal) * 100}%` }}
               />
+              {otherCostTypeAmount >= MIN_ROW_AMOUNT && (
+                <div
+                  className="cost-ratio-fill-other"
+                  style={{ width: `${(otherCostTypeAmount / costTypeTotal) * 100}%` }}
+                />
+              )}
             </div>
           </div>
         )}

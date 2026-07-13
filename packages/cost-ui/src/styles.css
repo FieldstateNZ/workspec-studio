@@ -825,10 +825,15 @@
   border-radius: var(--r-pill);
   background: var(--line);
   overflow: hidden;
+  display: flex;
 }
 .cost-ratio-fill-capex {
   height: 100%;
   background: var(--el-class);
+}
+.cost-ratio-fill-other {
+  height: 100%;
+  background: var(--ink-fade);
 }
 
 .cost-report-card {

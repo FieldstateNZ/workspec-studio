@@ -123,6 +123,10 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
     attributionRef,
   );
   const capabilities = useCapabilities();
+  // No optimistic update for the rail/composer's writeAttribution buttons —
+  // simplest correct guard against overlapping writes is disabling them
+  // while a mutation is in flight, rather than reconciling a speculative
+  // local state against the eventual server response.
   const writeAttribution = useWriteAttribution();
   const [state, setState] = useControllableState(props.state, props.onStateChange, DEFAULT_WORKBENCH_STATE);
 
@@ -169,21 +173,31 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
     state.draftValue ?? (primaryDimension?.values.includes('shared') ? 'shared' : primaryDimension?.values[0]) ?? '';
 
   const draftProjection = useMemo(() => {
-    if (!inventory || !liveAttribution || !spends || !primaryDimension || state.cluster === null) return undefined;
+    if (!inventory || !liveAttribution || !spends || !primaryDimension || !result || state.cluster === null) {
+      return undefined;
+    }
     const draftRule = buildPromotedRule(draftRuleId, state.cluster, primaryDimension.id, draftValue);
     const draftAttribution: Attribution = {
       ...liveAttribution,
       spec: { ...liveAttribution.spec, rules: [...liveAttribution.spec.rules, draftRule] },
     };
     const projected = attribute(inventory, spends, draftAttribution);
-    const hits = inventory.spec.resources.filter((r) => r.resourceGroup === state.cluster);
-    const hitSpend = hits.reduce((sum, r) => sum + (result?.resourceSpend[r.id] ?? 0), 0);
+    // Only resources the appended rule can actually WIN: the cluster's
+    // resources currently unattributed on the primary dimension — the same
+    // set the cluster chips count (`computeUnattributedClusters`). Counting
+    // every resource in the resource group (the pre-fix behaviour) double
+    // counts resources a pinned override or an earlier rule already claimed,
+    // producing a match count the projected coverage delta can't back up.
+    const hits = result.resolutions.filter(
+      (r) => r.assignments[primaryDimension.id] === undefined && resourceGroupById.get(r.resourceId) === state.cluster,
+    );
+    const hitSpend = hits.reduce((sum, r) => sum + (result.resourceSpend[r.resourceId] ?? 0), 0);
     const projectedCoverage = projected.coverage.find((c) => c.isPrimary);
     return {
       matchLine: `matches ${hits.length} · ${formatMoney(hitSpend)}/mo`,
       coveragePercent: projectedCoverage ? projectedCoverage.ratio * 100 : 0,
     };
-  }, [inventory, liveAttribution, spends, primaryDimension, state.cluster, draftValue, draftRuleId, result]);
+  }, [inventory, liveAttribution, spends, primaryDimension, state.cluster, draftValue, draftRuleId, result, resourceGroupById]);
 
   const pool = useMemo(() => {
     if (!inventory || !result) return [];
@@ -362,6 +376,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                         type="button"
                         className="cost-rule-remove"
                         aria-label={`Remove rule ${rule.id}`}
+                        disabled={writeAttribution.isPending}
                         onClick={() => removeRule(rule.id)}
                       >
                         ✕
@@ -383,6 +398,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                       type="button"
                       className="cost-rule-reorder-btn"
                       aria-label={`Move rule ${rule.id} up`}
+                      disabled={writeAttribution.isPending}
                       onClick={() => moveRule(index, -1)}
                     >
                       ▲
@@ -391,6 +407,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                       type="button"
                       className="cost-rule-reorder-btn"
                       aria-label={`Move rule ${rule.id} down`}
+                      disabled={writeAttribution.isPending}
                       onClick={() => moveRule(index, 1)}
                     >
                       ▼
@@ -418,6 +435,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
             <button
               type="button"
               className={`cost-filter-chip${state.filter === 'all' ? ' cost-filter-chip--active' : ''}`}
+              aria-pressed={state.filter === 'all'}
               onClick={() => setState((prev) => ({ ...prev, filter: 'all', cluster: null }))}
             >
               {`All · ${inventory.spec.resources.length}`}
@@ -425,6 +443,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
             <button
               type="button"
               className={`cost-filter-chip${state.filter === 'unattributed' ? ' cost-filter-chip--active' : ''}`}
+              aria-pressed={state.filter === 'unattributed'}
               onClick={() => setState((prev) => ({ ...prev, filter: 'unattributed' }))}
             >
               {`Unattributed · ${primaryCoverage?.unattributedCount ?? 0}`}
@@ -442,6 +461,7 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                       key={cluster.resourceGroup}
                       type="button"
                       className={`cost-cluster-chip${state.cluster === cluster.resourceGroup ? ' cost-cluster-chip--active' : ''}`}
+                      aria-pressed={state.cluster === cluster.resourceGroup}
                       onClick={() => pickCluster(cluster.resourceGroup)}
                     >
                       {`${cluster.resourceGroup} · ${cluster.count} · ${formatMoney(cluster.amount)}`}
@@ -478,7 +498,12 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                       {formatPercent(draftProjection?.coveragePercent ?? 0)}
                     </span>
                   </span>
-                  <button type="button" className="cost-btn-solid cost-add-rule-btn" onClick={addRule}>
+                  <button
+                    type="button"
+                    className="cost-btn-solid cost-add-rule-btn"
+                    disabled={writeAttribution.isPending}
+                    onClick={addRule}
+                  >
                     {`Add as ${draftRuleId}`}
                   </button>
                   <button
@@ -513,7 +538,16 @@ export function AttributionWorkbench(props: AttributionWorkbenchProps): ReactEle
                 <div
                   className={`cost-table-row${open ? ' cost-table-row--selected' : ''}`}
                   style={{ gridTemplateColumns }}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={open}
                   onClick={() => selectResource(resource.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      selectResource(resource.id);
+                    }
+                  }}
                 >
                   <span className="cost-table-cell-resource">
                     <span className="cost-table-cell-resource-name">{resource.name}</span>

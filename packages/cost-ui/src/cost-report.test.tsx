@@ -59,6 +59,17 @@ describe('CostReport', () => {
     expect(within(workspecSpendRow as HTMLElement).getByText('$180')).toBeInTheDocument();
   });
 
+  it('sorts spend-by-dimension rows by amount descending, with `unattributed` pinned last', async () => {
+    renderReport();
+    await screen.findByText('Rollups');
+    // Amounts (test estate): workspec $330, atrium $120, shared $20,
+    // unattributed $380 — unattributed is the LARGEST bucket, but must
+    // still render last, not first.
+    const rows = document.querySelectorAll('.cost-spend-row');
+    const keys = [...rows].map((row) => row.querySelector('.cost-chip')?.textContent);
+    expect(keys).toEqual(['workspec', 'atrium', 'shared', 'unattributed']);
+  });
+
   it('calls onFixCoverage when "Fix in workbench →" is clicked', async () => {
     const onFixCoverage = vi.fn();
     renderReport({ onFixCoverage });

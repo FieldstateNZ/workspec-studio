@@ -81,8 +81,9 @@ export function assignChipsOf(rule: RuleType): EffectChip[] {
   }
   if (rule.split) {
     for (const [dimensionId, ratios] of Object.entries(rule.split)) {
-      const pct = Object.values(ratios)
-        .map((r) => Math.round(r * 100))
+      const entries = Object.entries(ratios).map(([value, ratio]) => ({ value, ratio }));
+      const pct = sortedSplitEntries(entries)
+        .map((e) => Math.round(e.ratio * 100))
         .join('/');
       chips.push({ key: `split:${dimensionId}`, text: `${dimensionId} split ${pct}`, accent: 'var(--accent)' });
     }
@@ -99,15 +100,34 @@ export function assignChipsOf(rule: RuleType): EffectChip[] {
   return chips;
 }
 
+/**
+ * Sort split parts into the normative order `@workspec/cost-engine`'s
+ * `serializeSplitValue` uses (and every on-disk artifact is serialized in):
+ * ratio DESCENDING, then value ASCENDING on ties. Every render site for a
+ * split assignment/effect must use this — the raw object/array order a
+ * parsed YAML document hands back is alphabetical by value, not ratio, so
+ * rendering in source order reads the split backwards.
+ */
+export function sortedSplitEntries<T extends { value: string; ratio: number }>(parts: readonly T[]): T[] {
+  return [...parts].sort((a, b) => {
+    if (a.ratio !== b.ratio) return b.ratio - a.ratio;
+    return a.value < b.value ? -1 : a.value > b.value ? 1 : 0;
+  });
+}
+
 /** The resource table's split-cell label: `"wo 60 / at 40"` (first 2 letters + rounded pct). */
 export function splitCellLabel(parts: readonly SplitPart[]): string {
-  return parts.map((p) => `${p.value.slice(0, 2)} ${Math.round(p.ratio * 100)}`).join(' / ');
+  return sortedSplitEntries(parts)
+    .map((p) => `${p.value.slice(0, 2)} ${Math.round(p.ratio * 100)}`)
+    .join(' / ');
 }
 
 /** The inline cascade's value label for a won dimension: a literal value, or `"split 60/40"`. */
 export function cascadeValueLabel(assignment: DimensionAssignment): string {
   if (assignment.kind === 'split') {
-    return `split ${assignment.parts.map((p) => Math.round(p.ratio * 100)).join('/')}`;
+    return `split ${sortedSplitEntries(assignment.parts)
+      .map((p) => Math.round(p.ratio * 100))
+      .join('/')}`;
   }
   return assignment.value;
 }

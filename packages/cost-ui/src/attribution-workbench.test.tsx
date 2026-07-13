@@ -121,4 +121,37 @@ describe('AttributionWorkbench', () => {
     expect(row).not.toBeNull();
     expect(within(row as HTMLElement).getByLabelText('Remove rule r5')).toBeInTheDocument();
   });
+
+  it('composer over a mixed cluster counts only the currently-unattributed resources, not the whole resource group', async () => {
+    renderWorkbench();
+    await screen.findByText('55.3%');
+
+    fireEvent.click(screen.getByText('Fix coverage →'));
+    // rg-legacy has 3 resources (res-legacy1, res-legacy2, res-override), but
+    // res-override is already pinned to product=shared, so the cluster chip
+    // itself only counts the 2 still-unattributed ones — matches this test's
+    // very premise for the composer below.
+    const rgLegacyCluster = await screen.findByText('rg-legacy · 2 · $100');
+    fireEvent.click(rgLegacyCluster);
+
+    expect(await screen.findByText('resourceGroup ~ rg-legacy')).toBeInTheDocument();
+    // The appended rule can never win res-override (a pinned override beats
+    // all rules), so the projection must count only the 2 resources it can
+    // actually attribute — $100, not all 3 members' $120.
+    expect(screen.getByText(/matches 2 · \$100\/mo/)).toBeInTheDocument();
+    expect(screen.queryByText(/matches 3 ·/)).not.toBeInTheDocument();
+  });
+
+  it('pressing Enter on a focused resource row opens its cascade (keyboard access to the primary interaction)', async () => {
+    renderWorkbench();
+    await screen.findByText('55.3%');
+
+    const row = screen.getByText('res-client1').closest('.cost-table-row') as HTMLElement;
+    expect(row).not.toBeNull();
+    row.focus();
+    fireEvent.keyDown(row, { key: 'Enter' });
+
+    expect(await screen.findByText('resolution · first match wins')).toBeInTheDocument();
+    expect(screen.getByText('→ client = acme')).toBeInTheDocument();
+  });
 });
