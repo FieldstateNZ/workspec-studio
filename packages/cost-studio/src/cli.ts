@@ -37,6 +37,7 @@ import type {
 } from '@workspec/cost-provider';
 import { createAzureProvider } from '@workspec/cost-provider-azure';
 import { ArtifactValidationError, FsRepository } from './fs-repository.js';
+import { runServe } from './serve.js';
 
 /** Injectable IO. `out` is reserved for artifacts (report's table/json/csv); `err` for diagnostics. */
 export interface CliIO {
@@ -83,10 +84,13 @@ Commands:
   report      Print a coverage headline + rollup by dimension.
   plan        Compute the tag plan needed to converge on an attribution.
   apply       Apply (or dry-run) a tag plan against the live provider.
+  serve       Run the localhost Cost Studio host over a directory.
 
-Run "workspec-cost <command> --help" for command options. This CLI never
-invokes git — stocktake overwrites a STABLE inventory path, so a plain
-"git diff" on your working tree is the drift report.
+Run "workspec-cost <command> --help" for command options. With no command,
+this help is printed — "serve" is NOT the implicit default (divergence from
+@workspec/decision-studio's CLI). This CLI never invokes git — stocktake
+overwrites a STABLE inventory path, so a plain "git diff" on your working
+tree is the drift report.
 `;
 
 const STOCKTAKE_HELP = `workspec-cost stocktake — stock-take an estate + its spend
@@ -924,6 +928,8 @@ export async function run(argv: string[], io: CliIO = defaultIO, deps?: RunDeps)
       return runPlan(rest, io, deps);
     case 'apply':
       return runApply(rest, io, deps);
+    case 'serve':
+      return runServe(rest, io);
     case undefined:
     case 'help':
     case '--help':

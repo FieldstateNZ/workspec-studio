@@ -1,15 +1,17 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    // Deliberately NOT "dist": this config includes the test files, so a
-    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
-    // tree (`files: ["dist"]` ships everything under dist/ in the npm
-    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
-    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
-    // without polluting `dist/` — same shadow-emit split as packages/c4-*.
+    // Deliberately NOT "dist": this config covers `client/` alongside `src/`
+    // (rootDir infers to "."), so a `tsc -b` typecheck of it emits a
+    // `<outDir>/src` + `<outDir>/client` tree — not the flat dist/ layout the
+    // build config and package.json "types" expect — and includes test
+    // files. Routing the typecheck emit to a gitignored `.typecheck/` (never
+    // read by anything) keeps `tsc -b`'s self-bootstrap working without
+    // polluting `dist/` — same shadow-emit split as packages/c4-* and
+    // `@workspec/decision-studio`.
     "outDir": ".typecheck",
-    "types": ["node"],
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
   },
   // TS Project References: let `tsc -b` type-check against the sibling
@@ -25,5 +27,5 @@
     { "path": "../cost-schema/tsconfig.build.json" },
     { "path": "../cost-ui/tsconfig.build.json" }
   ],
-  "include": ["src"]
+  "include": ["src", "client"]
 }

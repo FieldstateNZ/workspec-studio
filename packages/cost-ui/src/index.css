@@ -1,15 +1,40 @@
 /* The package stylesheet build entry, compiled by @tailwindcss/cli into
-   dist/styles.css (see the package.json `build` script).
-
-   C0 bootstrap: no real components yet (those land starting a later slice),
-   so this stays the minimal composition — the WorkSpec preset's theme +
-   utilities layers, ready for the views this package will ship. Mirrors the
-   layer discipline of packages/decision-ui/src/index.css and
-   packages/c4-ui/src/index.css; the @source scan for @workspec/design's
-   adopted components and the scoped preflight stand-in get added once this
-   package actually renders any. */
+   dist/styles.css (see the package.json `build` script). Mirrors
+   packages/decision-ui/src/index.css and packages/c4-ui/src/index.css — see
+   those files' comments for the full rationale (no preflight, layer order,
+   @source scanning). C5a: the package now ships real components, so this
+   gained the @source scan for @workspec/design's adopted components (Tabs)
+   and the scoped preflight stand-in below, both previously deferred from the
+   C0 bootstrap. */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import '@workspec/design/tailwind';
+@import './styles.css' layer(components);
+
+/* Scoped stand-in for the preflight rules the adopted components rely on:
+   box-sizing + zero-width solid borders, and form-control normalisation.
+   Scoped under .cost-root so the host page is never touched. */
+@layer base {
+  .cost-root *,
+  .cost-root *::before,
+  .cost-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .cost-root button,
+  .cost-root input,
+  .cost-root select,
+  .cost-root textarea {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+  }
+}
+
+@source '../node_modules/@workspec/design/dist/components';
 @source './';
