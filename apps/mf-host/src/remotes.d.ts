@@ -63,3 +63,51 @@ declare module 'c4Ui/reactProbe' {
   const _default: typeof reactProbe;
   export default _default;
 }
+
+declare module 'costStudio/provider' {
+  export { CostStudioProvider, createInertLinkResolver } from '@workspec/cost-ui';
+  export type {
+    CostStudioProviderProps,
+    CostStudioHost,
+    CostStudioCapabilities,
+    CostLinkResolver,
+    CostLinkTarget,
+    CostLinkResolution,
+    ThemeName,
+  } from '@workspec/cost-ui';
+}
+
+declare module 'costStudio/CostInventory' {
+  import type { CostInventoryProps } from '@workspec/cost-ui';
+  import type { ReactElement } from 'react';
+  const CostInventory: (props: CostInventoryProps) => ReactElement;
+  export default CostInventory;
+}
+
+declare module 'costStudio/AttributionWorkbench' {
+  import type { AttributionWorkbenchProps } from '@workspec/cost-ui';
+  import type { ReactElement } from 'react';
+  const AttributionWorkbench: (props: AttributionWorkbenchProps) => ReactElement;
+  export default AttributionWorkbench;
+}
+
+declare module 'costStudio/CostReport' {
+  import type { CostReportProps } from '@workspec/cost-ui';
+  import type { ReactElement } from 'react';
+  const CostReport: (props: CostReportProps) => ReactElement;
+  export default CostReport;
+}
+
+declare module 'costStudio/TagPlanView' {
+  import type { TagPlanViewProps } from '@workspec/cost-ui';
+  import type { ReactElement } from 'react';
+  const TagPlanView: (props: TagPlanViewProps) => ReactElement;
+  export default TagPlanView;
+}
+
+declare module 'costStudio/reactProbe' {
+  /** Reports whether the remote's React is the host-stamped instance. */
+  export function reactProbe(): { sameInstance: boolean; version: string };
+  const _default: typeof reactProbe;
+  export default _default;
+}

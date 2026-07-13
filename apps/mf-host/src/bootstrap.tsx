@@ -1,14 +1,19 @@
 // The smoke host's real entry. It:
 //   1. seeds a factory-built MemoryRepository from the hosting-platform fixtures (the same
-//      golden data the engine snapshot locks),
+//      golden data the engine snapshot locks) — and, for Cost Attribution, a
+//      compact in-memory estate built inline (see ./cost-seed.ts),
 //   2. pulls the provider + view components FROM THE REMOTE over module
 //      federation (so provider and views share one module instance — one
 //      HostContext, one QueryClient wiring), and
-//   3. mounts DecisionCard + DecisionWorkspace inside one DecisionStudioProvider.
+//   3. mounts DecisionCard + DecisionWorkspace inside one DecisionStudioProvider,
+//      C4Diagram + C4Explorer over the in-memory C4 model, and
+//      AttributionWorkbench + CostReport + CostInventory + TagPlanView inside
+//      one CostStudioProvider.
 //
 // Before importing any remote module it stamps the host's React onto
-// `window.__DS_HOST_REACT`, so the remote's `reactProbe` can assert it sees the
-// exact same React instance — the single-React proof the smoke test checks.
+// `window.__DS_HOST_REACT`, so each remote's `reactProbe` can assert it sees
+// the exact same React instance — the single-React proof the smoke test
+// checks, now for three federated module families.
 
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -20,6 +25,13 @@ import {
 import type { DecisionStudioHost } from '@workspec/decision-ui';
 import { createMemorySource, loadC4Model } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
+import type { CostStudioHost } from '@workspec/cost-ui';
+import {
+  COST_ATTRIBUTION_REF,
+  COST_INVENTORY_REF,
+  COST_TAGPLAN_REF,
+  createCostSeedRepository,
+} from './cost-seed.js';
 // The hosting-platform fixtures as raw strings, parsed at runtime into the MemoryRepository.
 import hostingDecisionYaml from '../../../examples/hosting-platform/hosting-platform.decision.yaml?raw';
 import hostingCatalogYaml from '../../../examples/hosting-platform/platform.catalog.yaml?raw';
@@ -36,6 +48,13 @@ const { reactProbe } = await import('decisionStudio/reactProbe');
 const C4Diagram = (await import('c4Ui/C4Diagram')).default;
 const C4Explorer = (await import('c4Ui/C4Explorer')).default;
 const { reactProbe: c4ReactProbe } = await import('c4Ui/reactProbe');
+const { CostStudioProvider, createInertLinkResolver: createCostInertLinkResolver } =
+  await import('costStudio/provider');
+const AttributionWorkbench = (await import('costStudio/AttributionWorkbench')).default;
+const CostReport = (await import('costStudio/CostReport')).default;
+const CostInventory = (await import('costStudio/CostInventory')).default;
+const TagPlanView = (await import('costStudio/TagPlanView')).default;
+const { reactProbe: costReactProbe } = await import('costStudio/reactProbe');
 
 // ── Seed the in-memory repository from the hosting-platform fixtures ───────────
 const DECISION_REF = 'hosting-platform.decision.yaml';
@@ -103,9 +122,24 @@ const c4Positioned = await layoutDiagram({
   layout: c4Diagram.layout?.data ?? null,
 });
 
+// ── Seed the in-memory Cost Attribution repository (compact inline estate) ────
+const costRepository = createCostSeedRepository();
+
+const costHost: CostStudioHost = {
+  repository: costRepository,
+  links: createCostInertLinkResolver(),
+  // A writable mount — writes (rule reorder/remove, cluster promotion) go to
+  // the in-memory repository above. The smoke test clicks a rule's reorder
+  // button and asserts the rail visibly reorders, so `useWriteAttribution`
+  // is proven to round-trip through this exact MF seam, not just read from
+  // it.
+  capabilities: { editAttribution: true },
+};
+
 // ── Render ────────────────────────────────────────────────────────────────────
 const probe = reactProbe();
 const c4Probe = c4ReactProbe();
+const costProbe = costReactProbe();
 
 function SmokeApp(): React.ReactElement {
   return (
@@ -158,11 +192,44 @@ function C4SmokeApp(): React.ReactElement {
   );
 }
 
+function CostSmokeApp(): React.ReactElement {
+  return (
+    <CostStudioProvider host={costHost} theme="dark">
+      <div className="smoke-page">
+        {/* Single-React canary for the cost-ui remote, read by the Playwright smoke assertion. */}
+        <div
+          id="cost-react-probe"
+          data-same-instance={String(costProbe.sameInstance)}
+          data-remote-react-version={costProbe.version}
+          data-host-react-version={React.version}
+        />
+        <section id="cost-workbench-mount" className="smoke-section">
+          <h2 className="smoke-h">AttributionWorkbench · remote</h2>
+          <AttributionWorkbench inventoryRef={COST_INVENTORY_REF} attributionRef={COST_ATTRIBUTION_REF} />
+        </section>
+        <section id="cost-report-mount" className="smoke-section">
+          <h2 className="smoke-h">CostReport · remote</h2>
+          <CostReport inventoryRef={COST_INVENTORY_REF} attributionRef={COST_ATTRIBUTION_REF} />
+        </section>
+        <section id="cost-inventory-mount" className="smoke-section">
+          <h2 className="smoke-h">CostInventory · remote</h2>
+          <CostInventory inventoryRef={COST_INVENTORY_REF} attributionRef={COST_ATTRIBUTION_REF} />
+        </section>
+        <section id="cost-tagplan-mount" className="smoke-section">
+          <h2 className="smoke-h">TagPlanView · remote</h2>
+          <TagPlanView inventoryRef={COST_INVENTORY_REF} tagPlanRef={COST_TAGPLAN_REF} />
+        </section>
+      </div>
+    </CostStudioProvider>
+  );
+}
+
 const container = document.getElementById('root');
 if (container === null) throw new Error('#root not found');
 createRoot(container).render(
   <>
     <SmokeApp />
     <C4SmokeApp />
+    <CostSmokeApp />
   </>,
 );

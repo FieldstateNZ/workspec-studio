@@ -1,13 +1,14 @@
 {
   "name": "@workspec/cost-ui",
   "version": "0.1.0-alpha.0",
-  "description": "Host-agnostic React views for WorkSpec Cost Attribution: the 2a unified Attribution Workbench, Inventory, Reports, and Tag-Plan review, composed by CostApp and themed via a `theme` prop — no host framework or CSS assumptions baked in.",
+  "description": "Host-agnostic React views for WorkSpec Cost Attribution: the 2a unified Attribution Workbench, Inventory, Reports, and Tag-Plan review, composed by CostApp and themed via a `theme` prop — no host framework or CSS assumptions baked in (standalone lib + module-federation remote).",
   "keywords": [
     "react",
     "cost-attribution",
     "finops",
     "ui",
-    "components"
+    "components",
+    "module-federation"
   ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/cost-ui#readme",
   "repository": {
@@ -38,6 +39,7 @@
   },
   "scripts": {
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && tailwindcss --input src/index.css --output dist/styles.css --minify",
+    "build:mf": "vite build --config vite.config.mf.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint ."
@@ -53,7 +55,9 @@
     "@workspec/design": "0.1.0-alpha.1"
   },
   "devDependencies": {
+    "@module-federation/vite": "^1.16.12",
     "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.14",
     "@tanstack/react-query": "^5.62.7",
     "@vitest/expect": "4.1.10",
     "@testing-library/dom": "^10.4.0",
@@ -70,6 +74,7 @@
     "tailwindcss": "^4.1.14",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
+    "vite": "^7.0.0",
     "vitest": "^4.1.10"
   }
 }
