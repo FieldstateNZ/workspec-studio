@@ -1,6 +1,6 @@
 {
   "name": "@workspec/cost-engine",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Pure, normative cost attribution engine for WorkSpec Cost Attribution. No IO, no DOM, no React.",
   "keywords": [
     "cost-attribution",
