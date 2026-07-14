@@ -16,6 +16,14 @@
          requires the Aspire.AppHost.Sdk-wired DCP/dashboard binary paths, not just an
          Aspire.Hosting package reference (confirmed empirically; see that project's own comment). -->
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.4.6" />
+    <!-- aspire-hosting-cost only (A5): the publish-time cost-estimate step walks the app model's
+         Azure provisioning resources via Aspire.Hosting.Azure's AzureProvisioningResource —
+         same 13.4.6 line as the rest of this solution's Aspire packages (verified against
+         nuget.org). Aspire.Hosting.Azure.Storage is pinned for aspire-hosting-tests only, as the
+         one concrete Azure resource type (AddAzureStorage) exercised by the publish-step tests;
+         its own version line tracks Aspire.Hosting.Azure's (both 13.4.6 as of 2026-07-14). -->
+    <PackageVersion Include="Aspire.Hosting.Azure" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.4.6" />
   </ItemGroup>
 
   <ItemGroup>

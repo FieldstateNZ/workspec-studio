@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+    <!-- Publish-time cost-estimate step only (WorkspecCostPublishEstimateExtensions) — reads
+         AzureProvisioningResource.GetBicepTemplateString() to extract resource type/SKU. See
+         docs/aspire-hosting/cost-integration.md for why this is the only viable read path. -->
+    <PackageReference Include="Aspire.Hosting.Azure" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+</Project>
