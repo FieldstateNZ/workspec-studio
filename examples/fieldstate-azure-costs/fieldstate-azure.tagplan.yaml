@@ -1,0 +1,1212 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/tagplan.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: TagPlan
+metadata:
+  id: fieldstate-azure
+spec:
+  baselineAsOf: 2026-07-07T00:00:00Z
+  tagMapping:
+    client: fs-client
+    costType: fs-cost-type
+    product: fs-product
+  entries:
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-preview
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-dev
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.insights/components/atrium-ai-dev
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.keyvault/vaults/atrium-kv-dev
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.storage/storageaccounts/atriumdevstore
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-api-dev
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.web/sites/atrium-web-dev
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cache/redis/atrium-redis-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.cdn/profiles/atrium-cdn-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.dbforpostgresql/flexibleservers/atrium-pg-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.insights/components/atrium-ai-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.keyvault/vaults/atrium-kv-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.operationalinsights/workspaces/atrium-logs
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.search/searchservices/atrium-search-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media
+      tag: fs-cost-type
+      current: opex
+      desired: opex
+      action: noop
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atrium-media
+      tag: fs-product
+      current: atrium
+      desired: atrium
+      action: noop
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.storage/storageaccounts/atriumprodstore
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-api-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-prod/providers/microsoft.web/sites/atrium-web-prod
+      tag: fs-product
+      current: null
+      desired: atrium
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs
+      tag: fs-client
+      current: null
+      desired: acme-dairy
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.app/containerapps/acme-jobs
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg
+      tag: fs-client
+      current: null
+      desired: acme-dairy
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.dbforpostgresql/flexibleservers/acme-pg
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai
+      tag: fs-client
+      current: null
+      desired: acme-dairy
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.insights/components/acme-ai
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs
+      tag: fs-client
+      current: null
+      desired: acme-dairy
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.storage/storageaccounts/acmedocs
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod
+      tag: fs-client
+      current: null
+      desired: acme-dairy
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-acme/providers/microsoft.web/sites/acme-portal-prod
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg
+      tag: fs-client
+      current: null
+      desired: kauri-health
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.dbforpostgresql/flexibleservers/kauri-pg
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles
+      tag: fs-client
+      current: null
+      desired: kauri-health
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.storage/storageaccounts/kaurifiles
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal
+      tag: fs-client
+      current: null
+      desired: kauri-health
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-client-kauri/providers/microsoft.web/sites/kauri-portal
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.app/containerapps/coffers-ledger-jobs
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.cache/redis/coffers-redis
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.dbforpostgresql/flexibleservers/coffers-pg-prod
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.insights/components/coffers-ai-prod
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.keyvault/vaults/coffers-kv-prod
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.operationalinsights/workspaces/coffers-logs
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.storage/storageaccounts/coffersprodstore
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/functions/coffers-export
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-coffers-prod/providers/microsoft.web/sites/coffers-api-prod
+      tag: fs-product
+      current: null
+      desired: coffers
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.cdn/profiles/old-cdn-endpoint
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-dc01
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.dbforpostgresql/flexibleservers/demo-pg
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.insights/components/legacy-ai
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.network/loadbalancers/unnamed-lb
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.sql/servers/sqldb-trial
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/backupvault2019
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/scratchstore
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.storage/storageaccounts/test123storage
+      tag: fs-product
+      current: workspec
+      desired: shared
+      action: change
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/functions/tempfuncs
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-01
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.web/sites/legacy-web-02
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.app/containerapps/core-grafana
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerregistry/registries/fieldstateacr
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.containerservice/managedclusters/aks-shared
+      tag: fs-product
+      current: null
+      desired: workspec:60|atrium:40
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.keyvault/vaults/core-kv
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/azurefirewalls/core-firewall
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/bastionhosts/core-bastion
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/dnszones/core-dns
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.network/vpngateways/core-vpn
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.operationalinsights/workspaces/core-logs
+      tag: fs-product
+      current: null
+      desired: shared
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-shared-core/providers/microsoft.storage/storageaccounts/corebackups
+      tag: fs-product
+      current: workspec
+      desired: shared
+      action: change
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-jobs-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.app/containerapps/workspec-preview
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.insights/components/workspec-ai-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.keyvault/vaults/workspec-kv-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.storage/storageaccounts/workspecdevstore
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/functions/workspec-func-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-api-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev
+      tag: fs-cost-type
+      current: null
+      desired: capex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-dev/providers/microsoft.web/sites/workspec-web-dev
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.app/containerapps/workspec-jobs-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.cache/redis/workspec-redis-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.dbforpostgresql/flexibleservers/workspec-pg-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.insights/components/workspec-ai-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.keyvault/vaults/workspec-kv-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.network/loadbalancers/workspec-lb-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.operationalinsights/workspaces/workspec-logs
+      tag: fs-product
+      current: platform
+      desired: workspec
+      action: change
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecassets
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.storage/storageaccounts/workspecprodstore
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/functions/workspec-func-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-api-prod
+      tag: fs-product
+      current: workspec
+      desired: workspec
+      action: noop
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod
+      tag: fs-client
+      current: null
+      desired: internal
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod
+      tag: fs-cost-type
+      current: null
+      desired: opex
+      action: add
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-workspec-prod/providers/microsoft.web/sites/workspec-web-prod
+      tag: fs-product
+      current: null
+      desired: workspec
+      action: add

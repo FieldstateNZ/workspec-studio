@@ -16,6 +16,14 @@ import './styles.css';
 const C4 = lazy(() => import('./c4.js').then((module) => ({ default: module.C4 })));
 const C4Demo = lazy(() => import('./c4-demo.js').then((module) => ({ default: module.C4Demo })));
 
+// Same reasoning for /cost — @workspec/cost-ui pulls in cost-engine's whole
+// attribution/rollup/cross-tab pipeline, kept out of the main chunk for the
+// same reason the c4 stack is.
+const Cost = lazy(() => import('./cost.js').then((module) => ({ default: module.Cost })));
+const CostDemo = lazy(() =>
+  import('./cost-demo.js').then((module) => ({ default: module.CostDemo })),
+);
+
 // index.html's inline script set the initial theme signals before first
 // paint (stored preference, else OS); this keeps them in sync afterward —
 // applying the stored preference if one exists, else following OS changes
@@ -40,6 +48,18 @@ function App(): ReactElement {
       return (
         <Suspense fallback={<div className="route-loading">Loading C4 Diagrams…</div>}>
           <C4Demo />
+        </Suspense>
+      );
+    case 'cost':
+      return (
+        <Suspense fallback={<div className="route-loading">Loading Cost Attribution…</div>}>
+          <Cost />
+        </Suspense>
+      );
+    case 'cost-demo':
+      return (
+        <Suspense fallback={<div className="route-loading">Loading Cost Attribution…</div>}>
+          <CostDemo />
         </Suspense>
       );
     case 'studio-home':

@@ -150,6 +150,15 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.7.0(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@workspec/cost-engine':
+        specifier: workspace:*
+        version: link:../../packages/cost-engine
+      '@workspec/cost-schema':
+        specifier: workspace:*
+        version: link:../../packages/cost-schema
+      '@workspec/cost-ui':
+        specifier: workspace:*
+        version: link:../../packages/cost-ui
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
@@ -167,6 +176,8 @@ importers:
         version: 3.2.7(@types/node@24.13.2)(jiti@2.7.0)(jsdom@25.0.1)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0)
 
   examples/aspire-apphost: {}
+
+  examples/fieldstate-azure-costs: {}
 
   examples/hosting-platform: {}
 
@@ -195,7 +206,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/c4-model:
     dependencies:
@@ -214,7 +225,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/c4-schema:
     dependencies:
@@ -520,6 +531,9 @@ importers:
         specifier: ^8.5.2
         version: 8.5.2(express@4.22.2)
     devDependencies:
+      '@playwright/test':
+        specifier: 1.56.1
+        version: 1.56.1
       '@tanstack/react-query':
         specifier: ^5.62.7
         version: 5.101.2(react@18.3.1)
@@ -562,6 +576,9 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+      yaml:
+        specifier: ^2.6.0
+        version: 2.9.0
 
   packages/cost-ui:
     dependencies:

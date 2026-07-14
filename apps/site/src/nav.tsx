@@ -20,14 +20,15 @@ interface NavItem {
 }
 
 // Studio redesign, round 3 (S3) — the module pills also need to light on a
-// module's own demo route (`/decisions/demo`, `/c4/demo`), not just its pitch
-// page, so each item now matches a SET of routes rather than exactly one.
-// Home deliberately matches only 'studio-home' — it must stay unlit on every
-// demo route, same as it does on the pitch pages.
+// module's own demo route (`/decisions/demo`, `/c4/demo`, `/cost/demo`), not
+// just its pitch page, so each item now matches a SET of routes rather than
+// exactly one. Home deliberately matches only 'studio-home' — it must stay
+// unlit on every demo route, same as it does on the pitch pages.
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', href: '/', routes: ['studio-home'] },
   { label: 'Decisions', href: '/decisions', routes: ['decisions', 'decisions-demo'] },
   { label: 'C4 Model', href: '/c4', routes: ['c4', 'c4-demo'] },
+  { label: 'Cost', href: '/cost', routes: ['cost', 'cost-demo'] },
 ];
 
 export function SiteNav(props: { repoUrl: string; extras?: ReactNode }): ReactElement {

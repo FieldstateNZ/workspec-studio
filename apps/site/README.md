@@ -18,6 +18,13 @@ one-time domain cutover from the old `decision-studio.workspec.io`.
   suite exercises, never this repo's own dogfood `.workspec/` tree — see
   `docs/c4/drift-log.md` entry 17). Read-only (`editLayout: false`); `npx @workspec/c4-studio
 serve` gives you the same explorer with drag-to-pin over your own repo.
+- **`/cost`** — the Cost Attribution module page: positioning copy plus a live `CostApp` demo
+  (`/cost/demo`) running entirely in the browser against a `MemoryRepository` seeded with the
+  worked `fieldstate-azure` estate (`src/cost-seed.ts` — a verbatim copy of
+  `examples/fieldstate-azure-costs/`, the same 80-resource estate extended to 100% coverage).
+  Fully editable (`editAttribution: true`) — toggle rules, promote a cluster via Fix coverage,
+  reorder the rail, **Export CSV** — nothing leaves the page. `npx @workspec/cost-studio
+stocktake` gives you the same workbench over your own subscription.
 
 ## Why it depends on the registry, not the workspace
 
@@ -36,6 +43,13 @@ The four `@workspec/c4-*` packages are registry pins in `dependencies`, exactly 
 devDependency exception while unpublished — retired at v0.1.0-alpha.2; the history lives in
 `docs/c4/drift-log.md` entry 17.)
 
+`@workspec/cost-schema`, `@workspec/cost-engine`, and `@workspec/cost-ui` are, for now, a
+**documented `workspace:*` devDependency exception** (see `package.json`'s own
+`_LOUD_NOTICE_devDependencies_cost_packages` and `docs/cost/drift-log.md` entry 1) — the cost
+family hasn't published to npm yet. They flip to registry pins in `dependencies`, the same shape
+`@workspec/c4-*` already has, the first time the cost family ships — see
+[`docs/cost/launch-checklist.md`](../../docs/cost/launch-checklist.md) item 3.
+
 ## Develop
 
 ```bash
@@ -51,7 +65,7 @@ GitHub Pages at **`https://studio.workspec.io`** on every push to `main`
 that touches `apps/site/**` (and on manual `workflow_dispatch`). The custom domain
 is claimed by [`public/CNAME`](./public/CNAME) (Vite copies it to `dist/CNAME`), and
 `dist/404.html` is the SPA fallback so client-routed deep links like `/decisions`,
-`/decisions/demo`, and `/c4` resolve.
+`/decisions/demo`, `/c4`, and `/cost` resolve.
 
 The `studio.workspec.io` domain is Brett-gated — DNS + the Pages claim/cert sequence
 still need a human to run them; see

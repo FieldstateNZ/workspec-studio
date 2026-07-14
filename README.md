@@ -5,11 +5,11 @@ product, publishing packages that WorkSpec Enterprise consumes directly rather t
 duplicating. Every package here is Enterprise-grade by constitution: Enterprise is a future
 consumer of this code.
 
-| Module           | Status      | Where                                                 |
-| ---------------- | ----------- | ----------------------------------------------------- |
-| Decisions        | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`    |
-| C4 Diagrams      | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/` |
-| Cost Attribution | in progress | `packages/cost-*`                                     |
+| Module           | Status      | Where                                                                          |
+| ---------------- | ----------- | -------------------------------------------------------------------------------- |
+| Decisions        | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`                             |
+| C4 Diagrams      | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/`                          |
+| Cost Attribution | in progress | `packages/cost-*`, `apps/site` (`/cost` demo), `docs/cost/` — publishes with the next tag |
 
 ## Layout
 
@@ -73,6 +73,29 @@ All five `@workspec/c4-*` packages are published to npm at `0.1.0-alpha.0`. `app
 page still takes the c4 packages as `workspace:*` devDependencies as a documented, temporary
 exception — they flip to registry pins as a follow-up — see
 [`docs/c4/drift-log.md`](docs/c4/drift-log.md).
+
+## Cost Attribution module
+
+Stock-take a cloud estate, attribute its spend to dimensions you declare (product, team, cost
+type, client — whatever your organisation actually reports on), see coverage and rollups, and
+compute/apply the tagging diff that converges live tags on that result — straight from plain YAML
+artifacts that live in your repo and version with git. Full docs, the engine contract, Azure setup,
+and the launch runbook live under [`docs/cost/`](docs/cost).
+
+| Package                         | Path                           | Role                                                                                                                             |
+| --------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `@workspec/cost-schema`         | `packages/cost-schema`         | Zod source of truth for the four artifact kinds (Inventory, Spend, Attribution, TagPlan) — TS types, runtime validation, generated JSON Schema, byte-stable YAML. |
+| `@workspec/cost-provider`       | `packages/cost-provider`       | Pluggable cost-data provider contract — `CloudProviderPort`, vendor-neutral result types, an in-memory test double.             |
+| `@workspec/cost-provider-azure` | `packages/cost-provider-azure` | Azure implementation of `CloudProviderPort` — Resource Graph inventory, Cost Management spend, ARM tag apply, drift verification. |
+| `@workspec/cost-engine`         | `packages/cost-engine`         | Pure, normative attribution engine (no IO, no DOM) — matching, resolution, effects, overrides, coverage, rollups.               |
+| `@workspec/cost-ui`             | `packages/cost-ui`             | Host-agnostic React views — the unified Attribution Workbench, Inventory, Reports, Plan review (standalone lib + MF remote).    |
+| `@workspec/cost-studio`         | `packages/cost-studio`         | Standalone CLI (`workspec-cost`) + localhost host shell — `stocktake`, `validate`, `report`, `plan`, `apply`.                   |
+
+All six `@workspec/cost-*` packages are versioned at `0.1.0-alpha.0`, ready to publish on the next
+tag — see [`docs/cost/launch-checklist.md`](docs/cost/launch-checklist.md) for the runbook.
+`apps/site`'s `/cost` page takes `cost-schema`/`cost-engine`/`cost-ui` as `workspace:*`
+devDependencies as a documented, temporary exception, the same shape the c4 exception used before
+its own first publish — see [`docs/cost/drift-log.md`](docs/cost/drift-log.md).
 
 ## Architecture
 
