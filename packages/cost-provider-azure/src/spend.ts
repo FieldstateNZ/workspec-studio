@@ -2,6 +2,7 @@ import { API_VERSION, SpendArtifact, compareSpendRows } from '@workspec/cost-sch
 import type { Spend, SpendRowType } from '@workspec/cost-schema';
 import type { ProviderScope } from '@workspec/cost-provider';
 import type { AzureHttp } from './http.js';
+import { mapWithConcurrency } from './pool.js';
 
 // ── Spend via Azure Cost Management ─────────────────────────────────────────
 // One query PER SUBSCRIPTION (Cost Management's query API is scoped to a
@@ -46,8 +47,30 @@ interface CostManagementResponseBody {
   };
 }
 
+/**
+ * Default {@link FetchSpendOptions.maxConcurrency} — a small, conservative
+ * cap on how many subscriptions' Cost Management queries `fetchAzureSpend`
+ * has in flight at once. Chosen to meaningfully cut down simultaneous
+ * queries (and the 429 pile-up an unbounded fan-out causes) without
+ * serializing a large scope into an unnecessarily slow crawl.
+ */
+const DEFAULT_MAX_CONCURRENCY = 4;
+
 export interface FetchSpendOptions {
   http: AzureHttp;
+  /**
+   * Maximum number of subscriptions to query concurrently. Defaults to
+   * {@link DEFAULT_MAX_CONCURRENCY} (4). `0`, a negative number, or omitting
+   * the option falls back to that default; a value `>=
+   * scope.subscriptions.length` behaves like the old unbounded `Promise.all`
+   * fan-out (every subscription queried at once). Bounding this matters
+   * because Cost Management's query API is scoped per-subscription (see the
+   * module note above) — a scope with many subscriptions would otherwise
+   * fire every query at once, amplifying 429 throttling even though
+   * `withRetry` (see `./http.ts`) honors `Retry-After` on each individual
+   * request.
+   */
+  maxConcurrency?: number;
 }
 
 /** First instant and last instant of the ISO month `period` ("YYYY-MM"), as UTC ISO datetimes. */
@@ -192,10 +215,11 @@ export async function fetchAzureSpend(scope: ProviderScope, period: string, opti
   if (scope.subscriptions.length === 0) {
     throw new Error('fetchAzureSpend: scope.subscriptions must be non-empty');
   }
-  const { http } = options;
+  const { http, maxConcurrency } = options;
+  const concurrency = maxConcurrency !== undefined && maxConcurrency > 0 ? maxConcurrency : DEFAULT_MAX_CONCURRENCY;
 
-  const perSubscription = await Promise.all(
-    scope.subscriptions.map((subscriptionId) => fetchOneSubscription(subscriptionId, period, http)),
+  const perSubscription = await mapWithConcurrency(scope.subscriptions, concurrency, (subscriptionId) =>
+    fetchOneSubscription(subscriptionId, period, http),
   );
   const rows = perSubscription.flat().sort(compareSpendRows);
 
