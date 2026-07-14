@@ -1,27 +1,26 @@
 # Releasing
 
-WorkSpec Studio publishes the `@workspec/decision-*` and `@workspec/c4-*` npm families, and (A6,
-[#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)) the
-`Workspec.Aspire.Hosting.*` NuGet family, from one `release.yml` workflow triggered by a version
-tag. Each family versions and publishes independently — the release workflow walks every
-publishable package/project and skips any whose current version is already on its registry, so
+WorkSpec Studio publishes three npm families — `@workspec/decision-*`, `@workspec/c4-*`, and
+`@workspec/cost-*` — and (A6, [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39))
+the `Workspec.Aspire.Hosting.*` NuGet family, from one `release.yml` workflow triggered by a
+version tag. Each family versions and publishes independently — the workflow walks every
+publishable package/project and **skips any whose current version is already on its registry**, so
 tagging a release with only one family bumped publishes exactly that family. This doc covers npm
-first (the Decision Studio/C4/Cost package sets), then NuGet (`## NuGet (.NET)` below).
+first, then NuGet (`## NuGet (.NET)` below).
 
 ## npm (`@workspec/*`)
 
-The Decision Studio set:
+Fifteen public packages across three families:
 
-| Package                     | npx / import                                                |
-| --------------------------- | ----------------------------------------------------------- |
-| `@workspec/decision-schema` | library                                                     |
-| `@workspec/decision-engine` | library                                                     |
-| `@workspec/decision-ui`     | library (+ `./styles.css`, MF remote)                       |
-| `@workspec/decision-studio` | `npx @workspec/decision-studio` (bin: `workspec-decisions`) |
+| Family     | Packages                                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `decision` | `decision-schema`, `decision-engine`, `decision-ui`, `decision-studio` (bin: `workspec-decisions`)                    |
+| `c4`       | `c4-schema`, `c4-model`, `c4-layout`, `c4-ui`, `c4-studio` (bin: `workspec-c4`)                                       |
+| `cost`     | `cost-schema`, `cost-provider`, `cost-provider-azure`, `cost-engine`, `cost-ui`, `cost-studio` (bin: `workspec-cost`) |
 
 Each package sets `publishConfig: { access: "public", provenance: true }`, ships `dist` +
-`README.md` + `LICENSE`, and exposes types + ESM from the tarball. `examples/*` are `private`
-and never publish.
+`README.md` + `LICENSE`, and exposes types + ESM from the tarball. `examples/*` and `apps/*` are
+`private` and never publish. `@workspec/design` is published from its own repo, not here.
 
 ## Preflight (always)
 
@@ -32,48 +31,88 @@ pnpm -r build
 pnpm --filter @workspec/decision-ui build:mf
 pnpm --filter @workspec/decision-studio e2e        # needs Chromium (see below)
 
-# Inspect exactly what each tarball will contain — no src, dist + README + LICENSE.
-pnpm --filter @workspec/decision-schema pack --pack-destination /tmp
-pnpm --filter @workspec/decision-engine pack --pack-destination /tmp
-pnpm --filter @workspec/decision-ui     pack --pack-destination /tmp
-pnpm --filter @workspec/decision-studio pack --pack-destination /tmp
-tar tzf /tmp/workspec-decision-studio-*.tgz     # expect dist/bin.js, dist/client/**, README, LICENSE
+# Inspect exactly what a tarball will contain — no src, dist + README + LICENSE — and confirm
+# `pnpm pack` rewrote the workspace deps to concrete versions (no `workspace:` specifiers).
+pnpm --filter @workspec/cost-studio pack --pack-destination /tmp
+tar tzf /tmp/workspec-cost-studio-*.tgz                       # expect dist/**, README, LICENSE
+tar -xzO -f /tmp/workspec-cost-studio-*.tgz package/package.json | grep '@workspec/'   # ^0.1.0-…, not workspace:
 ```
 
-> `pnpm pack` rewrites the `workspace:*` dependencies to the concrete version, so the studio
-> tarball depends on the exact `@workspec/*` versions being published in the same release.
+> **Always rebuild before packing.** `dist/` is gitignored, so a stale local `dist/` will pack
+> stale code. The first cost publish shipped a pre-build `dist/` and landed on npm missing current
+> exports — run `pnpm -r build` immediately before any pack/publish. (CI does this automatically;
+> a manual publish must not skip it.)
 
 ## Automated (recommended)
 
-The [`release.yml`](./.github/workflows/release.yml) workflow publishes on a version tag with
-npm provenance (`id-token: write` + `publishConfig.provenance`).
+The [`release.yml`](../../.github/workflows/release.yml) workflow publishes on a version tag using
+**npm trusted publishing (OIDC)** — there is **no `NPM_TOKEN` secret**. GitHub mints a short-lived
+id-token (`id-token: write`) and npm exchanges it for publish rights; provenance is attached from
+each package's `publishConfig.provenance: true` because the publish runs in that OIDC-authenticated
+CI context.
 
-One-time setup: add an npm **automation token** with publish rights to the `@workspec` scope as
-the repo secret `NPM_TOKEN`.
+**One-time setup (per package):** register a **trusted publisher** on npmjs.com for each package
+(package page → Settings → Trusted Publisher → GitHub Actions), pointing at owner `FieldstateNZ`,
+repo `workspec-studio`, workflow `release.yml`. **A trusted publisher can only be added to a
+package that already exists** — see [First publish of a new package](#first-publish-of-a-new-package)
+for how to bootstrap a brand-new package name.
 
 ```bash
-# bump all four packages to the same version, commit, tag, push
-pnpm -r exec npm version 0.1.0-alpha.1 --no-git-tag-version   # or edit the four package.json files
-git commit -am "release: v0.1.0-alpha.1"
-git tag v0.1.0-alpha.1
+# bump a family to a new version (edit the package.json files, or `npm version` per package),
+# commit, tag, push. Version the whole family together (see Versioning below).
+git commit -am "release: cost 0.1.0-alpha.1"
+git tag v0.1.0-alpha.4          # tag name is just the trigger; the workflow publishes by package version
 git push origin main --tags
 ```
 
-Pushing the tag runs the workflow: install → build → typecheck → test → `pnpm -r publish`.
+Pushing the tag runs the workflow: install → build → typecheck → test → then, per publishable
+package, `pnpm --filter <pkg> pack` → `npm publish <tarball> --access public --tag <channel>`.
+`pnpm pack` rewrites `workspace:*`/`workspace:^` deps to the concrete version inside the tarball, so
+sibling `@workspec/*` deps resolve to the exact versions published in the same release. A
+prerelease (e.g. `0.1.0-alpha.1`) is routed to its prerelease dist-tag (`alpha`/`beta`/`rc`), never
+to `latest`; a stable version goes to `latest`. Packages already at their current version on the
+registry are skipped, so a re-run never collides.
 
-## Manual path
+## First publish of a new package
 
-If publishing from a workstation instead of CI:
+Trusted publishing (OIDC) **cannot create a package that does not yet exist** — there is no package
+page on which to register the trusted publisher, so the first `npm publish` of a brand-new name
+fails with `E404 … PUT … Not Found … or you do not have permission`. Bootstrap each new package
+once with a token-authenticated manual publish, then register its trusted publisher so CI takes
+over.
 
 ```bash
-npm login                        # an account with @workspec publish rights
-pnpm -r build
-# Provenance requires a supported CI with OIDC; from a laptop, publish without it:
-pnpm -r publish --access public --no-git-checks
+npm login                                  # or a granular token; account must have publish +
+npm whoami                                 # new-package rights on the @workspec scope
+pnpm install && pnpm -r build              # NEVER skip the build — dist/ is gitignored
+out="$(mktemp -d)"
+# Publish in dependency order (schema first, studio last) so the registry is never left
+# referencing an unpublished dep. Example for the cost family:
+for pkg in cost-schema cost-provider cost-engine cost-provider-azure cost-ui cost-studio; do
+  pnpm --filter "@workspec/$pkg" pack --pack-destination "$out"
+  npm publish "$out/workspec-$pkg-<version>.tgz" --access public --tag alpha --provenance=false
+done
 ```
 
-`pnpm -r publish` walks the workspace in dependency order and skips `private` packages, so the
-four libs go out and the examples do not. Add `--dry-run` first to rehearse.
+- `--provenance=false` — a local publish can't attach provenance (that needs the CI OIDC id-token),
+  and each manifest's `provenance: true` would otherwise make npm try and fail. The bootstrap
+  version won't carry provenance; the first CI release afterward will.
+- `--tag alpha` — a prerelease must not go to `latest` (npm 11 rejects it without an explicit tag).
+- After the packages exist, register the trusted publisher (above) for each, and all subsequent
+  releases go through CI via OIDC with provenance.
+
+## Manual path (existing packages)
+
+For an ad-hoc publish of packages that already exist on the registry, from a workstation:
+
+```bash
+npm login                                  # an account with @workspec publish rights
+pnpm install && pnpm -r build              # rebuild — dist/ is gitignored
+# Provenance requires CI OIDC; from a laptop, publish the packed tarballs without it, in
+# dependency order (same loop as the bootstrap above), each with `--provenance=false`.
+```
+
+Prefer the automated path — it rebuilds, attaches provenance, and skips already-published versions.
 
 ## NuGet (.NET) — PENDING one-time setup
 
@@ -109,9 +148,12 @@ families; the NuGet job runs and exits as a no-op guard, touching nothing on nug
    variables → Actions → Variables) — this is the switch that turns the inert `nuget-publish` job
    live. Until this step, leave it unset/`false`.
 
-Once all three are done, the same `git tag v0.1.0-alpha.1 && git push --tags` flow above publishes
-both families in one push. A package already at its current version on nuget.org is skipped
-(`dotnet nuget push --skip-duplicate`), mirroring the npm job's own per-package skip logic.
+Once all three are done, the same `git tag … && git push --tags` flow above publishes both
+ecosystems in one push. A package already at its current version on nuget.org is skipped
+(`dotnet nuget push --skip-duplicate`), mirroring the npm job's own per-package skip logic. Note the
+same first-publish constraint may apply: if the Trusted Publishing policy's glob doesn't permit
+creating a brand-new package ID on first push, do one manual `dotnet nuget push` (below) with an API
+key to create it, after which the OIDC policy takes over.
 
 ### Manual path (NuGet)
 
@@ -129,10 +171,17 @@ dotnet nuget push /tmp/nupkg/*.nupkg \
 - **Chromium for the E2E** is pre-provisioned in the dev container. On a fresh CI runner install
   it with `pnpm --filter @workspec/decision-studio exec playwright install --with-deps chromium`
   (pinned to `@playwright/test` `1.56.1`). CI does this in the `standalone-e2e` job.
-- **Schemas** publish separately to GitHub Pages via [`pages.yml`](./.github/workflows/pages.yml)
-  so the `$schema` directive resolves — that is not part of the npm release.
-- **Versioning:** keep the four npm packages on one version. The studio bin and the UI/engine/schema
-  it bundles are only guaranteed to agree at matching versions. The four NuGet packages version
-  independently of npm (they start at `0.1.0-alpha.0`, mirroring npm's own alpha convention, but
-  are a separate ecosystem/tag namespace — bump `aspire-hosting/Directory.Build.props`'s shared
-  `Version` property, not the npm packages' `package.json`s).
+- **Schemas** publish separately to GitHub Pages via [`pages.yml`](../../.github/workflows/pages.yml)
+  (in the `workspec-schemas` repo) so the `$schema` directive resolves — not part of the npm release.
+- **Versioning:** keep each npm family on one version — the studio bin and the UI/engine/schema it
+  bundles are only guaranteed to agree at matching versions — but families version independently of
+  one another (decision, c4, and cost need not share a number). The `latest` dist-tag is not moved
+  for prereleases (they go to the `alpha`/`beta`/`rc` tag), so a bare `npm i @workspec/<pkg>` during
+  the alpha resolves to whatever was first published as `latest` — consumers should pin or use
+  `@alpha`. The four NuGet packages version independently of npm via
+  `aspire-hosting/Directory.Build.props`'s shared `Version` property (a separate ecosystem/tag
+  namespace), not the npm packages' `package.json`s.
+
+```
+
+```
