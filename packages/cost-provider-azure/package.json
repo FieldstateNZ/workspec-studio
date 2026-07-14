@@ -1,6 +1,6 @@
 {
   "name": "@workspec/cost-provider-azure",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.5",
   "description": "Azure Cost Management implementation of the WorkSpec Cost Attribution provider contract — Resource Graph inventory, Cost Management spend, ARM tag apply, and drift verification, over plain REST.",
   "keywords": [
     "cost-attribution",

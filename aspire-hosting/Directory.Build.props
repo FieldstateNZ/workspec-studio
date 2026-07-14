@@ -25,7 +25,7 @@
        assembly names stay Aspire.Hosting.Workspec.* (decided in #39). -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
-    <Version>0.1.0-alpha.0</Version>
+    <Version>0.1.0-alpha.5</Version>
     <Authors>Fieldstate</Authors>
     <Company>Fieldstate</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

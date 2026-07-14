@@ -1,6 +1,6 @@
 {
   "name": "@workspec/c4-ui",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.5",
   "description": "Host-agnostic React components for interactive WorkSpec C4 diagrams (standalone lib + module-federation remote).",
   "keywords": [
     "react",

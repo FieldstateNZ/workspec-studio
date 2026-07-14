@@ -1,7 +1,7 @@
 {
   "name": "@workspec/decision-studio",
-  "version": "0.1.0-alpha.1",
-  "description": "WorkSpec Decision Studio \u2014 standalone CLI + localhost host shell. Run costed decisions from your working tree.",
+  "version": "0.1.0-alpha.5",
+  "description": "WorkSpec Decision Studio — standalone CLI + localhost host shell. Run costed decisions from your working tree.",
   "keywords": [
     "architecture-decision-records",
     "adr",
