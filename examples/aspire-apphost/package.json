@@ -1,0 +1,7 @@
+{
+  "name": "@workspec-examples/aspire-apphost",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worked example: a TypeScript Aspire AppHost using the workspec-c4 hosting integration (aspire-hosting/aspire-hosting-c4). Not wired into CI in this slice (A6 hardens it) — see README.md.",
+  "license": "Apache-2.0"
+}

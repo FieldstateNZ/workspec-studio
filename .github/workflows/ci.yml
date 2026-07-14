@@ -58,6 +58,24 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The E2E smoke test (aspire-hosting-tests/WorkspecC4E2ETests.cs) needs the real
+      # workspec-c4 CLI (packages/c4-studio/dist/bin.js) — without it, it self-skips with a
+      # message instead of failing, so this build step is what makes it actually run in CI.
+      - name: Build workspec-c4 CLI
+        run: pnpm --filter @workspec/c4-studio... build
+
       - name: Build
         run: dotnet build --configuration Release aspire-hosting/Aspire.Hosting.Workspec.slnx
 
