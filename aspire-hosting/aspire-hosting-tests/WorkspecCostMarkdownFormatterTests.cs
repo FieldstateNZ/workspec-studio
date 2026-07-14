@@ -1,55 +1,24 @@
 using Aspire.Hosting;
+using Aspire.Hosting.Workspec;
 
 namespace Aspire.Hosting.Workspec.Tests;
 
+/// <summary>
+/// <see cref="WorkspecCostMarkdownFormatter.FormatValidateMarkdown"/> is now a thin wrapper over
+/// <see cref="WorkspecCliRunner.FormatValidateMarkdown"/> (Core, A6 #39) — the shared table-rendering
+/// behavior (severity counts, pipe/newline escaping, null-safety) is covered once by
+/// <c>WorkspecCliRunnerTests</c>; only this module's own clean-diagnostics message text is
+/// cost-specific and worth a smoke test here. <see cref="WorkspecCostMarkdownFormatter.FormatReportMarkdown"/>
+/// has no equivalent in any other module integration, so its tests stay here in full.
+/// </summary>
 public class WorkspecCostMarkdownFormatterTests
 {
     [Fact]
-    public void FormatValidateMarkdown_WithNoDiagnostics_ReturnsCleanMessage()
+    public void FormatValidateMarkdown_WithNoDiagnostics_ReturnsCostSpecificCleanMessage()
     {
         var markdown = WorkspecCostMarkdownFormatter.FormatValidateMarkdown([]);
 
-        Assert.Contains("No diagnostics", markdown);
-    }
-
-    [Fact]
-    public void FormatValidateMarkdown_WithMixedSeverities_CountsEachSeverity()
-    {
-        var diagnostics = new[]
-        {
-            new WorkspecCostDiagnostic("error", "parse-error", "e1", "a.yaml"),
-            new WorkspecCostDiagnostic("warning", "mixed-currency", "w1", "b.yaml"),
-            new WorkspecCostDiagnostic("warning", "mixed-currency", "w2", "c.yaml"),
-        };
-
-        var markdown = WorkspecCostMarkdownFormatter.FormatValidateMarkdown(diagnostics);
-
-        Assert.Contains("1 error(s)", markdown);
-        Assert.Contains("2 warning(s)", markdown);
-        foreach (var d in diagnostics)
-        {
-            Assert.Contains(d.File, markdown);
-            Assert.Contains(d.Code, markdown);
-            Assert.Contains(d.Message, markdown);
-        }
-    }
-
-    // Every cell is CLI-provided text — a literal '|' in ANY column must be escaped or it splits
-    // the Markdown table row.
-    [Fact]
-    public void FormatValidateMarkdown_EscapesPipesInEveryColumn()
-    {
-        var diagnostics = new[]
-        {
-            new WorkspecCostDiagnostic("err|or", "code|x", "message with | pipe", "file|name.yaml"),
-        };
-
-        var markdown = WorkspecCostMarkdownFormatter.FormatValidateMarkdown(diagnostics);
-
-        Assert.Contains("err\\|or", markdown);
-        Assert.Contains("code\\|x", markdown);
-        Assert.Contains("message with \\| pipe", markdown);
-        Assert.Contains("file\\|name.yaml", markdown);
+        Assert.Equal("No diagnostics — every cost artifact under the directory is clean.", markdown);
     }
 
     [Fact]

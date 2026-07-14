@@ -114,7 +114,7 @@ public static class WorkspecCostExtensions
                     args.Add("--dir");
                     args.Add(resolvedCostDir);
 
-                    var result = await WorkspecCostCliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         args,
                         builder.AppHostDirectory,
@@ -134,7 +134,7 @@ public static class WorkspecCostExtensions
                     // dimension (its own documented default), which is exactly "report by primary
                     // dimension" — this resource has no way to know the primary dimension itself
                     // without reading the attribution artifact, which is exactly what the CLI does.
-                    var result = await WorkspecCostCliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["report", "--format", "json", "--dir", resolvedCostDir],
                         builder.AppHostDirectory,
@@ -145,7 +145,7 @@ public static class WorkspecCostExtensions
                         WorkspecCostReportPayload payload;
                         try
                         {
-                            payload = WorkspecCostCliRunner.ParseReportPayload(result.Stdout);
+                            payload = WorkspecCostReportPayload.Parse(result.Stdout);
                         }
                         catch (JsonException ex)
                         {
@@ -167,7 +167,7 @@ public static class WorkspecCostExtensions
                 "Validate",
                 executeCommand: async context =>
                 {
-                    var result = await WorkspecCostCliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["validate", "--json", "--dir", resolvedCostDir],
                         builder.AppHostDirectory,
@@ -178,10 +178,10 @@ public static class WorkspecCostExtensions
                     // payload, not an exceptional one, mirroring workspec-c4's own validate contract.
                     if (result.ExitCode is 0 or 1)
                     {
-                        IReadOnlyList<WorkspecCostDiagnostic> diagnostics;
+                        IReadOnlyList<WorkspecCliDiagnostic> diagnostics;
                         try
                         {
-                            diagnostics = WorkspecCostCliRunner.ParseDiagnostics(result.Stdout);
+                            diagnostics = WorkspecCliRunner.ParseDiagnostics(result.Stdout);
                         }
                         catch (JsonException ex)
                         {

@@ -1,11 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.Decisions</PackageId>
+    <Description>Wires the workspec-decisions CLI (Decision Studio) into a .NET Aspire apphost: a dashboard resource serving the decision/catalog explorer, WithDecision linking from any resource to the decision record governing it, and validate/render-adr dashboard commands.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -10,7 +10,7 @@ namespace Aspire.Hosting;
 /// Outcome of one <c>workspec-c4 import-aspire</c> invocation, shared by the <see cref="AfterResourcesCreatedEvent"/>
 /// subscriber and the "Sync .workspec" dashboard command in <see cref="WorkspecGraphSyncExtensions.WithGraphSync"/>.
 /// </summary>
-/// <param name="CliMissing">The CLI process itself couldn't be started (see <see cref="WorkspecC4CliRunner.RunAsync"/>'s -1 exit code convention).</param>
+/// <param name="CliMissing">The CLI process itself couldn't be started (see <see cref="WorkspecCliRunner.RunAsync"/>'s -1 exit code convention).</param>
 /// <param name="ExitCode">The process exit code (or -1 for <paramref name="CliMissing"/>).</param>
 /// <param name="Diagnostics">Parsed drift diagnostics (check mode only; always empty for scaffold mode).</param>
 /// <param name="RawStderr">The process's raw stderr — scaffold mode's human-readable "wrote/changed N file(s)" lines, or a failure message.</param>
@@ -164,7 +164,7 @@ public static class WorkspecGraphSyncExtensions
     /// <paramref name="mode"/>. Shared by <see cref="WithGraphSync"/>'s on-run subscriber and its
     /// "Sync .workspec" dashboard command so both go through one tested code path. Never throws for a
     /// missing/misbehaving CLI — callers get a degraded <see cref="WorkspecGraphSyncResult"/> instead
-    /// (see <see cref="WorkspecC4CliRunner.RunAsync"/>'s own crash-safety contract, which this builds on).
+    /// (see <see cref="WorkspecCliRunner.RunAsync"/>'s own crash-safety contract, which this builds on).
     /// </summary>
     internal static async Task<WorkspecGraphSyncResult> RunImportAspireAsync(
         WorkspecC4StudioResource resource,
@@ -190,7 +190,7 @@ public static class WorkspecGraphSyncExtensions
         var invocation = WorkspecCliLocator.Resolve("workspec-c4", new WorkspecCliLocatorOptions { WorkingDirectory = appHostDirectory });
         var modeArg = mode == WorkspecGraphSyncMode.Scaffold ? "scaffold" : "check";
 
-        var (exitCode, stdout, stderr) = await WorkspecC4CliRunner.RunAsync(
+        var (exitCode, stdout, stderr) = await WorkspecCliRunner.RunAsync(
             invocation,
             ["import-aspire", "--graph", dumpPath, "--dir", resource.WorkspecDirectory, "--mode", modeArg, "--json"],
             appHostDirectory,
@@ -213,7 +213,7 @@ public static class WorkspecGraphSyncExtensions
         // check mode: 0 = clean, 1 = drift found — both are normal, successful runs of the CLI.
         if (exitCode is 0 or 1)
         {
-            var diagnostics = WorkspecC4CliRunner.ParseDiagnostics(stdout);
+            var diagnostics = WorkspecCliRunner.ParseDiagnostics(stdout);
             return new WorkspecGraphSyncResult(CliMissing: false, ExitCode: exitCode, Diagnostics: diagnostics, RawStderr: stderr);
         }
 

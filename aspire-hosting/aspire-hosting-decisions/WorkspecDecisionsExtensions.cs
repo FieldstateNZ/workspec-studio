@@ -78,7 +78,7 @@ public static class WorkspecDecisionsExtensions
                 "Validate",
                 executeCommand: async context =>
                 {
-                    var result = await WorkspecDecisionsCliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["validate", "--json", "--dir", resolvedDir],
                         builder.AppHostDirectory,
@@ -91,10 +91,10 @@ public static class WorkspecDecisionsExtensions
                     // CLI itself couldn't produce a diagnostics array at all.
                     if (result.ExitCode is 0 or 1)
                     {
-                        IReadOnlyList<WorkspecDecisionsCliDiagnostic> diagnostics;
+                        IReadOnlyList<WorkspecCliDiagnostic> diagnostics;
                         try
                         {
-                            diagnostics = WorkspecDecisionsCliRunner.ParseDiagnostics(result.Stdout);
+                            diagnostics = WorkspecCliRunner.ParseDiagnostics(result.Stdout);
                         }
                         catch (JsonException ex)
                         {
@@ -103,7 +103,7 @@ public static class WorkspecDecisionsExtensions
                             return CommandResults.Failure($"validate: could not parse workspec-decisions --json output ({ex.Message})");
                         }
 
-                        var markdown = WorkspecDecisionsCliRunner.FormatValidateMarkdown(diagnostics);
+                        var markdown = WorkspecCliRunner.FormatValidateMarkdown(diagnostics, "No diagnostics — every decision/catalog artifact is valid.");
 
                         return result.ExitCode == 0
                             ? CommandResults.Success("validate: OK", markdown, CommandResultFormat.Markdown)
@@ -122,7 +122,7 @@ public static class WorkspecDecisionsExtensions
                     // runRenderAdr, this succeeds outright when the directory holds exactly one
                     // decision (exit 0, ADR on stdout); fails listing every available ref/id when it
                     // holds more than one; fails saying so when it holds none.
-                    var discovery = await WorkspecDecisionsCliRunner.RunAsync(
+                    var discovery = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["render-adr", "--dir", resolvedDir],
                         builder.AppHostDirectory,
@@ -159,7 +159,7 @@ public static class WorkspecDecisionsExtensions
                         return CommandResults.Failure($"render-adr: {discovery.Stderr.Trim()}");
                     }
 
-                    var withRef = await WorkspecDecisionsCliRunner.RunAsync(
+                    var withRef = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["render-adr", "--dir", resolvedDir, "--decision", fallbackRef],
                         builder.AppHostDirectory,

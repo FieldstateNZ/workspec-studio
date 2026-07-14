@@ -1,44 +1,22 @@
 using System.Globalization;
 using System.Text;
+using Aspire.Hosting.Workspec;
 
 namespace Aspire.Hosting;
 
 /// <summary>
 /// Builds the Markdown result payloads for the workspec-cost dashboard commands. Purely internal
 /// plumbing — factored out of the command delegates in <see cref="WorkspecCostExtensions"/> so it's
-/// directly unit-testable without a real (or fake) CLI process.
+/// directly unit-testable without a real (or fake) CLI process. "Validate"'s table itself is now a
+/// thin wrapper over <see cref="WorkspecCliRunner.FormatValidateMarkdown"/> (Core, A6 #39) with this
+/// module's own clean-diagnostics message; "Report" has no equivalent in any other module
+/// integration, so it stays here.
 /// </summary>
 internal static class WorkspecCostMarkdownFormatter
 {
     /// <summary>Builds the Markdown result payload for the "Validate" dashboard command: a summary line plus a diagnostics table.</summary>
-    public static string FormatValidateMarkdown(IReadOnlyList<WorkspecCostDiagnostic> diagnostics)
-    {
-        ArgumentNullException.ThrowIfNull(diagnostics);
-
-        if (diagnostics.Count == 0)
-        {
-            return "No diagnostics — every cost artifact under the directory is clean.";
-        }
-
-        var errorCount = diagnostics.Count(d => d.Severity == "error");
-        var warningCount = diagnostics.Count - errorCount;
-
-        var markdown = new StringBuilder();
-        markdown.Append(errorCount).Append(" error(s), ").Append(warningCount).Append(" warning(s).\n\n");
-        markdown.Append("| severity | code | file | message |\n");
-        markdown.Append("| --- | --- | --- | --- |\n");
-
-        foreach (var diagnostic in diagnostics)
-        {
-            markdown.Append("| ").Append(EscapeTableCell(diagnostic.Severity))
-                .Append(" | ").Append(EscapeTableCell(diagnostic.Code))
-                .Append(" | ").Append(EscapeTableCell(diagnostic.File))
-                .Append(" | ").Append(EscapeTableCell(diagnostic.Message))
-                .Append(" |\n");
-        }
-
-        return markdown.ToString();
-    }
+    public static string FormatValidateMarkdown(IReadOnlyList<WorkspecCliDiagnostic> diagnostics) =>
+        WorkspecCliRunner.FormatValidateMarkdown(diagnostics, "No diagnostics — every cost artifact under the directory is clean.");
 
     /// <summary>
     /// Builds the Markdown result payload for the "Report" dashboard command: a coverage headline
@@ -70,14 +48,14 @@ internal static class WorkspecCostMarkdownFormatter
             .ThenBy(b => b.Key, StringComparer.Ordinal);
         var ordered = unattributed is null ? rest : rest.Append(unattributed);
 
-        markdown.Append("| ").Append(EscapeTableCell(payload.Rollup.DimensionId)).Append(" | $/mo | share% |\n");
+        markdown.Append("| ").Append(WorkspecCliRunner.EscapeTableCell(payload.Rollup.DimensionId)).Append(" | $/mo | share% |\n");
         markdown.Append("| --- | ---: | ---: |\n");
 
         var totalSpend = payload.Totals.InventorySpend;
         foreach (var bucket in ordered)
         {
             var share = totalSpend != 0 ? bucket.Amount / totalSpend * 100 : 0;
-            markdown.Append("| ").Append(EscapeTableCell(bucket.Key))
+            markdown.Append("| ").Append(WorkspecCliRunner.EscapeTableCell(bucket.Key))
                 .Append(" | ").Append(FormatMoney(bucket.Amount))
                 .Append(" | ").Append(share.ToString("F1", CultureInfo.InvariantCulture)).Append("% |\n");
         }
@@ -86,8 +64,4 @@ internal static class WorkspecCostMarkdownFormatter
     }
 
     private static string FormatMoney(double amount) => Math.Round(amount).ToString("N0", CultureInfo.InvariantCulture);
-
-    // Every cell is CLI-provided (or dimension-id-derived) text; a literal '|' in any of them would
-    // break the table row.
-    private static string EscapeTableCell(string value) => value.Replace("|", "\\|", StringComparison.Ordinal);
 }

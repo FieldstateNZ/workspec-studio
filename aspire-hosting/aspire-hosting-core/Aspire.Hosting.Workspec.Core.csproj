@@ -2,10 +2,17 @@
 
   <PropertyGroup>
     <RootNamespace>Aspire.Hosting.Workspec</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.Core</PackageId>
+    <Description>Shared graph-dump contract (workspec-graph/v1), CLI locator, and health-check primitives for WorkSpec's .NET Aspire hosting integrations (Aspire.Hosting.Workspec.C4/.Decisions/.Cost). Not useful standalone — a dependency of the module integration packages.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
