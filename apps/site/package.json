@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions, /c4, and /cost, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/cost-* packages are a temporary workspace-devDependency exception (not yet published) — see docs/cost/drift-log.md.",
-  "_LOUD_NOTICE_devDependencies_cost_packages": "The three @workspec/cost-* entries in devDependencies below are workspace:* — NOT registry pins like every other @workspec/* dependency above. The cost packages aren't published to npm yet; this is a deliberate, TEMPORARY exception to this app's registry-pins-only rule, scoped ONLY to cost-schema/cost-engine/cost-ui (the decisions and c4 demos' pins are untouched). See docs/cost/drift-log.md entry 1 and this package's README.md. Flip each to a published semver range and move it up into \"dependencies\" at first publish — a one-line change per package, mirroring how PR #27 resolved the equivalent c4 exception (docs/c4/drift-log.md entry 17).",
+  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions, /c4, and /cost, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/cost-* packages remain a workspace exception: the first manual cost publish (0.1.0-alpha.0) shipped a stale build missing current exports, so they stay workspace-linked until cost is republished from a fresh build — see docs/cost/drift-log.md.",
+  "_LOUD_NOTICE_devDependencies_cost_packages": "The three @workspec/cost-* entries in devDependencies below are workspace:* — NOT registry pins like every other @workspec/* dependency above. Cost IS on npm now, but the first manual publish (0.1.0-alpha.0) packed a stale dist and is missing current public API (createMemoryRepository, CostApp, CostStudioProvider, attribute, …), so the site cannot consume it. Keep these workspace-linked until cost is republished from a fresh build (alpha.1+, ideally via the release workflow now that cost trusted publishers exist), then flip each to that registry version and move it up into \"dependencies\" — mirroring how PR #27 resolved the c4 exception (docs/c4/drift-log.md entry 17).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -18,9 +18,9 @@
     "@workspec/c4-model": "0.1.0-alpha.2",
     "@workspec/c4-schema": "0.1.0-alpha.2",
     "@workspec/c4-ui": "0.1.0-alpha.2",
-    "@workspec/decision-engine": "0.1.0-alpha.0",
-    "@workspec/decision-schema": "0.1.0-alpha.0",
-    "@workspec/decision-ui": "0.1.0-alpha.0",
+    "@workspec/decision-engine": "0.1.0-alpha.1",
+    "@workspec/decision-schema": "0.1.0-alpha.1",
+    "@workspec/decision-ui": "0.1.0-alpha.1",
     "@workspec/design": "0.1.0-alpha.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
