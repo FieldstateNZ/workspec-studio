@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ArtifactValidationError, FsRepository } from './fs-repository.js';
+import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 // packages/decision-studio/src → repo root is three levels up.
 const repoPath = (rel: string): string =>
@@ -58,6 +58,23 @@ describe('FsRepository discovery', () => {
     const decisions = await repo.listDecisions();
     expect(decisions.map((d) => d.ref)).toEqual(['a/b/nested.decision.yaml']);
     expect(await repo.listCatalogs()).toEqual([]);
+  });
+});
+
+describe('FsRepository.resolve — ref containment (issue #52)', () => {
+  it('still resolves a normal relative ref (no regression)', () => {
+    const repo = new FsRepository(dir);
+    expect(repo.resolve('a/b.decision.yaml')).toBe(join(dir, 'a', 'b.decision.yaml'));
+  });
+
+  it('rejects a POSIX absolute ref instead of trusting it unchanged', () => {
+    const repo = new FsRepository(dir);
+    expect(() => repo.resolve('/etc/passwd')).toThrow(RefEscapesRootError);
+  });
+
+  it('propagates the rejection through readDecision as a promise rejection', async () => {
+    const repo = new FsRepository(dir);
+    await expect(repo.readDecision('/etc/passwd')).rejects.toBeInstanceOf(RefEscapesRootError);
   });
 });
 

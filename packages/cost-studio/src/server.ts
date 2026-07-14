@@ -24,7 +24,7 @@ import {
   SpendArtifact,
   TagPlanArtifact,
 } from '@workspec/cost-schema';
-import { ArtifactValidationError, FsRepository } from './fs-repository.js';
+import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 /** Options for {@link createServer}. */
 export interface CreateServerOptions {
@@ -48,15 +48,49 @@ function defaultClientDir(): string | undefined {
   return undefined;
 }
 
-/** Reject refs that are absolute or escape the served directory. */
+/** Matches a Windows drive-letter prefix (`C:\`, `C:/`, or bare `C:`). */
+const DRIVE_LETTER_PATTERN = /^[A-Za-z]:/;
+
+/**
+ * Reject refs that are absolute or escape the served directory. This is the
+ * first line of defence, checked against the raw ref shape; it deliberately
+ * also rejects backslashes and drive-letter prefixes even though this
+ * process may be running on POSIX right now — a ref is only ever a
+ * repo-root-relative POSIX path by contract, so neither shape is ever
+ * legitimate. It is not the authoritative check: `FsRepository.resolve()`
+ * (via `resolveWithinRoot`) re-verifies containment regardless of what
+ * reaches it here.
+ */
 function refFrom(req: Request): string | undefined {
   const raw = req.query.ref;
   if (typeof raw !== 'string' || raw.length === 0) return undefined;
-  if (raw.startsWith('/') || raw.includes('..') || raw.includes('\0')) return undefined;
+  if (
+    raw.startsWith('/') ||
+    raw.includes('..') ||
+    raw.includes('\0') ||
+    raw.includes('\\') ||
+    DRIVE_LETTER_PATTERN.test(raw)
+  ) {
+    return undefined;
+  }
   return raw;
 }
 
+/**
+ * Maps a rejected ref (one that escaped the served root, per
+ * `FsRepository.resolve()`) to a 400. Returns whether it handled the error,
+ * so callers can fall through to their own mapping otherwise.
+ */
+function sendIfRefEscapes(res: Response, error: unknown): boolean {
+  if (error instanceof RefEscapesRootError) {
+    res.status(400).json({ error: 'ref escapes served root' });
+    return true;
+  }
+  return false;
+}
+
 function sendReadError(res: Response, error: unknown): void {
+  if (sendIfRefEscapes(res, error)) return;
   if (error instanceof ArtifactValidationError) {
     res.status(422).json({ error: 'invalid artifact', ref: error.ref, issues: error.issues });
     return;
@@ -134,7 +168,10 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .writeInventory(ref, parsed.data)
       .then(() => res.status(204).end())
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => {
+        if (sendIfRefEscapes(res, error)) return;
+        res.status(500).json({ error: (error as Error).message });
+      });
   });
 
   // ── Spend ────────────────────────────────────────────────────────────────
@@ -175,7 +212,10 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .writeSpend(ref, parsed.data)
       .then(() => res.status(204).end())
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => {
+        if (sendIfRefEscapes(res, error)) return;
+        res.status(500).json({ error: (error as Error).message });
+      });
   });
 
   // ── Attribution ──────────────────────────────────────────────────────────
@@ -216,7 +256,10 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .writeAttribution(ref, parsed.data)
       .then(() => res.status(204).end())
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => {
+        if (sendIfRefEscapes(res, error)) return;
+        res.status(500).json({ error: (error as Error).message });
+      });
   });
 
   // ── Tag plan ─────────────────────────────────────────────────────────────
@@ -257,7 +300,10 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .writeTagPlan(ref, parsed.data)
       .then(() => res.status(204).end())
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => {
+        if (sendIfRefEscapes(res, error)) return;
+        res.status(500).json({ error: (error as Error).message });
+      });
   });
 
   // Static client + SPA fallback (only for non-API GETs).

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Inventory } from '@workspec/cost-schema';
-import { ArtifactValidationError, FsRepository } from './fs-repository.js';
+import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 /** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
 function must<T>(value: T | undefined): T {
@@ -85,6 +85,23 @@ describe('FsRepository discovery', () => {
     expect(inventories.map((i) => i.ref)).toEqual(['a/b/nested.inventory.yaml']);
     expect(await repo.listSpends()).toEqual([]);
     expect(await repo.listAttributions()).toEqual([]);
+  });
+});
+
+describe('FsRepository.resolve — ref containment (issue #52)', () => {
+  it('still resolves a normal relative ref (no regression)', () => {
+    const repo = new FsRepository(dir);
+    expect(repo.resolve('a/b.inventory.yaml')).toBe(join(dir, 'a', 'b.inventory.yaml'));
+  });
+
+  it('rejects a POSIX absolute ref instead of trusting it unchanged', () => {
+    const repo = new FsRepository(dir);
+    expect(() => repo.resolve('/etc/passwd')).toThrow(RefEscapesRootError);
+  });
+
+  it('propagates the rejection through readInventory as a promise rejection', async () => {
+    const repo = new FsRepository(dir);
+    await expect(repo.readInventory('/etc/passwd')).rejects.toBeInstanceOf(RefEscapesRootError);
   });
 });
 

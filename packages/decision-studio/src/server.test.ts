@@ -58,6 +58,30 @@ describe('host server — read API over the hosting-platform example', () => {
     expect((await request(app).get('/api/decision?ref=../../../etc/passwd')).status).toBe(400);
   });
 
+  // Issue #52: Windows drive-letter / UNC / backslash refs must be rejected
+  // as client errors, not silently accepted (or turned into a 500) — the
+  // request guard (`refFrom`) rejects these outright, regardless of which OS
+  // this test runs on.
+  it('400s Windows-shaped refs (drive-letter, UNC, backslash traversal)', async () => {
+    const app = createServer({ dir });
+    for (const ref of [
+      String.raw`C:\evil\x.decision.yaml`,
+      String.raw`\\srv\share\x.decision.yaml`,
+      String.raw`sub\..\..\evil.decision.yaml`,
+    ]) {
+      const res = await request(app).get(`/api/decision?ref=${encodeURIComponent(ref)}`);
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it('400s a PUT to a Windows-shaped ref instead of writing or 500ing', async () => {
+    const app = createServer({ dir });
+    const res = await request(app)
+      .put(`/api/decision?ref=${encodeURIComponent(String.raw`C:\evil\x.decision.yaml`)}`)
+      .send({ apiVersion: 'workspec.io/v1alpha1', kind: 'Decision', metadata: {} });
+    expect(res.status).toBe(400);
+  });
+
   it('rejects an invalid decision write with 400 (Zod-validated)', async () => {
     const app = createServer({ dir });
     const res = await request(app)

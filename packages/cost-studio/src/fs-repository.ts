@@ -12,7 +12,7 @@
 // they are stable and platform-independent.
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, isAbsolute, posix, relative, resolve, sep } from 'node:path';
+import { dirname, posix, relative, resolve, sep } from 'node:path';
 import {
   AttributionArtifact,
   INVENTORY_FILE_SUFFIX,
@@ -48,6 +48,9 @@ import type {
   TagPlan,
   TagPlanRef,
 } from '@workspec/cost-schema';
+import { resolveWithinRoot } from './path-containment.js';
+
+export { RefEscapesRootError } from './path-containment.js';
 
 /** Directories never descended into during discovery. */
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'coverage']);
@@ -125,9 +128,15 @@ export class FsRepository implements CostRepositoryPort {
     this.root = resolve(root);
   }
 
-  /** Absolute filesystem path for a repo-root-relative ref. */
+  /**
+   * Absolute filesystem path for a repo-root-relative ref. Throws
+   * {@link RefEscapesRootError} (re-exported from this module) if `ref`
+   * would resolve outside `root` — a POSIX absolute path, `..` traversal,
+   * or, when this process is actually running on Windows, a drive-letter or
+   * UNC path.
+   */
   resolve(ref: Ref): string {
-    return isAbsolute(ref) ? ref : resolve(this.root, ref);
+    return resolveWithinRoot(this.root, ref);
   }
 
   private async discover(): Promise<{

@@ -136,6 +136,24 @@ describe('host server — health + read APIs', () => {
       expect((await request(app).get(`/api/${singular}`)).status).toBe(400); // missing ref
     }
   });
+
+  // Issue #52: Windows drive-letter / UNC / backslash refs must be rejected
+  // as client errors, not silently accepted (or turned into a 500) — the
+  // request guard (`refFrom`) rejects these outright, regardless of which OS
+  // this test runs on.
+  it('400s Windows-shaped refs (drive-letter, UNC, backslash traversal), for every kind', async () => {
+    const app = createServer({ dir });
+    for (const singular of ['inventory', 'spend', 'attribution', 'tagplan']) {
+      for (const ref of [
+        String.raw`C:\evil\x.${singular}.yaml`,
+        String.raw`\\srv\share\x.${singular}.yaml`,
+        String.raw`sub\..\..\evil.${singular}.yaml`,
+      ]) {
+        const res = await request(app).get(`/api/${singular}?ref=${encodeURIComponent(ref)}`);
+        expect(res.status).toBe(400);
+      }
+    }
+  });
 });
 
 describe('host server — write round-trip through the port', () => {
@@ -167,6 +185,14 @@ describe('host server — write round-trip through the port', () => {
     await directRepo.writeAttribution(ref, reread.body as Attribution);
     const viaDirect = await readFile(join(dir, ref), 'utf8');
     expect(viaDirect).toBe(viaHttp);
+  });
+
+  it('400s a PUT to a Windows-shaped ref instead of writing or 500ing', async () => {
+    const app = createServer({ dir });
+    const res = await request(app)
+      .put(`/api/inventory?ref=${encodeURIComponent(String.raw`C:\evil\x.inventory.yaml`)}`)
+      .send(makeInventory());
+    expect(res.status).toBe(400);
   });
 
   it('rejects an invalid inventory write with 422 (located issues, no write)', async () => {
