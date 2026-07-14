@@ -9,7 +9,7 @@
     "url": "https://github.com/FieldstateNZ/workspec-studio.git"
   },
   "engines": {
-    "node": ">=22"
+    "node": "^20.19.0 || ^22.13.0 || >=24"
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
