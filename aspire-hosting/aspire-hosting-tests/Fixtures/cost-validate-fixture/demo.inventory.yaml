@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/inventory.schema.json
+# Copied from packages/cost-schema/test/fixtures/valid/demo.inventory.yaml (a known-good artifact)
+# for WorkspecCostRealCliTests — the one test in this project that runs the real, built
+# workspec-cost CLI against a fixture directory rather than a fake shell-script CLI.
+apiVersion: workspec.io/v1alpha1
+kind: Inventory
+metadata:
+  id: demo
+spec:
+  asOf: 2026-07-01T00:00:00Z
+  scope:
+    subscriptions:
+      - 11111111-1111-1111-1111-111111111111
+  resources:
+    - id: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-shared/providers/Microsoft.Storage/storageAccounts/stshared001
+      name: stshared001
+      type: Microsoft.Storage/storageAccounts
+      location: australiaeast
+      resourceGroup: rg-shared
+      subscription: 11111111-1111-1111-1111-111111111111
+      tags:
+        fs-product: atrium
+        fs-team: platform
