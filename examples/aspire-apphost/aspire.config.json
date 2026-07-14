@@ -1,0 +1,9 @@
+{
+  "appHost": {
+    "path": "apphost.mts",
+    "language": "typescript/nodejs"
+  },
+  "packages": {
+    "Aspire.Hosting.Workspec.C4": "../../aspire-hosting/aspire-hosting-c4/Aspire.Hosting.Workspec.C4.csproj"
+  }
+}

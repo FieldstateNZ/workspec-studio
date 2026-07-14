@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- MSBuild <Sdk> versions can't flow from Directory.Packages.props — this literal is kept in
+       lockstep with the Aspire package pins there (13.4.6). -->
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.4.6" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+  </ItemGroup>
+
+</Project>

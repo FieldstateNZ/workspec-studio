@@ -11,6 +11,11 @@
          smoke test doesn't consume it yet. -->
     <PackageVersion Include="Aspire.Hosting" Version="13.4.6" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+    <!-- aspire-hosting-e2e-fixture-apphost only: a real (if otherwise-empty) AppHost project,
+         needed because DistributedApplicationTestingBuilder actually orchestrates via DCP — it
+         requires the Aspire.AppHost.Sdk-wired DCP/dashboard binary paths, not just an
+         Aspire.Hosting package reference (confirmed empirically; see that project's own comment). -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.4.6" />
   </ItemGroup>
 
   <ItemGroup>

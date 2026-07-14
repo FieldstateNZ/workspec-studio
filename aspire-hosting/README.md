@@ -24,7 +24,12 @@ Aspire.Hosting.Workspec.slnx   solution (new XML .slnx format)
 Directory.Build.props          shared TFM/nullable/warnings-as-errors settings
 Directory.Packages.props       central package version management
 aspire-hosting-core/           Aspire.Hosting.Workspec.Core — class library
+aspire-hosting-c4/             Aspire.Hosting.Workspec.C4 — class library
 aspire-hosting-tests/          Aspire.Hosting.Workspec.Tests — xunit test project
+aspire-hosting-e2e-fixture-apphost/
+                               E2EFixtureAppHost — minimal real AppHost entry point
+                               (Aspire.AppHost.Sdk + DCP wiring) that the tests'
+                               DistributedApplicationTestingBuilder requires; no integration code
 ```
 
 ## Planned packages
@@ -32,7 +37,7 @@ aspire-hosting-tests/          Aspire.Hosting.Workspec.Tests — xunit test proj
 | Module    | Assembly                           | Path                       | Slice | Tracking issue                                                    |
 | --------- | ----------------------------------- | --------------------------- | ----- | ------------------------------------------------------------------ |
 | Core      | `Aspire.Hosting.Workspec.Core`      | `aspire-hosting-core`      | A1 (scaffolded in A0) | [#34](https://github.com/FieldstateNZ/workspec-studio/issues/34)  |
-| C4        | `Aspire.Hosting.Workspec.C4`        | `aspire-hosting-c4`        | A3    | [#36](https://github.com/FieldstateNZ/workspec-studio/issues/36)  |
+| C4        | `Aspire.Hosting.Workspec.C4`        | `aspire-hosting-c4`        | A3 — see [`docs/aspire-hosting/c4-integration.md`](../docs/aspire-hosting/c4-integration.md) | [#36](https://github.com/FieldstateNZ/workspec-studio/issues/36)  |
 | Decisions | `Aspire.Hosting.Workspec.Decisions` | `aspire-hosting-decisions` | A4    | [#37](https://github.com/FieldstateNZ/workspec-studio/issues/37)  |
 | Cost      | `Aspire.Hosting.Workspec.Cost`      | `aspire-hosting-cost`      | A5    | [#38](https://github.com/FieldstateNZ/workspec-studio/issues/38)  |
 

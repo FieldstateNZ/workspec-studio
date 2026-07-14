@@ -10,6 +10,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <!-- E2E smoke test only (WorkspecC4E2ETests.cs) — pairs with the E2EFixtureAppHost project
+         reference below (DistributedApplicationTestingBuilder needs a real AppHost entry point). -->
+    <PackageReference Include="Aspire.Hosting.Testing" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,10 +21,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+    <ProjectReference Include="..\aspire-hosting-c4\Aspire.Hosting.Workspec.C4.csproj" />
+    <!-- E2E smoke test only: DistributedApplicationTestingBuilder.CreateAsync<TEntryPoint>() invokes
+         a real AppHost entry point (it does not work against an arbitrary calling assembly, such as
+         this xunit test host — confirmed empirically), so a minimal fixture AppHost project is the
+         entry point instead. Lives as a SIBLING project directory (not nested under this one) so its
+         Program.cs (top-level statements) isn't swept into this project's own default compile glob. -->
+    <ProjectReference Include="..\aspire-hosting-e2e-fixture-apphost\E2EFixtureAppHost.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Fake CLI scripts for the C4 fixture-driven process-execution tests (WorkspecC4CliRunnerTests /
+         WorkspecGraphSyncExtensionsTests). CopyToOutputDirectory must preserve the executable bit for
+         these to be runnable directly from the test output directory — verified empirically by
+         actually running the tests that invoke them, not just by inspecting this glob. -->
+    <None Include="Fixtures\**\*.sh" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
