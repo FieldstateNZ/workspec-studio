@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/attribution.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Attribution
+metadata:
+  id: fieldstate-azure
+spec:
+  dimensions:
+    - id: product
+      label: Product
+      values:
+        - workspec
+        - atrium
+        - coffers
+        - shared
+    - id: costType
+      label: Cost type
+      values:
+        - capex
+        - opex
+    - id: client
+      label: Client
+      values:
+        - acme-dairy
+        - kauri-health
+        - internal
+  rules:
+    - id: r1
+      name: Workspec resource groups
+      match:
+        resourceGroup: rg-workspec-*
+      assign:
+        product: workspec
+    - id: r2
+      name: Atrium resource groups
+      match:
+        resourceGroup: rg-atrium-*
+      assign:
+        product: atrium
+    - id: r3
+      name: Coffers resource groups
+      match:
+        resourceGroup: rg-coffers-*
+      assign:
+        product: coffers
+    - id: r4
+      name: Shared AKS split
+      match:
+        nameGlob: aks-shared
+      split:
+        product:
+          atrium: 0.4
+          workspec: 0.6
+    - id: r5
+      name: Shared core platform
+      match:
+        resourceGroup: rg-shared-core
+      assign:
+        product: shared
+    - id: r6
+      name: Client from tag
+      match:
+        tagExists: client
+      fromTag:
+        client: client
+    - id: r7
+      name: Dev environments capitalise
+      match:
+        resourceGroup: "*-dev"
+      assign:
+        costType: capex
+    - id: r8
+      name: "Default: opex, internal"
+      match: {}
+      assign:
+        client: internal
+        costType: opex
+    - id: r9
+      name: promoted-rg-legacy-misc
+      match:
+        resourceGroup: rg-legacy-misc
+      assign:
+        product: shared
+    - id: r10
+      name: promoted-rg-client-acme
+      match:
+        resourceGroup: rg-client-acme
+      assign:
+        product: shared
+    - id: r11
+      name: promoted-rg-client-kauri
+      match:
+        resourceGroup: rg-client-kauri
+      assign:
+        product: shared
+  overrides:
+    - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
+      assign:
+        product: shared

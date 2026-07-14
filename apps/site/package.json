@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions and /c4, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers.",
+  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions, /c4, and /cost, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/cost-* packages are a temporary workspace-devDependency exception (not yet published) — see docs/cost/drift-log.md.",
+  "_LOUD_NOTICE_devDependencies_cost_packages": "The three @workspec/cost-* entries in devDependencies below are workspace:* — NOT registry pins like every other @workspec/* dependency above. The cost packages aren't published to npm yet; this is a deliberate, TEMPORARY exception to this app's registry-pins-only rule, scoped ONLY to cost-schema/cost-engine/cost-ui (the decisions and c4 demos' pins are untouched). See docs/cost/drift-log.md entry 1 and this package's README.md. Flip each to a published semver range and move it up into \"dependencies\" at first publish — a one-line change per package, mirroring how PR #27 resolved the equivalent c4 exception (docs/c4/drift-log.md entry 17).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -37,6 +38,9 @@
     "tailwindcss": "^4.1.14",
     "typescript": "^5.7.2",
     "vite": "^7.0.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@workspec/cost-engine": "workspace:*",
+    "@workspec/cost-schema": "workspace:*",
+    "@workspec/cost-ui": "workspace:*"
   }
 }

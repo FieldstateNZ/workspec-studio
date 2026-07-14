@@ -30,6 +30,10 @@ describe('useRoute — resolves every deep path GitHub Pages might fall back to'
     ['/c4/', 'c4'],
     ['/c4/demo', 'c4-demo'],
     ['/c4/demo/', 'c4-demo'],
+    ['/cost', 'cost'],
+    ['/cost/', 'cost'],
+    ['/cost/demo', 'cost-demo'],
+    ['/cost/demo/', 'cost-demo'],
     ['/nonexistent', 'studio-home'],
   ])('resolves %s to %s', (path, expected) => {
     window.history.pushState({}, '', path);

@@ -1,0 +1,7 @@
+{
+  "name": "@workspec-examples/fieldstate-azure-costs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worked example: WorkSpec Cost Attribution over the fieldstate-azure demo estate, extended to 100% coverage on the primary dimension.",
+  "license": "Apache-2.0"
+}

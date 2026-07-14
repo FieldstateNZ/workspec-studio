@@ -21,6 +21,7 @@ interface ModuleTab {
 const MODULE_TABS: readonly ModuleTab[] = [
   { label: 'Decisions', href: '/decisions/demo', route: 'decisions-demo' },
   { label: 'C4 Model', href: '/c4/demo', route: 'c4-demo' },
+  { label: 'Cost', href: '/cost/demo', route: 'cost-demo' },
 ];
 
 export function WorkbenchBar(props: {

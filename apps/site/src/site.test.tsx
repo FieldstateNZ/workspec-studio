@@ -4,6 +4,8 @@ import { userEvent } from '@testing-library/user-event';
 
 import { C4 } from './c4.js';
 import { C4Demo } from './c4-demo.js';
+import { Cost } from './cost.js';
+import { CostDemo } from './cost-demo.js';
 import { Decisions } from './decisions.js';
 import { Demo } from './demo.js';
 import { renderAdr } from './export-adr.js';
@@ -203,6 +205,91 @@ describe('c4 demo page (/c4/demo) — full-page demo shell, same pattern as Deci
     expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /export adr/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^reset$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('cost module page (/cost) — pitch, no embedded demo', () => {
+  it('states what the module is, links each package to its GitHub source, and routes to /cost/demo', () => {
+    render(<Cost />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      /stock-take a cloud estate/i,
+    );
+    // Source links, NOT npm — the cost packages aren't published yet, so an
+    // npm href would 404 for anyone clicking through from the live page.
+    const packagesBase = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
+    for (const pkg of [
+      'cost-schema',
+      'cost-provider',
+      'cost-provider-azure',
+      'cost-engine',
+      'cost-ui',
+      'cost-studio',
+    ]) {
+      expect(screen.getByRole('link', { name: `@workspec/${pkg}` })).toHaveAttribute(
+        'href',
+        `${packagesBase}/${pkg}`,
+      );
+    }
+    const demoLinks = screen.getAllByRole('link', { name: /demo/i });
+    expect(demoLinks.length).toBeGreaterThan(0);
+    for (const link of demoLinks) {
+      expect(link).toHaveAttribute('href', '/cost/demo');
+    }
+  });
+
+  it('nav lists Home, Decisions, C4 Model, and Cost, matching the other pitch pages', () => {
+    render(<Cost />);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Decisions' })).toHaveAttribute('href', '/decisions');
+    expect(screen.getByRole('link', { name: 'C4 Model' })).toHaveAttribute('href', '/c4');
+    expect(screen.getByRole('link', { name: 'Cost' })).toHaveAttribute('href', '/cost');
+  });
+
+  it('marks the Cost nav pill active, leaving Home / Decisions / C4 Model inactive', () => {
+    window.history.pushState({}, '', '/cost');
+    render(<Cost />);
+    expect(screen.getByRole('link', { name: 'Cost' })).toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'Decisions' })).not.toHaveClass('nav-pill-active');
+    expect(screen.getByRole('link', { name: 'C4 Model' })).not.toHaveClass('nav-pill-active');
+  });
+});
+
+describe('cost demo page (/cost/demo) — full-page demo shell, same pattern as Decisions’', () => {
+  it('mounts a real CostApp over the worked fieldstate-azure estate, at 100% coverage', async () => {
+    render(<CostDemo />);
+    // Attribution is the default view — the coverage row renders once the
+    // seeded repository resolves.
+    expect(await screen.findByText('100.0%')).toBeInTheDocument();
+    expect(screen.getByText('$0/mo unattributed')).toBeInTheDocument();
+  });
+
+  it('renders the shell nav above the workbench bar, both agreeing Cost is active (Studio redesign, round 3)', () => {
+    window.history.pushState({}, '', '/cost/demo');
+    render(<CostDemo />);
+
+    const shellCostPill = findLink('Cost', '/cost');
+    expect(shellCostPill).toHaveClass('nav-pill-active');
+    expect(shellCostPill).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('nav-pill-active');
+    expect(findLink('Decisions', '/decisions')).not.toHaveClass('nav-pill-active');
+    expect(findLink('C4 Model', '/c4')).not.toHaveClass('nav-pill-active');
+
+    const wbNav = screen.getByRole('navigation', { name: 'Studio' });
+    const wbCostTab = within(wbNav).getByRole('link', { name: 'Cost' });
+    expect(wbCostTab).toHaveClass('wb-tab-active');
+    expect(wbCostTab).toHaveAttribute('aria-current', 'page');
+    const wbDecisionsTab = within(wbNav).getByRole('link', { name: 'Decisions' });
+    expect(wbDecisionsTab).toHaveAttribute('href', '/decisions/demo');
+    expect(wbDecisionsTab).not.toHaveClass('wb-tab-active');
+  });
+
+  it('shows the worked estate’s name in the crumb and keeps Export CSV / Reset in the actions slot', async () => {
+    render(<CostDemo />);
+    expect(screen.getByText('fieldstate-azure')).toBeInTheDocument();
+    await screen.findByText('100.0%'); // wait for the seeded repository to resolve
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
   });
 });
 
