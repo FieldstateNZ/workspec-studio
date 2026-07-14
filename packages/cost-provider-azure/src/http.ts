@@ -136,9 +136,54 @@ function parseRetryAfterMs(value: string): number | undefined {
 }
 
 /**
- * Wrap `http` with retry/backoff on 429/5xx: honors a `Retry-After` header
- * when present, otherwise backs off exponentially (`baseDelayMs * 2^attempt`,
- * capped at `maxDelayMs`, then jittered to `[50%, 100%]` of that value).
+ * Header names (already lower-cased, per this package's convention — see the
+ * `AzureHttpResponse.headers` doc above) that carry a service-specific retry
+ * delay, in the precedence order {@link retryDelayFromHeaders} checks them.
+ * Azure Cost Management (and the underlying Consumption API) publish their
+ * own throttling headers with QPU/quota-aware delays that are more accurate
+ * than the generic `Retry-After` — see
+ * https://learn.microsoft.com/en-us/azure/cost-management-billing/automate/get-started-partner-api#retry-header
+ */
+const RETRY_AFTER_HEADER_PRECEDENCE = [
+  'x-ms-ratelimit-microsoft.costmanagement-qpu-retry-after',
+  'x-ms-ratelimit-microsoft.consumption-retry-after',
+  'retry-after',
+] as const;
+
+/**
+ * Determine the retry delay (in ms) a set of response headers asks for, by
+ * checking {@link RETRY_AFTER_HEADER_PRECEDENCE} in order and returning the
+ * first header that is both present AND parses to a valid delay via
+ * {@link parseRetryAfterMs}. A present-but-unparseable header does not stop
+ * the search — it falls through to the next candidate, same as an absent
+ * header would. Returns `undefined` if none of the headers are present/valid,
+ * in which case the caller should fall back to computed exponential backoff.
+ */
+function retryDelayFromHeaders(headers: Record<string, string>): number | undefined {
+  for (const name of RETRY_AFTER_HEADER_PRECEDENCE) {
+    const value = headers[name];
+    if (value === undefined) continue;
+    const ms = parseRetryAfterMs(value);
+    if (ms !== undefined) return ms;
+  }
+  return undefined;
+}
+
+/**
+ * Wrap `http` with retry/backoff on 429/5xx. The retry delay is chosen by
+ * checking headers in this precedence order, using the first that parses to
+ * a valid delay (a present-but-unparseable header falls through to the next
+ * candidate rather than being treated as zero):
+ *
+ *   1. `x-ms-ratelimit-microsoft.costmanagement-qpu-retry-after` — Azure Cost
+ *      Management's QPU-quota-aware retry header.
+ *   2. `x-ms-ratelimit-microsoft.consumption-retry-after` — the underlying
+ *      Consumption API's equivalent.
+ *   3. `retry-after` — the generic HTTP header (seconds or HTTP-date).
+ *   4. Computed exponential backoff (`baseDelayMs * 2^attempt`, capped at
+ *      `maxDelayMs`, then jittered to `[50%, 100%]` of that value), when none
+ *      of the above headers are present/parseable.
+ *
  * Bounded by `maxAttempts`; the last retryable response's status is thrown
  * as an `Error` once attempts are exhausted. Non-retryable responses (any
  * other status) are returned as-is on the first try — this wrapper never
@@ -164,8 +209,7 @@ export function withRetry(http: AzureHttp, options: RetryOptions = {}): AzureHtt
           );
         }
 
-        const retryAfterHeader = res.headers['retry-after'];
-        const retryAfterMs = retryAfterHeader !== undefined ? parseRetryAfterMs(retryAfterHeader) : undefined;
+        const retryAfterMs = retryDelayFromHeaders(res.headers);
         const backoffMs = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt);
         const delayMs = retryAfterMs ?? Math.round(backoffMs * (0.5 + jitter() * 0.5));
 
