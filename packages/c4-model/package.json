@@ -1,6 +1,6 @@
 {
   "name": "@workspec/c4-model",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.5",
   "description": "Pure loader/resolver for a WorkSpec C4 working tree — discovers, parses, and resolves elements, diagrams, and layouts from any file-source port into one typed C4Model, with best-effort diagnostics. No IO assumptions, no DOM, no React.",
   "keywords": [
     "c4",
