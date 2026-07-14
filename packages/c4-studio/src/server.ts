@@ -79,13 +79,33 @@ function modelToWire(model: C4Model): unknown {
   };
 }
 
-function sendIoError(res: Response, error: unknown): void {
+/**
+ * Logs the real error server-side and sends a generic, non-leaky 500 body.
+ * This is the fallback for every error that isn't a typed case (here, the
+ * 404 for not-found): an unclassified filesystem error's `.message` can
+ * carry the served root's absolute path (e.g. `EISDIR` when a path of
+ * `.workspec` resolves to that directory itself), so it must never reach the
+ * client — only the server log.
+ */
+function sendInternalError(res: Response, error: unknown, ref?: string): void {
+  // `ref` is client-supplied, so it must not flow into console.error's
+  // format-string argument (tainted format string / log injection); pass it
+  // as a separate argument instead.
+  if (ref !== undefined) {
+    console.error('[c4-studio] unhandled error, ref:', ref, error);
+  } else {
+    console.error('[c4-studio] unhandled error:', error);
+  }
+  res.status(500).json({ error: 'internal error' });
+}
+
+function sendIoError(res: Response, error: unknown, ref?: string): void {
   const code = (error as NodeJS.ErrnoException).code;
   if (code === 'ENOENT') {
     res.status(404).json({ error: 'not found' });
     return;
   }
-  res.status(500).json({ error: (error as Error).message });
+  sendInternalError(res, error, ref);
 }
 
 /**
@@ -119,7 +139,7 @@ export function createServer(options: CreateServerOptions): Express {
   app.get('/api/model', (_req, res) => {
     loadC4Model(source)
       .then((model) => res.json(modelToWire(model)))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/files', (req, res) => {
@@ -131,7 +151,7 @@ export function createServer(options: CreateServerOptions): Express {
     source
       .listFiles(dir)
       .then((files) => res.json(files))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error, dir));
   });
 
   app.get('/api/file', (req, res) => {
@@ -143,7 +163,7 @@ export function createServer(options: CreateServerOptions): Express {
     source
       .readFile(path)
       .then((content) => res.json({ content }))
-      .catch((error: unknown) => sendIoError(res, error));
+      .catch((error: unknown) => sendIoError(res, error, path));
   });
 
   app.get('/api/file-exists', (req, res) => {
@@ -155,7 +175,7 @@ export function createServer(options: CreateServerOptions): Express {
     source
       .exists(path)
       .then((exists) => res.json({ exists }))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error, path));
   });
 
   app.put('/api/file', (req, res) => {
@@ -187,7 +207,7 @@ export function createServer(options: CreateServerOptions): Express {
     source
       .writeFile(path, serializeLayout(parsed.data))
       .then(() => res.status(204).end())
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error, path));
   });
 
   // Static client + SPA fallback (only for non-API GETs).

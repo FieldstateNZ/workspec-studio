@@ -77,7 +77,27 @@ function sendIfRefEscapes(res: Response, error: unknown): boolean {
   return false;
 }
 
-function sendReadError(res: Response, error: unknown): void {
+/**
+ * Logs the real error server-side and sends a generic, non-leaky 500 body.
+ * This is the fallback for every error that isn't one of the typed cases
+ * above (ref-escape, validation, not-found): an unclassified filesystem
+ * error's `.message` can carry the served root's absolute path (e.g.
+ * `EISDIR` when a ref of `.` resolves to the root directory itself), so it
+ * must never reach the client — only the server log.
+ */
+function sendInternalError(res: Response, error: unknown, ref?: string): void {
+  // `ref` is client-supplied, so it must not flow into console.error's
+  // format-string argument (tainted format string / log injection); pass it
+  // as a separate argument instead.
+  if (ref !== undefined) {
+    console.error('[decision-studio] unhandled error, ref:', ref, error);
+  } else {
+    console.error('[decision-studio] unhandled error:', error);
+  }
+  res.status(500).json({ error: 'internal error' });
+}
+
+function sendReadError(res: Response, error: unknown, ref?: string): void {
   if (sendIfRefEscapes(res, error)) return;
   if (error instanceof ArtifactValidationError) {
     res.status(422).json({ error: 'invalid artifact', ref: error.ref, issues: error.issues });
@@ -88,7 +108,7 @@ function sendReadError(res: Response, error: unknown): void {
     res.status(404).json({ error: 'not found' });
     return;
   }
-  res.status(500).json({ error: (error as Error).message });
+  sendInternalError(res, error, ref);
 }
 
 /**
@@ -122,7 +142,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listDecisions()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/decision', (req, res) => {
@@ -134,7 +154,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readDecision(ref)
       .then((decision) => res.json(decision))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/decision', (req, res) => {
@@ -156,7 +176,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 
@@ -164,7 +184,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listCatalogs()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/catalog', (req, res) => {
@@ -176,7 +196,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readCatalog(ref)
       .then((catalog) => res.json(catalog))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/catalog', (req, res) => {
@@ -198,7 +218,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 

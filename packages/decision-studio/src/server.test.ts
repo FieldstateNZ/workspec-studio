@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Decision } from '@workspec/decision-schema';
 import { createServer } from './server.js';
 
@@ -90,6 +90,31 @@ describe('host server — read API over the hosting-platform example', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('invalid decision');
   });
+
+  // A ref of "." passes `refFrom` (no leading /, no .., no backslash, no
+  // drive letter) and resolves — legitimately, per `resolveWithinRoot` — to
+  // the served root itself, which is a directory. `readFile` on a directory
+  // throws EISDIR: an unclassified error (not RefEscapesRootError, not
+  // ArtifactValidationError, not ENOENT), so it falls through to the generic
+  // 500 fallback. Before the fix, that fallback echoed `(error as
+  // Error).message` — which for a filesystem error can carry the absolute
+  // served path — straight into the response body. It must not.
+  it('500s a ref of "." (served root, EISDIR) with a generic body — no path or ref leaked', async () => {
+    const app = createServer({ dir });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const res = await request(app).get('/api/decision?ref=.');
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'internal error' });
+      const raw = JSON.stringify(res.body);
+      expect(raw).not.toContain(dir);
+      expect(raw).not.toContain('EISDIR');
+      // Debuggability is preserved: the real error still reaches the server log.
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 });
 
 describe('host server — write round-trip through the port', () => {
@@ -116,5 +141,22 @@ describe('host server — write round-trip through the port', () => {
 
     const reread = await request(app).get(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`);
     expect((reread.body as Decision).metadata.title).toBe('Edited via the host API');
+  });
+
+  it('500s a PUT to ref "." (served root, EISDIR on write) with a generic body — no path leaked', async () => {
+    const app = createServer({ dir });
+    const read = await request(app).get(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const res = await request(app).put('/api/decision?ref=.').send(read.body as Decision);
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'internal error' });
+      const raw = JSON.stringify(res.body);
+      expect(raw).not.toContain(dir);
+      expect(raw).not.toContain('EISDIR');
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });
