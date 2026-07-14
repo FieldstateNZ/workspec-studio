@@ -70,11 +70,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The E2E smoke test (aspire-hosting-tests/WorkspecC4E2ETests.cs) needs the real
-      # workspec-c4 CLI (packages/c4-studio/dist/bin.js) — without it, it self-skips with a
-      # message instead of failing, so this build step is what makes it actually run in CI.
-      - name: Build workspec-c4 CLI
-        run: pnpm --filter @workspec/c4-studio... build
+      # The E2E smoke tests (aspire-hosting-tests/WorkspecC4E2ETests.cs,
+      # WorkspecDecisionsE2ETests.cs) need the real workspec-c4 / workspec-decisions CLIs
+      # (packages/c4-studio/dist/bin.js, packages/decision-studio/dist/bin.js) — without them, they
+      # self-skip with a message instead of failing, so this build step is what makes them actually
+      # run in CI.
+      - name: Build workspec-c4 and workspec-decisions CLIs
+        run: pnpm --filter @workspec/c4-studio... --filter @workspec/decision-studio... build
 
       - name: Build
         run: dotnet build --configuration Release aspire-hosting/Aspire.Hosting.Workspec.slnx
