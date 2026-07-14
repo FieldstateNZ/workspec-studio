@@ -1,6 +1,6 @@
 {
   "name": "@workspec/cost-studio",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "WorkSpec Cost Attribution — standalone CLI + localhost host shell. workspec-cost stocktakes a cloud estate, validates/reports on cost artifacts, and computes/applies tag plans.",
   "keywords": [
     "cost-attribution",
