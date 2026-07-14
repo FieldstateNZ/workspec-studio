@@ -89,7 +89,23 @@ function sendIfRefEscapes(res: Response, error: unknown): boolean {
   return false;
 }
 
-function sendReadError(res: Response, error: unknown): void {
+/**
+ * Logs the real error server-side and sends a generic, non-leaky 500 body.
+ * This is the fallback for every error that isn't one of the typed cases
+ * above (ref-escape, validation, not-found): an unclassified filesystem
+ * error's `.message` can carry the served root's absolute path (e.g.
+ * `EISDIR` when a ref of `.` resolves to the root directory itself), so it
+ * must never reach the client — only the server log.
+ */
+function sendInternalError(res: Response, error: unknown, ref?: string): void {
+  console.error(
+    `[cost-studio] unhandled error${ref !== undefined ? ` (ref: ${ref})` : ''}:`,
+    error,
+  );
+  res.status(500).json({ error: 'internal error' });
+}
+
+function sendReadError(res: Response, error: unknown, ref?: string): void {
   if (sendIfRefEscapes(res, error)) return;
   if (error instanceof ArtifactValidationError) {
     res.status(422).json({ error: 'invalid artifact', ref: error.ref, issues: error.issues });
@@ -100,7 +116,7 @@ function sendReadError(res: Response, error: unknown): void {
     res.status(404).json({ error: 'not found' });
     return;
   }
-  res.status(500).json({ error: (error as Error).message });
+  sendInternalError(res, error, ref);
 }
 
 /**
@@ -136,7 +152,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listInventories()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/inventory', (req, res) => {
@@ -148,7 +164,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readInventory(ref)
       .then((inventory) => res.json(inventory))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/inventory', (req, res) => {
@@ -170,7 +186,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 
@@ -180,7 +196,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listSpends()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/spend', (req, res) => {
@@ -192,7 +208,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readSpend(ref)
       .then((spend) => res.json(spend))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/spend', (req, res) => {
@@ -214,7 +230,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 
@@ -224,7 +240,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listAttributions()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/attribution', (req, res) => {
@@ -236,7 +252,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readAttribution(ref)
       .then((attribution) => res.json(attribution))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/attribution', (req, res) => {
@@ -258,7 +274,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 
@@ -268,7 +284,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .listTagPlans()
       .then((list) => res.json(list))
-      .catch((error: unknown) => res.status(500).json({ error: (error as Error).message }));
+      .catch((error: unknown) => sendInternalError(res, error));
   });
 
   app.get('/api/tagplan', (req, res) => {
@@ -280,7 +296,7 @@ export function createServer(options: CreateServerOptions): Express {
     repo
       .readTagPlan(ref)
       .then((tagPlan) => res.json(tagPlan))
-      .catch((error: unknown) => sendReadError(res, error));
+      .catch((error: unknown) => sendReadError(res, error, ref));
   });
 
   app.put('/api/tagplan', (req, res) => {
@@ -302,7 +318,7 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;
-        res.status(500).json({ error: (error as Error).message });
+        sendInternalError(res, error, ref);
       });
   });
 

@@ -1,9 +1,9 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseLayoutYaml } from '@workspec/c4-schema';
 import { createServer } from './server.js';
 
@@ -171,5 +171,62 @@ describe('host server — drag-to-pin write-back through a temp dir', () => {
       .send({ content: 'version: 1\nnodes:\n  architect: "not an object"\n' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('invalid layout');
+  });
+});
+
+// A path of `.workspec` passes `pathParam` (no leading /, no .., equals the
+// confined WORKSPEC_DIR) and resolves — legitimately — to the served
+// `.workspec/` directory itself. `readFile` on a directory throws EISDIR: an
+// unclassified error (not ENOENT), so it falls through to the generic 500
+// fallback. Before the fix, that fallback echoed `(error as Error).message`
+// — which for a filesystem error can carry the absolute served path —
+// straight into the response body. It must not, on read or write.
+describe('host server — unclassified errors return a generic 500 (no path/message leak)', () => {
+  it('500s a read of ".workspec" (EISDIR on a directory) with a generic body — no path leaked', async () => {
+    const app = createServer({ dir });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const res = await request(app).get('/api/file').query({ path: '.workspec' });
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'internal error' });
+      const raw = JSON.stringify(res.body);
+      expect(raw).not.toContain(dir);
+      expect(raw).not.toContain('EISDIR');
+      // Debuggability is preserved: the real error still reaches the server log.
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('500s a layout write whose target collides with a directory (EISDIR) with a generic body — no path leaked', async () => {
+    // A valid-layout PUT whose (isLayoutFile-legal) target path is occupied by
+    // a directory: the write passes every gate and only fails at writeFile,
+    // exercising the write catch's 500 fallback.
+    const collide = '.workspec/diagrams/.layout/collide.yaml';
+    await mkdir(join(dir, collide), { recursive: true });
+
+    const app = createServer({ dir });
+    const content = [
+      'version: 1',
+      'nodes:',
+      '  __system__:',
+      '    x: 400',
+      '    y: 200',
+      'edges: {}',
+      '',
+    ].join('\n');
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const res = await request(app).put('/api/file').query({ path: collide }).send({ content });
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'internal error' });
+      const raw = JSON.stringify(res.body);
+      expect(raw).not.toContain(dir);
+      expect(raw).not.toContain('EISDIR');
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });
