@@ -86,10 +86,14 @@ function sendIfRefEscapes(res: Response, error: unknown): boolean {
  * must never reach the client — only the server log.
  */
 function sendInternalError(res: Response, error: unknown, ref?: string): void {
-  console.error(
-    `[decision-studio] unhandled error${ref !== undefined ? ` (ref: ${ref})` : ''}:`,
-    error,
-  );
+  // `ref` is client-supplied, so it must not flow into console.error's
+  // format-string argument (tainted format string / log injection); pass it
+  // as a separate argument instead.
+  if (ref !== undefined) {
+    console.error('[decision-studio] unhandled error, ref:', ref, error);
+  } else {
+    console.error('[decision-studio] unhandled error:', error);
+  }
   res.status(500).json({ error: 'internal error' });
 }
 
