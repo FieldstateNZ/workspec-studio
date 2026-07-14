@@ -182,6 +182,18 @@ has not been validated against a real generated SDK, and should be checked the n
 CLI >= 13.4 is available. `examples/aspire-apphost/apphost.mts` is written from the C# signatures
 and the ATS docs' own conventions as a best-effort illustration, not a tested integration.
 
+## Internal implementation note
+
+This package's dashboard commands and `WithGraphSync` run on
+`Aspire.Hosting.Workspec.WorkspecCliRunner` (`aspire-hosting-core`, public) — the shared
+process-execution (60s timeout, process-tree kill) and Markdown-table-formatting primitives every
+module integration in this repo consumes, plus the shared `WorkspecCliDiagnostic` type (this is
+the one module whose diagnostics populate `Slug`; `aspire-hosting-decisions`/`aspire-hosting-cost`
+never set it). Through A5, each of the three modules (this package, `aspire-hosting-decisions`,
+`aspire-hosting-cost`) carried its own byte-identical private copy of this runner; A6
+([#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)) consolidated all three into
+Core.
+
 ## See also
 
 - [`graph-contract.md`](./graph-contract.md) — the `workspec-graph/v1` document this integration

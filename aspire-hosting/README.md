@@ -23,7 +23,10 @@ in the pnpm workspace.
 Aspire.Hosting.Workspec.slnx   solution (new XML .slnx format)
 Directory.Build.props          shared TFM/nullable/warnings-as-errors settings
 Directory.Packages.props       central package version management
-aspire-hosting-core/           Aspire.Hosting.Workspec.Core — class library
+aspire-hosting-core/           Aspire.Hosting.Workspec.Core — class library (graph-dump contract,
+                               CLI locator, health-check wiring, and the shared WorkspecCliRunner/
+                               WorkspecCliDiagnostic process-execution + Markdown-formatting
+                               primitives every module integration below consumes)
 aspire-hosting-c4/             Aspire.Hosting.Workspec.C4 — class library
 aspire-hosting-cost/           Aspire.Hosting.Workspec.Cost — class library
 aspire-hosting-decisions/      Aspire.Hosting.Workspec.Decisions — class library
@@ -34,30 +37,41 @@ aspire-hosting-e2e-fixture-apphost/
                                DistributedApplicationTestingBuilder requires; no integration code
 ```
 
-## Planned packages
+## Packages
 
-| Module    | Assembly                           | Path                       | Slice | Tracking issue                                                    |
-| --------- | ----------------------------------- | --------------------------- | ----- | ------------------------------------------------------------------ |
-| Core      | `Aspire.Hosting.Workspec.Core`      | `aspire-hosting-core`      | A1 (scaffolded in A0) | [#34](https://github.com/FieldstateNZ/workspec-studio/issues/34)  |
-| C4        | `Aspire.Hosting.Workspec.C4`        | `aspire-hosting-c4`        | A3 — see [`docs/aspire-hosting/c4-integration.md`](../docs/aspire-hosting/c4-integration.md) | [#36](https://github.com/FieldstateNZ/workspec-studio/issues/36)  |
-| Decisions | `Aspire.Hosting.Workspec.Decisions` | `aspire-hosting-decisions` | A4 — see [`docs/aspire-hosting/decisions-integration.md`](../docs/aspire-hosting/decisions-integration.md) | [#37](https://github.com/FieldstateNZ/workspec-studio/issues/37)  |
-| Cost      | `Aspire.Hosting.Workspec.Cost`      | `aspire-hosting-cost`      | A5 — see [`docs/aspire-hosting/cost-integration.md`](../docs/aspire-hosting/cost-integration.md) | [#38](https://github.com/FieldstateNZ/workspec-studio/issues/38)  |
+All four are shipped in this repo (A6, [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)
+closed out packaging/release wiring for every module integration built in A1–A5):
 
-This slice (A0, [#33](https://github.com/FieldstateNZ/workspec-studio/issues/33)) only
-bootstraps the solution — Core's actual contents (graph-dump contract, CLI locator,
-health plumbing) land in A1. [#35](https://github.com/FieldstateNZ/workspec-studio/issues/35)
-(A2) is a related TS-side enabler (`workspec-c4 import-aspire` et al.) in `packages/`, not
-a fifth `aspire-hosting-*` package.
+| Module    | Assembly                           | PackageId                          | Path                       | Docs                                                                                          | Tracking issue                                                    |
+| --------- | ------------------------------------ | ------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Core      | `Aspire.Hosting.Workspec.Core`      | `Workspec.Aspire.Hosting.Core`      | `aspire-hosting-core`      | this README                                                                                   | [#34](https://github.com/FieldstateNZ/workspec-studio/issues/34)  |
+| C4        | `Aspire.Hosting.Workspec.C4`        | `Workspec.Aspire.Hosting.C4`        | `aspire-hosting-c4`        | [`docs/aspire-hosting/c4-integration.md`](../docs/aspire-hosting/c4-integration.md)           | [#36](https://github.com/FieldstateNZ/workspec-studio/issues/36)  |
+| Decisions | `Aspire.Hosting.Workspec.Decisions` | `Workspec.Aspire.Hosting.Decisions` | `aspire-hosting-decisions` | [`docs/aspire-hosting/decisions-integration.md`](../docs/aspire-hosting/decisions-integration.md) | [#37](https://github.com/FieldstateNZ/workspec-studio/issues/37)  |
+| Cost      | `Aspire.Hosting.Workspec.Cost`      | `Workspec.Aspire.Hosting.Cost`      | `aspire-hosting-cost`      | [`docs/aspire-hosting/cost-integration.md`](../docs/aspire-hosting/cost-integration.md)       | [#38](https://github.com/FieldstateNZ/workspec-studio/issues/38)  |
+
+[#35](https://github.com/FieldstateNZ/workspec-studio/issues/35) (A2) is a related TS-side
+enabler (`workspec-c4 import-aspire` et al.) in `packages/`, not a fifth `aspire-hosting-*`
+package.
 
 ## NuGet publishing
 
-No package has a decided `PackageId` yet. That's deliberate: launch naming is
-[#39](https://github.com/FieldstateNZ/workspec-studio/issues/39) (A6), pending a check
-that the `Aspire.*` prefix is available to reserve on nuget.org (prefix reservation gates
-who can publish `Aspire.*`-named packages at all; the fallback if it isn't is
-`Workspec.Aspire.Hosting.*` PackageIds while assembly names stay
-`Aspire.Hosting.Workspec.*`). Until #39 resolves, these are source-only, unpublished
-projects — assembly names above are provisional.
+**PackageId naming (decided at A6):** the `Aspire.` PackageId prefix is **reserved** on
+nuget.org — confirmed empirically by fetching `Aspire.Hosting`'s package page, which shows a
+"Prefix Reserved" badge linking to nuget.org's
+[ID Prefix Reservation](https://learn.microsoft.com/nuget/nuget-org/id-prefix-reservation) docs,
+with owners `Microsoft` and `aspire`. That rules out publishing anything named `Aspire.*`, so
+every package above ships as `Workspec.Aspire.Hosting.<Module>` instead, per the fallback this
+README always documented — **assembly names are unaffected** and stay
+`Aspire.Hosting.Workspec.*` (a PackageId and an assembly name are independent NuGet concepts; a
+consumer's `<PackageReference Include="Workspec.Aspire.Hosting.C4" />` still resolves types under
+the `Aspire.Hosting`/`Aspire.Hosting.Workspec` namespaces shown throughout this repo's docs).
+
+Every package is versioned `0.1.0-alpha.0` (mirroring the `@workspec/*` npm packages' own alpha
+convention — see `docs/decisions/RELEASING.md`), carries the `Apache-2.0`
+`PackageLicenseExpression`, and embeds this README as its `PackageReadmeFile`. Release wiring
+(`.github/workflows/release.yml`) is inert-but-ready pending a one-time manual nuget.org Trusted
+Publishing setup — see `docs/decisions/RELEASING.md`'s "NuGet (.NET)" section for the exact
+pending step.
 
 ## Aspire.Hosting.Integration.Analyzers
 

@@ -10,14 +10,16 @@ consumer of this code.
 | Decisions        | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`                             |
 | C4 Diagrams      | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/`                          |
 | Cost Attribution | in progress | `packages/cost-*`, `apps/site` (`/cost` demo), `docs/cost/` — publishes with the next tag |
+| Aspire Hosting   | in progress | `aspire-hosting/` (.NET), `docs/aspire-hosting/` — NuGet packaging/release wiring done, publish pending |
 
 ## Layout
 
 ```
-packages/   published @workspec/* libraries
-apps/       the Studio site and smoke hosts
-examples/   runnable example trees and demos
-docs/       specs and design bundles
+packages/        published @workspec/* libraries
+apps/            the Studio site and smoke hosts
+aspire-hosting/  .NET Aspire hosting integrations (own solution — not a pnpm workspace member)
+examples/        runnable example trees and demos
+docs/            specs and design bundles
 ```
 
 ## Development
@@ -96,6 +98,29 @@ tag — see [`docs/cost/launch-checklist.md`](docs/cost/launch-checklist.md) for
 `apps/site`'s `/cost` page takes `cost-schema`/`cost-engine`/`cost-ui` as `workspace:*`
 devDependencies as a documented, temporary exception, the same shape the c4 exception used before
 its own first publish — see [`docs/cost/drift-log.md`](docs/cost/drift-log.md).
+
+## Aspire Hosting module
+
+Wires the C4/Decisions/Cost `workspec-*` CLIs into a .NET Aspire apphost: dashboard resources,
+health checks, dashboard commands, and (for C4) a graph-sync drift gate that keeps `.workspec/`
+aligned with the apphost's own live resource graph — feeding this repo's architecture/cost/decision
+artifacts from the real running topology instead of a hand-maintained tree. `aspire-hosting/` is
+this monorepo's only .NET area: its own solution, build props, and CI stage, sitting alongside (not
+inside) the pnpm/TypeScript workspace. Full docs live under
+[`docs/aspire-hosting/`](docs/aspire-hosting).
+
+| Package                             | Path                       | Role                                                                                       |
+| -------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| `Aspire.Hosting.Workspec.Core`      | `aspire-hosting/aspire-hosting-core`      | Shared graph-dump contract (`workspec-graph/v1`), CLI locator, health checks, CLI-runner/Markdown-formatting primitives |
+| `Aspire.Hosting.Workspec.C4`        | `aspire-hosting/aspire-hosting-c4`        | `workspec-c4` studio resource, graph-sync drift gate, validate/render-diagram commands     |
+| `Aspire.Hosting.Workspec.Decisions` | `aspire-hosting/aspire-hosting-decisions` | `workspec-decisions` studio resource, `WithDecision` linking, validate/render-adr commands |
+| `Aspire.Hosting.Workspec.Cost`      | `aspire-hosting/aspire-hosting-cost`      | Stocktake/report/validate commands, publish-time Azure cost-estimate step                  |
+
+All four ship as NuGet packages (`Workspec.Aspire.Hosting.Core`/`.C4`/`.Decisions`/`.Cost` — the
+`Aspire.` PackageId prefix is reserved on nuget.org, so assemblies keep the `Aspire.Hosting.Workspec.*`
+name while PackageIds use the `Workspec.` prefix instead) at `0.1.0-alpha.0`. Release wiring
+(`.github/workflows/release.yml`) is inert-but-ready pending a one-time manual nuget.org Trusted
+Publishing setup — see [`docs/decisions/RELEASING.md`](docs/decisions/RELEASING.md).
 
 ## Architecture
 

@@ -78,7 +78,7 @@ public static class WorkspecC4Extensions
                 "Validate",
                 executeCommand: async context =>
                 {
-                    var result = await WorkspecC4CliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["validate", "--json", "--dir", resolvedWorkspecDir],
                         builder.AppHostDirectory,
@@ -94,7 +94,7 @@ public static class WorkspecC4Extensions
                         IReadOnlyList<WorkspecCliDiagnostic> diagnostics;
                         try
                         {
-                            diagnostics = WorkspecC4CliRunner.ParseDiagnostics(result.Stdout);
+                            diagnostics = WorkspecCliRunner.ParseDiagnostics(result.Stdout);
                         }
                         catch (JsonException ex)
                         {
@@ -103,7 +103,7 @@ public static class WorkspecC4Extensions
                             return CommandResults.Failure($"validate: could not parse workspec-c4 --json output ({ex.Message})");
                         }
 
-                        var markdown = WorkspecC4CliRunner.FormatValidateMarkdown(diagnostics);
+                        var markdown = WorkspecCliRunner.FormatValidateMarkdown(diagnostics, "No diagnostics — the `.workspec/` model is clean.");
 
                         return result.ExitCode == 0
                             ? CommandResults.Success("validate: OK", markdown, CommandResultFormat.Markdown)
@@ -118,7 +118,7 @@ public static class WorkspecC4Extensions
                 "Render diagram",
                 executeCommand: async context =>
                 {
-                    var result = await WorkspecC4CliRunner.RunAsync(
+                    var result = await WorkspecCliRunner.RunAsync(
                         invocation,
                         ["render", "aspire-container", "--dir", resolvedWorkspecDir, "--out", "-"],
                         builder.AppHostDirectory,

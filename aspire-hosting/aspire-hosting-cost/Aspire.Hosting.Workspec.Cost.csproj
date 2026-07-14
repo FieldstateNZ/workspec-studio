@@ -1,5 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.Cost</PackageId>
+    <Description>Wires the workspec-cost CLI into a .NET Aspire apphost: Stocktake/Report/Validate dashboard commands over a directory of cost artifacts, plus a publish-time step that estimates Azure resource costs from the apphost's own provisioning resources.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
     <!-- Publish-time cost-estimate step only (WorkspecCostPublishEstimateExtensions) — reads
@@ -10,6 +16,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

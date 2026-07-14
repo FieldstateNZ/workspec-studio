@@ -1,16 +1,17 @@
-name: Release (publish to npm)
+name: Release (publish to npm + NuGet)
 
-# Publishes the @workspec/decision-* and @workspec/c4-* packages to npm when
-# a version tag is pushed (e.g. `v0.1.0-alpha.1`). Any package whose current
-# version is already on the registry is skipped, so families can version
-# independently and a re-run never collides. Trusted publishers are registered
-# against owner FieldstateNZ / repo workspec-studio / workflow release.yml.
+# Publishes the @workspec/decision-* and @workspec/c4-* packages to npm, and the
+# Workspec.Aspire.Hosting.* packages to NuGet, when a version tag is pushed (e.g.
+# `v0.1.0-alpha.1`). Any package whose current version is already on its registry
+# is skipped, so families can version independently and a re-run never collides.
 #
-# Auth is via npm TRUSTED PUBLISHING (OIDC) — there is NO `NPM_TOKEN` secret.
-# GitHub mints a short-lived id-token (`id-token: write` below) and npm exchanges
-# it for publish rights. Provenance is NOT enabled by this workflow — it is turned
-# on per package via each package.json's `publishConfig.provenance: true`, and is
-# attached because the publish runs in this OIDC-authenticated CI context.
+# --- npm (job: publish) ---
+# Trusted publishers are registered against owner FieldstateNZ / repo workspec-studio
+# / workflow release.yml. Auth is via npm TRUSTED PUBLISHING (OIDC) — there is NO
+# `NPM_TOKEN` secret. GitHub mints a short-lived id-token (`id-token: write` below)
+# and npm exchanges it for publish rights. Provenance is NOT enabled by this workflow
+# — it is turned on per package via each package.json's `publishConfig.provenance: true`,
+# and is attached because the publish runs in this OIDC-authenticated CI context.
 # Prerequisites:
 #   1. A trusted publisher registered on npmjs.com for each package, pointing at
 #      owner FieldstateNZ / repo workspec-studio / workflow release.yml.
@@ -18,7 +19,19 @@ name: Release (publish to npm)
 # Then:
 #   pnpm version ...            # bump the four packages
 #   git tag v0.1.0-alpha.0 && git push --tags
-# See docs/decisions/RELEASING.md for the full runbook (and the manual path).
+#
+# --- NuGet (job: nuget-publish) ---
+# Same tag trigger, same skip-if-already-published stance (via `dotnet nuget push
+# --skip-duplicate`). Also OIDC-based — NuGet.org Trusted Publishing (GA 2025), via the
+# `NuGet/login@v1` action, which exchanges the same short-lived GitHub id-token for a
+# ~1-hour NuGet API key. This job is INERT BY DEFAULT (`if: vars.NUGET_PUBLISH_ENABLED
+# == 'true'`) until Brett completes a ONE-TIME manual setup on nuget.org — see
+# docs/decisions/RELEASING.md's "NuGet (.NET) — PENDING one-time setup" section for the
+# exact steps (create a Trusted Publishing policy there, add the NUGET_USER repo
+# secret, then flip the NUGET_PUBLISH_ENABLED repo variable to 'true'). Until that's
+# done, this job is a no-op — pushing a tag only publishes the npm families.
+#
+# See docs/decisions/RELEASING.md for the full runbook (and the manual path) for both.
 
 on:
   push:
@@ -28,7 +41,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # required for npm trusted publishing (OIDC) + provenance
+  id-token: write # required for npm trusted publishing (OIDC) + provenance, and NuGet trusted publishing (OIDC)
 
 jobs:
   publish:
@@ -108,3 +121,63 @@ jobs:
             exit 1
           fi
           echo "published $published package(s)"
+
+  nuget-publish:
+    runs-on: ubuntu-latest
+    # INERT BY DEFAULT: flip the NUGET_PUBLISH_ENABLED repo variable to 'true' once the one-time
+    # nuget.org Trusted Publishing policy + NUGET_USER repo secret are set up (pending — see
+    # docs/decisions/RELEASING.md's "NuGet (.NET)" section). Until then, a pushed tag publishes the
+    # npm families above but this job is a no-op — nothing on nuget.org is touched.
+    if: vars.NUGET_PUBLISH_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore aspire-hosting/Aspire.Hosting.Workspec.slnx
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore aspire-hosting/Aspire.Hosting.Workspec.slnx
+
+      # Belt-and-braces gate before anything leaves the machine. Weaker than ci.yml's own dotnet
+      # job: this workflow doesn't install/build the workspec-c4/decisions/cost JS CLIs first, so
+      # the E2E/real-CLI tests self-skip here rather than exercising the real binaries — ci.yml is
+      # what actually gates those; this is a smoke check that the packed assemblies still build and
+      # the CLI-independent unit tests still pass right before anything leaves the machine.
+      - name: Test
+        run: dotnet test --configuration Release --no-build aspire-hosting/Aspire.Hosting.Workspec.slnx
+
+      # IsPackable=false on aspire-hosting-tests/aspire-hosting-e2e-fixture-apphost means only the
+      # four shipping projects (Core/C4/Decisions/Cost) produce a .nupkg here.
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output artifacts/nuget aspire-hosting/Aspire.Hosting.Workspec.slnx
+
+      # NuGet Trusted Publishing (OIDC, GA 2025): exchanges the job's short-lived GitHub id-token
+      # for a ~1-hour NuGet API key — no long-lived NUGET_API_KEY secret. `user` is the nuget.org
+      # profile name the Trusted Publishing policy (see docs/decisions/RELEASING.md) was created
+      # under; kept as a secret per NuGet's own recommendation even though it isn't itself sensitive.
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          nupkgs=(artifacts/nuget/*.nupkg)
+          if [ ${#nupkgs[@]} -eq 0 ]; then
+            echo "error: no .nupkg produced — expected 4 (Core/C4/Decisions/Cost)" >&2
+            exit 1
+          fi
+          for pkg in "${nupkgs[@]}"; do
+            echo "pushing $pkg (--skip-duplicate: a no-op if this version is already on nuget.org)"
+            dotnet nuget push "$pkg" \
+              --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

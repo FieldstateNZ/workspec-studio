@@ -69,7 +69,7 @@ public class WorkspecC4E2ETests
         var sampleGraphPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "workspec-graph-v1.sample.json");
         Assert.True(File.Exists(sampleGraphPath), $"Expected the A1 sample graph fixture at '{sampleGraphPath}'.");
 
-        var scaffoldResult = await WorkspecC4CliRunner.RunAsync(
+        var scaffoldResult = await WorkspecCliRunner.RunAsync(
             new WorkspecCliInvocation(cliPath),
             ["import-aspire", "--graph", sampleGraphPath, "--dir", workspecDir.Path, "--mode", "scaffold", "--json"],
             AppContext.BaseDirectory,

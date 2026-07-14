@@ -118,13 +118,15 @@ actual TypeScript SDK shape for this package has not been separately validated i
 
 ## Internal implementation note
 
-`WorkspecDecisionsCliRunner`/`WorkspecDecisionsCliDiagnostic` are private, internal copies of
-aspire-hosting-c4's `WorkspecC4CliRunner`/`WorkspecCliDiagnostic` (process execution with a 60s
-timeout and process-tree kill, `--json` diagnostics parsing, pipe-escaped Markdown table
-formatting), adapted to the Decisions CLI's own diagnostic shape (no `slug` field, only optional
-`line`/`col`). This duplication is deliberate for A4 rather than reaching into aspire-hosting-c4 or
-aspire-hosting-core (both are out of scope for this slice); consolidating the identical runner logic
-into Core is tracked by A6 ([#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)).
+This package's dashboard commands run on `Aspire.Hosting.Workspec.WorkspecCliRunner`
+(`aspire-hosting-core`, public) — the shared process-execution (60s timeout, process-tree kill)
+and Markdown-table-formatting primitives every module integration in this repo consumes, plus the
+shared `WorkspecCliDiagnostic` type (its `Slug` field is always `null` for `workspec-decisions`
+diagnostics, which never emit one — only `Severity`/`Code`/`Message`/`File`/`Line`/`Col` are
+populated). Through A5, each module (`aspire-hosting-c4`, this package, `aspire-hosting-cost`)
+carried its own byte-identical private copy of this runner; A6
+([#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)) consolidated all three into
+Core — see [`aspire-hosting/README.md`](../../aspire-hosting/README.md)'s Layout section.
 
 ## See also
 

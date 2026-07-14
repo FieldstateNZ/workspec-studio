@@ -7,8 +7,9 @@ namespace Aspire.Hosting.Workspec.Tests;
 
 /// <summary>
 /// Exercises the actual "Stocktake"/"Report"/"Validate" dashboard command delegates registered by
-/// <c>AddWorkspecCost</c> — not just the underlying runner (<see cref="WorkspecCostCliRunnerTests"/>)
-/// or formatter (<see cref="WorkspecCostMarkdownFormatterTests"/>) in isolation. Commands are invoked
+/// <c>AddWorkspecCost</c> — not just the underlying runner (<see cref="WorkspecCliRunnerTests"/>,
+/// <see cref="WorkspecCostReportPayloadTests"/>) or formatter
+/// (<see cref="WorkspecCostMarkdownFormatterTests"/>) in isolation. Commands are invoked
 /// directly via their <see cref="ResourceCommandAnnotation.ExecuteCommand"/> delegate with a
 /// manually-constructed <see cref="ExecuteCommandContext"/> — mirroring
 /// <c>WorkspecC4ExtensionsTests</c>'s own <c>InvokeArgsCallback</c> pattern for

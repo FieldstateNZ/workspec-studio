@@ -1,11 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.C4</PackageId>
+    <Description>Wires the workspec-c4 CLI (C4 architecture model studio) into a .NET Aspire apphost: a dashboard resource serving the model explorer, a graph-sync drift gate against the apphost's own resource graph, and validate/health-check plumbing.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

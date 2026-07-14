@@ -45,8 +45,9 @@ and, via `WithPublishCostEstimate()`, a publish-time step that writes `cost.cost
 `@workspec/cost-provider-azure`'s `createAzureProvider()`), which authenticates through
 `@azure/identity`'s `DefaultAzureCredential` chain — environment variables, Workload Identity,
 Managed Identity, `az login`, Azure PowerShell, in that order. **`workspec-cost` runs as a child
-process of the apphost** (spawned by `WorkspecCostCliRunner`, same as every other workspec CLI
-integration in this repo) **and inherits the apphost process's environment** — so whatever
+process of the apphost** (spawned by `Aspire.Hosting.Workspec.WorkspecCliRunner`, shared by every
+workspec CLI integration in this repo since A6 — see "Internal implementation note" in
+[`c4-integration.md`](./c4-integration.md)) **and inherits the apphost process's environment** — so whatever
 credential source is ambient to the apphost itself (your local `az login` session, a CI job's
 Workload Identity/Managed Identity, etc.) is exactly what `Stocktake` will use. There is no separate
 credential configuration surface on `WorkspecCostResource` — if `az login` (or equivalent) works in
@@ -269,8 +270,11 @@ live in `packages/cost-studio/src/cli.ts` (`ValidateDiagnostic`) and `packages/c
 
 ## Testing notes
 
-- `aspire-hosting-tests/WorkspecCostCliRunnerTests.cs` and `WorkspecCostMarkdownFormatterTests.cs`
-  test the process-execution/formatting plumbing directly (no dashboard command involved).
+- `aspire-hosting-tests/WorkspecCliRunnerTests.cs` (Core-scoped, shared by every module since the
+  A6 runner consolidation) tests the process-execution/diagnostics-parsing/Markdown-table plumbing
+  directly; `aspire-hosting-tests/WorkspecCostReportPayloadTests.cs` and
+  `WorkspecCostMarkdownFormatterTests.cs` cover this module's own cost-specific report-parsing and
+  `FormatReportMarkdown` logic (no dashboard command involved in any of the three).
 - `aspire-hosting-tests/WorkspecCostCommandsTests.cs` invokes the actual registered
   `ResourceCommandAnnotation.ExecuteCommand` delegates via a manually-constructed
   `ExecuteCommandContext` (mirroring `WorkspecC4ExtensionsTests`' own `CommandLineArgsCallback`
@@ -284,15 +288,12 @@ live in `packages/cost-studio/src/cli.ts` (`ValidateDiagnostic`) and `packages/c
 - `aspire-hosting-tests/WorkspecCostRealCliTests.cs` is the one test that needs the real, built
   `@workspec/cost-studio` CLI (`packages/cost-studio/dist/bin.js`) — it self-skips with a message
   when that file doesn't exist, exactly like `WorkspecC4E2ETests` does for `packages/c4-studio`.
-  **`.github/workflows/ci.yml` does not build `packages/cost-studio` this round** (A5's scope
-  deliberately leaves the only CI edit to a prior slice) — a future slice wires the corresponding
-  build step, the same way C4's E2E test's CI wiring landed.
+  `.github/workflows/ci.yml`'s dotnet job builds `packages/cost-studio` alongside `c4-studio`/
+  `decision-studio` before running `dotnet test` (A6, #39), so this test runs for real in CI rather
+  than self-skipping.
 
 ## Known gaps for a future slice
 
-- **NuGet publishing.** As with C4/Decisions, no `PackageId` is decided yet (tracked by
-  [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)); this remains a source-only,
-  unpublished project.
 - **The experimental Pipelines API dependency.** See "Mechanism" above — a deliberate choice over
   the stable `BeforePublishEvent`/`AfterPublishEvent` hooks, made for the typed output path,
   progress reporting, and parity with Aspire's own publish steps. Revisit (A6, #39) when Aspire
@@ -314,9 +315,11 @@ live in `packages/cost-studio/src/cli.ts` (`ValidateDiagnostic`) and `packages/c
 ## See also
 
 - [`c4-integration.md`](./c4-integration.md) — the C4 module's own Aspire integration, whose
-  reviewed patterns (CLI locator, timeout+kill runner, pipe-escaped Markdown tables) this module's
-  private runner copy is based on (`// TODO(A6, #39): consolidate with aspire-hosting-c4's runner
-  into Core`).
+  reviewed patterns (CLI locator, timeout+kill runner, pipe-escaped Markdown tables) this module
+  now shares directly via `Aspire.Hosting.Workspec.WorkspecCliRunner` in `aspire-hosting-core`
+  (consolidated from three private per-module copies at A6, #39 — this module's own
+  `WorkspecCostReportPayload.Parse`/`FormatReportMarkdown` remain here, since no other module has
+  an equivalent "report" shape).
 - `packages/cost-studio/src/cli.ts` — the `workspec-cost` CLI this integration wraps.
 - `packages/cost-provider-azure/README.md` — the Azure credential chain and required RBAC roles
   `Stocktake` depends on.
