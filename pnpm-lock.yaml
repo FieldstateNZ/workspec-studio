@@ -96,26 +96,35 @@ importers:
         specifier: ^5.62.7
         version: 5.101.2(react@18.3.1)
       '@workspec/c4-layout':
-        specifier: 0.1.0-alpha.2
-        version: 0.1.0-alpha.2
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
       '@workspec/c4-model':
-        specifier: 0.1.0-alpha.2
-        version: 0.1.0-alpha.2
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
       '@workspec/c4-schema':
-        specifier: 0.1.0-alpha.2
-        version: 0.1.0-alpha.2
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
       '@workspec/c4-ui':
-        specifier: 0.1.0-alpha.2
-        version: 0.1.0-alpha.2(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+      '@workspec/cost-engine':
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
+      '@workspec/cost-schema':
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
+      '@workspec/cost-ui':
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       '@workspec/decision-engine':
-        specifier: 0.1.0-alpha.1
-        version: 0.1.0-alpha.1
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
       '@workspec/decision-schema':
-        specifier: 0.1.0-alpha.1
-        version: 0.1.0-alpha.1
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5
       '@workspec/decision-ui':
-        specifier: 0.1.0-alpha.1
-        version: 0.1.0-alpha.1(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.5
+        version: 0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       '@workspec/design':
         specifier: 0.1.0-alpha.1
         version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
@@ -150,15 +159,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.7.0(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
-      '@workspec/cost-engine':
-        specifier: workspace:*
-        version: link:../../packages/cost-engine
-      '@workspec/cost-schema':
-        specifier: workspace:*
-        version: link:../../packages/cost-schema
-      '@workspec/cost-ui':
-        specifier: workspace:*
-        version: link:../../packages/cost-ui
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
@@ -2823,40 +2823,46 @@ packages:
   '@vitest/utils@4.1.10':
     resolution: {integrity: sha512-fy9am/HWxbaGt/Sawrp90vt6Y6jQwf1RX77cz3uwoJwJVMli/e1IEwRPnMNJ7vKfPTwo0diXifkpPvwH9v7nGA==}
 
-  '@workspec/c4-layout@0.1.0-alpha.2':
-    resolution: {integrity: sha512-h1UcRgw6HPWbIKmGclUx+ZDe5Hl4m0rWtSQD0yWBXOSynr3FzpCA/bK9kIOLpYwLVv5N34IagzH1JwSTkoXUFw==}
+  '@workspec/c4-layout@0.1.0-alpha.5':
+    resolution: {integrity: sha512-PDMciqxOnUwA74RdsNDxLk9xehl+8QZfdOszQTPiVDHSbvb4UDN+h9vwzUVSljG4G9jHP423XjjetaibsFxqEw==}
 
-  '@workspec/c4-model@0.1.0-alpha.2':
-    resolution: {integrity: sha512-WSuikmc8ZpfRHMyfaWIMhFFI5SkdxlHjyCrWt2gsheqWfNh/r1EnYo2vm/J0M3I+Qsl9Dk0gDaJffKOreRX7wg==}
+  '@workspec/c4-model@0.1.0-alpha.5':
+    resolution: {integrity: sha512-LDh8jsmx/TtSMnGdfsnmA+JhFNq9lhDNbTeHj1IElnKkC75s1vWCse81WIlv4R49fl+ZvShgxpEON9DTaI6s4Q==}
 
-  '@workspec/c4-schema@0.1.0-alpha.2':
-    resolution: {integrity: sha512-/8531ZlFVwM5/yZXcLcHNOA1sS+l5OlZyhPyrNL6sKPgmrNpqKFA+PZAQ/RFAcWqSIyS0ePR1uhaX0h91uzzNQ==}
+  '@workspec/c4-schema@0.1.0-alpha.5':
+    resolution: {integrity: sha512-oKWBT0Q481HgpW7IlsqKykH35mHOZMLJWUGxV1G42NmKBQTlkX04qonY7shVvULNO2IzkL5j8+pDC4hhF80WfQ==}
 
-  '@workspec/c4-ui@0.1.0-alpha.2':
-    resolution: {integrity: sha512-5SU+6lPHKYVHAw5oy+CFzWvqFLzuT5Bte3objkFBKf+7cRiRTBszvoPs2zvhkXrFYzBhLhQ9otexzzdTm6myLA==}
+  '@workspec/c4-ui@0.1.0-alpha.5':
+    resolution: {integrity: sha512-kalGPaHa7O7lz1bCdraPfDImjOg2sYV8DDNrWyIIATe/hX0IZNR5AyXlhAprKqAjdLUInTSioE2bRlnOiil6zA==}
     peerDependencies:
       react: ^18.3.0
       react-dom: ^18.3.0
 
-  '@workspec/decision-engine@0.1.0-alpha.1':
-    resolution: {integrity: sha512-DiP0MpesJPLN9/R9XfHwpXYTrt5bLREUyCdXPbtutL/3MP4JgPXzo3RJgxWJiAS+i90zEP1jSs/MS42aRMHE5A==}
+  '@workspec/cost-engine@0.1.0-alpha.5':
+    resolution: {integrity: sha512-uq1xRMw+wy3eZf03ujjnD499s3GP0wgioiH7nDqDMyrMQijcOJ+x6x8PYc41wpBPKMlHYLJUO3DzxabOugF9pA==}
 
-  '@workspec/decision-schema@0.1.0-alpha.1':
-    resolution: {integrity: sha512-JYqvkXIf1qBao0yOQNmRwH4wFi49eEiw9hB2lkcK69zPPxqXXFQoyPwqU5JLYIj1wNvFNm4IAjiya7XIoaPkhA==}
+  '@workspec/cost-schema@0.1.0-alpha.5':
+    resolution: {integrity: sha512-wFTWZ9S4TAzCc7i7sXPFwIl0izc3T68xF8CACxMjrGNy/DbQMTrAMBxVUxYJYfS7MP2GCmpyuSKNsl4heO0z1Q==}
 
-  '@workspec/decision-ui@0.1.0-alpha.1':
-    resolution: {integrity: sha512-738J+OByHoJSMWnLZwYwo/oHpDFJhVxM9FZDkiVYt4gp6C+6XJjSzrXYGIpe4ugAcAPYBVZt7tjPY674vzWlQw==}
+  '@workspec/cost-ui@0.1.0-alpha.5':
+    resolution: {integrity: sha512-gGKLX8w8mV9tKdcXKTA//F6Tl/gUalR4LHbW4Z+KYGNYu5fMSsGL4bFUBASYrSE8G2qvURps10HR0CakyPCaNA==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       react: ^18.3.0
       react-dom: ^18.3.0
 
-  '@workspec/design@0.1.0-alpha.0':
-    resolution: {integrity: sha512-UoRkoLH1NdhO3mBCtLpbxOlTthYuXEgY2Z32iKRQx9dchrxBQ48nBcGbRjuWUwKtorI5On5j60sayainE7B9CA==}
-    engines: {node: '>=20'}
+  '@workspec/decision-engine@0.1.0-alpha.5':
+    resolution: {integrity: sha512-nrDEUXnqmbMkQGLyk5+a4AwxHrNKqZa+Gm3kHSz9lKQfVjWFanHrhUwF0YWryzZny8w5IwZuq8dqpuj0dEcPog==}
+
+  '@workspec/decision-schema@0.1.0-alpha.5':
+    resolution: {integrity: sha512-R97/3QRxLvJRT2g8VwxQLg8gVcbIAbbx1HUhjoYxVezr+YHUk2U/xwzHvJYhzTR1/Z7KAs/X13dwq1MKP3rMAQ==}
+
+  '@workspec/decision-ui@0.1.0-alpha.5':
+    resolution: {integrity: sha512-27jSLPJXP61icv/OLGXAhJ/0buRMo9u49uhlCYbq3gbSP0Wc7FJ50JGW2vHhBfgce775geQ3FvKNTjd/xoqOsg==}
     peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
+      '@tanstack/react-query': ^5.0.0
+      react: ^18.3.0
+      react-dom: ^18.3.0
 
   '@workspec/design@0.1.0-alpha.1':
     resolution: {integrity: sha512-xHHywIv0kOvpKy+vvAqjTwfCEj27SfIaDXNSgeokwU2BWe7XsTrSXDJ1r2YrcYsncs6MNx4NoHq2ikpHX3O63g==}
@@ -6772,26 +6778,26 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@workspec/c4-layout@0.1.0-alpha.2':
+  '@workspec/c4-layout@0.1.0-alpha.5':
     dependencies:
-      '@workspec/c4-model': 0.1.0-alpha.2
-      '@workspec/c4-schema': 0.1.0-alpha.2
+      '@workspec/c4-model': 0.1.0-alpha.5
+      '@workspec/c4-schema': 0.1.0-alpha.5
       elkjs: 0.11.1
 
-  '@workspec/c4-model@0.1.0-alpha.2':
+  '@workspec/c4-model@0.1.0-alpha.5':
     dependencies:
-      '@workspec/c4-schema': 0.1.0-alpha.2
+      '@workspec/c4-schema': 0.1.0-alpha.5
 
-  '@workspec/c4-schema@0.1.0-alpha.2':
+  '@workspec/c4-schema@0.1.0-alpha.5':
     dependencies:
       yaml: 2.9.0
       zod: 4.4.3
 
-  '@workspec/c4-ui@0.1.0-alpha.2(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+  '@workspec/c4-ui@0.1.0-alpha.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
     dependencies:
-      '@workspec/c4-layout': 0.1.0-alpha.2
-      '@workspec/c4-model': 0.1.0-alpha.2
-      '@workspec/c4-schema': 0.1.0-alpha.2
+      '@workspec/c4-layout': 0.1.0-alpha.5
+      '@workspec/c4-model': 0.1.0-alpha.5
+      '@workspec/c4-schema': 0.1.0-alpha.5
       '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       lucide-react: 0.545.0(react@18.3.1)
       react: 18.3.1
@@ -6801,22 +6807,22 @@ snapshots:
       - '@types/react-dom'
       - tailwindcss
 
-  '@workspec/decision-engine@0.1.0-alpha.1':
+  '@workspec/cost-engine@0.1.0-alpha.5':
     dependencies:
-      '@workspec/decision-schema': 0.1.0-alpha.1
+      '@workspec/cost-schema': 0.1.0-alpha.5
 
-  '@workspec/decision-schema@0.1.0-alpha.1':
+  '@workspec/cost-schema@0.1.0-alpha.5':
     dependencies:
       yaml: 2.9.0
       zod: 3.25.76
       zod-to-json-schema: 3.25.2(zod@3.25.76)
 
-  '@workspec/decision-ui@0.1.0-alpha.1(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+  '@workspec/cost-ui@0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
     dependencies:
       '@tanstack/react-query': 5.101.2(react@18.3.1)
-      '@workspec/decision-engine': 0.1.0-alpha.1
-      '@workspec/decision-schema': 0.1.0-alpha.1
-      '@workspec/design': 0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+      '@workspec/cost-engine': 0.1.0-alpha.5
+      '@workspec/cost-schema': 0.1.0-alpha.5
+      '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
     transitivePeerDependencies:
@@ -6824,53 +6830,24 @@ snapshots:
       - '@types/react-dom'
       - tailwindcss
 
-  '@workspec/design@0.1.0-alpha.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+  '@workspec/decision-engine@0.1.0-alpha.5':
     dependencies:
-      '@radix-ui/react-accordion': 1.2.16(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-alert-dialog': 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-aspect-ratio': 1.1.11(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-avatar': 1.2.2(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-checkbox': 1.3.7(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-collapsible': 1.1.16(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-context-menu': 2.3.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-dialog': 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-dropdown-menu': 2.1.20(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-hover-card': 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-label': 2.1.11(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-menubar': 1.1.20(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-navigation-menu': 1.2.18(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-popover': 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-progress': 1.1.12(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-radio-group': 1.4.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-scroll-area': 1.2.14(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-select': 2.3.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-separator': 1.1.11(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-slider': 1.4.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-slot': 1.3.0(@types/react@18.3.31)(react@18.3.1)
-      '@radix-ui/react-switch': 1.3.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-tabs': 1.1.17(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-toast': 1.2.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-toggle': 1.1.14(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-toggle-group': 1.1.15(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@radix-ui/react-tooltip': 1.2.12(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tailwindcss/typography': 0.5.20(tailwindcss@4.3.2)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      cmdk: 1.1.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      embla-carousel-react: 8.6.0(react@18.3.1)
-      input-otp: 1.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      lucide-react: 0.545.0(react@18.3.1)
-      next-themes: 0.4.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@workspec/decision-schema': 0.1.0-alpha.5
+
+  '@workspec/decision-schema@0.1.0-alpha.5':
+    dependencies:
+      yaml: 2.9.0
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
+
+  '@workspec/decision-ui@0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+    dependencies:
+      '@tanstack/react-query': 5.101.2(react@18.3.1)
+      '@workspec/decision-engine': 0.1.0-alpha.5
+      '@workspec/decision-schema': 0.1.0-alpha.5
+      '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       react: 18.3.1
-      react-day-picker: 9.14.0(react@18.3.1)
       react-dom: 18.3.1(react@18.3.1)
-      react-hook-form: 7.81.0(react@18.3.1)
-      react-resizable-panels: 2.1.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      recharts: 2.15.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      sonner: 2.0.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tailwind-merge: 3.6.0
-      tw-animate-css: 1.4.0
-      vaul: 1.1.2(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'

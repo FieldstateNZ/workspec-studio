@@ -5,26 +5,15 @@
     "jsx": "react-jsx",
     "types": ["vite/client"],
     // The site is a living test of the PUBLISHED packages: no `paths` override
-    // here, unlike the workspace packages — @workspec/decision-*/c4-* resolve
-    // from their registry build (dist + .d.ts) in node_modules, never
-    // workspace source. The @workspec/cost-* packages are the documented,
-    // temporary exception (workspace:* devDependencies — see
-    // docs/cost/drift-log.md entry 1, mirroring the retired c4 exception at
-    // docs/c4/drift-log.md entry 17): they resolve through pnpm's symlink to
-    // each package's own dist + .d.ts, which only exists after a build — so
-    // they alone need the project references below, letting `tsc -b` build
-    // their declarations on demand (CI runs typecheck before build; without
-    // references a clean tree fails TS2307). Registry deps need none:
-    // published .d.ts ship in node_modules. The former @workspec/c4-*
-    // workspace exception (and its own references block) was retired when
-    // the c4 family shipped at v0.1.0-alpha.2 — see docs/c4/drift-log.md
-    // entry 17.
+    // and no project `references` — every @workspec/* dependency (decision-*,
+    // c4-*, cost-*) resolves from its registry build (dist + shipped .d.ts) in
+    // node_modules, exactly like an outside consumer, never workspace source.
+    // The @workspec/cost-* packages spent one cycle as a workspace:*
+    // exception (with a references block here); it was retired when the cost
+    // family shipped at v0.1.0-alpha.5 — see docs/cost/drift-log.md entry 1
+    // (mirroring the earlier c4 retirement at v0.1.0-alpha.2, docs/c4/drift-log.md
+    // entry 17).
     "noEmit": true
   },
-  "references": [
-    { "path": "../../packages/cost-schema/tsconfig.build.json" },
-    { "path": "../../packages/cost-engine/tsconfig.build.json" },
-    { "path": "../../packages/cost-ui/tsconfig.build.json" }
-  ],
   "include": ["src"]
 }
