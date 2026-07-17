@@ -394,7 +394,7 @@
   }
   .home-module-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--s-5);
   }
   /* Whole-card-clickable via the "stretched link" technique: the real <a>

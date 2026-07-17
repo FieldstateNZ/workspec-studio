@@ -37,7 +37,7 @@ describe('Studio landing page (/)', () => {
   it('renders the hero pitch and both hero CTAs into the module pitch pages', () => {
     render(<StudioHome />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /one typed graph\. two lenses/i,
+      /one typed graph\. four lenses/i,
     );
     expect(screen.getByRole('link', { name: /open the studio/i })).toHaveAttribute(
       'href',
@@ -49,17 +49,24 @@ describe('Studio landing page (/)', () => {
     );
   });
 
-  it('renders both module cards, each linking to its own pitch page', () => {
+  it('renders all four module cards, each linking to its own pitch page', () => {
     render(<StudioHome />);
-    expect(screen.getByRole('link', { name: /open the workbench/i })).toHaveAttribute(
-      'href',
-      '/decisions',
-    );
+    // Decisions and Cost both use the "Open the workbench" CTA — disambiguate by href.
+    const workbenchHrefs = screen
+      .getAllByRole('link', { name: /open the workbench/i })
+      .map((link) => link.getAttribute('href'));
+    expect(workbenchHrefs).toEqual(expect.arrayContaining(['/decisions', '/cost']));
     expect(screen.getByRole('link', { name: /open the explorer/i })).toHaveAttribute('href', '/c4');
-    // Both modules carry the mockup's "live" pill — the @workspec/c4-* family
-    // (c4-studio included) is on npm at 0.1.0-alpha, verified against the
-    // registry during round-3 review.
+    // Traceability is designed but not yet built — its card links to the
+    // not-yet-live /traceability route on purpose (four-module home mockup,
+    // WorkSpec Studio.dc.html via the Design MCP).
+    expect(screen.getByRole('link', { name: /open the matrix/i })).toHaveAttribute(
+      'href',
+      '/traceability',
+    );
+    // Decisions and C4 carry the "live" pill; Cost and Traceability carry "new".
     expect(screen.getAllByText('live')).toHaveLength(2);
+    expect(screen.getAllByText('new')).toHaveLength(2);
     expect(screen.queryByText('in progress')).not.toBeInTheDocument();
   });
 

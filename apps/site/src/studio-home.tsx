@@ -23,7 +23,7 @@ interface Module {
   readonly key: string;
   readonly eyebrow: string;
   readonly name: string;
-  readonly status: 'live' | 'in progress';
+  readonly status: 'live' | 'in progress' | 'new';
   readonly href: string;
   readonly blurb: string;
   readonly cta: string;
@@ -41,12 +41,15 @@ interface Module {
 const STATUS_TONE: Record<Module['status'], StatusTone> = {
   live: 'accent',
   'in progress': 'warn',
+  new: 'warn',
 };
 
-// Both cards carry the mockup's "live" pill: the whole @workspec/c4-* family
-// (including the c4-studio CLI the terminal card demos) has shipped to npm at
-// 0.1.0-alpha — verified against the registry during round-3 review, which
-// caught the earlier "not published yet" premise as stale. The 'in progress'
+// Decisions and C4 carry the "Live" pill (both families shipped to npm); Cost
+// and Traceability carry the "New" pill (warn tone), per the current home
+// mockup (WorkSpec Studio.dc.html, pulled via the Design MCP). Cost shipped at
+// 0.1.0-alpha.5. Traceability is DESIGNED but not yet built — its /traceability
+// route does not exist yet, so its card deliberately links to a not-yet-live
+// page (surfacing the roadmap, per the four-module design). The 'in progress'
 // tone stays in the union for whatever module ships next.
 const MODULES: readonly Module[] = [
   {
@@ -75,6 +78,35 @@ const MODULES: readonly Module[] = [
     // var(--el-tint-eyebrow): that token's dark value (100%) is paired with
     // c4-ui's 22% accent-lift step, which these static cards don't apply.
     eyebrowColor: 'color-mix(in oklab, var(--el-system) 70%, var(--ink))',
+  },
+  {
+    key: 'cost',
+    eyebrow: 'module · cost',
+    name: 'Cost Attribution',
+    status: 'new',
+    href: '/cost',
+    blurb:
+      'Stock-take the cloud account, model attribution as declarative rules, write tags back as a reviewable plan.',
+    cta: 'Open the workbench',
+    accent: 'var(--type-scenario)',
+    eyebrowColor: 'color-mix(in oklab, var(--type-scenario) 70%, var(--ink))',
+  },
+  {
+    key: 'traceability',
+    eyebrow: 'module · traceability',
+    name: 'Traceability',
+    status: 'new',
+    href: '/traceability',
+    blurb:
+      'Link user & system requirements to features, generate test skeletons, then ingest CI runs into a committed coverage matrix.',
+    cta: 'Open the matrix',
+    // The mockup card uses its own invented --el-component accent, which isn't a
+    // published @workspec/design token; map it to the real --type-feature — the
+    // repo's established stand-in for that colour (see packages/cost-ui/src/
+    // format.ts's C5a mapping note, and c4-ui colouring the C4 'component' kind
+    // --type-feature). Apt too: traceability links requirements to features.
+    accent: 'var(--type-feature)',
+    eyebrowColor: 'color-mix(in oklab, var(--type-feature) 72%, var(--ink))',
   },
 ];
 
@@ -112,7 +144,7 @@ export function StudioHome(): ReactElement {
                 <span className="home-eyebrow-sep">/</span>
                 <span>architecture workbench</span>
               </div>
-              <h1 className="home-title">One typed graph. Two lenses.</h1>
+              <h1 className="home-title">One typed graph. Four lenses.</h1>
               <p className="home-lede">
                 A workbench over the artifacts already in your repo. Author C4 diagrams and
                 architecture decisions as YAML; the studio renders them as one product — every
@@ -157,7 +189,7 @@ export function StudioHome(): ReactElement {
           <div className="home-strip-head">
             <span className="home-strip-label">Modules</span>
             <span className="home-strip-rule" aria-hidden="true" />
-            <span className="home-strip-note">two lenses over one .workspec/ tree</span>
+            <span className="home-strip-note">four lenses over one .workspec/ tree</span>
           </div>
           <div className="home-module-grid">
             {MODULES.map((mod) => (
