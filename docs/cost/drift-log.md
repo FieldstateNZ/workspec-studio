@@ -28,6 +28,10 @@ accident. Mirrors [`docs/c4/drift-log.md`](../c4/drift-log.md)'s own convention 
    `launch-checklist.md` item 3 for the exact runbook, mirroring how PR #27 resolved
    `docs/c4/drift-log.md` entry 17 when the c4 family published at `0.1.0-alpha.2`.
 
-   **Not yet resolved** — the cost-* family has not published to npm as of this entry. This line
-   gains a "Resolved &lt;date&gt;" addendum, in entry 17's own shape, once `launch-checklist.md`
-   item 3 is carried out for real.
+   **Resolved 2026-07-17** — the cost family published at `0.1.0-alpha.5` (the unified alpha.5
+   release; the first manual `0.1.0-alpha.0` publish shipped a stale build and was superseded).
+   `apps/site` now pins `@workspec/cost-schema`, `@workspec/cost-engine`, and `@workspec/cost-ui`
+   at `0.1.0-alpha.5` in `dependencies` (moved out of `devDependencies`); the `_LOUD_NOTICE` block,
+   the `tsconfig.json` `references` array, and the vite/package.json exception comments are all
+   removed. The site now consumes all three from the registry like every other `@workspec/*`
+   dependency — no exceptions remaining.
