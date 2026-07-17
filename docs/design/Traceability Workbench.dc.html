@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background:#050506; }
+  [data-ws-root="1"], [data-ws-theme="dark"] {
+    --bg:#0a0a0c; --bg-soft:#16161a; --bg-elevated:#1c1c22; --panel-dark:#141419;
+    --line:#26262c; --line-2:#34343d;
+    --ink:#e8e8ea; --ink-soft:#a4a4ac; --ink-muted:#72727a; --ink-fade:#62626a;
+    --accent:#34d17f; --accent-soft:rgba(52,209,127,0.14); --accent-mid:rgba(52,209,127,0.35); --accent-wash:rgba(52,209,127,0.06);
+    --on-accent:#0a0a0c; --warn:#f2c94c; --danger:#ff5a5a;
+    --agent:#5cf2c0;
+    --type-feature:#5cf2c0; --type-persona:#9ec6ff; --type-scenario:#f2c94c;
+    --el-external:#64748b; --el-component:hsl(258 55% 62%);
+    --sh-2:0 2px 8px rgba(0,0,0,0.45);
+  }
+  [data-ws-theme="light"] {
+    --bg:#f6f6f7; --bg-soft:#fafafb; --bg-elevated:#ffffff; --panel-dark:#f1f1f4;
+    --line:#e4e4e7; --line-2:#d1d1d6;
+    --ink:#0a0a0c; --ink-soft:#4a4a52; --ink-muted:#76767c; --ink-fade:#8a8a90;
+    --accent:#1b8a55; --accent-soft:rgba(27,138,85,0.10); --accent-mid:rgba(27,138,85,0.30); --accent-wash:rgba(27,138,85,0.08);
+    --on-accent:#ffffff; --warn:#c89216; --danger:#c43a3a;
+    --agent:#0d8a72;
+    --type-feature:#1f8a6a; --type-persona:#3a6ea5; --type-scenario:#a07a14;
+    --el-external:#64748b; --el-component:hsl(258 45% 52%);
+    --sh-2:0 2px 8px rgba(0,0,0,0.08);
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  input:focus { outline: 1.5px solid var(--accent-mid); outline-offset: 0; }
+  button { font: inherit; }
+</style>
+</helmet>
+
+<section data-ws-root="1" data-ws-theme="{{ theme }}" data-screen-label="Traceability workbench" style="--sans:'Inter Tight',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;font-family:var(--sans);color:var(--ink);background:var(--bg);min-height:100vh;padding:36px 40px 64px;">
+
+  <div style="max-width:1240px;margin:0 auto;">
+
+    <!-- ===== shell topbar ===== -->
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 20px;border:1px solid var(--line);border-bottom:none;border-radius:14px 14px 0 0;background:var(--bg);">
+      <span style="width:11px;height:11px;border-radius:3px;background:var(--accent);"></span>
+      <span style="font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink);">workspec-trace</span>
+      <span style="font-family:var(--mono);font-size:12.5px;color:var(--ink-fade);">/ traceability</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);letter-spacing:0.04em;margin-left:10px;">example ▸ fieldstate-workspec</span>
+      <span style="flex:1;"></span>
+      <span style="display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:1px solid var(--line-2);color:var(--ink-soft);white-space:nowrap;">emitter ▸ {{ emitter }}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);white-space:nowrap;">{{ counts }}</span>
+    </div>
+
+    <!-- ===== meters bar ===== -->
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:28px;align-items:center;padding:15px 20px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-soft);">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;">Coverage</span>
+        <div style="flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden;"><div style="{{ m.covBar }}"></div></div>
+        <span style="font-size:17px;font-weight:680;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;">{{ m.covPct }}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;">Pass rate</span>
+        <div style="flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden;"><div style="{{ m.passBar }}"></div></div>
+        <span style="font-size:17px;font-weight:680;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;">{{ m.passPct }}</span>
+      </div>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);white-space:nowrap;font-variant-numeric:tabular-nums;">{{ m.summary }}</span>
+    </div>
+
+    <!-- ===== view nav ===== -->
+    <div style="display:flex;align-items:center;gap:4px;padding:8px 14px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel-dark);">
+      <button onClick="{{ nav.goEx }}" style="{{ nav.exS }}">Requirements</button>
+      <button onClick="{{ nav.goMx }}" style="{{ nav.mxS }}">Matrix</button>
+      <button onClick="{{ nav.goFd }}" style="{{ nav.fdS }}">Feature detail</button>
+      <button onClick="{{ nav.goRr }}" style="{{ nav.rrS }}">Run review</button>
+      <span style="flex:1;"></span>
+      <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-fade);white-space:nowrap;">{{ nav.hint }}</span>
+    </div>
+
+    <!-- ===== body ===== -->
+    <div style="border:1px solid var(--line);border-top:none;border-radius:0 0 14px 14px;background:var(--bg);overflow:hidden;box-shadow:var(--sh-2);">
+
+      <!-- ============ EXPLORER ============ -->
+      <sc-if value="{{ isEx }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+            <sc-for list="{{ ex.filters }}" as="f" hint-placeholder-count="5">
+              <button onClick="{{ f.pick }}" style="{{ f.s }}">{{ f.t }}</button>
+            </sc-for>
+            <span style="flex:1;"></span>
+            <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-fade);">click a row for its chain</span>
+          </div>
+          <div style="display:grid;grid-template-columns:118px 1.9fr 1.2fr 0.9fr;padding:0 18px;border-bottom:1px solid var(--line);background:var(--bg-soft);">
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);padding:9px 6px 9px 0;">Kind</span>
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);padding:9px 6px;">Requirement</span>
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);padding:9px 6px;">Links</span>
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);padding:9px 0 9px 6px;">Status</span>
+          </div>
+          <sc-for list="{{ ex.rows }}" as="w" hint-placeholder-count="9">
+            <div onClick="{{ w.pick }}" style="{{ w.wrap }}" style-hover="background:var(--bg-soft)">
+              <span style="padding:11px 6px 11px 0;align-self:start;"><span style="{{ w.kindS }}">{{ w.kind }}</span></span>
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0;padding:11px 6px;">
+                <span style="font-size:13.5px;color:var(--ink);font-weight:560;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.title }}</span>
+                <span style="font-family:var(--mono);font-size:10px;color:var(--ink-fade);">{{ w.slug }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:11px 6px;">
+                <sc-for list="{{ w.links }}" as="lk" hint-placeholder-count="1">
+                  <span style="{{ lk.s }}">{{ lk.t }}</span>
+                </sc-for>
+              </span>
+              <span style="padding:11px 0 11px 6px;align-self:center;display:flex;align-items:center;gap:8px;">
+                <span style="{{ w.statusS }}"><span style="{{ w.statusDot }}"></span>{{ w.status }}</span>
+              </span>
+              <sc-if value="{{ w.open }}" hint-placeholder-val="{{ false }}">
+                <div style="grid-column:1 / -1;margin:0 -18px;padding:14px 24px 16px;background:var(--panel-dark);border-top:1px solid var(--line);box-shadow:inset 3px 0 0 var(--accent);cursor:default;display:flex;flex-direction:column;gap:12px;">
+                  <sc-if value="{{ w.isUser }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                      <div style="font-family:var(--mono);font-size:12.5px;line-height:1.9;color:var(--ink-soft);"><span style="color:var(--type-persona);">As</span> {{ w.as }}<br><span style="color:var(--type-scenario);">I want</span> {{ w.want }}<br><span style="color:var(--accent);">so that</span> {{ w.so }}</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ w.isSys }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                      <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-fade);">scenarios · {{ w.scenCount }}</span>
+                      <sc-for list="{{ w.scenarios }}" as="sc" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <span style="{{ sc.dot }}"></span>
+                          <span style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);flex:0 0 auto;">{{ sc.fq }}</span>
+                          <span style="font-size:12.5px;color:var(--ink-soft);">{{ sc.title }}</span>
+                          <span style="flex:1;"></span>
+                          <span style="{{ sc.pill }}">{{ sc.status }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ w.hasDiag }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid color-mix(in oklab, var(--danger) 40%, transparent);background:color-mix(in oklab, var(--danger) 8%, transparent);">
+                      <span style="font-family:var(--mono);font-size:11px;color:var(--danger);">{{ w.diag }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+          <div style="padding:11px 18px;font-family:var(--mono);font-size:11px;color:var(--ink-fade);border-top:1px solid var(--line);">{{ ex.footer }}</div>
+        </div>
+      </sc-if>
+
+      <!-- ============ MATRIX (HERO) ============ -->
+      <sc-if value="{{ isMx }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+            <div style="display:inline-flex;padding:3px;border-radius:9px;border:1px solid var(--line-2);background:var(--bg-soft);gap:2px;">
+              <button onClick="{{ mx.setNested }}" style="{{ mx.nestedS }}">Nested drill-in</button>
+              <button onClick="{{ mx.setHeatmap }}" style="{{ mx.heatmapS }}">Heatmap</button>
+            </div>
+            <span style="flex:1;"></span>
+            <sc-if value="{{ mx.isNested }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ mx.toggleUntested }}" style="{{ mx.untestedChip }}">Untested only · {{ mx.untestedCount }}</button>
+            </sc-if>
+            <span style="display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:10px;color:var(--ink-fade);">
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--accent);"></span>pass</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--danger);"></span>fail</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--warn);"></span>skip</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;border:1px dashed var(--ink-fade);background:transparent;"></span>untested</span>
+            </span>
+          </div>
+
+          <!-- triage bar -->
+          <sc-if value="{{ mx.showTriage }}" hint-placeholder-val="{{ false }}">
+            <div style="border-bottom:1px solid var(--line);background:var(--panel-dark);padding:12px 18px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Fix coverage</span>
+                <span style="font-size:13px;color:var(--ink-soft);">{{ mx.triageLine }}</span>
+                <span style="flex:1;"></span>
+                <button onClick="{{ mx.toggleCmd }}" style="{{ mx.cmdBtnS }}">{{ mx.cmdBtnLabel }}</button>
+                <button onClick="{{ mx.clearSel }}" style="border:none;background:transparent;color:var(--ink-fade);font-family:var(--mono);font-size:11px;cursor:pointer;padding:0;" style-hover="color:var(--ink)">clear</button>
+              </div>
+              <sc-if value="{{ mx.showCmd }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
+                  <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);">run in repo · writes skeletons to disk, commit under review</span>
+                  <sc-for list="{{ mx.cmdLines }}" as="c" hint-placeholder-count="1">
+                    <div style="font-family:var(--mono);font-size:12px;color:var(--accent);"><span style="color:var(--ink-fade);">$ </span>{{ c.t }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <!-- NESTED -->
+          <sc-if value="{{ mx.isNested }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <sc-for list="{{ mx.feats }}" as="f" hint-placeholder-count="5">
+                <div>
+                  <div onClick="{{ f.toggle }}" style="{{ f.wrap }}" style-hover="background:var(--bg-soft)">
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);width:14px;flex:0 0 auto;">{{ f.chev }}</span>
+                    <span style="font-size:14px;font-weight:620;color:var(--ink);flex:0 0 auto;">{{ f.name }}</span>
+                    <span style="{{ f.prodChip }}">{{ f.product }}</span>
+                    <span style="flex:1;min-width:40px;"></span>
+                    <div style="display:flex;height:8px;width:240px;border-radius:99px;overflow:hidden;background:var(--line);flex:0 0 auto;">
+                      <sc-for list="{{ f.seg }}" as="sg" hint-placeholder-count="3">
+                        <div style="{{ sg.s }}"></div>
+                      </sc-for>
+                    </div>
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;width:150px;text-align:right;flex:0 0 auto;">{{ f.stat }}</span>
+                  </div>
+                  <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--panel-dark);border-bottom:1px solid var(--line);">
+                      <sc-for list="{{ f.sysreqs }}" as="sr" hint-placeholder-count="2">
+                        <div>
+                          <div onClick="{{ sr.toggle }}" style="{{ sr.wrap }}" style-hover="background:var(--bg-soft)">
+                            <span style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);width:14px;margin-left:24px;flex:0 0 auto;">{{ sr.chev }}</span>
+                            <span style="font-size:12.5px;font-weight:540;color:var(--ink-soft);flex:0 0 auto;">{{ sr.title }}</span>
+                            <span style="font-family:var(--mono);font-size:10px;color:var(--ink-fade);flex:0 0 auto;">{{ sr.slug }}</span>
+                            <span style="flex:1;min-width:40px;"></span>
+                            <div style="display:flex;height:6px;width:200px;border-radius:99px;overflow:hidden;background:var(--line);flex:0 0 auto;">
+                              <sc-for list="{{ sr.seg }}" as="sg" hint-placeholder-count="3">
+                                <div style="{{ sg.s }}"></div>
+                              </sc-for>
+                            </div>
+                            <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums;width:150px;text-align:right;flex:0 0 auto;">{{ sr.stat }}</span>
+                          </div>
+                          <sc-if value="{{ sr.open }}" hint-placeholder-val="{{ false }}">
+                            <div style="padding:4px 0 10px;">
+                              <sc-for list="{{ sr.scenarios }}" as="sc" hint-placeholder-count="3">
+                                <div style="{{ sc.wrap }}" onClick="{{ sc.onSel }}">
+                                  <span style="width:10px;height:10px;border-radius:3px;margin-left:78px;flex:0 0 auto;{{ sc.dotBox }}"></span>
+                                  <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-fade);flex:0 0 auto;">{{ sc.id }}</span>
+                                  <span style="font-size:12px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ sc.title }}</span>
+                                  <span style="flex:1;"></span>
+                                  <sc-if value="{{ sc.selectable }}" hint-placeholder-val="{{ false }}">
+                                    <span style="{{ sc.selChip }}">{{ sc.selLabel }}</span>
+                                  </sc-if>
+                                  <span style="{{ sc.pill }}">{{ sc.status }}</span>
+                                </div>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ f.uncovered }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:12px 18px 14px 62px;font-family:var(--mono);font-size:11px;color:var(--warn);">no system requirements — feature is uncovered</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- HEATMAP -->
+          <sc-if value="{{ mx.isHeatmap }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:6px 0;">
+              <sc-for list="{{ mx.heat }}" as="f" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:230px 1fr 132px;gap:18px;align-items:center;padding:12px 20px;border-bottom:1px solid color-mix(in oklab, var(--line) 60%, transparent);">
+                  <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                    <span onClick="{{ f.go }}" style="font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" style-hover="color:var(--accent)">{{ f.name }}</span>
+                    <span style="{{ f.prodChip }}">{{ f.product }}</span>
+                  </div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <sc-for list="{{ f.cells }}" as="c" hint-placeholder-count="6">
+                      <span onClick="{{ c.go }}" title="{{ c.tip }}" style="{{ c.s }}"></span>
+                    </sc-for>
+                    <sc-if value="{{ f.uncovered }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-family:var(--mono);font-size:11px;color:var(--warn);align-self:center;">uncovered — no sysreqs</span>
+                    </sc-if>
+                  </div>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;text-align:right;">{{ f.stat }}</span>
+                </div>
+              </sc-for>
+              <div style="padding:12px 20px;font-family:var(--mono);font-size:11px;color:var(--ink-fade);">click any cell → its feature detail · latest run {{ mx.latestSha }}</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ============ FEATURE DETAIL ============ -->
+      <sc-if value="{{ isFd }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-fade);margin-right:4px;">feature</span>
+            <sc-for list="{{ fd.picker }}" as="p" hint-placeholder-count="5">
+              <button onClick="{{ p.pick }}" style="{{ p.s }}">{{ p.t }}</button>
+            </sc-for>
+          </div>
+          <div style="padding:22px 24px;display:flex;flex-direction:column;gap:22px;">
+            <!-- header -->
+            <div style="display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <h2 style="margin:0;font-size:22px;font-weight:660;letter-spacing:-0.02em;color:var(--ink);">{{ fd.name }}</h2>
+                  <span style="{{ fd.prodChip }}">{{ fd.product }}</span>
+                </div>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);">{{ fd.slug }} · {{ fd.chainNote }}</span>
+              </div>
+              <span style="flex:1;"></span>
+              <div style="display:flex;gap:22px;align-items:center;">
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+                  <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);">coverage</span>
+                  <span style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1;">{{ fd.covPct }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+                  <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);">pass</span>
+                  <span style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1;">{{ fd.passPct }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- provenance -->
+            <div style="display:flex;align-items:center;gap:16px;padding:11px 16px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);flex-wrap:wrap;">
+              <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-fade);">latest run</span>
+              <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);">{{ fd.runSha }}</span>
+              <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);">{{ fd.runTs }}</span>
+              <a href="{{ fd.runCi }}" style="font-family:var(--mono);font-size:11.5px;">CI run ↗</a>
+              <span style="flex:1;"></span>
+              <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-fade);">history: {{ fd.runCount }} runs</span>
+            </div>
+
+            <!-- userreqs -->
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);">User requirements</span>
+              <sc-for list="{{ fd.userreqs }}" as="u" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg-elevated);">
+                  <span style="font-size:13px;font-weight:560;color:var(--ink);">{{ u.title }}</span>
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--ink-fade);">{{ u.slug }}</span>
+                  <span style="flex:1;"></span>
+                  <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-muted);">{{ u.actor }}</span>
+                  <span style="{{ u.statusS }}"><span style="{{ u.statusDot }}"></span>{{ u.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <!-- sysreqs with gherkin -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);">System requirements · Gherkin</span>
+              <sc-for list="{{ fd.sysreqs }}" as="sr" hint-placeholder-count="2">
+                <div style="border:1px solid var(--line);border-radius:12px;background:var(--bg-elevated);overflow:hidden;">
+                  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg-soft);">
+                    <span style="font-size:13.5px;font-weight:600;color:var(--ink);">{{ sr.title }}</span>
+                    <span style="font-family:var(--mono);font-size:10px;color:var(--ink-fade);">{{ sr.slug }}</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">{{ sr.stat }}</span>
+                  </div>
+                  <sc-for list="{{ sr.scenarios }}" as="sc" hint-placeholder-count="2">
+                    <div style="padding:14px 16px;border-bottom:1px solid color-mix(in oklab, var(--line) 55%, transparent);display:flex;flex-direction:column;gap:10px;">
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="width:9px;height:9px;border-radius:3px;flex:0 0 auto;{{ sc.dotBox }}"></span>
+                        <span style="font-size:13px;font-weight:560;color:var(--ink);">{{ sc.title }}</span>
+                        <span style="font-family:var(--mono);font-size:10px;color:var(--ink-fade);">{{ sc.fq }}</span>
+                        <span style="flex:1;"></span>
+                        <div style="display:flex;align-items:flex-end;gap:3px;height:16px;">
+                          <sc-for list="{{ sc.spark }}" as="sp" hint-placeholder-count="3">
+                            <span title="{{ sp.tip }}" style="{{ sp.s }}"></span>
+                          </sc-for>
+                        </div>
+                        <span style="{{ sc.pill }}">{{ sc.status }}</span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px;padding-left:19px;">
+                        <sc-for list="{{ sc.steps }}" as="st" hint-placeholder-count="3">
+                          <div style="font-family:var(--mono);font-size:11.5px;line-height:1.7;color:var(--ink-soft);"><span style="{{ st.kwS }}">{{ st.label }}</span> {{ st.text }}</div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ RUN REVIEW ============ -->
+      <sc-if value="{{ isRr }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-fade);margin-right:4px;">testrun</span>
+            <sc-for list="{{ rr.picker }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.pick }}" style="{{ p.s }}">{{ p.t }}</button>
+            </sc-for>
+          </div>
+          <div style="padding:22px 24px;display:flex;flex-direction:column;gap:22px;">
+            <!-- run header -->
+            <div style="display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);">{{ rr.file }}</div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);">{{ rr.sha }}</span>
+                  <span style="font-family:var(--mono);font-size:12px;color:var(--ink-muted);">{{ rr.ts }}</span>
+                  <a href="{{ rr.ci }}" style="font-family:var(--mono);font-size:12px;">CI run ↗</a>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--ink-fade);">emitter {{ emitter }}</span>
+                </div>
+              </div>
+              <span style="flex:1;"></span>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <sc-for list="{{ rr.counts }}" as="c" hint-placeholder-count="4">
+                  <div style="{{ c.wrap }}">
+                    <span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;{{ c.numColor }}">{{ c.n }}</span>
+                    <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);">{{ c.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <!-- failures -->
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--danger);">Failures · {{ rr.failCount }}</span>
+              <sc-if value="{{ rr.hasFails }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ rr.fails }}" as="fl" hint-placeholder-count="2">
+                  <div style="border:1px solid color-mix(in oklab, var(--danger) 35%, transparent);border-radius:10px;background:color-mix(in oklab, var(--danger) 6%, transparent);padding:13px 16px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                      <span style="font-family:var(--mono);font-size:11px;color:var(--danger);font-weight:600;">{{ fl.fq }}</span>
+                      <span style="font-size:13px;font-weight:560;color:var(--ink);">{{ fl.title }}</span>
+                    </div>
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--ink-muted);">{{ fl.chain }}</span>
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);">{{ fl.then }}</span>
+                  </div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ rr.noFails }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 16px;border:1px dashed var(--accent-mid);border-radius:10px;font-size:13px;color:var(--accent);">No failures in this run.</div>
+              </sc-if>
+            </div>
+
+            <!-- unmatched -->
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--warn);">Unmatched tests · {{ rr.unmatchedCount }}</span>
+              <span style="font-size:12px;color:var(--ink-muted);line-height:1.6;max-width:80ch;">Tests that ran but resolved to no requirement ID — kept, never dropped. Add a <span style="font-family:var(--mono);font-size:11px;">@req:</span> tag or a sysreq to bring them into the matrix.</span>
+              <sc-if value="{{ rr.hasUnmatched }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ rr.unmatched }}" as="um" hint-placeholder-count="1">
+                  <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg-elevated);">
+                    <span style="width:8px;height:8px;border-radius:2px;border:1px dashed var(--warn);flex:0 0 auto;"></span>
+                    <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);">{{ um.t }}</span>
+                  </div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ rr.noUnmatched }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:12px 16px;border:1px dashed var(--line-2);border-radius:10px;font-size:12.5px;color:var(--ink-muted);">Every test resolved to a requirement. Clean run.</div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:900},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark' | 'light'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;matrixDensity&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;nested&quot;,&quot;heatmap&quot;],&quot;default&quot;:&quot;nested&quot;,&quot;tsType&quot;:&quot;'nested' | 'heatmap'&quot;,&quot;section&quot;:&quot;Matrix&quot;},&quot;emitter&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cucumber&quot;,&quot;vitest&quot;,&quot;playwright&quot;],&quot;default&quot;:&quot;cucumber&quot;,&quot;tsType&quot;:&quot;'cucumber' | 'vitest' | 'playwright'&quot;,&quot;section&quot;:&quot;Generate&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.FEATURES = [
+      { slug: 'element-authoring', name: 'Element authoring', product: 'engine' },
+      { slug: 'coverage-engine', name: 'Coverage engine', product: 'engine' },
+      { slug: 'trace-matrix', name: 'Traceability matrix', product: 'engine' },
+      { slug: 'test-generation', name: 'Test generation', product: 'adapters' },
+      { slug: 'junit-ingest', name: 'JUnit ingestion', product: 'adapters' },
+      { slug: 'cli-validate', name: 'CLI validate', product: 'cli' },
+      { slug: 'serve-ui', name: 'Serve UI', product: 'ui' },
+    ];
+    this.ACTORS = { 'dev-lead': 'Dev lead', engineer: 'Engineer', 'ci-runner': 'CI runner', auditor: 'Auditor' };
+    this.USERREQS = [
+      { slug: 'u-req-as-files', title: 'Requirements as reviewable files', actor: 'dev-lead', features: ['element-authoring'], status: 'verified', as: 'a dev lead,', want: 'requirements stored as one file per element in git,', so: 'they review in pull requests exactly like code.' },
+      { slug: 'u-generate-skeletons', title: 'Generate test skeletons', actor: 'engineer', features: ['test-generation'], status: 'implemented', as: 'an engineer,', want: 'test skeletons generated from system requirements,', so: "I never hand-write bindings or drift from the spec." },
+      { slug: 'u-ingest-junit', title: 'Ingest CI results', actor: 'ci-runner', features: ['junit-ingest'], status: 'verified', as: 'a CI runner,', want: 'JUnit XML ingested and joined onto requirement IDs,', so: 'every run updates the matrix automatically.' },
+      { slug: 'u-committed-matrix', title: 'Committed coverage proof', actor: 'auditor', features: ['coverage-engine', 'trace-matrix'], status: 'agreed', as: 'an auditor,', want: 'the coverage matrix committed as an artifact,', so: 'I can prove which requirements are verified at a given sha.' },
+      { slug: 'u-honest-graph', title: 'Honest requirement graph', actor: 'dev-lead', features: ['cli-validate'], status: 'draft', as: 'a dev lead,', want: 'dangling refs and unstable IDs flagged on validate,', so: 'the traceability graph never silently rots.' },
+      { slug: 'u-tap-support', title: 'TAP result support', actor: 'engineer', features: [], status: 'draft', as: 'an engineer,', want: 'TAP output ingested alongside JUnit,', so: 'non-JVM runners join the matrix too.' },
+    ];
+    const S = (id, title, given, when, then) => ({ id, title, given, when, then });
+    this.SYSREQS = [
+      { slug: 'element-file-load', title: 'Element file loading', feature: 'element-authoring', userReqs: ['u-req-as-files'], scenarios: [
+        S('valid-yaml-loads', 'Valid element YAML loads', ['a file .workspec/user-requirements/foo.yaml', 'with a known kind and required fields'], ['the engine reads the tree'], ['the element is materialised with slug "foo"']),
+        S('unknown-kind-rejected', 'Unknown kind is rejected', ['a file declaring kind: Widget'], ['the engine reads the tree'], ['a diagnostic is raised', 'the element is not materialised']),
+        S('slug-from-filename', 'Slug derives from filename', ['a file bar.yaml with no explicit slug'], ['the engine reads it'], ['the element slug is "bar"']),
+      ] },
+      { slug: 'link-resolution', title: 'Link resolution', feature: 'element-authoring', userReqs: ['u-req-as-files', 'u-honest-graph'], scenarios: [
+        S('child-points-parent', 'Child points to parent', ['a sysreq with feature: element-authoring'], ['the graph resolves'], ['a forward edge sysreq→feature exists', 'the reverse edge is materialised']),
+        S('dangling-ref-diagnostic', 'Dangling ref is a diagnostic', ['a sysreq linking userreq "ghost" that does not exist'], ['the graph resolves'], ['a dangling-ref diagnostic is raised', 'the link renders inert, not a crash']),
+        S('duplicate-id-flagged', 'Duplicate IDs flagged', ['two elements sharing slug "dup"'], ['the graph resolves'], ['a duplicate-id diagnostic names both files']),
+      ] },
+      { slug: 'coverage-rollup', title: 'Coverage rollup', feature: 'coverage-engine', userReqs: ['u-committed-matrix'], scenarios: [
+        S('scenario-to-sysreq', 'Scenario rolls up to sysreq', ['a sysreq with 3 scenarios, 2 passing'], ['coverage computes'], ['the sysreq pass rate is 66.7%']),
+        S('sysreq-to-feature', 'Sysreq rolls up to feature', ['a feature with 2 sysreqs'], ['coverage computes'], ['the feature aggregates both sysreq totals']),
+        S('repo-total', 'Repo total aggregates all features', ['every feature computed'], ['coverage computes'], ['a repo-level coverage and pass rate are emitted']),
+        S('untested-excluded', 'Untested excluded from pass rate', ['a scenario with no run result'], ['coverage computes'], ['it counts against coverage', 'it is not counted as a failure in pass rate']),
+      ] },
+      { slug: 'cucumber-emitter', title: 'Cucumber emitter', feature: 'test-generation', userReqs: ['u-generate-skeletons'], scenarios: [
+        S('feature-file-per-sysreq', 'One .feature file per sysreq', ['a sysreq with scenarios'], ['generate --emitter cucumber runs'], ['a .feature file is written for the sysreq']),
+        S('req-tag-on-scenario', 'Scenario carries @req tag', ['a scenario with id x/y'], ['cucumber emits'], ['the scenario is tagged @req:x/y']),
+        S('outline-from-examples', 'Examples become a Scenario Outline', ['a scenario with an examples table'], ['cucumber emits'], ['a Scenario Outline with an Examples block is written']),
+      ] },
+      { slug: 'regeneration-safety', title: 'Regeneration safety', feature: 'test-generation', userReqs: ['u-generate-skeletons'], scenarios: [
+        S('marker-preserved', 'Regeneration-safe header preserved', ['a previously generated file with its marker intact'], ['generate runs again'], ['the file is regenerated in place']),
+        S('ownership-signal-skips', 'Removed marker signals ownership', ['a generated file whose marker comment was deleted'], ['generate runs again'], ['the file is not overwritten']),
+      ] },
+      { slug: 'junit-parse', title: 'JUnit parsing', feature: 'junit-ingest', userReqs: ['u-ingest-junit'], scenarios: [
+        S('results-keyed-by-id', 'Results keyed by requirement ID', ['a JUnit report with @req tags in test names'], ['ingest runs'], ['results are written keyed by requirement ID']),
+        S('unmatched-kept', 'Unmatched tests are kept', ['a test whose name resolves to no requirement ID'], ['ingest runs'], ['it is written to the testrun as unmatched', 'it is never dropped']),
+        S('sha-recorded', 'Git sha recorded on run', ['ingest is called with --sha'], ['the testrun is written'], ['the sha is recorded in run metadata']),
+      ] },
+      { slug: 'matrix-compute', title: 'Matrix computation', feature: 'trace-matrix', userReqs: ['u-committed-matrix', 'u-ghost-persona'], scenarios: [
+        S('cell-latest-status', 'Cell shows latest run status', ['two runs, the later one passing a scenario'], ['the matrix computes'], ['the cell shows the latest status']),
+        S('history-across-runs', 'Cell carries history across runs', ['three runs for a scenario'], ['the matrix computes'], ['the cell exposes a per-run history']),
+      ] },
+      { slug: 'id-stability', title: 'ID stability', feature: 'cli-validate', userReqs: ['u-honest-graph'], scenarios: [
+        S('rename-flagged', 'Renaming a scenario id is flagged', ['a scenario id changed from "a" to "b"'], ['validate runs against the last committed matrix'], ['a traceability-break diagnostic is raised']),
+        S('positional-id-rejected', 'Positional ids are rejected', ['a scenario with no explicit id'], ['validate runs'], ['an error requires an author-assigned id']),
+      ] },
+    ];
+    this.TESTRUNS = [
+      { id: 'run-2026-07-02', ts: '2026-07-02 04:12', sha: 'a1b2f00', ci: 'https://ci.fieldstate.io/workspec-trace/812', results: {
+        'element-file-load/valid-yaml-loads': 'pass', 'element-file-load/unknown-kind-rejected': 'fail', 'element-file-load/slug-from-filename': 'pass',
+        'link-resolution/child-points-parent': 'pass', 'coverage-rollup/scenario-to-sysreq': 'pass',
+        'cucumber-emitter/feature-file-per-sysreq': 'pass', 'junit-parse/results-keyed-by-id': 'pass', 'junit-parse/sha-recorded': 'pass',
+      }, unmatched: [] },
+      { id: 'run-2026-07-09', ts: '2026-07-09 04:08', sha: 'c3d4b88', ci: 'https://ci.fieldstate.io/workspec-trace/904', results: {
+        'element-file-load/valid-yaml-loads': 'pass', 'element-file-load/unknown-kind-rejected': 'pass', 'element-file-load/slug-from-filename': 'pass',
+        'link-resolution/child-points-parent': 'pass', 'link-resolution/dangling-ref-diagnostic': 'fail',
+        'coverage-rollup/scenario-to-sysreq': 'pass', 'coverage-rollup/sysreq-to-feature': 'pass', 'coverage-rollup/repo-total': 'pass',
+        'cucumber-emitter/feature-file-per-sysreq': 'pass', 'cucumber-emitter/req-tag-on-scenario': 'pass', 'cucumber-emitter/outline-from-examples': 'pass',
+        'regeneration-safety/marker-preserved': 'pass', 'junit-parse/results-keyed-by-id': 'pass', 'junit-parse/unmatched-kept': 'skip', 'junit-parse/sha-recorded': 'pass',
+        'matrix-compute/cell-latest-status': 'pass', 'id-stability/rename-flagged': 'fail',
+      }, unmatched: ['legacy smoke: cli boots'] },
+      { id: 'run-2026-07-14', ts: '2026-07-14 04:11', sha: 'e5f6a12', ci: 'https://ci.fieldstate.io/workspec-trace/961', results: {
+        'element-file-load/valid-yaml-loads': 'pass', 'element-file-load/unknown-kind-rejected': 'pass', 'element-file-load/slug-from-filename': 'pass',
+        'link-resolution/child-points-parent': 'pass', 'link-resolution/dangling-ref-diagnostic': 'fail',
+        'coverage-rollup/scenario-to-sysreq': 'pass', 'coverage-rollup/sysreq-to-feature': 'pass', 'coverage-rollup/repo-total': 'fail',
+        'cucumber-emitter/feature-file-per-sysreq': 'pass', 'cucumber-emitter/req-tag-on-scenario': 'pass', 'cucumber-emitter/outline-from-examples': 'skip',
+        'regeneration-safety/marker-preserved': 'pass', 'junit-parse/results-keyed-by-id': 'pass', 'junit-parse/unmatched-kept': 'pass', 'junit-parse/sha-recorded': 'pass',
+        'matrix-compute/cell-latest-status': 'pass', 'id-stability/rename-flagged': 'fail',
+      }, unmatched: ['renders empty matrix state', 'legacy smoke: cli boots'] },
+    ];
+    this.FBY = {};
+    this.FEATURES.forEach((f) => { this.FBY[f.slug] = f; });
+    this.UBY = {};
+    this.USERREQS.forEach((u) => { this.UBY[u.slug] = u; });
+  }
+
+  fq(sr, sc) { return sr.slug + '/' + sc.id; }
+  sysreqsOf(fslug) { return this.SYSREQS.filter((s) => s.feature === fslug); }
+  latest(id) { for (let i = this.TESTRUNS.length - 1; i >= 0; i--) { const r = this.TESTRUNS[i].results[id]; if (r) return r; } return 'untested'; }
+  history(id) { return this.TESTRUNS.map((run) => ({ status: run.results[id] || 'untested', sha: run.sha, ts: run.ts })); }
+  rollup(ids) {
+    const total = ids.length; let pass = 0, fail = 0, skip = 0, tested = 0;
+    ids.forEach((id) => { const s = this.latest(id); if (s !== 'untested') tested++; if (s === 'pass') pass++; else if (s === 'fail') fail++; else if (s === 'skip') skip++; });
+    return { total, tested, pass, fail, skip, untested: total - tested, covPct: total ? (tested / total) * 100 : 0, passPct: total ? (pass / total) * 100 : 0 };
+  }
+  scenIdsOf(fslug) { const ids = []; this.sysreqsOf(fslug).forEach((sr) => sr.scenarios.forEach((sc) => ids.push(this.fq(sr, sc)))); return ids; }
+  allScenIds() { const ids = []; this.SYSREQS.forEach((sr) => sr.scenarios.forEach((sc) => ids.push(this.fq(sr, sc)))); return ids; }
+
+  state = {
+    theme: null, density: null, view: 'matrix',
+    ex: { filter: 'all', sel: null },
+    mx: { openF: { 'element-authoring': true }, openS: {}, untestedOnly: false, sel: {}, showCmd: false },
+    fd: { feature: 'element-authoring' },
+    rr: { run: 'run-2026-07-14' },
+  };
+
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const density = s.density ?? this.props.matrixDensity ?? 'nested';
+    const emitter = this.props.emitter ?? 'cucumber';
+    const pct = (n) => n.toFixed(1) + '%';
+    const PC = { engine: 'var(--type-feature)', adapters: 'var(--type-scenario)', cli: 'var(--type-persona)', ui: 'var(--el-component)' };
+    const ST = {
+      pass: { c: 'var(--accent)', label: 'pass' }, fail: { c: 'var(--danger)', label: 'fail' },
+      skip: { c: 'var(--warn)', label: 'skip' }, untested: { c: 'var(--ink-fade)', label: 'untested' },
+    };
+    const chip = (col) => ({ display: 'inline-flex', alignItems: 'center', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.03em', padding: '2px 8px', borderRadius: '5px', border: '1px solid color-mix(in oklab, ' + col + ' 40%, transparent)', background: 'color-mix(in oklab, ' + col + ' 12%, transparent)', color: 'color-mix(in oklab, ' + col + ' 82%, var(--ink))', whiteSpace: 'nowrap' });
+    const prodChip = (p) => chip(PC[p] || 'var(--ink-fade)');
+    const pill = (st) => { const d = ST[st] || ST.untested; return { display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--mono)', fontSize: '10px', padding: '2px 9px', borderRadius: '99px', border: st === 'untested' ? '1px dashed color-mix(in oklab, ' + d.c + ' 55%, transparent)' : '1px solid color-mix(in oklab, ' + d.c + ' 45%, transparent)', background: st === 'untested' ? 'transparent' : 'color-mix(in oklab, ' + d.c + ' 13%, transparent)', color: st === 'untested' ? 'var(--ink-muted)' : 'color-mix(in oklab, ' + d.c + ' 85%, var(--ink))', whiteSpace: 'nowrap' }; };
+    const dotBox = (st) => { const d = ST[st] || ST.untested; return st === 'untested' ? 'border:1px dashed var(--ink-fade);background:transparent;' : 'background:' + d.c + ';'; };
+    const segOf = (r) => ['pass', 'fail', 'skip', 'untested'].map((k) => ({ k, n: r[k], s: { width: r.total ? (r[k] / r.total) * 100 + '%' : '0%', height: '100%', background: k === 'untested' ? 'repeating-linear-gradient(45deg, transparent, transparent 3px, color-mix(in oklab, var(--ink-fade) 30%, transparent) 3px, color-mix(in oklab, var(--ink-fade) 30%, transparent) 6px)' : ST[k].c } })).filter((x) => x.n > 0);
+    const statText = (r) => r.pass + '/' + r.total + ' pass · ' + r.untested + ' untested';
+
+    const statusLifecycle = { draft: 'var(--ink-fade)', agreed: 'var(--type-persona)', implemented: 'var(--warn)', verified: 'var(--accent)' };
+    const lifePill = (st) => { const c = statusLifecycle[st] || 'var(--ink-fade)'; return { display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--mono)', fontSize: '10px', padding: '3px 10px', borderRadius: '99px', border: '1px solid color-mix(in oklab, ' + c + ' 40%, transparent)', background: 'color-mix(in oklab, ' + c + ' 12%, transparent)', color: 'color-mix(in oklab, ' + c + ' 84%, var(--ink))', whiteSpace: 'nowrap' }; };
+    const lifeDot = (st) => ({ width: '6px', height: '6px', borderRadius: '50%', background: statusLifecycle[st] || 'var(--ink-fade)', flex: '0 0 auto' });
+
+    // dangling ref detection
+    const danglingOf = (sr) => (sr.userReqs || []).filter((u) => !this.UBY[u]);
+
+    // ---- meters (repo) ----
+    const repo = this.rollup(this.allScenIds());
+    const covBar = (p) => ({ height: '100%', width: p.toFixed(1) + '%', background: 'linear-gradient(90deg, var(--accent), var(--agent))', borderRadius: '99px', transition: 'width 0.35s ease' });
+    const passBarS = (p) => ({ height: '100%', width: p.toFixed(1) + '%', background: 'var(--accent)', borderRadius: '99px', transition: 'width 0.35s ease' });
+    const featuresCovered = this.FEATURES.filter((f) => this.sysreqsOf(f.slug).length > 0).length;
+    const m = { covPct: pct(repo.covPct), covBar: covBar(repo.covPct), passPct: pct(repo.passPct), passBar: passBarS(repo.passPct), summary: repo.pass + ' pass · ' + repo.fail + ' fail · ' + repo.skip + ' skip · ' + repo.untested + ' untested' };
+    const counts = this.FEATURES.length + ' features · ' + this.SYSREQS.length + ' sysreqs · ' + repo.total + ' scenarios';
+
+    // ---- nav ----
+    const navBtn = (on) => ({ fontFamily: 'var(--sans)', fontSize: '13px', fontWeight: on ? 600 : 500, padding: '7px 14px', borderRadius: '8px', border: '1px solid ' + (on ? 'var(--line-2)' : 'transparent'), background: on ? 'var(--bg-elevated)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-muted)', cursor: 'pointer' });
+    const setView = (v) => () => this.setState({ view: v });
+    const navHints = { explorer: 'the graph as a table — orphans & dangling refs flagged', matrix: 'drive requirement coverage green', feature: 'one feature\'s chain · Gherkin · run history', run: 'a single *.testrun.yaml rendered' };
+    const nav = {
+      exS: navBtn(s.view === 'explorer'), mxS: navBtn(s.view === 'matrix'), fdS: navBtn(s.view === 'feature'), rrS: navBtn(s.view === 'run'),
+      goEx: setView('explorer'), goMx: setView('matrix'), goFd: setView('feature'), goRr: setView('run'),
+      hint: navHints[s.view],
+    };
+
+    // ================= EXPLORER =================
+    const linkChipN = (t, live) => ({ t, s: { display: 'inline-flex', alignItems: 'center', fontFamily: 'var(--mono)', fontSize: '9.5px', padding: '2px 7px', borderRadius: '5px', border: '1px solid ' + (live ? 'var(--line-2)' : 'color-mix(in oklab, var(--danger) 45%, transparent)'), background: live ? 'var(--bg-elevated)' : 'transparent', color: live ? 'var(--ink-soft)' : 'var(--danger)', textDecoration: live ? 'none' : 'line-through', whiteSpace: 'nowrap' } });
+    const exItems = [];
+    this.USERREQS.forEach((u) => {
+      const orphan = u.features.length === 0;
+      exItems.push({ kind: 'userreq', isUser: true, slug: u.slug, title: u.title, status: u.status, orphan, dangling: [],
+        links: u.features.map((f) => linkChipN(this.FBY[f] ? this.FBY[f].name : f, !!this.FBY[f])).concat(orphan ? [linkChipN('orphan · no feature', false)] : []),
+        as: u.as, want: u.want, so: u.so, actor: this.ACTORS[u.actor] });
+    });
+    this.SYSREQS.forEach((sr) => {
+      const dangling = danglingOf(sr);
+      const r = this.rollup(sr.scenarios.map((sc) => this.fq(sr, sc)));
+      exItems.push({ kind: 'sysreq', isSys: true, slug: sr.slug, title: sr.title, status: r.untested === r.total ? 'untested' : (r.fail > 0 ? 'failing' : r.covPct === 100 && r.pass === r.total ? 'green' : 'partial'),
+        statusKind: r.untested === r.total ? 'untested' : (r.fail > 0 ? 'fail' : r.pass === r.total ? 'pass' : 'skip'),
+        links: [linkChipN(this.FBY[sr.feature] ? this.FBY[sr.feature].name : sr.feature, !!this.FBY[sr.feature])].concat(sr.userReqs.map((u) => linkChipN(u, !!this.UBY[u]))),
+        dangling, scenarios: sr.scenarios.map((sc) => { const st = this.latest(this.fq(sr, sc)); return { fq: this.fq(sr, sc), title: sc.title, status: st, pill: pill(st), dot: { width: '9px', height: '9px', borderRadius: '3px', flex: '0 0 auto', ...(st === 'untested' ? { border: '1px dashed var(--ink-fade)' } : { background: ST[st].c }) } }; }), _sr: sr, _r: r });
+    });
+    const exUncovered = this.FEATURES.filter((f) => this.sysreqsOf(f.slug).length === 0);
+    const exFilters = [
+      { id: 'all', t: 'All · ' + exItems.length }, { id: 'user', t: 'User reqs · ' + this.USERREQS.length },
+      { id: 'sys', t: 'Sys reqs · ' + this.SYSREQS.length },
+      { id: 'diag', t: 'Diagnostics · ' + (exItems.filter((i) => i.orphan || (i.dangling && i.dangling.length)).length + exUncovered.length) },
+      { id: 'untested', t: 'Has untested · ' + exItems.filter((i) => i.isSys && i._r.untested > 0).length },
+    ];
+    const fchip = (on) => ({ fontFamily: 'var(--mono)', fontSize: '11px', padding: '5px 12px', borderRadius: '99px', border: on ? '1px solid var(--line-2)' : '1px solid transparent', background: on ? 'var(--bg-elevated)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-muted)', cursor: 'pointer' });
+    let exFiltered = exItems;
+    if (s.ex.filter === 'user') exFiltered = exItems.filter((i) => i.isUser);
+    else if (s.ex.filter === 'sys') exFiltered = exItems.filter((i) => i.isSys);
+    else if (s.ex.filter === 'diag') exFiltered = exItems.filter((i) => i.orphan || (i.dangling && i.dangling.length));
+    else if (s.ex.filter === 'untested') exFiltered = exItems.filter((i) => i.isSys && i._r.untested > 0);
+    const exRows = exFiltered.map((it) => {
+      const open = s.ex.sel === (it.kind + ':' + it.slug);
+      const statusColor = it.isUser ? statusLifecycle[it.status] : (it.statusKind ? ST[it.statusKind].c : 'var(--ink-fade)');
+      return {
+        kind: it.kind === 'userreq' ? 'UserReq' : 'SysReq', kindS: chip(it.kind === 'userreq' ? 'var(--type-persona)' : 'var(--type-feature)'),
+        slug: it.slug, title: it.title, links: it.links,
+        status: it.status,
+        statusS: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--mono)', fontSize: '10px', padding: '3px 10px', borderRadius: '99px', border: '1px solid color-mix(in oklab, ' + statusColor + ' 40%, transparent)', background: 'color-mix(in oklab, ' + statusColor + ' 12%, transparent)', color: 'color-mix(in oklab, ' + statusColor + ' 85%, var(--ink))', whiteSpace: 'nowrap' },
+        statusDot: { width: '6px', height: '6px', borderRadius: '50%', background: statusColor, flex: '0 0 auto' },
+        open, isUser: !!it.isUser, isSys: !!it.isSys, as: it.as, want: it.want, so: it.so,
+        scenCount: it.isSys ? it.scenarios.length : 0, scenarios: it.scenarios || [],
+        hasDiag: !!(it.orphan || (it.dangling && it.dangling.length)),
+        diag: it.orphan ? 'Orphan userreq — links to no feature. Reserved for a future kind (Need); rendered inert.' : (it.dangling && it.dangling.length ? 'Dangling ref: ' + it.dangling.join(', ') + ' — no such userreq. Link rendered inert (D5).' : ''),
+        wrap: { display: 'grid', gridTemplateColumns: '118px 1.9fr 1.2fr 0.9fr', padding: '0 18px', borderBottom: '1px solid color-mix(in oklab, var(--line) 55%, transparent)', cursor: 'pointer', background: open ? 'var(--accent-wash)' : 'transparent' },
+        pick: () => this.setState((p) => ({ ex: { ...p.ex, sel: p.ex.sel === (it.kind + ':' + it.slug) ? null : (it.kind + ':' + it.slug) } })),
+      };
+    });
+    const ex = { filters: exFilters.map((f) => ({ t: f.t, s: fchip(s.ex.filter === f.id), pick: () => this.setState((p) => ({ ex: { ...p.ex, filter: f.id, sel: null } })) })), rows: exRows,
+      footer: exUncovered.length ? exUncovered.length + ' uncovered feature' + (exUncovered.length > 1 ? 's' : '') + ' (' + exUncovered.map((f) => f.slug).join(', ') + ') — no sysreqs yet' : 'all features covered' };
+
+    // ================= MATRIX =================
+    const isNested = density === 'nested', isHeatmap = density === 'heatmap';
+    const setDensity = (d) => () => this.setState({ density: d });
+    const segBtn = (on) => ({ fontFamily: 'var(--sans)', fontSize: '12px', fontWeight: on ? 600 : 500, padding: '5px 12px', borderRadius: '7px', border: 'none', background: on ? 'var(--bg-elevated)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-muted)', cursor: 'pointer', boxShadow: on ? 'var(--sh-2)' : 'none' });
+    const untestedTotal = repo.untested;
+    const selIds = Object.keys(s.mx.sel).filter((k) => s.mx.sel[k]);
+    const mxFeats = this.FEATURES.map((f) => {
+      const srs = this.sysreqsOf(f.slug);
+      const r = this.rollup(this.scenIdsOf(f.slug));
+      const openF = !!s.mx.openF[f.slug];
+      const sysreqs = srs.map((sr) => {
+        const rr2 = this.rollup(sr.scenarios.map((sc) => this.fq(sr, sc)));
+        const openS = !!s.mx.openS[sr.slug];
+        let scen = sr.scenarios.map((sc) => {
+          const id = this.fq(sr, sc); const st = this.latest(id); const sel = !!s.mx.sel[id];
+          const selectable = st === 'untested';
+          return { id: sc.id, title: sc.title, status: st, statusK: st, pill: pill(st), dotBox: dotBox(st),
+            selectable, selLabel: sel ? '✓ selected' : '+ select',
+            selChip: { fontFamily: 'var(--mono)', fontSize: '9.5px', padding: '2px 8px', borderRadius: '99px', cursor: 'pointer', border: '1px solid ' + (sel ? 'var(--accent-mid)' : 'var(--line-2)'), background: sel ? 'var(--accent-soft)' : 'transparent', color: sel ? 'var(--accent)' : 'var(--ink-muted)' },
+            wrap: { display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 18px', cursor: selectable ? 'pointer' : 'default' },
+            onSel: selectable ? () => this.setState((p) => ({ mx: { ...p.mx, sel: { ...p.mx.sel, [id]: !p.mx.sel[id] } } })) : () => {} };
+        });
+        if (s.mx.untestedOnly) scen = scen.filter((x) => x.status === 'untested');
+        return { title: sr.title, slug: sr.slug, stat: statText(rr2), seg: segOf(rr2), open: openS, chev: openS ? '▾' : '▸',
+          wrap: { display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 18px', borderBottom: '1px solid color-mix(in oklab, var(--line) 55%, transparent)', cursor: 'pointer', background: openS ? 'var(--bg-soft)' : 'transparent' },
+          scenarios: scen, toggle: () => this.setState((p) => ({ mx: { ...p.mx, openS: { ...p.mx.openS, [sr.slug]: !p.mx.openS[sr.slug] } } })) };
+      });
+      return { name: f.name, product: f.product, prodChip: prodChip(f.product), stat: srs.length ? statText(r) : '—', seg: segOf(r), open: openF, chev: srs.length ? (openF ? '▾' : '▸') : '·',
+        uncovered: srs.length === 0, sysreqs,
+        wrap: { display: 'flex', alignItems: 'center', gap: '10px', padding: '13px 18px', borderBottom: '1px solid var(--line)', cursor: 'pointer', background: openF ? 'var(--bg-soft)' : 'transparent' },
+        toggle: () => this.setState((p) => ({ mx: { ...p.mx, openF: { ...p.mx.openF, [f.slug]: !p.mx.openF[f.slug] } } })) };
+    });
+    const goFeature = (fslug) => () => this.setState((p) => ({ view: 'feature', fd: { ...p.fd, feature: fslug } }));
+    const mxHeat = this.FEATURES.map((f) => {
+      const srs = this.sysreqsOf(f.slug);
+      const r = this.rollup(this.scenIdsOf(f.slug));
+      const cells = [];
+      srs.forEach((sr) => sr.scenarios.forEach((sc) => { const id = this.fq(sr, sc); const st = this.latest(id); cells.push({ tip: id + ' — ' + st, go: goFeature(f.slug),
+        s: { width: '20px', height: '20px', borderRadius: '5px', cursor: 'pointer', flex: '0 0 auto', ...(st === 'untested' ? { border: '1px dashed var(--ink-fade)', background: 'transparent' } : { background: ST[st].c, boxShadow: 'inset 0 0 0 1px color-mix(in oklab, ' + ST[st].c + ' 60%, transparent)' }) } }); }));
+      return { name: f.name, product: f.product, prodChip: prodChip(f.product), stat: srs.length ? statText(r) : '—', uncovered: srs.length === 0, cells, go: goFeature(f.slug) };
+    });
+    // triage
+    const selFeatures = [];
+    selIds.forEach((id) => { const sl = id.split('/')[0]; const sr = this.SYSREQS.find((x) => x.slug === sl); if (sr && !selFeatures.includes(sr.feature)) selFeatures.push(sr.feature); });
+    const cmdLines = selFeatures.map((fslug) => ({ t: 'workspec-trace generate --emitter ' + emitter + ' --feature ' + fslug }));
+    const mx = {
+      isNested, isHeatmap,
+      nestedS: segBtn(isNested), heatmapS: segBtn(isHeatmap), setNested: setDensity('nested'), setHeatmap: setDensity('heatmap'),
+      untestedCount: String(untestedTotal), untestedChip: fchip(s.mx.untestedOnly), toggleUntested: () => this.setState((p) => ({ mx: { ...p.mx, untestedOnly: !p.mx.untestedOnly } })),
+      feats: mxFeats, heat: mxHeat, latestSha: this.TESTRUNS[this.TESTRUNS.length - 1].sha,
+      showTriage: selIds.length > 0,
+      triageLine: selIds.length + ' untested scenario' + (selIds.length === 1 ? '' : 's') + ' selected across ' + selFeatures.length + ' feature' + (selFeatures.length === 1 ? '' : 's') + ' — generate skeletons via the CLI',
+      cmdBtnS: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--sans)', fontSize: '12px', fontWeight: 600, padding: '0 14px', height: '30px', borderRadius: '6px', border: '1px solid var(--accent)', color: 'var(--on-accent)', background: 'var(--accent)', cursor: 'pointer' },
+      cmdBtnLabel: s.mx.showCmd ? 'Hide command' : 'Fix coverage →',
+      toggleCmd: () => this.setState((p) => ({ mx: { ...p.mx, showCmd: !p.mx.showCmd } })),
+      showCmd: s.mx.showCmd, cmdLines,
+      clearSel: () => this.setState((p) => ({ mx: { ...p.mx, sel: {}, showCmd: false } })),
+    };
+
+    // ================= FEATURE DETAIL =================
+    const cf = this.FBY[s.fd.feature] || this.FEATURES[0];
+    const cfSrs = this.sysreqsOf(cf.slug);
+    const cfR = this.rollup(this.scenIdsOf(cf.slug));
+    const latestRun = this.TESTRUNS[this.TESTRUNS.length - 1];
+    const cfUserReqSlugs = [];
+    cfSrs.forEach((sr) => sr.userReqs.forEach((u) => { if (this.UBY[u] && !cfUserReqSlugs.includes(u)) cfUserReqSlugs.push(u); }));
+    const kwColor = { Given: 'var(--type-persona)', When: 'var(--type-scenario)', Then: 'var(--accent)', And: 'var(--ink-fade)' };
+    const stepsOf = (sc) => {
+      const out = [];
+      const push = (arr, first) => arr.forEach((t, i) => out.push({ label: i === 0 ? first : 'And', text: t, kwS: { color: kwColor[i === 0 ? first : 'And'], fontWeight: 600, display: 'inline-block', minWidth: '42px' } }));
+      push(sc.given, 'Given'); push(sc.when, 'When'); push(sc.then, 'Then');
+      return out;
+    };
+    const fd = {
+      picker: this.FEATURES.map((f) => ({ t: f.name, s: { fontFamily: 'var(--sans)', fontSize: '12px', fontWeight: s.fd.feature === f.slug ? 600 : 500, padding: '5px 12px', borderRadius: '99px', border: '1px solid ' + (s.fd.feature === f.slug ? 'color-mix(in oklab, ' + (PC[f.product] || 'var(--accent)') + ' 55%, transparent)' : 'var(--line-2)'), background: s.fd.feature === f.slug ? 'color-mix(in oklab, ' + (PC[f.product] || 'var(--accent)') + ' 13%, transparent)' : 'transparent', color: s.fd.feature === f.slug ? 'var(--ink)' : 'var(--ink-muted)', cursor: 'pointer' }, pick: () => this.setState((p) => ({ fd: { ...p.fd, feature: f.slug } })) })),
+      name: cf.name, product: cf.product, prodChip: prodChip(cf.product), slug: cf.slug,
+      chainNote: cfSrs.length ? cfSrs.length + ' sysreqs · ' + cfR.total + ' scenarios · ' + cfUserReqSlugs.length + ' userreqs' : 'uncovered — no sysreqs yet',
+      covPct: pct(cfR.covPct), passPct: pct(cfR.passPct),
+      runSha: latestRun.sha, runTs: latestRun.ts, runCi: latestRun.ci, runCount: String(this.TESTRUNS.length),
+      userreqs: cfUserReqSlugs.map((us) => { const u = this.UBY[us]; return { title: u.title, slug: u.slug, actor: this.ACTORS[u.actor], status: u.status, statusS: lifePill(u.status), statusDot: lifeDot(u.status) }; }),
+      sysreqs: cfSrs.map((sr) => {
+        const rr2 = this.rollup(sr.scenarios.map((sc) => this.fq(sr, sc)));
+        return { title: sr.title, slug: sr.slug, stat: statText(rr2),
+          scenarios: sr.scenarios.map((sc) => {
+            const id = this.fq(sr, sc); const st = this.latest(id); const hist = this.history(id);
+            return { title: sc.title, fq: id, status: st, pill: pill(st), dotBox: dotBox(st), steps: stepsOf(sc),
+              spark: hist.map((h) => ({ tip: h.sha + ' · ' + h.status, s: { width: '5px', borderRadius: '2px', height: h.status === 'untested' ? '4px' : (h.status === 'pass' ? '14px' : h.status === 'fail' ? '10px' : '7px'), background: h.status === 'untested' ? 'var(--line-2)' : ST[h.status].c } })) };
+          }) };
+      }),
+    };
+
+    // ================= RUN REVIEW =================
+    const cr = this.TESTRUNS.find((r) => r.id === s.rr.run) || latestRun;
+    const crRes = cr.results;
+    let cpass = 0, cfail = 0, cskip = 0; Object.values(crRes).forEach((v) => { if (v === 'pass') cpass++; else if (v === 'fail') cfail++; else if (v === 'skip') cskip++; });
+    const notRun = repo.total - Object.keys(crRes).length;
+    const failList = [];
+    Object.entries(crRes).forEach(([id, st]) => { if (st !== 'fail') return; const [sl, scid] = id.split('/'); const sr = this.SYSREQS.find((x) => x.slug === sl); if (!sr) return; const sc = sr.scenarios.find((x) => x.id === scid); const feat = this.FBY[sr.feature];
+      failList.push({ fq: id, title: sc ? sc.title : scid, chain: (feat ? feat.name : sr.feature) + ' › ' + sr.title, then: sc ? 'Then ' + sc.then.join('; ') : '' }); });
+    const countCard = (n, label, col) => ({ n: String(n), label, numColor: 'color:' + col + ';', wrap: { display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', minWidth: '58px', padding: '10px 14px', border: '1px solid var(--line)', borderRadius: '10px', background: 'var(--bg-soft)' } });
+    const rr = {
+      picker: this.TESTRUNS.slice().reverse().map((r) => ({ t: r.sha + ' · ' + r.ts.split(' ')[0], s: { fontFamily: 'var(--mono)', fontSize: '11px', fontWeight: s.rr.run === r.id ? 600 : 500, padding: '5px 12px', borderRadius: '99px', border: '1px solid ' + (s.rr.run === r.id ? 'var(--accent-mid)' : 'var(--line-2)'), background: s.rr.run === r.id ? 'var(--accent-wash)' : 'transparent', color: s.rr.run === r.id ? 'var(--ink)' : 'var(--ink-muted)', cursor: 'pointer' }, pick: () => this.setState((p) => ({ rr: { ...p.rr, run: r.id } })) })),
+      file: '.workspec/runs/' + cr.id + '.testrun.yaml', sha: cr.sha, ts: cr.ts, ci: cr.ci,
+      counts: [countCard(cpass, 'pass', 'var(--accent)'), countCard(cfail, 'fail', 'var(--danger)'), countCard(cskip, 'skip', 'var(--warn)'), countCard(notRun, 'not run', 'var(--ink-muted)'), countCard(cr.unmatched.length, 'unmatched', 'var(--warn)')],
+      failCount: String(cfail), hasFails: cfail > 0, noFails: cfail === 0, fails: failList,
+      unmatchedCount: String(cr.unmatched.length), hasUnmatched: cr.unmatched.length > 0, noUnmatched: cr.unmatched.length === 0,
+      unmatched: cr.unmatched.map((t) => ({ t })),
+    };
+
+    return {
+      theme, emitter, counts, m, nav,
+      isEx: s.view === 'explorer', isMx: s.view === 'matrix', isFd: s.view === 'feature', isRr: s.view === 'run',
+      ex, mx, fd, rr,
+    };
+  }
+}
+</script>
+</body>
+</html>

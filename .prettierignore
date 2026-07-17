@@ -12,3 +12,5 @@ packages/c4-schema/test/fixtures
 packages/c4-model/test/fixtures
 apps/site/src/examples-c4
 .workspec
+# Design handoffs — byte-authoritative Claude Design exports, never reformat
+docs/design
