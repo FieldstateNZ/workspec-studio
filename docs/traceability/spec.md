@@ -1,200 +1,315 @@
 # WorkSpec Studio — Traceability Workbench Spec (v0)
 
-**Status:** draft, grounded in the `Traceability Workbench.dc.html` design
-handoff (authoritative for all surfaces; committed to
-[`docs/design/`](../design/Traceability%20Workbench.dc.html)).
-**Repo:** `FieldstateNZ/workspec-studio` · CLI namespace: `workspec-trace`
-**Supersedes:** an earlier draft that specced traceability as a link-graph
-lens. That was wrong. This module is the **test surface**.
+**Status:** validated. Contains the full artifact model inline (§4) — the part frozen by
+`req-schema` (T1).
+**Repo:** `FieldstateNZ/workspec-studio` · CLI: `workspec-trace`
+**Design:** [`docs/design/Traceability Workbench.dc.html`](../design/Traceability%20Workbench.dc.html)
+(authoritative for surfaces).
+**Scope decision:** **Option B confirmed** — WorkSpec is open-source; anything living in the repo
+is open. All artifact kinds are file-native. Enterprise's moat is the resolved linkage graph +
+teams/seats, not the artifact model.
+
+**Two corrections folded in from review:**
+
+1. **The file IS the scenario.** A system-requirement is a single Gherkin scenario — there is no
+   `scenarios: [...]` array nesting scenarios inside a sysreq. One file = one scenario = one sysreq.
+   _(This corrects the design handoff's nested `sysreq.scenarios[]` shape — flagged for confirmation
+   in §9.)_
+2. **Slug = scenario name = identity.** No opaque `sysreq-44` ids, no author-assigned scenario `id`.
+   The filename is the stable identity, consistent with every other Studio kind. This dissolves the
+   id-stability problem entirely.
 
 ---
 
 ## 1. What this module is
 
-**Proving requirements are met.** Not "what links to what" — _"is this
-requirement actually proven, and by what evidence?"_
+**Proving requirements are met** — _"is this requirement actually proven, and by what evidence?"_ —
+not "what links to what."
 
-The insight that makes it possible is already in WorkSpec's data model
-(`lib/db/src/schema/projects.ts`):
+The model insight (from Enterprise `lib/db/src/schema/projects.ts`):
 
-> _"A Gherkin scenario **IS** a system-requirement in v4 — there is no
-> separate `scenario` artifact type."_
+> _"A Gherkin scenario **IS** a system-requirement in v4 — there is no separate `scenario` artifact
+> type."_
 
-The requirement doesn't _have_ a test. The requirement **is** a test.
-There is therefore no mapping problem to invent and no spec-vs-suite
-drift to reconcile: the artifact being traced and the artifact being
-executed are the same file. v5's `proven-by` is the edge that carries
-the evidence; the chain terminates in proof rather than in a build slice.
+The requirement doesn't _have_ a test; the requirement **is** a test. So there's no mapping problem
+and no spec-vs-suite drift: the artifact being traced and the artifact being executed are the same
+file. The chain terminates in proof (`proven-by`), not in a build slice.
 
-**Why it matters beyond tidiness:** a requirements traceability matrix —
-every requirement, its tests, its evidence — is a _compliance artifact_
-under IEC 62304, ISO 13485, and FDA software guidance. It is universally
-produced by hand, in spreadsheets, badly, at audit time. Studio generates
-it from artifacts that already exist, continuously, in CI. That is this
-module's real weight.
+**Why it has weight:** a requirements traceability matrix — every requirement, its verification, its
+evidence — is a compliance artifact under IEC 62304 / ISO 13485 / FDA software guidance, universally
+produced by hand at audit time. Studio generates it continuously from files that already exist.
 
-## 2. The emitter — the load-bearing concept
+## 2. The open-core line (cite this; don't re-derive)
 
-An **emitter** is a named convention binding SysReq artifacts to a test
-toolchain **in both directions**. The design ships two — `cucumber` and
-`junit` — with named conventions surfaced in the UI:
+- **In the repo → open.** Every artifact kind here (actor, feature, user-requirement,
+  system-requirement) is file-native, Apache-2.0, fully usable standalone.
+- **The resolved graph + teams/seats → Enterprise.** Standalone resolves refs within _one_ tree and
+  renders unresolvable ones inert. Enterprise resolves the _cross-project_ graph, persistently, for
+  a team. Resolution is the moat — not the format.
 
-| Convention                | Meaning                                              |
-| ------------------------- | ---------------------------------------------------- |
-| `feature-file-per-sysreq` | each SysReq emits one `.feature` file                |
-| `req-tag-on-scenario`     | emitted scenarios carry the SysReq slug as a tag     |
-| `outline-from-examples`   | a SysReq's examples table becomes a Scenario Outline |
+## 3. The emitter (load-bearing)
 
-This is why **both directions are required**, and why they aren't two
-separate features:
+A named convention binding sysreq artifacts to a test toolchain **in both directions**. Ships
+`cucumber` + `junit`. Conventions surfaced in the UI:
 
-- **Emit (greenfield):** SysReq → test files. The suite is generated from
-  the requirements, so coverage is total by construction.
-- **Ingest (brownfield):** an existing suite tags scenarios with SysReq
-  slugs (`req-tag-on-scenario`); results return as Cucumber JSON / JUnit
-  XML and map back by the _same_ convention.
+| Convention                | Meaning                                          |
+| ------------------------- | ------------------------------------------------ |
+| `feature-file-per-sysreq` | each sysreq emits one `.feature` scenario        |
+| `req-tag-on-scenario`     | emitted scenarios carry the sysreq slug as a tag |
+| `outline-from-examples`   | a sysreq's `examples` table → Scenario Outline   |
 
-One convention, two directions. A repo can be fully generated, fully
-tagged, or mixed — the emitter doesn't care, because the tag is the
-identity either way.
+- **Emit (greenfield):** sysreq → test files; coverage total by construction.
+- **Ingest (brownfield):** existing suite tags scenarios with sysreq slugs; Cucumber JSON / JUnit
+  XML maps back by the _same_ convention.
 
-**The emitter is the module's provider seam**, and its conventions are
-normative: a conformant emitter must round-trip (emit → run → ingest →
-the same SysReqs are proven).
+The emitter is the module's provider seam. Conformance = **round-trip** (emit → run → ingest → the
+same sysreqs proven).
 
-## 3. Evidence model
+---
+
+## 4. THE MODEL (validate this)
+
+Chain:
 
 ```
-SysReq (Gherkin — IS the requirement)
-  └── proven-by → Evidence { run, status, at, duration, failure? }
+actor
+  ▼
+user-requirement ──(userReqs)── system-requirement ──(proven-by)── evidence
+     │                               │
+  (features)                     (feature)
+     └────────► feature ◄───────────┘
 ```
 
-Statuses, per the design: **pass · fail · skip · unproven**.
-
-- `unproven` is the important one and is **derived, never stored**: a
-  SysReq with no evidence in the latest run. Same philosophy as
-  Enterprise's `anchored` — computed from what's loaded; no column, no
-  drift.
-- **Coverage** = SysReqs with any evidence ÷ all SysReqs.
-- **Pass rate** = passing ÷ SysReqs with evidence.
-
-Two separate meters, deliberately: _100% pass rate over 40% coverage is
-the lie every test dashboard tells._ The design puts both side by side in
-a persistent meters bar — that's the honest move and it should never be
-collapsed into one number.
-
-Evidence is **ingested, never authored** — runs are facts.
-
-## 4. Artifacts
-
-The module needs SysReq/Gherkin artifacts in Studio — the Gherkin end of
-the chain, **not** all of WorkSpec's discovery model. Much smaller than
-open-sourcing personas/needs/user-requirements, and it's the only new
-kind this module requires.
+Layout — file per artifact, slug = path stem, identity is structural:
 
 ```
-requirements/
-  element-authoring/
-    sysreq-44.yml        # Gherkin lives inside; the file IS the requirement
+actors/
+  dev-lead.yml
 features/
-  element-authoring.yml  # sysreq → feature is the containing edge
+  element-authoring.yml
+requirements/
+  user/
+    authoring-flow.yml
+  system/
+    inline-create-persists.yml       # named for the SCENARIO it asserts
+    inline-create-each-kind.yml
 .runs/
-  2026-07-09T….json      # ingested evidence (derived, not authored)
+  2026-07-09T02-14Z.json             # ingested, not authored
 ```
 
-- `sysreq → feature` is the containing relationship the design's
-  **Feature detail** view renders (`sysreqsOf(feature)`).
-- Features with **no sysreqs** are a first-class finding — the design
-  counts them explicitly (`sysreqsOf(f.slug).length === 0`). That's the
-  inverse orphan: a feature nobody wrote a requirement for. Unbuilt or
-  unjustified work, made visible.
+### 4.1 actor
 
-## 5. Surfaces (design is authoritative)
+Closed vocabulary the user-requirements reference. Own kind so the set is typo-proof.
 
-Shell: `workspec-trace / traceability`, emitter chip in the topbar,
-counts, then the **meters bar** (Coverage · Pass rate · summary) —
-persistent across every view, because those two numbers are the module's
-entire claim.
+```yaml
+# actors/dev-lead.yml
+apiVersion: workspec.io/v1alpha1
+kind: Actor
+metadata:
+  slug: dev-lead
+spec:
+  name: Dev lead
+  description: Runs a build, delegates slices, owns signoff.
+```
 
-Four views:
+### 4.2 feature
 
-1. **Requirements** (explorer) — filterable rows; click a row for its
-   chain. The default surface.
-2. **Matrix** — the requirements traceability matrix. The compliance
-   artifact. Must be exportable (§6).
-3. **Feature detail** — a feature with its sysreqs and their scenarios,
-   including the no-sysreqs case handled explicitly.
-4. **Run review** — a run's results, failures foregrounded.
+Thin container / grouping edge. `product` scopes it in a multi-product estate.
 
-Design tokens are already WorkSpec's (`--accent`, `--ink-*`,
-`--type-scenario`…): consume `@workspec/design`, define nothing locally.
-The colour-coded `--type-feature` / `--type-persona` / `--type-scenario`
-vocabulary is shared with the rest of Studio — respect it.
+```yaml
+# features/element-authoring.yml
+apiVersion: workspec.io/v1alpha1
+kind: Feature
+metadata:
+  slug: element-authoring
+spec:
+  name: Element authoring
+  product: workspec-studio
+```
 
-Host contract per every Studio module: `repository`, `links` resolver,
-`capabilities`, MF-exposed.
+### 4.3 user-requirement
 
-## 6. CLI (`workspec-trace`) — where this earns its keep
+The requirement in user-story form — **the artifact the RTM actually traces.** "As X I want Y so
+that Z" is the promise that must be verified.
 
-- `emit --emitter cucumber [--feature <slug>]` — SysReqs → test files.
-  The design surfaces this exact shape (`emit --emitter {{ emitter }}
---feature {{ fslug }}`), so it's a first-class user-facing verb, not a
-  hidden build step.
+```yaml
+# requirements/user/authoring-flow.yml
+apiVersion: workspec.io/v1alpha1
+kind: UserRequirement
+metadata:
+  slug: authoring-flow
+spec:
+  title: Author an element without leaving the canvas
+  actor: dev-lead # intra-tree ref → actors/*
+  as: a dev lead
+  want: to author a new element inline on the canvas
+  so: that I don't break flow switching to a form
+  features: [element-authoring] # intra-tree refs → features/*
+  status: agreed # draft | agreed | implemented | verified
+  links:
+    - kind: need
+      ref: need:frictionless-authoring # cross-layer → inert standalone, resolves in Enterprise
+```
+
+### 4.4 system-requirement — **the file IS the scenario**
+
+One Gherkin scenario per file. The scenario name is the slug is the identity. No nested
+`scenarios[]`, no scenario `id`.
+
+```yaml
+# requirements/system/inline-create-persists.yml
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create-persists # scenario name = slug = identity
+spec:
+  title: Creating an element inline saves it immediately
+  feature: element-authoring # intra-tree ref (containing)
+  userReqs: [authoring-flow] # intra-tree refs (verifies — makes it an RTM)
+  given:
+    - a canvas with no selected element
+  when:
+    - the dev lead double-clicks empty canvas
+    - and types a name and presses Enter
+  then:
+    - the element is persisted
+    - and appears in the repo tree without a form submit
+```
+
+With an examples table → Scenario Outline (still one scenario, one file):
+
+```yaml
+# requirements/system/inline-create-each-kind.yml
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create-each-kind
+spec:
+  title: Inline create works for each element kind
+  feature: element-authoring
+  userReqs: [authoring-flow]
+  given:
+    - a canvas
+  when:
+    - the dev lead inline-creates a "<kind>"
+  then:
+    - a valid "<kind>" artifact is written
+  examples:
+    - { kind: component }
+    - { kind: container }
+    - { kind: database }
+```
+
+### 4.5 evidence (testrun) — ingested, never authored
+
+Produced by `workspec-trace ingest`. **Keys on the sysreq slug alone** — because the file is the
+scenario, there's no composite `<sysreq>/<id>` key and no scenario id to stabilise.
+
+```json
+// .runs/2026-07-09T02-14Z.json
+{
+  "id": "2026-07-09T02-14Z",
+  "ts": "2026-07-09T02:14:07Z",
+  "sha": "a1b2c3d",
+  "ci": "github-actions",
+  "emitter": "cucumber",
+  "results": {
+    "inline-create-persists": "pass",
+    "inline-create-each-kind": "pass"
+  }
+}
+```
+
+`pass` / `fail` / `skip` / _absence_ are distinct. Absence → **unproven**.
+
+### 4.6 What the graph DERIVES (nothing above stores an edge or status)
+
+| Derived              | From                                                    |
+| -------------------- | ------------------------------------------------------- |
+| `verifies(userReq)`  | sysreqs whose `userReqs` include it                     |
+| `proven-by(sysreq)`  | latest run's result for its slug                        |
+| `unproven(sysreq)`   | in tree, absent from latest run (derived, never stored) |
+| `coverage`           | userReqs with ≥1 passing sysreq ÷ all userReqs          |
+| `pass rate`          | passing sysreqs ÷ sysreqs with evidence                 |
+| `orphan feature`     | feature with no userReqs / no sysreqs                   |
+| **`orphan userReq`** | **userReq no sysreq verifies — an unverified promise**  |
+
+The last row is the module's single most valuable finding and only exists because user-requirements
+are in the model (Option B): a promise to a user with no test proving it's kept.
+
+### 4.7 Ref conventions (every module inherits these)
+
+- **Kind-qualified for cross-kind links:** `need:frictionless-authoring`. Lets the loader type-check
+  the target without resolving.
+- **Bare slug for single-kind fields:** `actor: dev-lead`, `feature: element-authoring`,
+  `userReqs: [authoring-flow]` — the field implies the kind.
+
+Resolution rule (schema declares per field which bucket it's in):
+
+- **Intra-tree** ref that doesn't resolve → **dangling → `verify` fails.** (typo protection)
+- **Cross-layer** ref (target kind is Enterprise-only, e.g. `need`, `persona`) that doesn't resolve
+  → **inert → allowed**, rendered as a quiet "resolves across your estate" label.
+
+---
+
+## 5. Surfaces (design authoritative)
+
+Shell `workspec-trace / traceability`, emitter chip, counts, then the persistent **meters bar** —
+**Coverage** and **Pass rate** side by side, never collapsed to one number (100% pass over 40%
+coverage is the lie every test dashboard tells).
+
+Four views: **Requirements** (explorer, click row → chain) · **Matrix** (the RTM, exportable) ·
+**Feature detail** (feature → userReqs → sysreqs, no-sysreqs case explicit) · **Run review**
+(failures foregrounded).
+
+Consume `@workspec/design`; define no local tokens. Host contract per every Studio module
+(`repository`, `links` resolver, `capabilities`, MF-exposed).
+
+## 6. CLI (`workspec-trace`)
+
+- `emit --emitter cucumber [--feature <slug>]` — sysreqs → test files.
 - `ingest <results> --emitter junit|cucumber` — results → evidence.
-- `verify` — **the CI gate.** Fails on coverage or pass-rate regression;
-  thresholds configurable. This is what turns "requirements are proven"
-  into a build-breaking property rather than a dashboard nobody opens.
-- `matrix --out matrix.{md,csv,html}` — the RTM as a generated artifact.
-  For a regulated user this single command is the reason to adopt.
+- `verify` — **CI gate:** fails on coverage/pass-rate regression _and_ on dangling intra-tree refs;
+  thresholds configurable.
+- `matrix --out matrix.{md,csv,html}` — the RTM as a generated artifact (the compliance payload).
 - `render` — deterministic SVG of a feature's proof state.
 
 ## 7. Packages
 
 ```
-packages/req-schema      # SysReq/Gherkin + feature artifacts → registry v1alpha1
-packages/trace-model     # evidence join, coverage/pass/unproven derivation, diagnostics (pure)
+packages/req-schema      # actor/feature/user-requirement/system-requirement → registry v1alpha1
+packages/trace-model     # evidence join, coverage/pass/unproven + orphan derivation (pure)
 packages/trace-emitters  # cucumber | junit — emit + ingest, one convention set each
 packages/trace-ui        # the four views (design-system-native, MF remote)
 packages/trace-studio    # CLI + standalone host
 ```
 
-`trace-emitters` is the seam: each emitter is a pair of pure functions
-(`emit(sysreqs) → files`, `ingest(results) → evidence[]`) plus its
-declared conventions. Adding a framework means adding an emitter and
-nothing else.
-
-**Conformance test: round-trip.** Emit a fixture SysReq set, feed the
-mocked runner output back through ingest, assert the same SysReqs are
-proven. An emitter that can't round-trip is broken by definition.
+`trace-emitters` seam: each emitter = `emit(sysreqs) → files` + `ingest(results) → evidence[]` +
+declared conventions. Conformance = round-trip.
 
 ## 8. Build sequence
 
-1. `req-schema` — SysReq/Gherkin + feature kinds, registry-published,
-   conformance-checked against the Enterprise tree.
-2. `trace-model` — evidence join + coverage/pass/unproven derivation,
-   golden fixtures.
+1. `req-schema` — the four kinds, registry-published, conformance-checked against the Enterprise
+   tree.
+2. `trace-model` — derivation engine + golden fixtures.
 3. `trace-emitters` cucumber (emit + ingest) + round-trip conformance.
-4. `workspec-trace emit` / `ingest` / `verify` — CI-usable.
-   **Shippable value with zero frontend.**
-5. `trace-ui` Requirements + Feature detail (per the design).
+4. `emit` / `ingest` / `verify` CLI — **shippable value, zero frontend.**
+5. `trace-ui` Requirements + Feature detail.
 6. Matrix view + `matrix` export — the compliance payload.
 7. Run review; junit emitter.
-8. Studio shell `/traceability`, site module page, demo seeded with the
-   worked example (`example ▸ fieldstate-workspec` in the design — the
-   repo proving its own requirements).
+8. Studio shell `/traceability`, site page, demo seeded with the worked example (the repo proving
+   its own requirements).
 
-## 9. Open items
+## 9. Open items (validate)
 
-1. **Where evidence lives** — `.runs/` gitignored (default) vs committed
-   (proof history). Recommend configurable, default ignore, and document
-   committing as the regulated-user pattern: a git-versioned proof
-   history is exactly what an auditor wants and nobody else offers it.
-2. **Multi-run history** — v0 shows the latest run; trend (coverage over
-   time) is the obvious v0.1 and the meters bar implies it. Confirm out
-   of scope for v0.
-3. **The other five designs in the handoff bundle** — Attribution
-   Workbench, WorkSpec Studio, WorkSpec Docs, Site Review, Density
-   Review. _WorkSpec Docs overlaps the docs design brief written
-   separately_ — reconcile before briefing design again.
-4. **Cross-project manifest** — still open; now needed by topology, cost
-   attribution, and this module. Cheapest to design now.
+1. **§4.4 confirm the file-is-the-scenario correction** — the design handoff nests
+   `sysreq.scenarios[]`; this spec flattens to one-scenario-per-file. If confirmed, the design's
+   data model inherits the same edit before T5. **This is the load-bearing validation.**
+2. **§4.3 the `need` upward ref** — invented to illustrate the cross-layer inert case. Confirm `need`
+   (vs `persona`) is the right parent kind; depends on Enterprise's chain above user-requirements
+   (unread — flag if you want it verified before T1 freezes).
+3. **Evidence location** — `.runs/` configurable, default gitignored; committing documented as the
+   auditable-proof-history pattern.
+4. **Multi-run history** — v0 latest-run-only; coverage-over-time is v0.1.
+5. **Cross-project manifest (#77)** — Enterprise-side cross-tree resolution; standalone is
+   single-tree. Not gating v0.
