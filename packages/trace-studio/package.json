@@ -1,0 +1,50 @@
+{
+  "name": "@workspec/trace-studio",
+  "version": "0.1.0-alpha.5",
+  "description": "WorkSpec Traceability Workbench — standalone CLI + host. workspec-trace emits/ingests test-framework evidence and verifies requirement coverage. T0 bootstrap skeleton: CLI verbs land in T4, the host shell in T8.",
+  "keywords": [
+    "traceability",
+    "cli"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/trace-studio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/trace-studio"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "workspec-trace": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

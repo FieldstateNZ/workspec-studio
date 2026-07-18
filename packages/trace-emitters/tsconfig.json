@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as packages/cost-*.
+    "outDir": ".typecheck",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Explicit, rather than relying on TypeScript's automatic `@types/*`
+    // discovery (see packages/cost-schema/tsconfig.json for the verified
+    // detail this mirrors). Not exercised by the T0 skeleton itself, but the
+    // cucumber emitter (T3) will read/write fixture files via `node:fs`,
+    // same as packages/cost-engine.
+    "types": ["node"]
+  },
+  // No TS Project References yet: this package has no `@workspec` sibling
+  // dependency until T3 wires the cucumber emitter to `@workspec/req-schema`
+  // (mirrors packages/cost-engine's `references` pattern, which will be
+  // added at that point).
+  "include": ["src"]
+}
