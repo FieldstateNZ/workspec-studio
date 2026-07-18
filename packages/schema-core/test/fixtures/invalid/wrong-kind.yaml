@@ -1,0 +1,8 @@
+# Invalid: `kind` is not the literal "Actor" defineArtifact('Actor', ...) fixes it to.
+apiVersion: workspec.io/v1alpha1
+kind: NotAnActor
+metadata:
+  slug: dev-lead
+spec:
+  name: Dev lead
+  description: Runs a build, delegates slices, owns signoff.

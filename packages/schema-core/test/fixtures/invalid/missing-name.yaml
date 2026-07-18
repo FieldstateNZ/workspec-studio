@@ -1,0 +1,7 @@
+# Invalid: spec.name is required and absent here.
+apiVersion: workspec.io/v1alpha1
+kind: Actor
+metadata:
+  slug: dev-lead
+spec:
+  description: Runs a build, delegates slices, owns signoff.
