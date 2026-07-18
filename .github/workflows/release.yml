@@ -88,6 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           packages=(
+            schema-core
             decision-schema decision-engine decision-ui decision-studio
             c4-schema c4-model c4-layout c4-ui c4-studio
             cost-schema cost-provider cost-provider-azure cost-engine cost-ui cost-studio

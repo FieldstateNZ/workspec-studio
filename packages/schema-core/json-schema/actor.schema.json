@@ -1,0 +1,75 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/actor.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec Actor artifact.",
+  "properties": {
+    "apiVersion": {
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant.",
+      "type": "string"
+    },
+    "kind": {
+      "const": "Actor",
+      "description": "Artifact kind discriminant.",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "An actor: a human role or persona that interacts with the system.",
+      "properties": {
+        "description": {
+          "description": "What this actor does and why it interacts with the system.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "links": {
+          "description": "Cross-references to other artifacts or docs: exactly one {<linkType>: <pathRef>} pair per entry, plus an optional cardinality key ({from, to, label?}). Path refs must start with \"~/\" or \"@workspace/\".",
+          "items": {
+            "additionalProperties": {},
+            "propertyNames": {
+              "description": "The link type, e.g. \"adr\", \"runbook\" — or \"cardinality\" for the optional cardinality key.",
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "Human-readable name of the actor.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "tags": {
+          "description": "Free-text labels for filtering and grouping.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkSpec Actor (v1alpha1)",
+  "type": "object"
+}

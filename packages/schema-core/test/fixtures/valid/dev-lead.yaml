@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/actor.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Actor
+metadata:
+  slug: dev-lead
+spec:
+  name: Dev lead
+  description: Runs a build, delegates slices, owns signoff.
+  tags:
+    - human
+  links:
+    - adr: ~/docs/decisions/staffing.md
