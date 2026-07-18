@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as
+    // packages/cost-studio.
+    "rootDir": "src",
+    "outDir": ".typecheck",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Explicit, rather than relying on TypeScript's automatic `@types/*`
+    // discovery: under this repo's pinned `typescript@^6.0.3` +
+    // `@types/node@^24`, `bin.ts`/`cli.ts`'s references to `process` don't
+    // resolve without this (verified empirically for this package; see
+    // packages/cost-schema/tsconfig.json for the same underlying quirk).
+    // Deviates from packages/cost-studio's tsconfig.json, which happens not
+    // to need this override.
+    "types": ["node"]
+  },
+  // No `jsx`/DOM `lib`, no TS Project References yet: this T0 skeleton has
+  // no `client/` host shell (no React) and no `@workspec` sibling
+  // dependency — both land later (the CLI verbs in T4, the host shell in
+  // T8; mirrors packages/cost-studio's fuller config, which will be added
+  // at that point).
+  "include": ["src"]
+}
