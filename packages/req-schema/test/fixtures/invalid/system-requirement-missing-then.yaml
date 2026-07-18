@@ -1,0 +1,14 @@
+# Invalid: spec.then is required and non-empty — a scenario without an assertion
+# is meaningless. Here it is absent entirely.
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create-persists
+spec:
+  title: Creating an element inline saves it immediately
+  feature: element-authoring
+  userReqs: [authoring-flow]
+  given:
+    - a canvas with no selected element
+  when:
+    - the dev lead double-clicks empty canvas

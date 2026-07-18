@@ -1,0 +1,55 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/feature.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec Feature artifact.",
+  "properties": {
+    "apiVersion": {
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant.",
+      "type": "string"
+    },
+    "kind": {
+      "const": "Feature",
+      "description": "Artifact kind discriminant.",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "A feature: a thin container / grouping edge requirements attach to.",
+      "properties": {
+        "name": {
+          "description": "Human-readable name of the feature.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "product": {
+          "description": "Product this feature belongs to, scoping it in a multi-product estate.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkSpec Feature (v1alpha1)",
+  "type": "object"
+}

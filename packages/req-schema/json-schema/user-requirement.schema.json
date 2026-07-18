@@ -1,0 +1,111 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/user-requirement.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec UserRequirement artifact.",
+  "properties": {
+    "apiVersion": {
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant.",
+      "type": "string"
+    },
+    "kind": {
+      "const": "UserRequirement",
+      "description": "Artifact kind discriminant.",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "A user-requirement: a promise to an actor in user-story form (the RTM traces this).",
+      "properties": {
+        "actor": {
+          "description": "Bare-slug intra-tree ref → actors/*: the role this requirement is written for.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "as": {
+          "description": "User-story role clause, e.g. \"a dev lead\".",
+          "minLength": 1,
+          "type": "string"
+        },
+        "features": {
+          "description": "Bare-slug intra-tree refs → features/*: the feature(s) this requirement belongs to (at least one).",
+          "items": {
+            "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "links": {
+          "description": "Cross-references to other artifacts or docs: exactly one {<linkType>: <pathRef>} pair per entry, plus an optional cardinality key ({from, to, label?}). Path refs must start with \"~/\" or \"@workspace/\".",
+          "items": {
+            "additionalProperties": {},
+            "propertyNames": {
+              "description": "The link type, e.g. \"adr\", \"runbook\" — or \"cardinality\" for the optional cardinality key.",
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "so": {
+          "description": "User-story rationale clause, e.g. \"that I don't break flow switching to a form\".",
+          "minLength": 1,
+          "type": "string"
+        },
+        "status": {
+          "description": "Lifecycle status of the requirement.",
+          "enum": [
+            "draft",
+            "agreed",
+            "implemented",
+            "verified"
+          ],
+          "type": "string"
+        },
+        "title": {
+          "description": "One-line summary of the requirement.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "want": {
+          "description": "User-story desire clause, e.g. \"to author a new element inline on the canvas\".",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "actor",
+        "as",
+        "want",
+        "so",
+        "features",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkSpec User Requirement (v1alpha1)",
+  "type": "object"
+}

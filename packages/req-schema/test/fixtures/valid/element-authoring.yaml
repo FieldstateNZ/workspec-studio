@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/feature.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Feature
+metadata:
+  slug: element-authoring
+spec:
+  name: Element authoring
+  product: workspec-studio

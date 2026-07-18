@@ -1,0 +1,11 @@
+{
+  "id": "2026-07-09T02-14Z",
+  "ts": "2026-07-09T02:14:07Z",
+  "sha": "a1b2c3d",
+  "ci": "github-actions",
+  "emitter": "cucumber",
+  "results": {
+    "inline-create-persists": "pass",
+    "inline-create-each-kind": "pass"
+  }
+}

@@ -1,0 +1,19 @@
+# Invalid: the design handoff's nested `scenarios[]` shape. The file IS the
+# scenario (spec §9.1) — there is no scenarios[] array. The nested key is
+# stripped, leaving the required top-level `then` absent, so this fails. Proves
+# a scenario cannot be smuggled in via nesting.
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create-persists
+spec:
+  title: Creating an element inline saves it immediately
+  feature: element-authoring
+  userReqs: [authoring-flow]
+  scenarios:
+    - given:
+        - a canvas with no selected element
+      when:
+        - the dev lead double-clicks empty canvas
+      then:
+        - the element is persisted

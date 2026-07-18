@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/system-requirement.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create-each-kind
+spec:
+  title: Inline create works for each element kind
+  feature: element-authoring
+  userReqs: [authoring-flow]
+  given:
+    - a canvas
+  when:
+    - the dev lead inline-creates a "<kind>"
+  then:
+    - a valid "<kind>" artifact is written
+  examples:
+    - { kind: component }
+    - { kind: container }
+    - { kind: database }

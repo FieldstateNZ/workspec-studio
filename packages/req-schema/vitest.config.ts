@@ -1,9 +1,15 @@
 import { defineConfig } from 'vitest/config';
 
+/**
+ * Single-project Vitest config. Everything here is pure schema/path logic with
+ * no I/O beyond reading fixture files from disk (the conformance suite), so
+ * there is no need for a multi-project split.
+ */
 export default defineConfig({
   test: {
     name: 'req-schema',
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+    fileParallelism: false,
   },
 });

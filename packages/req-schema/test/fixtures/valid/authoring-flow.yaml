@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/user-requirement.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: UserRequirement
+metadata:
+  slug: authoring-flow
+spec:
+  title: Author an element without leaving the canvas
+  actor: dev-lead # intra-tree ref → actors/*
+  as: a dev lead
+  want: to author a new element inline on the canvas
+  so: that I don't break flow switching to a form
+  features: [element-authoring] # intra-tree refs → features/*
+  status: agreed # draft | agreed | implemented | verified
