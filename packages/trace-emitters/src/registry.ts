@@ -3,10 +3,11 @@
 // else downstream): the CLI/UI select by `name` through `getEmitter`.
 
 import { cucumberEmitter } from './cucumber.js';
+import { junitEmitter } from './junit.js';
 import type { Emitter } from './types.js';
 
-/** Every emitter this package ships, in a stable order. v0: cucumber (junit follows in a later slice). */
-export const emitters: readonly Emitter[] = [cucumberEmitter];
+/** Every emitter this package ships, in a stable order: `cucumber`, then `junit`. */
+export const emitters: readonly Emitter[] = [cucumberEmitter, junitEmitter];
 
 /** Look up an emitter by its `name` (e.g. `"cucumber"`), or `undefined` if unknown. */
 export function getEmitter(name: string): Emitter | undefined {

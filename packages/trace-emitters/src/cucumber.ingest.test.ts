@@ -124,6 +124,27 @@ describe('cucumberEmitter.ingest — tag recovery + defensiveness', () => {
   });
 });
 
+describe('cucumberEmitter.ingest — accepts a raw JSON string (the CLI contract)', () => {
+  it('parses a JSON-stringified report identically to the already-parsed array', () => {
+    const r = report(scenario('a', steps('passed')), scenario('b', steps('failed')));
+    const fromString = ingest(JSON.stringify(r));
+    const fromArray = ingest(r);
+    expect(fromString.results).toEqual(fromArray.results);
+    expect(fromString.results).toEqual({ a: 'pass', b: 'fail' });
+  });
+
+  it('never throws on a malformed JSON string — yields empty results, not a crash', () => {
+    for (const bad of ['{not json', '', '   ', 'null', '"just a string"', '{"foo": 1}']) {
+      expect(() => ingest(bad)).not.toThrow();
+    }
+    expect(ingest('{not json').results).toEqual({});
+    // valid JSON that isn't an array of features also yields empty results
+    expect(ingest('null').results).toEqual({});
+    expect(ingest('"just a string"').results).toEqual({});
+    expect(ingest('{"foo": 1}').results).toEqual({});
+  });
+});
+
 describe('cucumberEmitter.ingest — TestRun envelope', () => {
   it('stamps the run identity from meta and emitter="cucumber"', () => {
     const run = cucumberEmitter.ingest(report(scenario('a', steps('passed'))), {

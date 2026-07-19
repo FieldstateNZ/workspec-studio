@@ -1,7 +1,7 @@
 {
   "name": "@workspec/trace-emitters",
   "version": "0.1.0-alpha.5",
-  "description": "Pure emit/ingest functions for the WorkSpec Traceability Workbench's test-framework emitters — each a named convention binding SysReq artifacts to a test toolchain in both directions. Ships the `cucumber` emitter (emit → .feature files, ingest → TestRun) and a round-trip conformance harness. No IO, no DOM, no React.",
+  "description": "Pure emit/ingest functions for the WorkSpec Traceability Workbench's test-framework emitters — each a named convention binding SysReq artifacts to a test toolchain in both directions. Ships the `cucumber` (emit → .feature files) and `junit` (emit → JUnit XML files) emitters, both ingest → TestRun, and a shared round-trip conformance harness. No IO, no DOM, no React.",
   "keywords": [
     "traceability",
     "pure-function",

@@ -1,13 +1,14 @@
-// @workspec/trace-emitters — the cucumber emit + ingest seam for the WorkSpec
-// Traceability Workbench.
+// @workspec/trace-emitters — the cucumber + junit emit/ingest seam for the
+// WorkSpec Traceability Workbench.
 //
 // An emitter is a named convention binding Rule (system-requirement) +
 // scenario artifacts to a test toolchain IN BOTH DIRECTIONS: `emit(rules) →
 // files` (greenfield) and `ingest(raw, meta) → TestRun` (brownfield), plus its
 // declared conventions (spec §3). This is the module's PROVIDER SEAM — adding
-// a framework means adding an `Emitter` and nothing else. Everything here is
-// PURE and DETERMINISTIC: no IO, no DOM, no clock, no `Math.random()`;
-// identical input yields byte-identical output. See
+// a framework means adding an `Emitter` and nothing else; `junit` is the
+// second provider on this seam, proving it generalises beyond cucumber.
+// Everything here is PURE and DETERMINISTIC: no IO, no DOM, no clock, no
+// `Math.random()`; identical input yields byte-identical output. See
 // docs/traceability/spec.md §3/§4.4/§4.5/§7.
 
 import { REQ_SCHEMA_PACKAGE } from '@workspec/req-schema';
@@ -46,6 +47,13 @@ export type {
   CucumberTag,
   MockRunOptions,
 } from './cucumber.js';
+
+// ── The junit emitter ──────────────────────────────────────────────────────────
+export { junitEmitter, JUNIT_CONVENTIONS } from './junit.js';
+
+// ── The junit mock runner ─────────────────────────────────────────────────────
+export { mockJunitRun } from './junit.js';
+export type { MockJunitRunOptions } from './junit.js';
 
 // ── The emitter registry ──────────────────────────────────────────────────────
 export { emitters, getEmitter } from './registry.js';
