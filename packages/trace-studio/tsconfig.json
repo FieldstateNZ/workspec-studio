@@ -11,19 +11,25 @@
     "rootDir": "src",
     "outDir": ".typecheck",
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
-    // Explicit, rather than relying on TypeScript's automatic `@types/*`
-    // discovery: under this repo's pinned `typescript@^6.0.3` +
-    // `@types/node@^24`, `bin.ts`/`cli.ts`'s references to `process` don't
-    // resolve without this (verified empirically for this package; see
-    // packages/cost-schema/tsconfig.json for the same underlying quirk).
-    // Deviates from packages/cost-studio's tsconfig.json, which happens not
-    // to need this override.
+    // This IS a Node CLI (bin.ts/cli.ts touch `process`, fs-repository.ts
+    // imports `node:*`) — so node globals/types are EXPECTED here, unlike the
+    // pure sibling packages (trace-model/trace-emitters pin `types: []`). Set
+    // explicitly rather than relying on automatic `@types/*` discovery, which
+    // under this repo's pinned typescript@^6 + @types/node@^24 does not resolve
+    // `process`/`node:*` for this package without it.
     "types": ["node"]
   },
-  // No `jsx`/DOM `lib`, no TS Project References yet: this T0 skeleton has
-  // no `client/` host shell (no React) and no `@workspec` sibling
-  // dependency — both land later (the CLI verbs in T4, the host shell in
-  // T8; mirrors packages/cost-studio's fuller config, which will be added
-  // at that point).
+  // TS Project References: let `tsc -b` type-check against the sibling
+  // packages' real TypeScript source (building their declarations on demand),
+  // so `typecheck` never has to run after `build` — matching CI, which
+  // typechecks BEFORE any dist/ exists. Points at each dependency's *build*
+  // config (rootDir "src", the published dist/ layout the package.json "types"
+  // field advertises). trace-studio imports all four directly.
+  "references": [
+    { "path": "../schema-core/tsconfig.build.json" },
+    { "path": "../req-schema/tsconfig.build.json" },
+    { "path": "../trace-model/tsconfig.build.json" },
+    { "path": "../trace-emitters/tsconfig.build.json" }
+  ],
   "include": ["src"]
 }

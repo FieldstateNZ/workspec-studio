@@ -1,7 +1,7 @@
 {
   "name": "@workspec/trace-studio",
   "version": "0.1.0-alpha.5",
-  "description": "WorkSpec Traceability Workbench — standalone CLI + host. workspec-trace emits/ingests test-framework evidence and verifies requirement coverage. T0 bootstrap skeleton: CLI verbs land in T4, the host shell in T8.",
+  "description": "WorkSpec Traceability Workbench CLI. workspec-trace emits test files from system-requirements, ingests a test toolchain's results as evidence, and verifies requirement coverage + pass-rate as a build-breaking CI gate.",
   "keywords": [
     "traceability",
     "cli"
@@ -37,9 +37,16 @@
   },
   "scripts": {
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/req-schema": "workspace:*",
+    "@workspec/schema-core": "workspace:*",
+    "@workspec/trace-emitters": "workspace:*",
+    "@workspec/trace-model": "workspace:*",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
