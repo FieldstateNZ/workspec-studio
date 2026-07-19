@@ -1,13 +1,66 @@
 // @workspec/trace-ui — host-agnostic React views for the WorkSpec
-// Traceability Workbench: Requirements, Feature detail, Matrix, and Run
-// review, composed on @workspec/design.
+// Traceability Workbench: the persistent meters bar, the Requirements
+// explorer, and Feature detail (T5, #73), composed by `TraceApp` and themed
+// via a `theme` prop — no host framework or CSS assumptions baked in
+// (standalone lib + module-federation remote, mirroring `@workspec/cost-ui`).
+// Matrix and Run review land in T6/T7 (see docs/traceability/spec.md §7/§8).
 //
-// T0 bootstrap skeleton (see docs/traceability/spec.md §7/§8): no views yet
-// — they land starting T5. Kept as a plain TS module (no JSX, no
-// @workspec/design/React dependency yet) so `pnpm -r build` stays trivial;
-// the Tailwind `dist/styles.css` build and module-federation remote-entry
-// (`build:mf`) are deferred to that same slice — see tsup.config.ts and the
-// package README.
-
-/** This package's own identity (mirrors `@workspec/cost-ui`'s convention). */
+// Styles ship compiled and separate: import `@workspec/trace-ui/styles.css`.
 export const TRACE_UI_PACKAGE = '@workspec/trace-ui' as const;
+
+// ── Host contract ────────────────────────────────────────────────────────────
+export { createInertLinkResolver, createMemoryRepository, repositoryId } from './host.js';
+export type {
+  MemoryRepositoryInit,
+  TraceLinkResolution,
+  TraceLinkResolver,
+  TraceLinkTarget,
+  TraceRepositoryPort,
+  TraceStudioCapabilities,
+  TraceStudioHost,
+} from './host.js';
+
+// ── Theming ──────────────────────────────────────────────────────────────────
+export { DEFAULT_THEME, DESIGN_THEMES, THEMES, themeStyle } from './themes.js';
+export type { ThemeName, TokenName } from './themes.js';
+export { TraceThemedRoot, useAmbientTheme } from './themed-root.js';
+export type { TraceThemedRootProps } from './themed-root.js';
+
+// ── Provider + hooks ─────────────────────────────────────────────────────────
+export {
+  HostNavigateProvider,
+  TraceStudioProvider,
+  traceModelKey,
+  useCapabilities,
+  useHost,
+  useInvalidateTraceModel,
+  useLinkResolver,
+  useNavigate,
+  useRepository,
+  useTraceModel,
+} from './context.js';
+export type { TraceStudioProviderProps } from './context.js';
+
+// ── Formatting helpers ───────────────────────────────────────────────────────
+export {
+  formatMeterFraction,
+  formatPercent,
+  formatProofTally,
+  PROOF_ACCENT,
+  PROOF_LABEL,
+  STATUS_ACCENT,
+  tallyProofs,
+} from './format.js';
+export type { ProofTally } from './format.js';
+
+// ── Views ────────────────────────────────────────────────────────────────────
+export { MetersBar } from './meters-bar.js';
+export type { MetersBarProps } from './meters-bar.js';
+export { RequirementsExplorer } from './requirements-explorer.js';
+export type { RequirementsExplorerProps } from './requirements-explorer.js';
+export { FeatureDetail } from './feature-detail.js';
+export type { FeatureDetailProps } from './feature-detail.js';
+
+// ── App ──────────────────────────────────────────────────────────────────────
+export { TraceApp } from './app.js';
+export type { TraceAppProps, TraceView } from './app.js';

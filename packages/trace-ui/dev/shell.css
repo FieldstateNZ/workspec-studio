@@ -1,0 +1,80 @@
+/* Host-chrome styles for the dev story ONLY — not part of the published
+   package (this file lives in dev/, outside src/, and is never built into
+   dist/styles.css). Uses the WorkSpec design tokens (available because the
+   chrome renders inside `.trace-root`, where the provider binds the palette
+   inline). Every colour value below is a token reference (var(--*)) — no
+   hex/rgb literals. Mirrors packages/cost-studio/client/shell.css. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.trace-root.tsh-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tsh-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.tsh-brand {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tsh-crumb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.tsh-spacer {
+  flex: 1;
+}
+
+.tsh-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.tsh-toggle-seg {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.tsh-toggle-seg:hover {
+  color: var(--ink);
+}
+.tsh-toggle-seg--active {
+  background: var(--bg-elevated);
+  border-color: var(--line-2);
+  color: var(--ink);
+}
+
+.tsh-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}

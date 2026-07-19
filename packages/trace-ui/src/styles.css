@@ -1,0 +1,683 @@
+/* Bespoke component styles for @workspec/trace-ui. Every colour value below
+   is a @workspec/design token reference (var(--*)) or a color-mix(...) tint
+   of one — no hex/rgb literals (`zero-local-tokens.test.ts` greps for this).
+   The chip/pill tint recipe (40% border / 12% surface / 80%-into-ink text,
+   dashed for the "untested"/"unproven" empty state) mirrors
+   `@workspec/cost-ui`'s `.cost-chip`/`.cost-pill` grammar, which itself
+   mirrors `@workspec/c4-ui`'s `.c4-node` element grammar — one derivation,
+   reused rather than re-invented per surface. Padding/margin/gap snap to the
+   --s-* scale; radii snap to --r-*. */
+
+.trace-root {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.trace-notice {
+  padding: var(--s-6);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.trace-notice-error {
+  color: var(--danger);
+}
+
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+
+.trace-app {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-5);
+  background: var(--bg);
+  overflow: hidden;
+  box-shadow: var(--sh-2);
+}
+
+.trace-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 11px var(--s-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.trace-topbar-glyph {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--accent);
+  flex: 0 0 auto;
+}
+.trace-topbar-brand {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.trace-topbar-slash {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-fade);
+}
+.trace-topbar-crumb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-left: var(--s-2);
+}
+.trace-topbar-spacer {
+  flex: 1;
+}
+.trace-topbar-emitter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px var(--s-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.trace-topbar-counts {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.trace-nav {
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-dark);
+  padding: var(--s-2) var(--s-4);
+}
+.trace-nav-list {
+  background: transparent;
+  gap: 4px;
+  padding: 0;
+}
+.trace-nav-trigger {
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.trace-nav-hint {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-fade);
+}
+
+.trace-view {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Meters bar ──────────────────────────────────────────────────────────── */
+
+.trace-meters {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: 15px var(--s-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  flex-wrap: wrap;
+}
+.trace-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+.trace-meter-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.trace-meter-track {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+.trace-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--agent));
+  border-radius: var(--r-pill);
+  transition: width 0.35s ease;
+}
+.trace-meter-figure {
+  font-size: 15px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.trace-meters-summary {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* ── Chips / pills (one shared grammar) ─────────────────────────────────────
+   Consumer sets `--chip-accent` inline to a token reference; the tint
+   derivation lives here, once. */
+
+.trace-kind-chip,
+.trace-link-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-3);
+  white-space: nowrap;
+  border: 1px solid color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 40%, transparent);
+  background: color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 12%, transparent);
+  color: color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 80%, var(--ink));
+}
+.trace-link-chip {
+  border-color: var(--line-2);
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+}
+.trace-link-chip--broken {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--danger) 50%, transparent);
+  background: transparent;
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+.trace-pill,
+.trace-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px var(--s-3);
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  border: 1px solid color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 45%, transparent);
+  background: color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 13%, transparent);
+  color: color-mix(in oklab, var(--chip-accent, var(--ink-fade)) 85%, var(--ink));
+}
+.trace-status-dot,
+.trace-proof-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--chip-accent, var(--ink-fade));
+  flex: 0 0 auto;
+}
+.trace-proof-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+/* ── Requirements explorer ───────────────────────────────────────────────── */
+
+.trace-explorer {
+  display: flex;
+  flex-direction: column;
+}
+.trace-explorer-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 13px var(--s-5);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.trace-filter-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px var(--s-3);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+}
+.trace-filter-chip--active {
+  border-color: var(--line-2);
+  background: var(--bg-elevated);
+  color: var(--ink);
+}
+.trace-explorer-hint {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-fade);
+}
+
+.trace-explorer-header,
+.trace-explorer-row {
+  display: grid;
+  grid-template-columns: 118px 1.9fr 1.2fr 0.9fr;
+  padding: 0 var(--s-5);
+  align-items: center;
+}
+.trace-explorer-header {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.trace-explorer-header-cell {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+  padding: 9px var(--s-1);
+}
+.trace-explorer-empty {
+  padding: var(--s-6) var(--s-5);
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.trace-explorer-row {
+  border-bottom: 1px solid color-mix(in oklab, var(--line) 55%, transparent);
+  cursor: pointer;
+  background: transparent;
+}
+.trace-explorer-row:hover {
+  background: var(--bg-soft);
+}
+.trace-explorer-row--open {
+  background: var(--accent-wash);
+}
+.trace-explorer-cell {
+  padding: 11px var(--s-1);
+  align-self: center;
+  min-width: 0;
+}
+.trace-explorer-cell-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.trace-explorer-cell-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.trace-row-title {
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trace-row-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+
+.trace-explorer-chain {
+  margin: 0 calc(var(--s-5) * -1);
+  padding: 14px var(--s-6) var(--s-4);
+  background: var(--panel-dark);
+  border-top: 1px solid var(--line);
+  box-shadow: inset 3px 0 0 var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  cursor: default;
+}
+.trace-diagnostic {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-3);
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid color-mix(in oklab, var(--warn) 40%, transparent);
+  background: color-mix(in oklab, var(--warn) 8%, transparent);
+  color: var(--warn);
+}
+.trace-diagnostic[data-severity='error'] {
+  border-color: color-mix(in oklab, var(--danger) 40%, transparent);
+  background: color-mix(in oklab, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
+/* Diagnostics that name no requirement row (e.g. orphan-feature) — surfaced
+   here so no finding silently vanishes from the Diagnostics filter. */
+.trace-diagnostics-unattached {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5) var(--s-4);
+  border-top: 1px dashed var(--line-2);
+  background: var(--bg-soft);
+}
+.trace-diagnostics-unattached-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+.trace-diagnostics-unattached-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.trace-diagnostics-unattached-row .trace-diagnostic {
+  flex: 1;
+  min-width: 0;
+}
+
+.trace-chain-empty {
+  padding: var(--s-3) var(--s-4);
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-3);
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.trace-chain-empty--warn {
+  border-color: color-mix(in oklab, var(--warn) 45%, transparent);
+  color: var(--warn);
+}
+.trace-chain-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.trace-chain-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+.trace-chain-rule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--bg-elevated);
+}
+.trace-chain-rule-title {
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--ink-soft);
+}
+.trace-chain-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.trace-chain-scenario-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.trace-chain-scenario-slug {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-fade);
+  flex: 0 0 auto;
+}
+.trace-chain-scenario-title {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trace-explorer-footer {
+  padding: 11px var(--s-5);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-fade);
+  border-top: 1px solid var(--line);
+}
+
+/* ── Feature detail ──────────────────────────────────────────────────────── */
+
+.trace-feature-detail {
+  display: flex;
+  flex-direction: column;
+}
+.trace-feature-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 12px var(--s-5);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.trace-feature-chip {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px var(--s-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.trace-feature-chip--active {
+  font-weight: 600;
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+
+.trace-feature-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding: var(--s-6);
+}
+.trace-feature-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+}
+.trace-feature-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trace-feature-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.trace-feature-slug {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-fade);
+}
+.trace-feature-figures {
+  display: flex;
+  gap: var(--s-6);
+  align-items: center;
+  margin-left: auto;
+}
+.trace-feature-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-end;
+}
+.trace-feature-figure-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.trace-feature-figure-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.trace-feature-provenance {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: 11px var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--bg-soft);
+  flex-wrap: wrap;
+}
+.trace-feature-provenance-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+.trace-feature-provenance-value {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+.trace-feature-provenance-meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
+.trace-feature-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.trace-feature-section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.trace-userreq-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 11px var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--bg-elevated);
+}
+.trace-userreq-title {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--ink);
+}
+.trace-userreq-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+.trace-userreq-actor {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-muted);
+}
+
+.trace-rule-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  background: var(--bg-elevated);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.trace-rule-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 12px var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.trace-rule-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.trace-rule-card-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+.trace-rule-card .trace-chain-empty {
+  margin: var(--s-3);
+}
+
+.trace-scenario-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: 14px var(--s-4);
+  border-bottom: 1px solid color-mix(in oklab, var(--line) 55%, transparent);
+}
+.trace-scenario-row:last-child {
+  border-bottom: none;
+}
+.trace-scenario-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.trace-scenario-line1 {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.trace-scenario-title {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--ink);
+}
+.trace-scenario-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+.trace-scenario-evidence {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}

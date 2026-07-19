@@ -5,6 +5,10 @@
     "outDir": "dist",
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
   },
+  "references": [
+    { "path": "../trace-model/tsconfig.build.json" },
+    { "path": "../req-schema/tsconfig.build.json" }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
