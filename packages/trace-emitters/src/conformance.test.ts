@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { Actor, Feature, SystemRequirement, UserRequirement } from '@workspec/req-schema';
+import type {
+  Actor,
+  Feature,
+  Scenario,
+  SystemRequirement,
+  UserRequirement,
+} from '@workspec/req-schema';
 import type { Located, TraceTree } from '@workspec/trace-model';
 import { assertRoundTrip, roundTrip } from './conformance.js';
 import { cucumberEmitter, mockCucumberRun } from './cucumber.js';
@@ -46,6 +52,14 @@ function sysReq(slug: string, spec: SystemRequirement['spec']): Located<SystemRe
   };
 }
 
+function scenario(slug: string, spec: Scenario['spec']): Located<Scenario> {
+  return {
+    slug,
+    source: { file: `scenarios/${slug}.yml` },
+    artifact: { apiVersion: API_VERSION, kind: 'Scenario', metadata: { slug }, spec },
+  };
+}
+
 /** A small, fully-wired tree (no dangling refs, no orphans) so the model proves cleanly. */
 function buildTree(): TraceTree {
   return {
@@ -64,18 +78,24 @@ function buildTree(): TraceTree {
       }),
     ],
     systemRequirements: [
-      sysReq('inline-create-persists', {
-        title: 'Creating an element inline saves it immediately',
+      sysReq('inline-create', {
+        title: 'Inline element creation',
         feature: 'element-authoring',
         userReqs: ['authoring-flow'],
+        links: [],
+      }),
+    ],
+    scenarios: [
+      scenario('inline-create-persists', {
+        title: 'Creating an element inline saves it immediately',
+        systemRequirement: 'inline-create',
         given: ['a canvas with no selected element'],
         when: ['the dev lead double-clicks empty canvas', 'and types a name and presses Enter'],
         then: ['the element is persisted', 'and appears in the repo tree without a form submit'],
       }),
-      sysReq('inline-create-each-kind', {
+      scenario('inline-create-each-kind', {
         title: 'Inline create works for each element kind',
-        feature: 'element-authoring',
-        userReqs: ['authoring-flow'],
+        systemRequirement: 'inline-create',
         given: ['a canvas'],
         when: ['the dev lead inline-creates a "<kind>"'],
         then: ['a valid "<kind>" artifact is written'],
@@ -88,16 +108,13 @@ function buildTree(): TraceTree {
 const ALL_SLUGS = ['inline-create-each-kind', 'inline-create-persists'];
 
 describe('round-trip conformance (issue #71) — emit → run → ingest → proven', () => {
-  it('proves every emitted sysreq when the mock run passes (assertRoundTrip does not throw)', () => {
+  it('proves every emitted scenario when the mock run passes (assertRoundTrip does not throw)', () => {
     const tree = buildTree();
     const result = assertRoundTrip(cucumberEmitter, tree, mockCucumberRun, META);
 
     expect(result.provenSlugs).toEqual(ALL_SLUGS);
     expect(result.unprovenSlugs).toEqual([]);
-    expect(result.emitted.map((f) => f.path)).toEqual([
-      'inline-create-each-kind.feature',
-      'inline-create-persists.feature',
-    ]);
+    expect(result.emitted.map((f) => f.path)).toEqual(['inline-create.feature']);
     expect(result.run.emitter).toBe('cucumber');
     expect(result.run.results).toEqual({
       'inline-create-each-kind': 'pass',
@@ -105,32 +122,37 @@ describe('round-trip conformance (issue #71) — emit → run → ingest → pro
     });
   });
 
-  it('makes "proven" SEMANTIC via trace-model: proof === pass, meters saturated', () => {
+  it('makes "proven" SEMANTIC via trace-model: ScenarioNode.proof === pass, meters saturated', () => {
     const { model } = assertRoundTrip(cucumberEmitter, buildTree(), mockCucumberRun, META);
 
-    expect(model.systemRequirements.map((n) => [n.slug, n.proof])).toEqual([
+    expect(model.scenarios.map((n) => [n.slug, n.proof])).toEqual([
       ['inline-create-each-kind', 'pass'],
       ['inline-create-persists', 'pass'],
     ]);
     expect(model.passRate).toEqual({ numerator: 2, denominator: 2, ratio: 1 });
-    // coverage: authoring-flow has a passing verifier → covered.
-    expect(model.coverage).toEqual({ numerator: 1, denominator: 1, ratio: 1 });
+    expect(model.scenarioCoverage).toEqual({ numerator: 2, denominator: 2, ratio: 1 });
+    // userReq coverage: authoring-flow has a rule-proven verifier → covered.
+    expect(model.userReqCoverage).toEqual({ numerator: 1, denominator: 1, ratio: 1 });
     expect(model.userRequirements[0]?.covered).toBe(true);
+    expect(model.systemRequirements[0]?.ruleProven).toBe(true);
     expect(model.findings).toEqual([]);
   });
 
   it('closes the loop: every emitted @tag becomes a key in the ingested run', () => {
     const { emitted, run } = roundTrip(cucumberEmitter, buildTree(), mockCucumberRun, META);
     for (const file of emitted) {
-      const tag = /^ {2}@(?<slug>\S+)$/m.exec(file.content)?.groups?.slug;
-      expect(tag).toBeDefined();
-      expect(run.results[tag as string]).toBeDefined();
+      const tags = [...file.content.matchAll(/^ {4}@(?<slug>\S+)$/gm)].map((m) => m.groups?.slug);
+      expect(tags.length).toBeGreaterThan(0);
+      for (const tag of tags) {
+        expect(tag).toBeDefined();
+        expect(run.results[tag as string]).toBeDefined();
+      }
     }
   });
 
   it('NEGATIVE — a failing scenario ingests to fail, leaving the slug unproven (fail reflected in the model)', () => {
-    const failing: MockRunner = (sysreqs) =>
-      mockCucumberRun(sysreqs, { failing: ['inline-create-persists'] });
+    const failing: MockRunner = (rules) =>
+      mockCucumberRun(rules, { failing: ['inline-create-persists'] });
     const { run, model, provenSlugs, unprovenSlugs } = roundTrip(
       cucumberEmitter,
       buildTree(),
@@ -139,11 +161,16 @@ describe('round-trip conformance (issue #71) — emit → run → ingest → pro
     );
 
     expect(run.results['inline-create-persists']).toBe('fail');
-    const failed = model.systemRequirements.find((n) => n.slug === 'inline-create-persists');
+    const failed = model.scenarios.find((n) => n.slug === 'inline-create-persists');
     expect(failed?.proof).toBe('fail');
     expect(unprovenSlugs).toEqual(['inline-create-persists']);
     expect(provenSlugs).toEqual(['inline-create-each-kind']);
     expect(model.passRate).toEqual({ numerator: 1, denominator: 2, ratio: 0.5 });
+
+    // The Rule that groups the failing scenario is no longer rule-proven, so
+    // its userReq loses coverage too — proving the failure propagates.
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+    expect(model.userRequirements[0]?.covered).toBe(false);
 
     // The conformance claim must FAIL for a run that does not prove everything.
     expect(() => assertRoundTrip(cucumberEmitter, buildTree(), failing, META)).toThrow(
@@ -152,12 +179,12 @@ describe('round-trip conformance (issue #71) — emit → run → ingest → pro
   });
 
   it('NEGATIVE — a skipped scenario is unproven (skip is not pass)', () => {
-    const skipping: MockRunner = (sysreqs) =>
-      mockCucumberRun(sysreqs, { skipping: ['inline-create-each-kind'] });
+    const skipping: MockRunner = (rules) =>
+      mockCucumberRun(rules, { skipping: ['inline-create-each-kind'] });
     const { run, model, unprovenSlugs } = roundTrip(cucumberEmitter, buildTree(), skipping, META);
 
     expect(run.results['inline-create-each-kind']).toBe('skip');
-    const skipped = model.systemRequirements.find((n) => n.slug === 'inline-create-each-kind');
+    const skipped = model.scenarios.find((n) => n.slug === 'inline-create-each-kind');
     expect(skipped?.proof).toBe('skip');
     expect(unprovenSlugs).toEqual(['inline-create-each-kind']);
   });

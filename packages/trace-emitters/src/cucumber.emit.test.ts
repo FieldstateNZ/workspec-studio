@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { SystemRequirement } from '@workspec/req-schema';
+import type { Scenario, SystemRequirement } from '@workspec/req-schema';
 import { cucumberEmitter } from './cucumber.js';
-import type { SysReqInput } from './types.js';
+import type { RuleWithScenarios, ScenarioInput } from './types.js';
 
-function sysReqInput(slug: string, spec: SystemRequirement['spec']): SysReqInput {
+function rule(slug: string, spec: SystemRequirement['spec']): RuleWithScenarios['sysreq'] {
   return {
     slug,
-    sysreq: {
+    artifact: {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'SystemRequirement',
       metadata: { slug },
@@ -15,88 +15,136 @@ function sysReqInput(slug: string, spec: SystemRequirement['spec']): SysReqInput
   };
 }
 
-const persists = sysReqInput('inline-create-persists', {
-  title: 'Creating an element inline saves it immediately',
-  feature: 'element-authoring',
-  userReqs: ['authoring-flow'],
-  given: ['a canvas with no selected element'],
-  when: ['the dev lead double-clicks empty canvas', 'and types a name and presses Enter'],
-  then: ['the element is persisted', 'and appears in the repo tree without a form submit'],
-});
+function scenarioInput(slug: string, spec: Scenario['spec']): ScenarioInput {
+  return {
+    slug,
+    artifact: { apiVersion: 'workspec.io/v1alpha1', kind: 'Scenario', metadata: { slug }, spec },
+  };
+}
 
-const eachKind = sysReqInput('inline-create-each-kind', {
-  title: 'Inline create works for each element kind',
-  feature: 'element-authoring',
-  userReqs: ['authoring-flow'],
-  given: ['a canvas'],
-  when: ['the dev lead inline-creates a "<kind>"'],
-  then: ['a valid "<kind>" artifact is written'],
-  examples: [{ kind: 'component' }, { kind: 'container' }, { kind: 'database' }],
-});
+const inlineCreate: RuleWithScenarios = {
+  sysreq: rule('inline-create', {
+    title: 'Inline element creation',
+    feature: 'element-authoring',
+    userReqs: ['authoring-flow'],
+    links: [],
+  }),
+  scenarios: [
+    scenarioInput('inline-create-persists', {
+      title: 'Creating an element inline saves it immediately',
+      systemRequirement: 'inline-create',
+      given: ['a canvas with no selected element'],
+      when: ['the dev lead double-clicks empty canvas', 'and types a name and presses Enter'],
+      then: ['the element is persisted', 'and appears in the repo tree without a form submit'],
+    }),
+    scenarioInput('inline-create-each-kind', {
+      title: 'Inline create works for each element kind',
+      systemRequirement: 'inline-create',
+      given: ['a canvas'],
+      when: ['the dev lead inline-creates a "<kind>"'],
+      then: ['a valid "<kind>" artifact is written'],
+      examples: [{ kind: 'component' }, { kind: 'container' }, { kind: 'database' }],
+    }),
+  ],
+};
+
+const runReview: RuleWithScenarios = {
+  sysreq: rule('failing-run-surfaced', {
+    title: 'A failing scenario is surfaced in run review',
+    feature: 'run-review',
+    userReqs: ['review-failures'],
+    links: [],
+  }),
+  scenarios: [
+    scenarioInput('failing-run-surfaced-scenario', {
+      title: 'A failing scenario is surfaced in run review',
+      systemRequirement: 'failing-run-surfaced',
+      then: ['the failure is listed first'],
+    }),
+  ],
+};
 
 describe('cucumberEmitter.emit', () => {
-  it('emits one .feature file per sysreq, named on the slug (feature-file-per-sysreq)', () => {
-    const files = cucumberEmitter.emit([persists, eachKind]);
+  it('emits one .feature file per Rule, named on the Rule slug (feature-file-per-rule)', () => {
+    const files = cucumberEmitter.emit([inlineCreate, runReview]);
     expect(files.map((f) => f.path)).toEqual([
-      'inline-create-each-kind.feature',
-      'inline-create-persists.feature',
+      'failing-run-surfaced.feature',
+      'inline-create.feature',
     ]);
   });
 
   it('returns files deterministically sorted by path regardless of input order', () => {
-    const a = cucumberEmitter.emit([persists, eachKind]);
-    const b = cucumberEmitter.emit([eachKind, persists]);
+    const a = cucumberEmitter.emit([inlineCreate, runReview]);
+    const b = cucumberEmitter.emit([runReview, inlineCreate]);
     expect(a).toEqual(b);
   });
 
-  it('tags each scenario with @<slug> (req-tag-on-scenario — the ingest binding)', () => {
-    for (const input of [persists, eachKind]) {
-      const [file] = cucumberEmitter.emit([input]);
-      expect(file?.content).toContain(`@${input.slug}\n`);
-    }
+  it('tags each scenario with its OWN @<scenario-slug> (req-tag-on-scenario — the ingest binding)', () => {
+    const [file] = cucumberEmitter.emit([inlineCreate]);
+    expect(file?.content).toContain('@inline-create-persists\n');
+    expect(file?.content).toContain('@inline-create-each-kind\n');
   });
 
-  it('uses Scenario Outline only when the sysreq has an examples table (outline-from-examples)', () => {
-    const [plain] = cucumberEmitter.emit([persists]);
-    const [outline] = cucumberEmitter.emit([eachKind]);
-    expect(plain?.content).toContain('  Scenario: ');
-    expect(plain?.content).not.toContain('Scenario Outline');
-    expect(outline?.content).toContain('  Scenario Outline: ');
-    expect(outline?.content).toContain('    Examples:');
+  it('groups multiple scenarios under one Feature/Rule (rule-groups-scenarios)', () => {
+    const [file] = cucumberEmitter.emit([inlineCreate]);
+    expect(file?.content).toContain('Feature: element-authoring');
+    expect(file?.content).toContain('Rule: Inline element creation');
+    expect(file?.content?.match(/Scenario/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('byte-stable full output for a plain scenario', () => {
-    const [file] = cucumberEmitter.emit([persists]);
+  it('uses Scenario Outline only when the scenario has an examples table (outline-from-examples)', () => {
+    const [file] = cucumberEmitter.emit([inlineCreate]);
+    expect(file?.content).toContain('Scenario: Creating an element inline saves it immediately');
+    expect(file?.content).toContain('Scenario Outline: Inline create works for each element kind');
+    expect(file?.content).toContain('Examples:');
+  });
+
+  it('emits the Feature/Rule header alone for an empty rule (no scenarios)', () => {
+    const empty: RuleWithScenarios = {
+      sysreq: rule('empty-rule', {
+        title: 'A rule with no scenarios yet',
+        feature: 'element-authoring',
+        userReqs: ['authoring-flow'],
+        links: [],
+      }),
+      scenarios: [],
+    };
+    const [file] = cucumberEmitter.emit([empty]);
+    expect(file?.path).toBe('empty-rule.feature');
     expect(file?.content).toMatchInlineSnapshot(`
       "Feature: element-authoring
 
-        @inline-create-persists
-        Scenario: Creating an element inline saves it immediately
-          Given a canvas with no selected element
-          When the dev lead double-clicks empty canvas
-          And types a name and presses Enter
-          Then the element is persisted
-          And appears in the repo tree without a form submit
+        Rule: A rule with no scenarios yet
       "
     `);
   });
 
-  it('byte-stable full output for a scenario outline', () => {
-    const [file] = cucumberEmitter.emit([eachKind]);
+  it('byte-stable full output for a Rule with a plain scenario + a scenario outline', () => {
+    const [file] = cucumberEmitter.emit([inlineCreate]);
     expect(file?.content).toMatchInlineSnapshot(`
       "Feature: element-authoring
 
-        @inline-create-each-kind
-        Scenario Outline: Inline create works for each element kind
-          Given a canvas
-          When the dev lead inline-creates a "<kind>"
-          Then a valid "<kind>" artifact is written
+        Rule: Inline element creation
 
-          Examples:
-            | kind      |
-            | component |
-            | container |
-            | database  |
+          @inline-create-persists
+          Scenario: Creating an element inline saves it immediately
+            Given a canvas with no selected element
+            When the dev lead double-clicks empty canvas
+            And types a name and presses Enter
+            Then the element is persisted
+            And appears in the repo tree without a form submit
+
+          @inline-create-each-kind
+          Scenario Outline: Inline create works for each element kind
+            Given a canvas
+            When the dev lead inline-creates a "<kind>"
+            Then a valid "<kind>" artifact is written
+
+            Examples:
+              | kind      |
+              | component |
+              | container |
+              | database  |
       "
     `);
   });

@@ -1,13 +1,14 @@
 // @workspec/trace-emitters — the cucumber emit + ingest seam for the WorkSpec
 // Traceability Workbench.
 //
-// An emitter is a named convention binding system-requirement artifacts to a
-// test toolchain IN BOTH DIRECTIONS: `emit(sysreqs) → files` (greenfield) and
-// `ingest(raw, meta) → TestRun` (brownfield), plus its declared conventions
-// (spec §3). This is the module's PROVIDER SEAM — adding a framework means
-// adding an `Emitter` and nothing else. Everything here is PURE and
-// DETERMINISTIC: no IO, no DOM, no clock, no `Math.random()`; identical input
-// yields byte-identical output. See docs/traceability/spec.md §3/§4.4/§4.5/§7.
+// An emitter is a named convention binding Rule (system-requirement) +
+// scenario artifacts to a test toolchain IN BOTH DIRECTIONS: `emit(rules) →
+// files` (greenfield) and `ingest(raw, meta) → TestRun` (brownfield), plus its
+// declared conventions (spec §3). This is the module's PROVIDER SEAM — adding
+// a framework means adding an `Emitter` and nothing else. Everything here is
+// PURE and DETERMINISTIC: no IO, no DOM, no clock, no `Math.random()`;
+// identical input yields byte-identical output. See
+// docs/traceability/spec.md §3/§4.4/§4.5/§7.
 
 import { REQ_SCHEMA_PACKAGE } from '@workspec/req-schema';
 
@@ -18,7 +19,15 @@ export const TRACE_EMITTERS_PACKAGE = '@workspec/trace-emitters' as const;
 export const EMITTER_TARGET_SCHEMA = REQ_SCHEMA_PACKAGE;
 
 // ── The emitter seam (contract + types) ───────────────────────────────────────
-export type { Emitter, EmitterConvention, EmittedFile, RunMeta, SysReqInput } from './types.js';
+export type {
+  Emitter,
+  EmitterConvention,
+  EmittedFile,
+  RuleInput,
+  RuleWithScenarios,
+  RunMeta,
+  ScenarioInput,
+} from './types.js';
 
 // ── The cucumber emitter ──────────────────────────────────────────────────────
 export { cucumberEmitter, CUCUMBER_CONVENTIONS } from './cucumber.js';
