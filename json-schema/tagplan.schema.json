@@ -1,86 +1,60 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schema.workspec.io/v1alpha1/tagplan.schema.json",
-  "title": "WorkSpec TagPlan (v1alpha1)",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec tag-plan artifact: the tagging actions needed to converge on an attribution result.",
   "properties": {
     "apiVersion": {
-      "type": "string",
       "const": "workspec.io/v1alpha1",
-      "description": "Artifact API version discriminant."
+      "description": "Artifact API version discriminant.",
+      "type": "string"
     },
     "kind": {
-      "type": "string",
       "const": "TagPlan",
-      "description": "Artifact kind discriminant."
+      "description": "Artifact kind discriminant.",
+      "type": "string"
     },
     "metadata": {
-      "type": "object",
+      "description": "Common artifact identity.",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "description": "Stable tag-plan id, e.g. \"prod-2026-07\"."
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional human-readable name."
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
         }
       },
-      "required": [
-        "id"
-      ],
-      "additionalProperties": false,
-      "description": "TagPlan identity."
+      "type": "object"
     },
     "spec": {
-      "type": "object",
+      "description": "The tag plan body: optional name, baseline anchor, dimension→tag mapping, and entries.",
       "properties": {
         "baselineAsOf": {
-          "type": "string",
+          "description": "ISO 8601 UTC timestamp: the Inventory `asOf` this plan was computed against (the drift-check anchor).",
           "format": "date-time",
-          "description": "ISO 8601 UTC timestamp: the Inventory `asOf` this plan was computed against (the drift-check anchor)."
-        },
-        "tagMapping": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 512,
-            "pattern": "^[^<>%&\\\\?/]*$",
-            "description": "A resource tag name: 1-512 characters, must not contain < > % & \\ ? / (Azure rule)."
-          },
-          "propertyNames": {
-            "minLength": 1,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-          },
-          "description": "Dimension id → tag name mapping, e.g. { product: \"fs-product\" }. Must not be empty."
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+          "type": "string"
         },
         "entries": {
-          "type": "array",
+          "description": "One entry per resource × tag. MUST be sorted ascending by (resourceId, tag) — the sort-order contract (see README).",
           "items": {
-            "type": "object",
+            "description": "One resource × tag entry in the tag plan.",
             "properties": {
-              "resourceId": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Resource id this entry concerns (matches an Inventory resource id)."
-              },
-              "tag": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 512,
-                "pattern": "^[^<>%&\\\\?/]*$",
-                "description": "Tag name."
+              "action": {
+                "description": "The tagging action this entry represents: add (current null, desired set), change (both set and different), remove (current set, desired null), or noop (equal).",
+                "enum": [
+                  "add",
+                  "change",
+                  "remove",
+                  "noop"
+                ],
+                "type": "string"
               },
               "current": {
                 "anyOf": [
                   {
-                    "type": "string",
+                    "description": "A resource tag value: at most 256 characters. No character restriction.",
                     "maxLength": 256,
-                    "description": "A resource tag value: at most 256 characters. No character restriction."
+                    "type": "string"
                   },
                   {
                     "type": "null"
@@ -91,9 +65,9 @@
               "desired": {
                 "anyOf": [
                   {
-                    "type": "string",
+                    "description": "A resource tag value: at most 256 characters. No character restriction.",
                     "maxLength": 256,
-                    "description": "A resource tag value: at most 256 characters. No character restriction."
+                    "type": "string"
                   },
                   {
                     "type": "null"
@@ -101,15 +75,17 @@
                 ],
                 "description": "Desired tag value, or null if the tag should not be set."
               },
-              "action": {
-                "type": "string",
-                "enum": [
-                  "add",
-                  "change",
-                  "remove",
-                  "noop"
-                ],
-                "description": "The tagging action this entry represents: add (current null, desired set), change (both set and different), remove (current set, desired null), or noop (equal)."
+              "resourceId": {
+                "description": "Resource id this entry concerns (matches an Inventory resource id).",
+                "minLength": 1,
+                "type": "string"
+              },
+              "tag": {
+                "description": "Tag name.",
+                "maxLength": 512,
+                "minLength": 1,
+                "pattern": "^[^<>%&\\\\?/]*$",
+                "type": "string"
               }
             },
             "required": [
@@ -119,10 +95,30 @@
               "desired",
               "action"
             ],
-            "additionalProperties": false,
-            "description": "One resource × tag entry in the tag plan."
+            "type": "object"
           },
-          "description": "One entry per resource × tag. MUST be sorted ascending by (resourceId, tag) — the sort-order contract (see README)."
+          "type": "array"
+        },
+        "name": {
+          "description": "Optional human-readable name for this tag plan.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "tagMapping": {
+          "additionalProperties": {
+            "description": "A resource tag name: 1-512 characters, must not contain < > % & \\ ? / (Azure rule).",
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^<>%&\\\\?/]*$",
+            "type": "string"
+          },
+          "description": "Dimension id → tag name mapping, e.g. { product: \"fs-product\" }. Must not be empty.",
+          "propertyNames": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "type": "object"
         }
       },
       "required": [
@@ -130,8 +126,7 @@
         "tagMapping",
         "entries"
       ],
-      "additionalProperties": false,
-      "description": "The tag plan body."
+      "type": "object"
     }
   },
   "required": [
@@ -140,6 +135,6 @@
     "metadata",
     "spec"
   ],
-  "additionalProperties": false,
-  "description": "A WorkSpec tag-plan artifact: the tagging actions needed to converge on an attribution result."
+  "title": "WorkSpec TagPlan (v1alpha1)",
+  "type": "object"
 }

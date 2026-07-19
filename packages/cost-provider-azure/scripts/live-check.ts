@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   const emptyDryRunPlan = {
     apiVersion: 'workspec.io/v1alpha1' as const,
     kind: 'TagPlan' as const,
-    metadata: { id: 'live-check-noop' },
+    metadata: { slug: 'live-check-noop' },
     spec: { baselineAsOf: inventory.spec.asOf, tagMapping: { 'live-check': 'workspec-live-check' }, entries: [] },
   };
   const applyResult = await provider.applyTags(emptyDryRunPlan, { dryRun: true });

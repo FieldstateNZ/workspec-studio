@@ -75,8 +75,9 @@ function buildInventory(): Inventory {
   return {
     apiVersion: API_VERSION,
     kind: 'Inventory',
-    metadata: { id: 'mf-host-estate', name: 'MF host smoke estate' },
+    metadata: { slug: 'mf-host-estate' },
     spec: {
+      name: 'MF host smoke estate',
       asOf: INVENTORY_AS_OF,
       scope: { subscriptions: [SUBSCRIPTION] },
       resources,
@@ -96,7 +97,7 @@ function buildSpend(): Spend {
   return {
     apiVersion: API_VERSION,
     kind: 'Spend',
-    metadata: { id: 'mf-host-estate-2026-06' },
+    metadata: { slug: 'mf-host-estate-2026-06' },
     spec: { rows },
   };
 }
@@ -105,7 +106,7 @@ function buildAttribution(): Attribution {
   return {
     apiVersion: API_VERSION,
     kind: 'Attribution',
-    metadata: { id: 'mf-host-estate' },
+    metadata: { slug: 'mf-host-estate' },
     spec: {
       dimensions: [
         { id: 'product', label: 'Product', values: ['ledger', 'atlas', 'shared'] },
@@ -157,8 +158,9 @@ function buildTagPlan(): TagPlan {
   return {
     apiVersion: API_VERSION,
     kind: 'TagPlan',
-    metadata: { id: 'mf-host-estate-plan', name: 'MF host smoke tag plan' },
+    metadata: { slug: 'mf-host-estate-plan' },
     spec: {
+      name: 'MF host smoke tag plan',
       baselineAsOf: INVENTORY_AS_OF,
       tagMapping: { product: 'ws-product', costType: 'ws-cost-type', client: 'ws-client' },
       entries: [

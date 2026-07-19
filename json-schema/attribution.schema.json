@@ -1,68 +1,58 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schema.workspec.io/v1alpha1/attribution.schema.json",
-  "title": "WorkSpec Attribution (v1alpha1)",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec attribution artifact: dimensions, ordered rules, and pinned overrides.",
   "properties": {
     "apiVersion": {
-      "type": "string",
       "const": "workspec.io/v1alpha1",
-      "description": "Artifact API version discriminant."
+      "description": "Artifact API version discriminant.",
+      "type": "string"
     },
     "kind": {
-      "type": "string",
       "const": "Attribution",
-      "description": "Artifact kind discriminant."
+      "description": "Artifact kind discriminant.",
+      "type": "string"
     },
     "metadata": {
-      "type": "object",
+      "description": "Common artifact identity.",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "description": "Stable attribution id, e.g. \"prod\"."
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional human-readable name."
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
         }
       },
-      "required": [
-        "id"
-      ],
-      "additionalProperties": false,
-      "description": "Attribution identity."
+      "type": "object"
     },
     "spec": {
-      "type": "object",
+      "description": "The attribution body: optional name, dimensions, ordered rules, and pinned overrides.",
       "properties": {
         "dimensions": {
-          "type": "array",
+          "description": "Declared attribution dimensions (axes). Dimension ids must be unique.",
           "items": {
-            "type": "object",
+            "description": "An attribution dimension: a named axis of cost allocation.",
             "properties": {
               "id": {
-                "type": "string",
+                "description": "Stable dimension id, unique among dimensions, e.g. \"product\".",
                 "minLength": 1,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                "description": "Stable dimension id, unique among dimensions, e.g. \"product\"."
+                "type": "string"
               },
               "label": {
-                "type": "string",
+                "description": "Human-readable dimension name, e.g. \"Product\".",
                 "minLength": 1,
-                "description": "Human-readable dimension name, e.g. \"Product\"."
+                "type": "string"
               },
               "values": {
-                "type": "array",
+                "description": "Declared value ids for this dimension, e.g. [\"atrium\", \"workspec\"]. Must be unique.",
                 "items": {
-                  "type": "string",
                   "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
                 },
                 "minItems": 1,
-                "description": "Declared value ids for this dimension, e.g. [\"atrium\", \"workspec\"]. Must be unique."
+                "type": "array"
               }
             },
             "required": [
@@ -70,123 +60,162 @@
               "label",
               "values"
             ],
-            "additionalProperties": false,
-            "description": "An attribution dimension: a named axis of cost allocation."
+            "type": "object"
           },
           "minItems": 1,
-          "description": "Declared attribution dimensions (axes). Dimension ids must be unique."
+          "type": "array"
+        },
+        "name": {
+          "description": "Optional human-readable name for this attribution.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "overrides": {
+          "description": "Pinned per-resource assignments that beat all rules (engine precedence — see README).",
+          "items": {
+            "description": "A pinned per-resource assignment that beats all rules.",
+            "properties": {
+              "assign": {
+                "additionalProperties": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
+                },
+                "description": "Pinned per-dimension value assignment; beats all rules (engine precedence — see README).",
+                "propertyNames": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "resourceId": {
+                "description": "Resource id this override pins (matches an Inventory resource id).",
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "resourceId",
+              "assign"
+            ],
+            "type": "object"
+          },
+          "type": "array"
         },
         "rules": {
-          "type": "array",
+          "description": "Attribution rules. ORDERED: the order in the file IS the match precedence — the attribution engine (a later slice) applies the first matching rule, per dimension, independently. An empty `match: {}` matches every resource, so a catch-all rule belongs last.",
           "items": {
-            "type": "object",
+            "description": "An attribution rule: match conditions plus one or more effects.",
             "properties": {
+              "assign": {
+                "additionalProperties": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
+                },
+                "description": "Literal per-dimension value assignment.",
+                "propertyNames": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "fromTag": {
+                "additionalProperties": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "description": "Per-dimension assignment read from a resource tag.",
+                "propertyNames": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
+                },
+                "type": "object"
+              },
               "id": {
-                "type": "string",
+                "description": "Stable rule id, unique among rules, e.g. \"r1\".",
                 "minLength": 1,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                "description": "Stable rule id, unique among rules, e.g. \"r1\"."
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Human-readable rule name."
+                "type": "string"
               },
               "match": {
-                "type": "object",
+                "description": "Match conditions; ALL present fields must match (AND).",
                 "properties": {
-                  "resourceType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "Exact match on the Inventory resource `type`."
-                  },
                   "nameGlob": {
-                    "type": "string",
+                    "description": "Glob match on the Inventory resource `name` (`*` is the only wildcard).",
                     "minLength": 1,
-                    "description": "Glob match on the Inventory resource `name` (`*` is the only wildcard)."
+                    "type": "string"
                   },
                   "resourceGroup": {
-                    "type": "string",
+                    "description": "Glob match on the Inventory resource `resourceGroup` (`*` is the only wildcard).",
                     "minLength": 1,
-                    "description": "Glob match on the Inventory resource `resourceGroup` (`*` is the only wildcard)."
+                    "type": "string"
+                  },
+                  "resourceType": {
+                    "description": "Exact match on the Inventory resource `type`.",
+                    "minLength": 1,
+                    "type": "string"
                   },
                   "subscription": {
-                    "type": "string",
+                    "description": "Exact match on the Inventory resource `subscription`.",
                     "minLength": 1,
-                    "description": "Exact match on the Inventory resource `subscription`."
+                    "type": "string"
                   },
                   "tagEquals": {
-                    "type": "object",
+                    "description": "Match when the resource has this tag name set to this exact value.",
                     "properties": {
                       "name": {
-                        "type": "string",
+                        "description": "Tag name.",
                         "minLength": 1,
-                        "description": "Tag name."
+                        "type": "string"
                       },
                       "value": {
-                        "type": "string",
-                        "description": "Tag value to match exactly."
+                        "description": "Tag value to match exactly.",
+                        "type": "string"
                       }
                     },
                     "required": [
                       "name",
                       "value"
                     ],
-                    "additionalProperties": false,
-                    "description": "Match when the resource has this tag name set to this exact value."
+                    "type": "object"
                   },
                   "tagExists": {
-                    "type": "string",
+                    "description": "Match when the resource has this tag name set, regardless of value.",
                     "minLength": 1,
-                    "description": "Match when the resource has this tag name set, regardless of value."
+                    "type": "string"
                   }
                 },
-                "additionalProperties": false,
-                "description": "Match conditions; ALL present fields must match (AND)."
+                "type": "object"
               },
-              "assign": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                },
-                "propertyNames": {
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                },
-                "description": "Literal per-dimension value assignment."
+              "name": {
+                "description": "Human-readable rule name.",
+                "minLength": 1,
+                "type": "string"
               },
               "split": {
-                "type": "object",
                 "additionalProperties": {
-                  "type": "object",
                   "additionalProperties": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "type": "number"
                   },
                   "propertyNames": {
                     "minLength": 1,
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                  }
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                    "type": "string"
+                  },
+                  "type": "object"
                 },
+                "description": "Per-dimension ratio splits across multiple values.",
                 "propertyNames": {
                   "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "type": "string"
                 },
-                "description": "Per-dimension ratio splits across multiple values."
-              },
-              "fromTag": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "propertyNames": {
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                },
-                "description": "Per-dimension assignment read from a resource tag."
+                "type": "object"
               }
             },
             "required": [
@@ -194,51 +223,16 @@
               "name",
               "match"
             ],
-            "additionalProperties": false,
-            "description": "An attribution rule: match conditions plus one or more effects."
+            "type": "object"
           },
-          "description": "Attribution rules. ORDERED: the order in the file IS the match precedence — the attribution engine (a later slice) applies the first matching rule, per dimension, independently. An empty `match: {}` matches every resource, so a catch-all rule belongs last."
-        },
-        "overrides": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "resourceId": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Resource id this override pins (matches an Inventory resource id)."
-              },
-              "assign": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                },
-                "propertyNames": {
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
-                },
-                "description": "Pinned per-dimension value assignment; beats all rules (engine precedence — see README)."
-              }
-            },
-            "required": [
-              "resourceId",
-              "assign"
-            ],
-            "additionalProperties": false,
-            "description": "A pinned per-resource assignment that beats all rules."
-          },
-          "description": "Pinned per-resource assignments that beat all rules (engine precedence — see README)."
+          "type": "array"
         }
       },
       "required": [
         "dimensions",
         "rules"
       ],
-      "additionalProperties": false,
-      "description": "The attribution body."
+      "type": "object"
     }
   },
   "required": [
@@ -247,6 +241,6 @@
     "metadata",
     "spec"
   ],
-  "additionalProperties": false,
-  "description": "A WorkSpec attribution artifact: dimensions, ordered rules, and pinned overrides."
+  "title": "WorkSpec Attribution (v1alpha1)",
+  "type": "object"
 }

@@ -1,11 +1,13 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
-import { identifier } from './common.js';
+import { defineArtifact } from '@workspec/schema-core';
 
 // ── Spend artifact (`*.spend.yaml`) ─────────────────────────────────────────
 // Billed rows for a period, each attributed to an inventory resource (or left
 // `unresolved` when the provider's billing export couldn't be matched to one).
 // Like Inventory, the sort order of `rows[]` is part of the schema contract.
+//
+// Built on `@workspec/schema-core`'s `defineArtifact` — see `inventory.ts` for
+// the envelope/identity note. `name` (optional) lives on `spec` now.
 
 /** One spend row: an amount for a period, attributed to a resource (or left unresolved). */
 export const SpendRow = z
@@ -50,11 +52,18 @@ export const SpendRow = z
           'provenance alongside `resourceId` otherwise.',
       ),
   })
-  .describe('One spend row: an amount for a period, attributed to a resource (or left unresolved).');
+  .describe(
+    'One spend row: an amount for a period, attributed to a resource (or left unresolved).',
+  );
 
-/** The spend body: billed rows for a period. */
+/** The spend body: optional name, billed rows for a period. */
 export const SpendSpec = z
   .object({
+    name: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Optional human-readable name for this spend record.'),
     rows: z
       .array(SpendRow)
       .describe(
@@ -62,15 +71,7 @@ export const SpendSpec = z
           'serviceCategory) — the sort-order contract (see README).',
       ),
   })
-  .describe('The spend body: billed rows for a period.');
-
-/** Spend identity. */
-export const SpendMetadata = z
-  .object({
-    id: identifier.describe('Stable spend id, e.g. "prod-2026-06".'),
-    name: z.string().min(1).optional().describe('Optional human-readable name.'),
-  })
-  .describe('Spend identity.');
+  .describe('The spend body: optional name, billed rows for a period.');
 
 /**
  * A `*.spend.yaml` artifact: billed rows for a period.
@@ -80,13 +81,7 @@ export const SpendMetadata = z
  * `sourceLabel` is required), and `rows[]` must already be sorted ascending by
  * the composite sort key (the sort-order contract — see README).
  */
-export const SpendArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('Spend').describe('Artifact kind discriminant.'),
-    metadata: SpendMetadata.describe('Spend identity.'),
-    spec: SpendSpec.describe('The spend body.'),
-  })
+export const SpendArtifact = defineArtifact('Spend', SpendSpec)
   .superRefine((doc, ctx) => {
     doc.spec.rows.forEach((row, i) => {
       if (row.unresolved === true) {
@@ -146,5 +141,4 @@ export function compareSpendRows(a: SpendRow, b: SpendRow): number {
 // Inferred TypeScript types (Zod is the single source of truth).
 export type SpendRow = z.infer<typeof SpendRow>;
 export type SpendSpec = z.infer<typeof SpendSpec>;
-export type SpendMetadata = z.infer<typeof SpendMetadata>;
 export type Spend = z.infer<typeof SpendArtifact>;

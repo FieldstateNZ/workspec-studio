@@ -18,9 +18,29 @@ workspec-cost apply <plan-file>                # 4. apply (or --dry-run) the dif
 workspec-cost stocktake --subscription <id>    # 5. re-snapshot — tags now match the plan
 ```
 
-**This CLI never invokes git.** `stocktake` writes to a STABLE path (`<name>.inventory.yaml`) —
-re-running it updates the same file in place, so a plain `git diff` on your working tree IS the
-drift report between two stock-takes. You commit; `workspec-cost` never does.
+**This CLI never invokes git.** `stocktake` writes to a STABLE path
+(`.workspec/inventories/<name>.yaml`) — re-running it updates the same file in place, so a plain
+`git diff` on your working tree IS the drift report between two stock-takes. You commit;
+`workspec-cost` never does.
+
+## Artifact layout
+
+Every cost artifact lives at `.workspec/<kind-dir>/<slug>.yaml` — no more `*.inventory.yaml` /
+`*.spend.yaml` / `*.attribution.yaml` / `*.tagplan.yaml` suffix files scattered anywhere in the
+tree. The filename stem IS the artifact's identity (its slug); `list*` only ever discovers
+artifacts actually filed under the matching directory:
+
+```
+.workspec/
+├── inventories/<slug>.yaml
+├── spends/<slug>.yaml
+├── attributions/<slug>.yaml
+└── tagplans/<slug>.yaml
+```
+
+A slug is lowercase alphanumeric segments separated by single hyphens (e.g. `estate`,
+`estate-2026-07`). `stocktake --name` and `plan --out` both become filenames, so both are validated
+against this shape — an invalid value is a clean usage error (exit `2`), not a write-time failure.
 
 ## Commands
 
@@ -28,13 +48,14 @@ drift report between two stock-takes. You commit; `workspec-cost` never does.
 
 ```
 workspec-cost stocktake --subscription <id> [--subscription <id>...] \
-                         [--name <id>] [--period YYYY-MM] [--dir <dir>]
+                         [--name <slug>] [--period YYYY-MM] [--dir <dir>]
 ```
 
 Fetches inventory + spend from the cloud provider (`@workspec/cost-provider-azure` by default) and
-writes/overwrites `<name>.inventory.yaml` and `<name>.<period>.spend.yaml`. `--name` defaults to
-`estate`; `--period` defaults to the current month. Before overwriting an existing inventory, diffs
-old vs new in memory and prints a drift summary, e.g.:
+writes/overwrites `.workspec/inventories/<name>.yaml` and `.workspec/spends/<name>-<period>.yaml`.
+`--name` defaults to `estate` and must be a valid slug (it becomes the filename); `--period`
+defaults to the current month. Before overwriting an existing inventory, diffs old vs new in memory
+and prints a drift summary, e.g.:
 
 ```
 stocktake: 4 drifts: +2 appeared · −1 disappeared · ~1 tags changed
@@ -93,7 +114,9 @@ Requires exactly one inventory and one attribution in scope (same usage-error co
 (`@workspec/cost-engine`'s `buildTagPlan`). Every declared dimension defaults to tag
 `fs-<kebab-case dimension id>` (e.g. `costType` → `fs-cost-type`, matching the design handoff);
 `--map` overrides individual dimensions. Writes to `--out` (default:
-`<latest spend period, or the inventory's asOf month>.tagplan.yaml`) and prints a summary:
+`.workspec/tagplans/<latest spend period, or the inventory's asOf month>.yaml`) — its filename stem
+becomes the plan's slug, so (like `stocktake --name`) it must be a valid slug — and prints a
+summary:
 
 ```
 plan: +215 add · ~2 change · −1 remove · 3 noop
@@ -117,7 +140,7 @@ Otherwise calls the provider's `verifyBaseline` against exactly the resources th
 **refuses** (exit `1`, no writes):
 
 ```
-apply: refusing — live state has drifted from the plan's baseline inventory (estate.inventory.yaml):
+apply: refusing — live state has drifted from the plan's baseline inventory (.workspec/inventories/estate.yaml):
   ~ res-vm-1 tags changed out-of-band
 apply: re-stocktake and re-plan before applying
 ```

@@ -11,7 +11,7 @@ function plan(): TagPlan {
   const candidate: TagPlan = {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'TagPlan',
-    metadata: { id: 'plan-azure-1' },
+    metadata: { slug: 'plan-azure-1' },
     spec: {
       baselineAsOf: '2024-01-01T00:00:00.000Z',
       tagMapping: { product: 'env' },

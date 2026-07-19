@@ -34,7 +34,7 @@ const EXAMPLE = resolve(STUDIO_ROOT, '../../examples/fieldstate-azure-costs');
 const PORT = Number(process.env.E2E_PORT ?? 4189);
 const BASE = `http://127.0.0.1:${PORT}`;
 
-const ATTRIBUTION_FILE = 'fieldstate-azure.attribution.yaml';
+const ATTRIBUTION_FILE = '.workspec/attributions/fieldstate-azure.yaml';
 const STRIPPED_RULE_IDS = new Set(['r9', 'r10', 'r11']);
 
 let server: ChildProcess;

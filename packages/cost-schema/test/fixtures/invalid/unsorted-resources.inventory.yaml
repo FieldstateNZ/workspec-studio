@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Inventory
 metadata:
-  id: demo
+  slug: demo
 spec:
   asOf: "2026-07-01T00:00:00Z"
   scope:

@@ -1,6 +1,6 @@
 {
   "name": "@workspec/cost-provider",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Pluggable cost-data provider contract for WorkSpec Cost Attribution: the CloudProviderPort interface, its vendor-neutral result types (ApplyResult, DriftReport), and a stateful in-memory test double (createMemoryProvider).",
   "keywords": [
     "cost-attribution",

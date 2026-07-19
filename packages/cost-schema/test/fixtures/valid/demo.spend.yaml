@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Spend
 metadata:
-  id: demo
+  slug: demo
 spec:
   rows:
     - resourceId: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-growth/providers/Microsoft.Web/sites/app-growth-web

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
+import { defineArtifact } from '@workspec/schema-core';
 import { identifier } from './common.js';
 
 // ── Attribution artifact (`*.attribution.yaml`) ─────────────────────────────
@@ -10,6 +10,9 @@ import { identifier } from './common.js';
 // match wins per dimension; overrides beat all rules) belong to the
 // attribution engine (a later slice); this package only shapes and validates
 // the data those semantics run over.
+//
+// Built on `@workspec/schema-core`'s `defineArtifact` — see `inventory.ts` for
+// the envelope/identity note. `name` (optional) lives on `spec` now.
 
 /** An attribution dimension: a named axis of cost allocation (e.g. "product", "team"). */
 export const Dimension = z
@@ -19,7 +22,9 @@ export const Dimension = z
     values: z
       .array(identifier)
       .min(1)
-      .describe('Declared value ids for this dimension, e.g. ["atrium", "workspec"]. Must be unique.'),
+      .describe(
+        'Declared value ids for this dimension, e.g. ["atrium", "workspec"]. Must be unique.',
+      ),
   })
   .describe('An attribution dimension: a named axis of cost allocation.');
 
@@ -77,7 +82,7 @@ export const RuleAssign = z
 export const RuleSplit = z
   .record(identifier, z.record(identifier, z.number().positive()))
   .describe(
-    'Per-dimension ratio splits, keyed by dimension id. Each dimension\'s ratio map has at ' +
+    "Per-dimension ratio splits, keyed by dimension id. Each dimension's ratio map has at " +
       'least 2 entries (value id → positive ratio) summing to 1 (tolerance 1e-6).',
   );
 
@@ -121,9 +126,14 @@ export const Override = z
   })
   .describe('A pinned per-resource assignment that beats all rules.');
 
-/** The attribution body: dimensions, ordered rules, and pinned overrides. */
+/** The attribution body: optional name, dimensions, ordered rules, and pinned overrides. */
 export const AttributionSpec = z
   .object({
+    name: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Optional human-readable name for this attribution.'),
     dimensions: z
       .array(Dimension)
       .min(1)
@@ -143,15 +153,9 @@ export const AttributionSpec = z
         'Pinned per-resource assignments that beat all rules (engine precedence — see README).',
       ),
   })
-  .describe('The attribution body: dimensions, ordered rules, and pinned overrides.');
-
-/** Attribution identity. */
-export const AttributionMetadata = z
-  .object({
-    id: identifier.describe('Stable attribution id, e.g. "prod".'),
-    name: z.string().min(1).optional().describe('Optional human-readable name.'),
-  })
-  .describe('Attribution identity.');
+  .describe(
+    'The attribution body: optional name, dimensions, ordered rules, and pinned overrides.',
+  );
 
 /**
  * A `*.attribution.yaml` artifact: dimensions, ordered rules, and overrides.
@@ -165,13 +169,7 @@ export const AttributionMetadata = z
  * ratio maps must have at least 2 entries summing to 1 (tolerance 1e-6); and
  * override `assign` maps follow the same referential rules.
  */
-export const AttributionArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('Attribution').describe('Artifact kind discriminant.'),
-    metadata: AttributionMetadata.describe('Attribution identity.'),
-    spec: AttributionSpec.describe('The attribution body.'),
-  })
+export const AttributionArtifact = defineArtifact('Attribution', AttributionSpec)
   .superRefine((doc, ctx) => {
     const dimensionIds = new Set<string>();
     const dimensionValues = new Map<string, Set<string>>();
@@ -394,5 +392,4 @@ export type RuleFromTag = z.infer<typeof RuleFromTag>;
 export type Rule = z.infer<typeof Rule>;
 export type Override = z.infer<typeof Override>;
 export type AttributionSpec = z.infer<typeof AttributionSpec>;
-export type AttributionMetadata = z.infer<typeof AttributionMetadata>;
 export type Attribution = z.infer<typeof AttributionArtifact>;

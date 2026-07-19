@@ -63,7 +63,7 @@ export function Shell(props: ShellProps): ReactNode {
         <span className="csh-brand">workspec-cost</span>
         <span className="csh-slash">/ studio</span>
         {firstInventory !== undefined && (
-          <span className="csh-crumb">{`example ▸ ${firstInventory.id}`}</span>
+          <span className="csh-crumb">{`example ▸ ${firstInventory.name ?? firstInventory.slug ?? firstInventory.ref}`}</span>
         )}
         <span className="csh-spacer" />
         <div className="csh-toggle" role="group" aria-label="Theme">

@@ -1,31 +1,31 @@
 // FsRepository — the standalone, filesystem-backed implementation of the C4
-// `CostRepositoryPort`. It discovers `*.inventory.yaml` / `*.spend.yaml` /
-// `*.attribution.yaml` / `*.tagplan.yaml` artifacts by a manual recursive walk
-// of a root directory (no glob dependency), reads them through the schema's
-// parse+validate helpers, and writes them back via the schema's byte-stable
-// `serialize*Yaml` (the directive header is included by the serializer
-// itself — unlike `@workspec/decision-studio`'s `FsRepository`, there is no
-// comment-preserving patch step here: byte-stable serialization from the
-// validated data IS the product contract for these artifacts).
+// `CostRepositoryPort`. Discovery is a per-kind DIRECTORY WALK of
+// `.workspec/<type-dir>` (from `@workspec/cost-schema`'s `typeDirectoryFor`) —
+// not a whole-tree recursive walk keyed off filename suffixes. Identity is the
+// FILENAME: a `.workspec/<kind-dir>/<slug>.yaml` artifact's slug is derived
+// from its filename via `slugFromPath` (`@workspec/schema-core`), the file IS
+// the identity, mirroring `@workspec/trace-studio`'s `FsRepository`. Artifacts
+// are read/validated through the schema's parse helpers and written back via
+// the schema's byte-stable `serialize*Yaml` (the directive header is included
+// by the serializer itself — unlike `@workspec/decision-studio`'s
+// `FsRepository`, there is no comment-preserving patch step here: byte-stable
+// serialization from the validated data IS the product contract for these
+// artifacts).
 //
-// Refs are repo-root-relative POSIX paths (`prod/estate.inventory.yaml`) so
-// they are stable and platform-independent.
+// Refs are repo-root-relative POSIX paths (`.workspec/inventories/estate.yaml`)
+// so they are stable and platform-independent. `read*`/`write*` accept any
+// ref a caller supplies (they don't themselves enforce the `.workspec/<kind-
+// dir>/` convention) — it is `list*` that only ever discovers artifacts
+// actually filed under the matching type directory.
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, posix, relative, resolve, sep } from 'node:path';
+import { dirname, posix, resolve } from 'node:path';
+import { FILE_EXTENSION, Slug, slugFromPath } from '@workspec/schema-core';
 import {
   AttributionArtifact,
-  INVENTORY_FILE_SUFFIX,
   InventoryArtifact,
-  SPEND_FILE_SUFFIX,
   SpendArtifact,
-  ATTRIBUTION_FILE_SUFFIX,
-  TAGPLAN_FILE_SUFFIX,
   TagPlanArtifact,
-  isAttributionFile,
-  isInventoryFile,
-  isSpendFile,
-  isTagPlanFile,
   parseAttributionYaml,
   parseInventoryYaml,
   parseSpendYaml,
@@ -34,6 +34,7 @@ import {
   serializeInventoryYaml,
   serializeSpendYaml,
   serializeTagPlanYaml,
+  typeDirectoryFor,
 } from '@workspec/cost-schema';
 import type {
   Attribution,
@@ -42,6 +43,7 @@ import type {
   Inventory,
   InventoryRef,
   ParseIssue,
+  ParseResult,
   Ref,
   Spend,
   SpendRef,
@@ -51,9 +53,6 @@ import type {
 import { resolveWithinRoot } from './path-containment.js';
 
 export { RefEscapesRootError } from './path-containment.js';
-
-/** Directories never descended into during discovery. */
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'coverage']);
 
 /**
  * Thrown by `read*` when a file fails parse or schema validation, and by
@@ -74,35 +73,6 @@ export class ArtifactValidationError extends Error {
   }
 }
 
-function toPosixRef(root: string, absPath: string): Ref {
-  return relative(root, absPath).split(sep).join('/');
-}
-
-async function walk(dir: string, onFile: (absPath: string) => void): Promise<void> {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return; // unreadable dir → skip
-  }
-  for (const entry of entries) {
-    const full = resolve(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (SKIP_DIRS.has(entry.name)) continue;
-      await walk(full, onFile);
-    } else if (entry.isFile()) {
-      if (
-        isInventoryFile(entry.name) ||
-        isSpendFile(entry.name) ||
-        isAttributionFile(entry.name) ||
-        isTagPlanFile(entry.name)
-      ) {
-        onFile(full);
-      }
-    }
-  }
-}
-
 function zodIssuesToParseIssues(error: {
   issues: { path: PropertyKey[]; message: string }[];
 }): ParseIssue[] {
@@ -112,6 +82,13 @@ function zodIssuesToParseIssues(error: {
     line: 0,
     col: 0,
   }));
+}
+
+/** One `list*` entry: the ref, its filename-derived slug, and `spec.name` when known. */
+interface KindRef {
+  ref: Ref;
+  slug: string;
+  name?: string;
 }
 
 /**
@@ -139,108 +116,65 @@ export class FsRepository implements CostRepositoryPort {
     return resolveWithinRoot(this.root, ref);
   }
 
-  private async discover(): Promise<{
-    inventories: Ref[];
-    spends: Ref[];
-    attributions: Ref[];
-    tagPlans: Ref[];
-  }> {
-    const inventories: Ref[] = [];
-    const spends: Ref[] = [];
-    const attributions: Ref[] = [];
-    const tagPlans: Ref[] = [];
-    await walk(this.root, (abs) => {
-      const ref = toPosixRef(this.root, abs);
-      if (isInventoryFile(abs)) inventories.push(ref);
-      else if (isSpendFile(abs)) spends.push(ref);
-      else if (isAttributionFile(abs)) attributions.push(ref);
-      else if (isTagPlanFile(abs)) tagPlans.push(ref);
-    });
-    inventories.sort();
-    spends.sort();
-    attributions.sort();
-    tagPlans.sort();
-    return { inventories, spends, attributions, tagPlans };
+  /**
+   * Lists one kind's artifacts: a flat (non-recursive) read of `kindDir`,
+   * filtered to `.yaml` files whose filename stem is a valid slug (a file
+   * that fails either check is not a WorkSpec artifact of this kind and is
+   * silently skipped — the same tolerance the old suffix-filtered walk had
+   * for unrelated files). `slug` is always the FILENAME-derived identity
+   * (never a hand-written `metadata.slug`) — the file IS the identity, per
+   * the `.workspec/<kind-dir>/<slug>.yaml` convention. `name` is a best-
+   * effort read of `spec.name`: a file that fails to parse/validate still
+   * lists (by its filename slug alone) so `validate` can find and report it.
+   */
+  private async listKind<T extends { spec: { name?: string | undefined } }>(
+    kindDir: string,
+    parse: (text: string) => ParseResult<T>,
+  ): Promise<KindRef[]> {
+    let entries;
+    try {
+      entries = await readdir(this.resolve(kindDir), { withFileTypes: true });
+    } catch {
+      return []; // absent kind dir → no artifacts of this kind
+    }
+
+    const names = entries
+      .filter((e) => e.isFile() && e.name.endsWith(FILE_EXTENSION))
+      .map((e) => e.name)
+      .sort();
+
+    const out: KindRef[] = [];
+    for (const name of names) {
+      const slug = slugFromPath(name);
+      if (slug === null || !Slug.safeParse(slug).success) continue; // not a valid artifact filename
+
+      const ref = posix.join(kindDir, name);
+      let artifactName: string | undefined;
+      try {
+        const parsed = parse(await readFile(this.resolve(ref), 'utf8'));
+        if (parsed.ok) artifactName = parsed.data.spec.name;
+      } catch {
+        /* keep the filename-derived slug only */
+      }
+      out.push({ ref, slug, ...(artifactName !== undefined ? { name: artifactName } : {}) });
+    }
+    return out;
   }
 
   async listInventories(): Promise<InventoryRef[]> {
-    const { inventories } = await this.discover();
-    const out: InventoryRef[] = [];
-    for (const ref of inventories) {
-      let id = posix.basename(ref).replace(new RegExp(`\\${INVENTORY_FILE_SUFFIX}$`), '');
-      let name: string | undefined;
-      try {
-        const parsed = parseInventoryYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          name = parsed.data.metadata.name;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(name !== undefined ? { ref, id, name } : { ref, id });
-    }
-    return out;
+    return this.listKind<Inventory>(typeDirectoryFor('Inventory'), parseInventoryYaml);
   }
 
   async listSpends(): Promise<SpendRef[]> {
-    const { spends } = await this.discover();
-    const out: SpendRef[] = [];
-    for (const ref of spends) {
-      let id = posix.basename(ref).replace(new RegExp(`\\${SPEND_FILE_SUFFIX}$`), '');
-      let name: string | undefined;
-      try {
-        const parsed = parseSpendYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          name = parsed.data.metadata.name;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(name !== undefined ? { ref, id, name } : { ref, id });
-    }
-    return out;
+    return this.listKind<Spend>(typeDirectoryFor('Spend'), parseSpendYaml);
   }
 
   async listAttributions(): Promise<AttributionRef[]> {
-    const { attributions } = await this.discover();
-    const out: AttributionRef[] = [];
-    for (const ref of attributions) {
-      let id = posix.basename(ref).replace(new RegExp(`\\${ATTRIBUTION_FILE_SUFFIX}$`), '');
-      let name: string | undefined;
-      try {
-        const parsed = parseAttributionYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          name = parsed.data.metadata.name;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(name !== undefined ? { ref, id, name } : { ref, id });
-    }
-    return out;
+    return this.listKind<Attribution>(typeDirectoryFor('Attribution'), parseAttributionYaml);
   }
 
   async listTagPlans(): Promise<TagPlanRef[]> {
-    const { tagPlans } = await this.discover();
-    const out: TagPlanRef[] = [];
-    for (const ref of tagPlans) {
-      let id = posix.basename(ref).replace(new RegExp(`\\${TAGPLAN_FILE_SUFFIX}$`), '');
-      let name: string | undefined;
-      try {
-        const parsed = parseTagPlanYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          name = parsed.data.metadata.name;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(name !== undefined ? { ref, id, name } : { ref, id });
-    }
-    return out;
+    return this.listKind<TagPlan>(typeDirectoryFor('TagPlan'), parseTagPlanYaml);
   }
 
   async readInventory(ref: Ref): Promise<Inventory> {

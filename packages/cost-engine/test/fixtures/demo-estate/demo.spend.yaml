@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Spend
 metadata:
-  id: fieldstate-azure-2026-07
+  slug: fieldstate-azure-2026-07
 spec:
   rows:
     - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-atrium-dev/providers/microsoft.app/containerapps/atrium-e2e-runner

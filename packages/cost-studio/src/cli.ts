@@ -12,9 +12,9 @@
 // STABLE inventory path, so `git diff` on the working tree IS the drift
 // report; `plan`/`apply` follow the same "you commit, we never do" rule.
 
-import { posix } from 'node:path';
 import { parseArgs } from 'node:util';
-import { compareResourceIds, identifier } from '@workspec/cost-schema';
+import { FILE_EXTENSION, Slug, slugFromPath } from '@workspec/schema-core';
+import { compareResourceIds, typeDirectoryFor } from '@workspec/cost-schema';
 import type {
   Attribution,
   CostRepositoryPort,
@@ -97,18 +97,20 @@ const STOCKTAKE_HELP = `workspec-cost stocktake — stock-take an estate + its s
 
 Usage:
   workspec-cost stocktake --subscription <id> [--subscription <id>...]
-                           [--name <id>] [--period YYYY-MM] [--dir <dir>]
+                           [--name <slug>] [--period YYYY-MM] [--dir <dir>]
 
 Options:
   --subscription <id>  Subscription to include (repeatable, required).
-  --name <id>          Stable inventory/spend id (default: "estate").
+  --name <slug>        Stable inventory/spend slug (default: "estate"). Becomes
+                        the filename, so it must be a valid slug: lowercase
+                        alphanumeric segments separated by single hyphens.
   --period <YYYY-MM>   Billing period to fetch (default: current month).
   --dir <path>         Directory to write into (default: current directory).
 
-Writes/overwrites "<name>.inventory.yaml" (a STABLE path — re-running updates
-the same file, so "git diff" against it is the drift report) and
-"<name>.<period>.spend.yaml". Prints a drift summary before overwriting an
-existing inventory.
+Writes/overwrites ".workspec/inventories/<name>.yaml" (a STABLE path —
+re-running updates the same file, so "git diff" against it is the drift
+report) and ".workspec/spends/<name>-<period>.yaml". Prints a drift summary
+before overwriting an existing inventory.
 `;
 
 const VALIDATE_HELP = `workspec-cost validate — validate all cost artifacts under a directory
@@ -162,7 +164,11 @@ Usage:
 
 Options:
   --map <dim>=<tag>   Override the default tag for a dimension (repeatable).
-  --out <file>        Where to write the tag plan (default: "<period>.tagplan.yaml").
+  --out <file>        Where to write the tag plan (default:
+                      ".workspec/tagplans/<period>.yaml"). Its filename stem
+                      (minus ".yaml") becomes the plan's slug, so it must be a
+                      valid slug: lowercase alphanumeric segments separated by
+                      single hyphens.
   --dir <path>        Directory to scan (default: current directory).
 
 Requires exactly one inventory and one attribution in scope. Every declared
@@ -303,21 +309,24 @@ async function runStocktake(argv: string[], io: CliIO, deps: RunDeps | undefined
   const clock = resolveClock(deps);
 
   const name = values.name ?? 'estate';
-  // Validate the metadata id EARLY — before touching the provider at all — so
-  // a bad --name fails fast with a clean usage error instead of paying for a
-  // provider round-trip only to have the write reject at the very end.
-  const nameCheck = identifier.safeParse(name);
+  // Validate the slug EARLY — before touching the provider at all — so a bad
+  // --name fails fast with a clean usage error instead of paying for a
+  // provider round-trip only to have the write reject at the very end. --name
+  // becomes the filename stem (`.workspec/inventories/<name>.yaml`), so it
+  // must already be a valid slug, not just any old identifier.
+  const nameCheck = Slug.safeParse(name);
   if (!nameCheck.success) {
     io.err(
-      `stocktake: invalid --name "${name}": ${nameCheck.error.issues[0]?.message ?? 'must be a valid identifier'}\n`,
+      `stocktake: invalid --name "${name}": ${nameCheck.error.issues[0]?.message ?? 'must be a valid slug'}\n`,
     );
     return 2;
   }
   const period = values.period ?? monthOf(clock());
   const scope: ProviderScope = { subscriptions };
 
-  const inventoryRef = `${name}.inventory.yaml`;
-  const spendRef = `${name}.${period}.spend.yaml`;
+  const inventoryRef = `${typeDirectoryFor('Inventory')}/${name}${FILE_EXTENSION}`;
+  const spendSlug = `${name}-${period}`;
+  const spendRef = `${typeDirectoryFor('Spend')}/${spendSlug}${FILE_EXTENSION}`;
 
   let oldInventory: Inventory | undefined;
   try {
@@ -330,10 +339,10 @@ async function runStocktake(argv: string[], io: CliIO, deps: RunDeps | undefined
   }
 
   const fetchedInventory = await provider.fetchInventory(scope);
-  const newInventory: Inventory = { ...fetchedInventory, metadata: { id: name } };
+  const newInventory: Inventory = { ...fetchedInventory, metadata: { slug: name } };
 
   const fetchedSpend = await provider.fetchSpend(scope, period);
-  const newSpend: Spend = { ...fetchedSpend, metadata: { id: `${name}-${period}` } };
+  const newSpend: Spend = { ...fetchedSpend, metadata: { slug: spendSlug } };
 
   if (oldInventory !== undefined) {
     io.err(`stocktake: ${driftSummary(inventoryDrift(oldInventory, newInventory))}\n`);
@@ -670,11 +679,6 @@ function latestPeriod(spends: readonly Spend[], inventory: Inventory): string {
   return latest ?? monthOf(inventory.spec.asOf);
 }
 
-function derivePlanId(ref: string): string {
-  const base = posix.basename(ref).replace(/\.tagplan\.yaml$/, '');
-  return base.length > 0 ? base : 'tagplan';
-}
-
 interface ActionCounts {
   add: number;
   change: number;
@@ -712,15 +716,21 @@ async function runPlan(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
     return 0;
   }
 
-  // Validate the tag plan's metadata id EARLY — right after parsing flags,
-  // before any repository reads — so a bad --out fails fast with a clean
-  // usage error instead of a repository validation rejection surfacing only
-  // at the write, at the very end of the command.
+  // Validate the tag plan's slug EARLY — right after parsing flags, before
+  // any repository reads — so a bad --out fails fast with a clean usage
+  // error instead of a repository validation rejection surfacing only at the
+  // write, at the very end of the command. --out's filename stem becomes
+  // `metadata.slug`, so it must both end in ".yaml" and be a valid slug.
   if (values.out !== undefined) {
-    const outIdCheck = identifier.safeParse(derivePlanId(values.out));
-    if (!outIdCheck.success) {
+    const outSlug = slugFromPath(values.out);
+    if (outSlug === null) {
+      io.err(`plan: invalid --out "${values.out}": must end in "${FILE_EXTENSION}"\n`);
+      return 2;
+    }
+    const outSlugCheck = Slug.safeParse(outSlug);
+    if (!outSlugCheck.success) {
       io.err(
-        `plan: invalid --out "${values.out}": ${outIdCheck.error.issues[0]?.message ?? 'must be a valid identifier'}\n`,
+        `plan: invalid --out "${values.out}": ${outSlugCheck.error.issues[0]?.message ?? 'must be a valid slug'}\n`,
       );
       return 2;
     }
@@ -790,9 +800,11 @@ async function runPlan(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
     }
   }
 
-  const outRef = values.out ?? `${latestPeriod(spends, inventory)}.tagplan.yaml`;
+  const outRef =
+    values.out ?? `${typeDirectoryFor('TagPlan')}/${latestPeriod(spends, inventory)}${FILE_EXTENSION}`;
+  const outSlug = slugFromPath(outRef);
   const tagPlan: TagPlan = buildTagPlan(inventory, attribution, tagMapping, {
-    id: derivePlanId(outRef),
+    ...(outSlug !== null ? { slug: outSlug } : {}),
   });
 
   const primaryDimension = attribution.spec.dimensions[0];

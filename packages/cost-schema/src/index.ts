@@ -1,7 +1,8 @@
 // @workspec/cost-schema — the Zod source of truth for WorkSpec Cost
 // Attribution artifacts. One definition yields three outputs: TypeScript
 // types (`z.infer`), runtime validation (`safeParse`), and JSON Schema
-// (draft 2020-12) for editor IntelliSense. See the package README for the
+// (draft 2020-12) for editor IntelliSense. Built on `@workspec/schema-core`'s
+// K8s-style envelope (`defineArtifact`) — see the package README for the
 // four artifact kinds, their sort-order contracts, and match/effect
 // semantics.
 
@@ -12,7 +13,11 @@
  */
 export const COST_SCHEMA_PACKAGE = '@workspec/cost-schema' as const;
 
-// ── Version, URLs, directives and file-naming constants ─────────────────────
+// ── Version, URL and directive constants. `SCHEMA_VERSION`/`API_VERSION`/
+// `SCHEMA_BASE_URL`/`JSON_SCHEMA_DIALECT`/`schemaDirective` are
+// `@workspec/schema-core`'s (re-exported here, values unchanged from this
+// package's former local copies); the four `*_SCHEMA_URL`/`*_SCHEMA_DIRECTIVE`
+// constants are this package's own. ────────────────────────────────────────
 export {
   SCHEMA_VERSION,
   API_VERSION,
@@ -27,23 +32,12 @@ export {
   SPEND_SCHEMA_DIRECTIVE,
   ATTRIBUTION_SCHEMA_DIRECTIVE,
   TAGPLAN_SCHEMA_DIRECTIVE,
-  INVENTORY_FILE_SUFFIX,
-  SPEND_FILE_SUFFIX,
-  ATTRIBUTION_FILE_SUFFIX,
-  TAGPLAN_FILE_SUFFIX,
-  INVENTORY_FILE_GLOB,
-  SPEND_FILE_GLOB,
-  ATTRIBUTION_FILE_GLOB,
-  TAGPLAN_FILE_GLOB,
-  INVENTORY_FILE_GLOB_RECURSIVE,
-  SPEND_FILE_GLOB_RECURSIVE,
-  ATTRIBUTION_FILE_GLOB_RECURSIVE,
-  TAGPLAN_FILE_GLOB_RECURSIVE,
-  isInventoryFile,
-  isSpendFile,
-  isAttributionFile,
-  isTagPlanFile,
 } from './constants.js';
+
+// ── Kind list and type directories (cost-schema's own four kinds) ──────────
+export { ARTIFACT_KINDS } from './paths/artifact-kind.js';
+export type { ArtifactKind } from './paths/artifact-kind.js';
+export { TYPE_DIRECTORIES, typeDirectoryFor } from './paths/type-directories.js';
 
 // ── Shared primitives ───────────────────────────────────────────────────────
 export { identifier, resourceTagName, resourceTagValue } from './common.js';
@@ -53,7 +47,6 @@ export {
   InventoryScope,
   InventoryResource,
   InventorySpec,
-  InventoryMetadata,
   InventoryArtifact,
   compareResourceIds,
 } from './inventory.js';
@@ -61,18 +54,12 @@ export type {
   InventoryScope as InventoryScopeType,
   InventoryResource as InventoryResourceType,
   InventorySpec as InventorySpecType,
-  InventoryMetadata as InventoryMetadataType,
   Inventory,
 } from './inventory.js';
 
 // ── Spend artifact: schema + inferred types ─────────────────────────────────
-export { SpendRow, SpendSpec, SpendMetadata, SpendArtifact, compareSpendRows } from './spend.js';
-export type {
-  SpendRow as SpendRowType,
-  SpendSpec as SpendSpecType,
-  SpendMetadata as SpendMetadataType,
-  Spend,
-} from './spend.js';
+export { SpendRow, SpendSpec, SpendArtifact, compareSpendRows } from './spend.js';
+export type { SpendRow as SpendRowType, SpendSpec as SpendSpecType, Spend } from './spend.js';
 
 // ── Attribution artifact: schema + inferred types ───────────────────────────
 export {
@@ -84,7 +71,6 @@ export {
   Rule,
   Override,
   AttributionSpec,
-  AttributionMetadata,
   AttributionArtifact,
 } from './attribution.js';
 export type {
@@ -96,22 +82,14 @@ export type {
   Rule as RuleType,
   Override as OverrideType,
   AttributionSpec as AttributionSpecType,
-  AttributionMetadata as AttributionMetadataType,
   Attribution,
 } from './attribution.js';
 
 // ── TagPlan artifact: schema + inferred types ───────────────────────────────
-export {
-  TagPlanEntry,
-  TagPlanSpec,
-  TagPlanMetadata,
-  TagPlanArtifact,
-  compareTagPlanEntries,
-} from './tagplan.js';
+export { TagPlanEntry, TagPlanSpec, TagPlanArtifact, compareTagPlanEntries } from './tagplan.js';
 export type {
   TagPlanEntry as TagPlanEntryType,
   TagPlanSpec as TagPlanSpecType,
-  TagPlanMetadata as TagPlanMetadataType,
   TagPlan,
 } from './tagplan.js';
 

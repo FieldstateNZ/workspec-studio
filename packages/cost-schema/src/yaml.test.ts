@@ -46,7 +46,7 @@ describe('valid demo estate fixtures', () => {
     const res = parseInventoryYaml(read(validUrl('demo.inventory.yaml')));
     expect(res.ok).toBe(true);
     if (res.ok) {
-      expect(res.data.metadata.id).toBe('demo');
+      expect(res.data.metadata.slug).toBe('demo');
       expect(res.data.spec.resources).toHaveLength(5);
       // Sorted ascending by id.
       const ids = res.data.spec.resources.map((r) => r.id);

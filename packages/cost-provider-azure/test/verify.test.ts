@@ -8,7 +8,7 @@ function baseline(): Inventory {
   const candidate: Inventory = {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'baseline-1' },
+    metadata: { slug: 'baseline-1' },
     spec: {
       asOf: '2024-01-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1'] },

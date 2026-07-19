@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Attribution
 metadata:
-  id: demo
+  slug: demo
 spec:
   dimensions:
     - id: product

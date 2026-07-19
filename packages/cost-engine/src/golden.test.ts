@@ -183,7 +183,7 @@ describe('golden: fieldstate-azure demo estate', () => {
     let entries: ReturnType<typeof buildTagPlan>['spec']['entries'];
 
     beforeAll(() => {
-      const tagPlan = buildTagPlan(inventory, attribution, TAG_MAPPING, { id: 'fieldstate-azure-2026-07' });
+      const tagPlan = buildTagPlan(inventory, attribution, TAG_MAPPING, { slug: 'fieldstate-azure-2026-07' });
       expect(TagPlanArtifact.safeParse(tagPlan).success).toBe(true);
       expect(tagPlan.spec.baselineAsOf).toBe(inventory.spec.asOf);
       entries = tagPlan.spec.entries;
@@ -234,7 +234,7 @@ describe('golden: fieldstate-azure demo estate', () => {
 
   describe('conformance snapshot', () => {
     it('matches the committed golden snapshot (attribute + plan)', () => {
-      const tagPlan = buildTagPlan(inventory, attribution, TAG_MAPPING, { id: 'fieldstate-azure-2026-07' });
+      const tagPlan = buildTagPlan(inventory, attribution, TAG_MAPPING, { slug: 'fieldstate-azure-2026-07' });
       expect({ attribute: result, plan: tagPlan }).toMatchSnapshot();
     });
   });

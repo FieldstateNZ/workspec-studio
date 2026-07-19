@@ -31,7 +31,7 @@ function seedInventory(): Inventory {
   const candidate: Inventory = {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'seed-2024-01' },
+    metadata: { slug: 'seed-2024-01' },
     spec: {
       asOf: '2023-12-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1', 'sub-2'] },
@@ -51,7 +51,7 @@ function seedSpend(): Spend {
   const candidate: Spend = {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Spend',
-    metadata: { id: 'seed-spend' },
+    metadata: { slug: 'seed-spend' },
     spec: {
       rows: [
         {
@@ -77,7 +77,7 @@ function tagPlan(baselineAsOf: string): TagPlan {
   const candidate: TagPlan = {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'TagPlan',
-    metadata: { id: 'plan-1' },
+    metadata: { slug: 'plan-1' },
     spec: {
       baselineAsOf,
       tagMapping: { product: 'env' },

@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Attribution
 metadata:
-  id: fieldstate-azure
+  slug: fieldstate-azure
 spec:
   dimensions:
     - id: product

@@ -26,7 +26,7 @@ function makeInventory(): Record<string, unknown> {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'demo' },
+    metadata: { slug: 'demo' },
     spec: {
       asOf: '2026-07-01T00:00:00Z',
       scope: { subscriptions: [SUB] },
@@ -56,7 +56,7 @@ function makeSpend(): Record<string, unknown> {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Spend',
-    metadata: { id: 'demo' },
+    metadata: { slug: 'demo' },
     spec: {
       rows: [
         {
@@ -82,7 +82,7 @@ function makeAttribution(): Record<string, unknown> {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'demo' },
+    metadata: { slug: 'demo' },
     spec: {
       dimensions: [
         { id: 'product', label: 'Product', values: ['atrium', 'workspec'] },
@@ -98,7 +98,7 @@ function makeTagPlan(): Record<string, unknown> {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'TagPlan',
-    metadata: { id: 'demo' },
+    metadata: { slug: 'demo' },
     spec: {
       baselineAsOf: '2026-07-01T00:00:00Z',
       tagMapping: { product: 'fs-product' },

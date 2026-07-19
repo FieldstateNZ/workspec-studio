@@ -43,7 +43,7 @@ function inventoryOf(resources: InventoryResourceType[]): Inventory {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'test' },
+    metadata: { slug: 'test' },
     spec: {
       asOf: '2026-07-07T00:00:00Z',
       scope: { subscriptions: ['sub-1'] },
@@ -56,13 +56,13 @@ function attributionOf(dimensions: DimensionType[], rules: RuleType[], overrides
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'test' },
+    metadata: { slug: 'test' },
     spec: { dimensions, rules, ...(overrides !== undefined ? { overrides } : {}) },
   };
 }
 
 function spendOf(rows: SpendRowType[]): Spend {
-  return { apiVersion: 'workspec.io/v1alpha1', kind: 'Spend', metadata: { id: 'test' }, spec: { rows } };
+  return { apiVersion: 'workspec.io/v1alpha1', kind: 'Spend', metadata: { slug: 'test' }, spec: { rows } };
 }
 
 const DIM_PRODUCT: DimensionType = { id: 'product', label: 'Product', values: ['a', 'b'] };
@@ -632,7 +632,7 @@ describe('plan() / buildTagPlan()', () => {
   it('buildTagPlan produces a schema-valid TagPlan artifact anchored on inventory.spec.asOf', () => {
     const inv = inventoryOf([resource({ id: 'r1', name: 'r1' })]);
     const attribution = attributionOf([DIM_PRODUCT], [{ id: 'r1-rule', name: 'Rule', match: {}, assign: { product: 'a' } }]);
-    const tagPlan = buildTagPlan(inv, attribution, { product: 'fs-product' }, { id: 'test-plan' });
+    const tagPlan = buildTagPlan(inv, attribution, { product: 'fs-product' }, { slug: 'test-plan' });
     expect(tagPlan.spec.baselineAsOf).toBe(inv.spec.asOf);
     expect(TagPlanArtifact.safeParse(tagPlan).success).toBe(true);
   });
