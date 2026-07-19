@@ -39,6 +39,7 @@ export default defineConfig({
         './RequirementsExplorer': './src/mf/RequirementsExplorer.tsx',
         './MatrixView': './src/mf/MatrixView.tsx',
         './FeatureDetail': './src/mf/FeatureDetail.tsx',
+        './RunReviewView': './src/mf/RunReviewView.tsx',
         './TraceApp': './src/mf/TraceApp.tsx',
         // Auxiliary modules a host needs to mount the above:
         './provider': './src/mf/provider.ts', // TraceStudioProvider + host helpers

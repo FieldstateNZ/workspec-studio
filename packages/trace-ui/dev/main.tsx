@@ -1,14 +1,18 @@
 // The standalone dev story's entry (T5 brief: a small standalone entry so
-// the Requirements + Feature detail views can be screenshotted in a browser
-// for design review). `pnpm --filter @workspec/trace-ui dev` serves this at
-// http://localhost:5183/.
+// all four views — Requirements, Matrix, Feature detail, and Run review
+// (T7, #75) — can be screenshotted in a browser for design review).
+// `pnpm --filter @workspec/trace-ui dev` serves this at http://localhost:5183/.
 //
-// Wires a seeded fixture `TraceModel` (the same one this package's own
-// render tests use — see `../src/test-helpers/trace-fixture.ts`) into
-// `createMemoryRepository`, and mounts `TraceApp` inside
-// `TraceStudioProvider`. Theme is owned here (a Dark/Light toggle), exactly
-// like `@workspec/cost-studio`'s standalone shell (`packages/cost-studio/client/main.tsx`)
-// — `TraceStudioProvider` itself never calls `matchMedia` or touches storage.
+// Wires a seeded `TraceModel` into `createMemoryRepository`, and mounts
+// `TraceApp` inside `TraceStudioProvider`. The model is `buildDevModel()`
+// (`./dev-model.ts`) — the package's own `test-helpers/trace-fixture.ts`
+// tree plus one extra `skip`-verdict scenario, so the Run review tab has an
+// interesting latest run (failures + skips + unproven together) to show;
+// see `dev-model.ts`'s doc comment for why that extra scenario lives here
+// rather than in the shared fixture. Theme is owned here (a Dark/Light
+// toggle), exactly like `@workspec/cost-studio`'s standalone shell
+// (`packages/cost-studio/client/main.tsx`) — `TraceStudioProvider` itself
+// never calls `matchMedia` or touches storage.
 import { StrictMode, useState } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -20,11 +24,11 @@ import {
   createMemoryRepository,
 } from '../src/index.js';
 import type { ThemeName, TraceStudioHost } from '../src/index.js';
-import { buildFixtureModel } from '../src/test-helpers/trace-fixture.js';
+import { buildDevModel } from './dev-model.js';
 import '../src/index.css';
 import './shell.css';
 
-const repository = createMemoryRepository({ model: buildFixtureModel() });
+const repository = createMemoryRepository({ model: buildDevModel() });
 
 const host: TraceStudioHost = {
   repository,
@@ -46,7 +50,7 @@ function App(): ReactElement {
     <TraceStudioProvider host={host} theme={theme} className="tsh-shell">
       <header className="tsh-topbar">
         <span className="tsh-brand">trace-ui dev story</span>
-        <span className="tsh-crumb">seeded fixture model — see test-helpers/trace-fixture.ts</span>
+        <span className="tsh-crumb">seeded fixture model — see dev/dev-model.ts</span>
         <span className="tsh-spacer" />
         <div className="tsh-toggle" role="group" aria-label="Theme">
           {THEME_OPTIONS.map((option) => (

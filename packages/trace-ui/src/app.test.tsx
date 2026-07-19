@@ -53,7 +53,7 @@ describe('TraceApp', () => {
     });
   });
 
-  it('renders Run review as a disabled tab (T7 not wired yet) while Matrix is enabled', async () => {
+  it('enables the Run review tab (T7, #75) alongside every other view', async () => {
     render(
       <TraceStudioProvider host={buildHost()}>
         <TraceApp />
@@ -62,7 +62,24 @@ describe('TraceApp', () => {
 
     await screen.findByText('Scenario coverage');
     expect(screen.getByRole('tab', { name: 'Matrix' })).not.toBeDisabled();
-    expect(screen.getByRole('tab', { name: 'Run review' })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: 'Run review' })).not.toBeDisabled();
+  });
+
+  it('can switch to the Run review tab and see the latest run, failures foregrounded', async () => {
+    const user = userEvent.setup();
+    render(
+      <TraceStudioProvider host={buildHost()}>
+        <TraceApp />
+      </TraceStudioProvider>,
+    );
+
+    await screen.findByText('Scenario coverage');
+    await user.click(screen.getByRole('tab', { name: 'Run review' }));
+    await waitFor(() => {
+      // The fixture's latest run id, from its own run-metadata header.
+      expect(screen.getByText('2026-07-09T02-14Z')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Failures · 1')).toBeInTheDocument();
   });
 
   it('can switch to the Matrix tab and see the RTM grouped by feature', async () => {
