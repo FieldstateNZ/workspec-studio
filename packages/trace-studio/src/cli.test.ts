@@ -10,7 +10,7 @@ import type {
   SystemRequirement,
   UserRequirement,
 } from '@workspec/req-schema';
-import { mockCucumberRun } from '@workspec/trace-emitters';
+import { mockCucumberRun, mockJunitRun } from '@workspec/trace-emitters';
 import type { RuleWithScenarios, ScenarioInput } from '@workspec/trace-emitters';
 import { buildModel } from '@workspec/trace-model';
 import type { Located, TestRun } from '@workspec/trace-model';
@@ -313,6 +313,38 @@ describe('ingest', () => {
     expect(run_.id).toBe(EXPECTED_RUN_ID);
     expect(run_.sha).toBe('abc123');
     expect(run_.emitter).toBe('cucumber');
+    expect(run_.results).toEqual({
+      'inline-create-each-kind': 'pass',
+      'inline-create-persists': 'pass',
+    });
+    expect(cap.out()).toContain('2 pass');
+  });
+
+  it('reads a JUnit XML report and writes a run keyed on scenario slugs (format-agnostic ingest)', async () => {
+    // Proves the CLI is format-agnostic (the fix under test): `ingest` reads
+    // <results-file> as raw TEXT and hands it straight to --emitter's own
+    // `ingest` — no JSON.parse in the CLI. `mockJunitRun` synthesises the
+    // JUnit XML a real toolchain run would produce, keyed on the SAME
+    // scenario slugs as the cucumber test above.
+    const report = mockJunitRun(wiredInputs());
+    const repository = createMemoryRepository({ files: { 'report.xml': report } });
+    const cap = captureIO();
+    const code = await run(
+      ['ingest', 'report.xml', '--emitter', 'junit', '--sha', 'abc123'],
+      cap.io,
+      {
+        repository,
+        clock: FIXED_CLOCK,
+      },
+    );
+    expect(code).toBe(0);
+    const ref = `.workspec/.runs/${EXPECTED_RUN_ID}.json`;
+    const written = repository.writes.get(ref);
+    expect(written).toBeDefined();
+    const run_ = JSON.parse(written as string);
+    expect(run_.id).toBe(EXPECTED_RUN_ID);
+    expect(run_.sha).toBe('abc123');
+    expect(run_.emitter).toBe('junit');
     expect(run_.results).toEqual({
       'inline-create-each-kind': 'pass',
       'inline-create-persists': 'pass',

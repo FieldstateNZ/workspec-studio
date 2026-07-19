@@ -111,9 +111,11 @@ Options:
   --runs-dir <dir>   Where to write the run (default: "${DEFAULT_RUNS_DIR}").
   --json             Print the run summary as JSON.
 
-Reads <results-file> (a Cucumber JSON report), maps scenarios back to scenario
-slugs via the emitter's tag convention, and writes <runs-dir>/<id>.json. The
-runs dir is gitignore-able (spec §9.3); commit it to keep an auditable history.
+Reads <results-file> as raw text and hands it to --emitter's own ingest, which
+knows its report format (e.g. cucumber's Cucumber JSON, junit's JUnit XML) and
+maps scenarios back to scenario slugs via its tag convention. Writes
+<runs-dir>/<id>.json. The runs dir is gitignore-able (spec §9.3); commit it to
+keep an auditable history.
 `;
 
 const VERIFY_HELP = `workspec-trace verify — the CI gate
@@ -366,15 +368,12 @@ async function runIngest(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     return 1;
   }
 
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (error) {
-    io.err(`ingest: results file ${resultsFile} is not valid JSON: ${(error as Error).message}\n`);
-    return 1;
-  }
-
-  const run = emitter.ingest(raw, {
+  // Format-agnostic (spec §3/§6): the CLI reads the results file as TEXT and
+  // hands it straight to the emitter, which knows its OWN report format
+  // (Cucumber JSON, JUnit XML, ...) — the CLI must not assume or parse it. A
+  // report the emitter can't make sense of is the emitter's problem: it
+  // defensively yields an empty `TestRun`, never a thrown parse error here.
+  const run = emitter.ingest(text, {
     id,
     ts,
     ...(values.sha !== undefined ? { sha: values.sha } : {}),

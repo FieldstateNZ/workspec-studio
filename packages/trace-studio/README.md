@@ -25,6 +25,8 @@ its parent Rule via `systemRequirement`). Evidence (`.runs/*.json`) keys on the 
 workspec-trace emit --emitter cucumber [--feature <slug>] [--out <dir>] [--dir <root>] [--json]
 
 # Brownfield: a test toolchain's results -> a run (evidence, keyed on scenario slug)
+# --emitter's own format-agnostic ingest reads <results-file>'s raw text (Cucumber
+# JSON for `cucumber`, JUnit XML for `junit`) -- the CLI never parses it itself.
 workspec-trace ingest <results-file> --emitter cucumber [--id <id>] [--ts <iso>] \
                       [--sha <sha>] [--ci <ci>] [--dir <root>] [--runs-dir <dir>] [--json]
 

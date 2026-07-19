@@ -9,6 +9,8 @@
 
 import type { Scenario, TestRun } from '@workspec/req-schema';
 import { renderFeatureFile } from './gherkin.js';
+import { foldVerdict } from './verdict.js';
+import type { Verdict } from './verdict.js';
 import type {
   Emitter,
   EmitterConvention,
@@ -105,9 +107,6 @@ function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-/** The three explicit verdicts (identical to req-schema's `TestResult`). */
-type Verdict = 'pass' | 'fail' | 'skip';
-
 /**
  * Recover the scenario slug from a scenario element's tags (the
  * `req-tag-on-scenario` convention). Uses the FIRST tag that carries a name,
@@ -169,27 +168,36 @@ function scenarioVerdict(element: Record<string, unknown>): Verdict {
 }
 
 /**
- * Fold a slug's next scenario verdict into its running verdict — for a Scenario
- * Outline that expanded to several rows (each element carries the same `@slug`
- * tag). Precedence: `fail` > `skip` > `pass`. Any non-passing row makes the
- * slug non-passing; order-independent, so the fold is deterministic.
+ * Recover the report value `ingest` should scan: the CLI's contract (spec §6)
+ * is that `raw` is the report's RAW TEXT — a Cucumber JSON report is a JSON
+ * string, so `ingest` `JSON.parse`s it here, defensively (malformed JSON, or
+ * JSON that doesn't parse to an array, yields `[]` rather than throwing — the
+ * caller sees empty `results`, never a crash). A caller that already holds the
+ * parsed array/object (e.g. `mockCucumberRun`'s output, consumed directly by
+ * the round-trip conformance harness) may pass it through as-is — `ingest`
+ * only parses when `raw` is a `string`.
  */
-function foldVerdict(existing: Verdict | undefined, next: Verdict): Verdict {
-  if (existing === undefined) return next;
-  if (existing === 'fail' || next === 'fail') return 'fail';
-  if (existing === 'skip' || next === 'skip') return 'skip';
-  return 'pass';
+function parseReport(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 /**
  * Parse a Cucumber JSON report into a `TestRun` (spec §4.6), keyed on the
- * SCENARIO slug ALONE. Defensive: never throws — a non-array report, or any
- * malformed feature/element/step, is skipped rather than fatal. `results` keys
- * are sorted so the output is byte-stable / CI-diffable.
+ * SCENARIO slug ALONE. `raw` is the report's raw JSON TEXT (the CLI's
+ * contract) OR an already-parsed array/object (the round-trip conformance
+ * harness's contract) — see {@link parseReport}. Defensive: never throws — a
+ * non-string/unparseable `raw`, a non-array report, or any malformed
+ * feature/element/step, is skipped rather than fatal. `results` keys are
+ * sorted so the output is byte-stable / CI-diffable.
  */
 function ingest(raw: unknown, meta: RunMeta): TestRun {
   const folded = new Map<string, Verdict>();
-  for (const feature of asArray(raw)) {
+  for (const feature of asArray(parseReport(raw))) {
     for (const element of asArray(asRecord(feature)['elements'])) {
       const el = asRecord(element);
       const slug = recoverSlug(el);

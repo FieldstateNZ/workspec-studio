@@ -109,8 +109,8 @@ export interface EmitterConvention {
 }
 
 /**
- * The provider seam. Every test-framework binding (`cucumber`, a future
- * `junit`) implements exactly this — and only this. Both methods are PURE and
+ * The provider seam. Every test-framework binding (`cucumber`, `junit`)
+ * implements exactly this — and only this. Both methods are PURE and
  * DETERMINISTIC: identical input yields byte-identical output.
  */
 export interface Emitter {

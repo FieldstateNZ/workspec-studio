@@ -9,6 +9,7 @@ import type {
 import type { Located, TraceTree } from '@workspec/trace-model';
 import { assertRoundTrip, roundTrip } from './conformance.js';
 import { cucumberEmitter, mockCucumberRun } from './cucumber.js';
+import { junitEmitter, mockJunitRun } from './junit.js';
 import type { MockRunner } from './conformance.js';
 import type { RunMeta } from './types.js';
 
@@ -182,6 +183,93 @@ describe('round-trip conformance (issue #71) — emit → run → ingest → pro
     const skipping: MockRunner = (rules) =>
       mockCucumberRun(rules, { skipping: ['inline-create-each-kind'] });
     const { run, model, unprovenSlugs } = roundTrip(cucumberEmitter, buildTree(), skipping, META);
+
+    expect(run.results['inline-create-each-kind']).toBe('skip');
+    const skipped = model.scenarios.find((n) => n.slug === 'inline-create-each-kind');
+    expect(skipped?.proof).toBe('skip');
+    expect(unprovenSlugs).toEqual(['inline-create-each-kind']);
+  });
+});
+
+// ── junit — the SAME emitter-agnostic harness, second provider (spec §3) ──────
+//
+// Proves the seam generalises: `roundTrip`/`assertRoundTrip` (conformance.ts)
+// take ZERO junit-specific branches — only the `emitter`/`runner` arguments
+// change from the cucumber block above.
+
+describe('round-trip conformance — junit (the SAME harness, second provider)', () => {
+  it('proves every emitted scenario when the mock run passes (assertRoundTrip does not throw)', () => {
+    const tree = buildTree();
+    const result = assertRoundTrip(junitEmitter, tree, mockJunitRun, META);
+
+    expect(result.provenSlugs).toEqual(ALL_SLUGS);
+    expect(result.unprovenSlugs).toEqual([]);
+    expect(result.emitted.map((f) => f.path)).toEqual(['inline-create.xml']);
+    expect(result.run.emitter).toBe('junit');
+    expect(result.run.results).toEqual({
+      'inline-create-each-kind': 'pass',
+      'inline-create-persists': 'pass',
+    });
+  });
+
+  it('makes "proven" SEMANTIC via trace-model: ScenarioNode.proof === pass, meters saturated', () => {
+    const { model } = assertRoundTrip(junitEmitter, buildTree(), mockJunitRun, META);
+
+    expect(model.scenarios.map((n) => [n.slug, n.proof])).toEqual([
+      ['inline-create-each-kind', 'pass'],
+      ['inline-create-persists', 'pass'],
+    ]);
+    expect(model.passRate).toEqual({ numerator: 2, denominator: 2, ratio: 1 });
+    expect(model.scenarioCoverage).toEqual({ numerator: 2, denominator: 2, ratio: 1 });
+    expect(model.userReqCoverage).toEqual({ numerator: 1, denominator: 1, ratio: 1 });
+    expect(model.userRequirements[0]?.covered).toBe(true);
+    expect(model.systemRequirements[0]?.ruleProven).toBe(true);
+    expect(model.findings).toEqual([]);
+  });
+
+  it('closes the loop: every emitted testcase name="<slug>" becomes a key in the ingested run', () => {
+    const { emitted, run } = roundTrip(junitEmitter, buildTree(), mockJunitRun, META);
+    for (const file of emitted) {
+      const names = [...file.content.matchAll(/<testcase\b[^>]*\bname="(?<slug>[^"]+)"/g)].map(
+        (m) => m.groups?.slug,
+      );
+      expect(names.length).toBeGreaterThan(0);
+      for (const slug of names) {
+        expect(slug).toBeDefined();
+        expect(run.results[slug as string]).toBeDefined();
+      }
+    }
+  });
+
+  it('NEGATIVE — a failing scenario ingests to fail, leaving the slug unproven (fail reflected in the model)', () => {
+    const failing: MockRunner = (rules) =>
+      mockJunitRun(rules, { failing: ['inline-create-persists'] });
+    const { run, model, provenSlugs, unprovenSlugs } = roundTrip(
+      junitEmitter,
+      buildTree(),
+      failing,
+      META,
+    );
+
+    expect(run.results['inline-create-persists']).toBe('fail');
+    const failed = model.scenarios.find((n) => n.slug === 'inline-create-persists');
+    expect(failed?.proof).toBe('fail');
+    expect(unprovenSlugs).toEqual(['inline-create-persists']);
+    expect(provenSlugs).toEqual(['inline-create-each-kind']);
+    expect(model.passRate).toEqual({ numerator: 1, denominator: 2, ratio: 0.5 });
+
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+    expect(model.userRequirements[0]?.covered).toBe(false);
+
+    expect(() => assertRoundTrip(junitEmitter, buildTree(), failing, META)).toThrow(
+      /inline-create-persists/,
+    );
+  });
+
+  it('NEGATIVE — a skipped scenario is unproven (skip is not pass)', () => {
+    const skipping: MockRunner = (rules) =>
+      mockJunitRun(rules, { skipping: ['inline-create-each-kind'] });
+    const { run, model, unprovenSlugs } = roundTrip(junitEmitter, buildTree(), skipping, META);
 
     expect(run.results['inline-create-each-kind']).toBe('skip');
     const skipped = model.scenarios.find((n) => n.slug === 'inline-create-each-kind');
