@@ -2,11 +2,6 @@
 
 exports[`golden: the worked example > matches the committed golden snapshot 1`] = `
 {
-  "coverage": {
-    "denominator": 4,
-    "numerator": 1,
-    "ratio": 0.25,
-  },
   "features": [
     {
       "name": "Element authoring",
@@ -17,8 +12,8 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
         "line": 3,
       },
       "systemRequirements": [
-        "inline-create-each-kind",
-        "inline-create-persists",
+        "empty-rule",
+        "inline-create",
         "outline-each-kind",
       ],
       "userRequirements": [
@@ -48,7 +43,7 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       },
       "systemRequirements": [
         "failing-run-surfaced",
-        "unproven-scenario",
+        "unproven-rule",
       ],
       "userRequirements": [
         "review-failures",
@@ -66,23 +61,31 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
     },
     {
       "field": "feature",
-      "file": "requirements/system/dangling-refs-scenario.yml",
+      "file": "requirements/system/dangling-refs-rule.yml",
       "kind": "dangling-ref",
       "line": 4,
       "message": "feature "nonexistent-feature" does not resolve to any feature in the tree",
       "ref": "nonexistent-feature",
       "severity": "error",
-      "slug": "dangling-refs-scenario",
+      "slug": "dangling-refs-rule",
     },
     {
       "field": "userReqs",
-      "file": "requirements/system/dangling-refs-scenario.yml",
+      "file": "requirements/system/dangling-refs-rule.yml",
       "kind": "dangling-ref",
       "line": 4,
       "message": "userReqs "nonexistent-userreq" does not resolve to any user-requirement in the tree",
       "ref": "nonexistent-userreq",
       "severity": "error",
-      "slug": "dangling-refs-scenario",
+      "slug": "dangling-refs-rule",
+    },
+    {
+      "file": "requirements/system/empty-rule.yml",
+      "kind": "empty-rule",
+      "line": 4,
+      "message": "system-requirement "empty-rule" is an empty rule: it groups no scenarios, so it has no proof",
+      "severity": "warning",
+      "slug": "empty-rule",
     },
     {
       "file": "requirements/system/failing-run-surfaced.copy.yml",
@@ -118,6 +121,16 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       "severity": "error",
       "slug": "ghost-actor-req",
     },
+    {
+      "field": "systemRequirement",
+      "file": "scenarios/scenario-dangling-systemreq.yml",
+      "kind": "dangling-ref",
+      "line": 4,
+      "message": "systemRequirement "nonexistent-rule" does not resolve to any system-requirement in the tree",
+      "ref": "nonexistent-rule",
+      "severity": "error",
+      "slug": "scenario-dangling-systemreq",
+    },
   ],
   "latestRun": {
     "ci": "github-actions",
@@ -127,41 +140,169 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
     "ts": "2026-07-09T02:14:07Z",
   },
   "passRate": {
-    "denominator": 5,
-    "numerator": 2,
-    "ratio": 0.4,
+    "denominator": 6,
+    "numerator": 4,
+    "ratio": 0.6666666666666666,
   },
-  "systemRequirements": [
+  "scenarioCoverage": {
+    "denominator": 7,
+    "numerator": 6,
+    "ratio": 0.8571428571428571,
+  },
+  "scenarios": [
     {
       "evidence": {
         "at": "2026-07-09T02:14:07Z",
         "runId": "2026-07-09T02-14Z",
+        "scenario": "dangling-refs-rule-scenario",
         "sha": "a1b2c3d",
         "status": "pass",
-        "sysreq": "dangling-refs-scenario",
       },
-      "feature": "nonexistent-feature",
       "proof": "pass",
-      "slug": "dangling-refs-scenario",
+      "slug": "dangling-refs-rule-scenario",
       "source": {
-        "file": "requirements/system/dangling-refs-scenario.yml",
+        "file": "scenarios/dangling-refs-rule-scenario.yml",
         "line": 4,
       },
-      "title": "A scenario whose intra-tree refs do not resolve",
-      "verifies": [
-        "nonexistent-userreq",
-      ],
+      "systemRequirement": "dangling-refs-rule",
+      "title": "A scenario belonging to a rule whose OWN refs don't resolve",
     },
     {
       "evidence": {
         "at": "2026-07-09T02:14:07Z",
         "runId": "2026-07-09T02-14Z",
+        "scenario": "failing-run-surfaced-scenario",
         "sha": "a1b2c3d",
         "status": "fail",
-        "sysreq": "failing-run-surfaced",
       },
-      "feature": "run-review",
       "proof": "fail",
+      "slug": "failing-run-surfaced-scenario",
+      "source": {
+        "file": "scenarios/failing-run-surfaced-scenario.yml",
+        "line": 4,
+      },
+      "systemRequirement": "failing-run-surfaced",
+      "title": "A failing scenario is surfaced in run review",
+    },
+    {
+      "evidence": {
+        "at": "2026-07-09T02:14:07Z",
+        "runId": "2026-07-09T02-14Z",
+        "scenario": "inline-create-each-kind",
+        "sha": "a1b2c3d",
+        "status": "pass",
+      },
+      "proof": "pass",
+      "slug": "inline-create-each-kind",
+      "source": {
+        "file": "scenarios/inline-create-each-kind.yml",
+        "line": 4,
+      },
+      "systemRequirement": "inline-create",
+      "title": "Inline create works for each element kind",
+    },
+    {
+      "evidence": {
+        "at": "2026-07-09T02:14:07Z",
+        "runId": "2026-07-09T02-14Z",
+        "scenario": "inline-create-persists",
+        "sha": "a1b2c3d",
+        "status": "pass",
+      },
+      "proof": "pass",
+      "slug": "inline-create-persists",
+      "source": {
+        "file": "scenarios/inline-create-persists.yml",
+        "line": 4,
+      },
+      "systemRequirement": "inline-create",
+      "title": "Creating an element inline saves it immediately",
+    },
+    {
+      "evidence": {
+        "at": "2026-07-09T02:14:07Z",
+        "runId": "2026-07-09T02-14Z",
+        "scenario": "outline-each-kind-scenario",
+        "sha": "a1b2c3d",
+        "status": "skip",
+      },
+      "proof": "skip",
+      "slug": "outline-each-kind-scenario",
+      "source": {
+        "file": "scenarios/outline-each-kind-scenario.yml",
+        "line": 4,
+      },
+      "systemRequirement": "outline-each-kind",
+      "title": "Outline covers each kind from the examples table",
+    },
+    {
+      "evidence": {
+        "at": "2026-07-09T02:14:07Z",
+        "runId": "2026-07-09T02-14Z",
+        "scenario": "scenario-dangling-systemreq",
+        "sha": "a1b2c3d",
+        "status": "pass",
+      },
+      "proof": "pass",
+      "slug": "scenario-dangling-systemreq",
+      "source": {
+        "file": "scenarios/scenario-dangling-systemreq.yml",
+        "line": 4,
+      },
+      "systemRequirement": "nonexistent-rule",
+      "title": "A scenario whose parent rule ref doesn't resolve",
+    },
+    {
+      "proof": "unproven",
+      "slug": "unproven-scenario",
+      "source": {
+        "file": "scenarios/unproven-scenario.yml",
+        "line": 4,
+      },
+      "systemRequirement": "unproven-rule",
+      "title": "A scenario the latest run never reported on",
+    },
+  ],
+  "systemRequirements": [
+    {
+      "empty": false,
+      "feature": "nonexistent-feature",
+      "ruleProven": true,
+      "scenarios": [
+        "dangling-refs-rule-scenario",
+      ],
+      "slug": "dangling-refs-rule",
+      "source": {
+        "file": "requirements/system/dangling-refs-rule.yml",
+        "line": 4,
+      },
+      "title": "A rule whose intra-tree refs do not resolve",
+      "verifies": [
+        "nonexistent-userreq",
+      ],
+    },
+    {
+      "empty": true,
+      "feature": "element-authoring",
+      "ruleProven": false,
+      "scenarios": [],
+      "slug": "empty-rule",
+      "source": {
+        "file": "requirements/system/empty-rule.yml",
+        "line": 4,
+      },
+      "title": "A rule with no scenarios yet",
+      "verifies": [
+        "authoring-flow",
+      ],
+    },
+    {
+      "empty": false,
+      "feature": "run-review",
+      "ruleProven": false,
+      "scenarios": [
+        "failing-run-surfaced-scenario",
+      ],
       "slug": "failing-run-surfaced",
       "source": {
         "file": "requirements/system/failing-run-surfaced.copy.yml",
@@ -173,55 +314,30 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       ],
     },
     {
-      "evidence": {
-        "at": "2026-07-09T02:14:07Z",
-        "runId": "2026-07-09T02-14Z",
-        "sha": "a1b2c3d",
-        "status": "fail",
-        "sysreq": "inline-create-each-kind",
-      },
+      "empty": false,
       "feature": "element-authoring",
-      "proof": "fail",
-      "slug": "inline-create-each-kind",
+      "ruleProven": true,
+      "scenarios": [
+        "inline-create-each-kind",
+        "inline-create-persists",
+      ],
+      "slug": "inline-create",
       "source": {
-        "file": "requirements/system/inline-create-each-kind.yml",
+        "file": "requirements/system/inline-create.yml",
         "line": 4,
       },
-      "title": "Inline create works for each element kind",
+      "title": "Inline element creation",
       "verifies": [
         "authoring-flow",
       ],
     },
     {
-      "evidence": {
-        "at": "2026-07-09T02:14:07Z",
-        "runId": "2026-07-09T02-14Z",
-        "sha": "a1b2c3d",
-        "status": "pass",
-        "sysreq": "inline-create-persists",
-      },
+      "empty": false,
       "feature": "element-authoring",
-      "proof": "pass",
-      "slug": "inline-create-persists",
-      "source": {
-        "file": "requirements/system/inline-create-persists.yml",
-        "line": 4,
-      },
-      "title": "Creating an element inline saves it immediately",
-      "verifies": [
-        "authoring-flow",
+      "ruleProven": false,
+      "scenarios": [
+        "outline-each-kind-scenario",
       ],
-    },
-    {
-      "evidence": {
-        "at": "2026-07-09T02:14:07Z",
-        "runId": "2026-07-09T02-14Z",
-        "sha": "a1b2c3d",
-        "status": "skip",
-        "sysreq": "outline-each-kind",
-      },
-      "feature": "element-authoring",
-      "proof": "skip",
       "slug": "outline-each-kind",
       "source": {
         "file": "requirements/system/outline-each-kind.yml",
@@ -234,19 +350,28 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       ],
     },
     {
+      "empty": false,
       "feature": "run-review",
-      "proof": "unproven",
-      "slug": "unproven-scenario",
+      "ruleProven": false,
+      "scenarios": [
+        "unproven-scenario",
+      ],
+      "slug": "unproven-rule",
       "source": {
-        "file": "requirements/system/unproven-scenario.yml",
+        "file": "requirements/system/unproven-rule.yml",
         "line": 4,
       },
-      "title": "A scenario the latest run never reported on",
+      "title": "A rule whose scenario the latest run never reported on",
       "verifies": [
         "review-failures",
       ],
     },
   ],
+  "userReqCoverage": {
+    "denominator": 4,
+    "numerator": 1,
+    "ratio": 0.25,
+  },
   "userRequirements": [
     {
       "actor": "dev-lead",
@@ -255,7 +380,7 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
         "element-authoring",
       ],
       "orphan": true,
-      "passingSysReqs": [],
+      "provenBy": [],
       "slug": "audit-export",
       "source": {
         "file": "requirements/user/audit-export.yml",
@@ -272,8 +397,8 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
         "element-authoring",
       ],
       "orphan": false,
-      "passingSysReqs": [
-        "inline-create-persists",
+      "provenBy": [
+        "inline-create",
       ],
       "slug": "authoring-flow",
       "source": {
@@ -283,8 +408,8 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       "status": "agreed",
       "title": "Author an element without leaving the canvas",
       "verifiedBy": [
-        "inline-create-each-kind",
-        "inline-create-persists",
+        "empty-rule",
+        "inline-create",
         "outline-each-kind",
       ],
     },
@@ -295,7 +420,7 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
         "element-authoring",
       ],
       "orphan": false,
-      "passingSysReqs": [],
+      "provenBy": [],
       "slug": "ghost-actor-req",
       "source": {
         "file": "requirements/user/ghost-actor-req.yml",
@@ -314,7 +439,7 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
         "run-review",
       ],
       "orphan": false,
-      "passingSysReqs": [],
+      "provenBy": [],
       "slug": "review-failures",
       "source": {
         "file": "requirements/user/review-failures.yml",
@@ -324,7 +449,7 @@ exports[`golden: the worked example > matches the committed golden snapshot 1`] 
       "title": "See which scenarios failed in the latest run",
       "verifiedBy": [
         "failing-run-surfaced",
-        "unproven-scenario",
+        "unproven-rule",
       ],
     },
   ],

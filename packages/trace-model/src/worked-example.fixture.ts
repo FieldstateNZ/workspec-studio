@@ -1,22 +1,36 @@
 // The worked example — a small but representative single tree plus two runs,
-// built as typed LOCATED inputs (no YAML, no `node:fs`, so the fixture stays as
-// pure as the engine). It deliberately exercises every derivation the golden
-// test pins:
+// built as typed LOCATED inputs (no YAML, no `node:fs`, so the fixture stays
+// as pure as the engine). It deliberately exercises every derivation the
+// golden test pins, across the 5-kind Rule model (spec §4):
 //
-//   • coverage    — authoring-flow is covered (a passing verifier); three
-//                   others are not, one of them an orphan.
-//   • pass-rate   — a pass/fail/skip mix over the latest run, plus one sysreq
-//                   absent from it (→ unproven).
-//   • latest-run-wins — the OLDER run passes everything; the newer run's mixed
-//                   verdicts are what the model reflects.
-//   • findings    — orphan-userReq, orphan-feature, three dangling refs
-//                   (actor / feature / userReqs), and a duplicate sysreq slug.
+//   • scenarioCoverage — 6 of 7 scenarios have a result in the latest run
+//                        (`unproven-scenario` is absent).
+//   • passRate         — a pass/fail/skip mix over the latest run's 6
+//                        evidenced scenarios: 4 pass.
+//   • userReqCoverage  — only `authoring-flow` has a rule-proven verifier
+//                        (1 of 4).
+//   • ruleProven       — all four cases: all-pass (`inline-create`),
+//                        one-failing (`failing-run-surfaced`),
+//                        one-unproven (`unproven-rule`), and empty
+//                        (`empty-rule`, which groups no scenarios at all).
+//   • latest-run-wins  — the OLDER run passes everything; the newer run's
+//                        mixed verdicts are what the model reflects.
+//   • findings         — orphan-userReq, orphan-feature, empty-rule, four
+//                        dangling refs (actor / Rule-feature / Rule-userReqs /
+//                        scenario-systemRequirement), and a duplicate Rule
+//                        slug.
 //
-// The expected headline numbers (independently re-derived here so a regression
-// is obvious without reading the snapshot): coverage 1/4, pass-rate 2/5,
-// latest run = the 2026-07-09 run, 7 findings.
+// The expected headline numbers (independently re-derived here so a
+// regression is obvious without reading the snapshot): scenarioCoverage 6/7,
+// passRate 4/6 (= 2/3), userReqCoverage 1/4, 9 findings.
 
-import type { Actor, Feature, SystemRequirement, UserRequirement } from '@workspec/req-schema';
+import type {
+  Actor,
+  Feature,
+  Scenario,
+  SystemRequirement,
+  UserRequirement,
+} from '@workspec/req-schema';
 import type { Located, TestRun, TraceTree } from './types.js';
 
 const API_VERSION = 'workspec.io/v1alpha1';
@@ -59,6 +73,7 @@ function userReq(
   };
 }
 
+/** A system-requirement — a Gherkin Rule: no steps of its own, groups scenarios. */
 function sysReq(
   slug: string,
   file: string,
@@ -68,6 +83,15 @@ function sysReq(
     slug,
     source: { file, line: 4 },
     artifact: { apiVersion: API_VERSION, kind: 'SystemRequirement', metadata: { slug }, spec },
+  };
+}
+
+/** A scenario — the executed unit — referencing its parent Rule via `systemRequirement`. */
+function scenario(slug: string, file: string, spec: Scenario['spec']): Located<Scenario> {
+  return {
+    slug,
+    source: { file, line: 4 },
+    artifact: { apiVersion: API_VERSION, kind: 'Scenario', metadata: { slug }, spec },
   };
 }
 
@@ -105,7 +129,7 @@ export function buildWorkedExample(): TraceTree {
         status: 'agreed',
         links: [],
       }),
-      // Orphan user-requirement: no sysreq verifies it → the headline finding.
+      // Orphan user-requirement: no Rule verifies it → the headline finding.
       userReq('audit-export', 'requirements/user/audit-export.yml', {
         title: 'Export the RTM as a compliance artifact',
         actor: 'dev-lead',
@@ -117,8 +141,8 @@ export function buildWorkedExample(): TraceTree {
         links: [],
       }),
       // Dangling actor ref (`ghost-actor` is not an actor in the tree); still
-      // verified by outline-each-kind, so it is NOT an orphan — isolates the
-      // dangling-actor finding.
+      // verified by `outline-each-kind`, so it is NOT an orphan — isolates
+      // the dangling-actor finding.
       userReq('ghost-actor-req', 'requirements/user/ghost-actor-req.yml', {
         title: 'A requirement pointing at a missing actor',
         actor: 'ghost-actor',
@@ -131,51 +155,94 @@ export function buildWorkedExample(): TraceTree {
       }),
     ],
     systemRequirements: [
-      sysReq('inline-create-persists', 'requirements/system/inline-create-persists.yml', {
-        title: 'Creating an element inline saves it immediately',
+      // ALL-PASS: every scenario it groups passes → ruleProven.
+      sysReq('inline-create', 'requirements/system/inline-create.yml', {
+        title: 'Inline element creation',
         feature: 'element-authoring',
         userReqs: ['authoring-flow'],
-        then: ['the element is persisted'],
+        links: [],
       }),
-      sysReq('inline-create-each-kind', 'requirements/system/inline-create-each-kind.yml', {
-        title: 'Inline create works for each element kind',
-        feature: 'element-authoring',
-        userReqs: ['authoring-flow'],
-        then: ['a valid artifact is written'],
-      }),
+      // ONE scenario, skipped: not all-pass, not empty → not ruleProven.
       sysReq('outline-each-kind', 'requirements/system/outline-each-kind.yml', {
         title: 'Outline covers each kind from the examples table',
         feature: 'element-authoring',
         userReqs: ['authoring-flow', 'ghost-actor-req'],
-        then: ['each row produces a scenario'],
+        links: [],
       }),
+      // ONE-FAILING: its one scenario fails → not ruleProven.
       sysReq('failing-run-surfaced', 'requirements/system/failing-run-surfaced.yml', {
         title: 'A failing scenario is surfaced in run review',
         feature: 'run-review',
         userReqs: ['review-failures'],
-        then: ['the failure is listed first'],
+        links: [],
       }),
       // Same slug as above from a second file → duplicate-slug (both files flagged).
       sysReq('failing-run-surfaced', 'requirements/system/failing-run-surfaced.copy.yml', {
         title: 'A failing scenario is surfaced in run review (copy)',
         feature: 'run-review',
         userReqs: ['review-failures'],
+        links: [],
+      }),
+      // ONE-UNPROVEN: its one scenario is absent from the latest run → not ruleProven.
+      sysReq('unproven-rule', 'requirements/system/unproven-rule.yml', {
+        title: 'A rule whose scenario the latest run never reported on',
+        feature: 'run-review',
+        userReqs: ['review-failures'],
+        links: [],
+      }),
+      // EMPTY: groups no scenarios at all → empty-rule finding, not ruleProven.
+      sysReq('empty-rule', 'requirements/system/empty-rule.yml', {
+        title: 'A rule with no scenarios yet',
+        feature: 'element-authoring',
+        userReqs: ['authoring-flow'],
+        links: [],
+      }),
+      // Dangling feature ref AND dangling userReqs ref → two dangling findings.
+      sysReq('dangling-refs-rule', 'requirements/system/dangling-refs-rule.yml', {
+        title: 'A rule whose intra-tree refs do not resolve',
+        feature: 'nonexistent-feature',
+        userReqs: ['nonexistent-userreq'],
+        links: [],
+      }),
+    ],
+    scenarios: [
+      scenario('inline-create-persists', 'scenarios/inline-create-persists.yml', {
+        title: 'Creating an element inline saves it immediately',
+        systemRequirement: 'inline-create',
+        then: ['the element is persisted'],
+      }),
+      scenario('inline-create-each-kind', 'scenarios/inline-create-each-kind.yml', {
+        title: 'Inline create works for each element kind',
+        systemRequirement: 'inline-create',
+        then: ['a valid artifact is written'],
+      }),
+      scenario('outline-each-kind-scenario', 'scenarios/outline-each-kind-scenario.yml', {
+        title: 'Outline covers each kind from the examples table',
+        systemRequirement: 'outline-each-kind',
+        then: ['each row produces a scenario'],
+      }),
+      scenario('failing-run-surfaced-scenario', 'scenarios/failing-run-surfaced-scenario.yml', {
+        title: 'A failing scenario is surfaced in run review',
+        systemRequirement: 'failing-run-surfaced',
         then: ['the failure is listed first'],
       }),
       // In the tree but ABSENT from the latest run → unproven (even though the
       // older run passed it — proves latest-run-wins).
-      sysReq('unproven-scenario', 'requirements/system/unproven-scenario.yml', {
+      scenario('unproven-scenario', 'scenarios/unproven-scenario.yml', {
         title: 'A scenario the latest run never reported on',
-        feature: 'run-review',
-        userReqs: ['review-failures'],
+        systemRequirement: 'unproven-rule',
         then: ['it stays unproven until a run reports it'],
       }),
-      // Dangling feature ref AND dangling userReqs ref → two dangling findings.
-      sysReq('dangling-refs-scenario', 'requirements/system/dangling-refs-scenario.yml', {
-        title: 'A scenario whose intra-tree refs do not resolve',
-        feature: 'nonexistent-feature',
-        userReqs: ['nonexistent-userreq'],
-        then: ['the dangling-ref check catches both refs'],
+      scenario('dangling-refs-rule-scenario', 'scenarios/dangling-refs-rule-scenario.yml', {
+        title: "A scenario belonging to a rule whose OWN refs don't resolve",
+        systemRequirement: 'dangling-refs-rule',
+        then: ['the rule-level dangling refs are still caught'],
+      }),
+      // Dangling systemRequirement ref → the fifth-kind dangling finding.
+      scenario('scenario-dangling-systemreq', 'scenarios/scenario-dangling-systemreq.yml', {
+        title: "A scenario whose parent rule ref doesn't resolve",
+        systemRequirement: 'nonexistent-rule',
+        then: ['the dangling-ref check catches the scenario→rule ref too'],
       }),
     ],
   };
@@ -184,6 +251,7 @@ export function buildWorkedExample(): TraceTree {
 /**
  * Two runs. The older one passes everything; the newer one carries the mixed
  * verdicts the model must reflect — and omits `unproven-scenario` entirely.
+ * Keyed on the SCENARIO slug (spec §4.6 revision).
  */
 export function buildWorkedExampleRuns(): TestRun[] {
   return [
@@ -194,10 +262,11 @@ export function buildWorkedExampleRuns(): TestRun[] {
       results: {
         'inline-create-persists': 'pass',
         'inline-create-each-kind': 'pass',
-        'outline-each-kind': 'pass',
-        'failing-run-surfaced': 'pass',
+        'outline-each-kind-scenario': 'pass',
+        'failing-run-surfaced-scenario': 'pass',
         'unproven-scenario': 'pass',
-        'dangling-refs-scenario': 'pass',
+        'dangling-refs-rule-scenario': 'pass',
+        'scenario-dangling-systemreq': 'pass',
       },
     },
     {
@@ -208,10 +277,11 @@ export function buildWorkedExampleRuns(): TestRun[] {
       emitter: 'cucumber',
       results: {
         'inline-create-persists': 'pass',
-        'inline-create-each-kind': 'fail',
-        'outline-each-kind': 'skip',
-        'failing-run-surfaced': 'fail',
-        'dangling-refs-scenario': 'pass',
+        'inline-create-each-kind': 'pass',
+        'outline-each-kind-scenario': 'skip',
+        'failing-run-surfaced-scenario': 'fail',
+        'dangling-refs-rule-scenario': 'pass',
+        'scenario-dangling-systemreq': 'pass',
         // unproven-scenario intentionally absent → derived `unproven`.
       },
     },
