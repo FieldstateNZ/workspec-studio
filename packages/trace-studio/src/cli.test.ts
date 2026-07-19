@@ -12,11 +12,14 @@ import type {
 } from '@workspec/req-schema';
 import { mockCucumberRun } from '@workspec/trace-emitters';
 import type { RuleWithScenarios, ScenarioInput } from '@workspec/trace-emitters';
+import { buildModel } from '@workspec/trace-model';
 import type { Located, TestRun } from '@workspec/trace-model';
 import { run } from './cli.js';
 import type { CliIO } from './cli.js';
+import { renderMatrix } from './matrix-render.js';
+import { buildMatrixRows } from './matrix-rows.js';
 import { createMemoryRepository } from './repository.js';
-import type { LoadIssue } from './repository.js';
+import type { LoadIssue, TraceRepositoryPort } from './repository.js';
 
 // ── capture double + fixed clock (no real process/wall-clock in tests) ────────
 
@@ -541,6 +544,124 @@ describe('verify: gate + exit codes', () => {
   });
 });
 
+// ── matrix ───────────────────────────────────────────────────────────────────
+
+describe('matrix', () => {
+  it('prints its help and exits 0 for --help', async () => {
+    const cap = captureIO();
+    const code = await run(['matrix', '--help'], cap.io, { repository: createMemoryRepository() });
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('workspec-trace matrix');
+    expect(cap.err()).toBe('');
+  });
+
+  it('exits 2 on an unknown flag', async () => {
+    const cap = captureIO();
+    const code = await run(['matrix', '--bogus-flag'], cap.io, {
+      repository: createMemoryRepository({ tree: wiredTree() }),
+    });
+    expect(code).toBe(2);
+  });
+
+  it('exits 2 when neither --out nor --format is given', async () => {
+    const cap = captureIO();
+    const code = await run(['matrix'], cap.io, {
+      repository: createMemoryRepository({ tree: wiredTree() }),
+    });
+    expect(code).toBe(2);
+    expect(cap.err()).toContain('either --out <file> or --format <md|csv|html> is required');
+  });
+
+  it('exits 2 when --out has an unrecognised extension and no --format is given', async () => {
+    const cap = captureIO();
+    const code = await run(['matrix', '--out', 'matrix.txt'], cap.io, {
+      repository: createMemoryRepository({ tree: wiredTree() }),
+    });
+    expect(code).toBe(2);
+    expect(cap.err()).toContain('cannot infer a format from --out "matrix.txt"');
+  });
+
+  it('exits 2 on an unrecognised --format value', async () => {
+    const cap = captureIO();
+    const code = await run(['matrix', '--format', 'xml'], cap.io, {
+      repository: createMemoryRepository({ tree: wiredTree() }),
+    });
+    expect(code).toBe(2);
+    expect(cap.err()).toContain('unknown --format "xml"');
+  });
+
+  it("infers the format from --out's extension and writes the serializer's exact output", async () => {
+    const tree = wiredTree();
+    const runs: TestRun[] = [
+      {
+        id: 'r1',
+        ts: '2026-07-14T09:30:00.000Z',
+        emitter: 'cucumber',
+        results: { 'inline-create-persists': 'pass', 'inline-create-each-kind': 'fail' },
+      },
+    ];
+    const repository = createMemoryRepository({ tree, runs });
+    const cap = captureIO();
+    const code = await run(['matrix', '--out', 'matrix.md'], cap.io, { repository });
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('matrix: wrote matrix.md (md, 2 row(s))');
+
+    const expected = renderMatrix('md', buildMatrixRows(buildModel(tree, runs)));
+    expect(repository.writes.get('matrix.md')).toBe(expected);
+  });
+
+  it('--format overrides the extension --out would otherwise imply', async () => {
+    const tree = wiredTree();
+    const repository = createMemoryRepository({ tree });
+    const cap = captureIO();
+    const code = await run(['matrix', '--out', 'matrix.csv', '--format', 'html'], cap.io, {
+      repository,
+    });
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('matrix: wrote matrix.csv (html, 2 row(s))');
+    const written = repository.writes.get('matrix.csv');
+    expect(written).toBeDefined();
+    expect(written).toBe(renderMatrix('html', buildMatrixRows(buildModel(tree, []))));
+  });
+
+  it('writes to stdout when --out is omitted, using --format', async () => {
+    const tree = wiredTree();
+    const repository = createMemoryRepository({ tree });
+    const cap = captureIO();
+    const code = await run(['matrix', '--format', 'csv'], cap.io, { repository });
+    expect(code).toBe(0);
+    expect(cap.out()).toBe(renderMatrix('csv', buildMatrixRows(buildModel(tree, []))));
+    expect(repository.writes.size).toBe(0);
+  });
+
+  it('exits 1 when the write fails', async () => {
+    const tree = wiredTree();
+    const failing: TraceRepositoryPort = {
+      loadTree: () => Promise.resolve({ tree, issues: [] }),
+      loadRuns: () => Promise.resolve({ runs: [], issues: [] }),
+      readFile: () => Promise.reject(new Error('not used')),
+      writeFile: () => Promise.reject(new Error('disk full')),
+    };
+    const cap = captureIO();
+    const code = await run(['matrix', '--out', 'matrix.md'], cap.io, { repository: failing });
+    expect(code).toBe(1);
+    expect(cap.err()).toContain('failed to write matrix.md');
+    expect(cap.err()).toContain('disk full');
+  });
+
+  it('warns on loader validation issues but still renders', async () => {
+    const issues: LoadIssue[] = [
+      { file: '.workspec/features/BAD NAME.yaml', kind: 'filename', message: 'bad slug' },
+    ];
+    const repository = createMemoryRepository({ tree: wiredTree(), treeIssues: issues });
+    const cap = captureIO();
+    const code = await run(['matrix', '--format', 'md'], cap.io, { repository });
+    expect(code).toBe(0);
+    expect(cap.err()).toContain('bad slug');
+    expect(cap.out()).toContain('| Feature | Rule | Scenario | Verifies | Status | Run | SHA |');
+  });
+});
+
 // ── the full round-trip through the real FsRepository (tmp dir) ────────────────
 
 describe('CLI round-trip (emit -> mock run -> ingest -> verify) over a real FS tree', () => {
@@ -652,5 +773,34 @@ describe('CLI round-trip (emit -> mock run -> ingest -> verify) over a real FS t
     expect(code).toBe(1);
     expect(cap.out()).toContain('Pass rate: 1 of 2 (50.0%)');
     expect(cap.out()).toContain('verify: FAILED');
+  });
+
+  it('matrix writes the RTM to --out under --dir, matching the pure serializer byte-for-byte', async () => {
+    await run(['emit', '--emitter', 'cucumber', '--dir', dir], captureIO().io);
+    const report = mockCucumberRun(wiredInputs());
+    await writeFile(join(dir, 'report.json'), JSON.stringify(report), 'utf8');
+    await run(['ingest', 'report.json', '--emitter', 'cucumber', '--dir', dir], captureIO().io, {
+      clock: FIXED_CLOCK,
+    });
+
+    const cap = captureIO();
+    const code = await run(['matrix', '--out', 'matrix.html', '--dir', dir], cap.io);
+    expect(code).toBe(0);
+    expect(cap.out()).toContain('matrix: wrote matrix.html (html, 2 row(s))');
+
+    const written = await readFile(join(dir, 'matrix.html'), 'utf8');
+    expect(written.startsWith('<!doctype html>')).toBe(true);
+    expect(written).toContain('<td class="status-pass">pass</td>');
+
+    const tree = wiredTree();
+    const runs: TestRun[] = [
+      {
+        id: EXPECTED_RUN_ID,
+        ts: FIXED_CLOCK(),
+        emitter: 'cucumber',
+        results: { 'inline-create-persists': 'pass', 'inline-create-each-kind': 'pass' },
+      },
+    ];
+    expect(written).toBe(renderMatrix('html', buildMatrixRows(buildModel(tree, runs))));
   });
 });

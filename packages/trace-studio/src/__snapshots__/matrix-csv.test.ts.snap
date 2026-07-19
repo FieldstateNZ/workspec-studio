@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderMatrixCsv > matches the committed golden snapshot (byte-determinism) 1`] = `
+"Feature,Rule,Scenario,Verifies,Status,Run,SHA
+,ghost-rule,A scenario whose Rule ref is dangling,,pass,r1,abc1234
+Element authoring,Inline element creation,A failing scenario,Author an element without leaving the canvas,fail,r1,abc1234
+Element authoring,Inline element creation,Creates and persists inline,Author an element without leaving the canvas,pass,r1,abc1234
+Element authoring,Inline element creation,Never reported by any run,Author an element without leaving the canvas,unproven,,
+Element authoring,A Rule | with a pipe,"A scenario title with a <tag> and a comma, plus ""quotes""","Author an element without leaving the canvas; A promise with a ""quote"" inside",skip,r1,abc1234
+ghost-feature,A rule whose feature ref is dangling,Proves the dangling-feature rule,Author an element without leaving the canvas,pass,r1,abc1234
+"Reporting, Audit & Compliance",An empty rule with no scenarios,(no scenarios — empty rule),Author an element without leaving the canvas,unproven,,
+"
+`;

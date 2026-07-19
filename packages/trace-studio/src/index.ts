@@ -42,3 +42,17 @@ export type {
 // ── CLI entry (also the executable's `run`) ────────────────────────────────────
 export { run } from './cli.js';
 export type { CliIO, RunDeps } from './cli.js';
+
+// ── The RTM (matrix) pure serializer layer — no IO, so an embedder (a future
+//    Matrix-view export button, spec §5) can reuse the same projection +
+//    renderers the CLI's `matrix` command wires up. ───────────────────────────
+export { buildMatrixRows, EMPTY_RULE_SCENARIO_LABEL } from './matrix-rows.js';
+export { MATRIX_COLUMNS } from './matrix-columns.js';
+export type { MatrixColumn } from './matrix-columns.js';
+export type { MatrixRow } from './matrix-row.types.js';
+export { resolveMatrixFormat } from './matrix-format.js';
+export type { MatrixFormat } from './matrix-format.js';
+export { renderMatrix } from './matrix-render.js';
+export { renderMatrixCsv } from './matrix-csv.js';
+export { renderMatrixHtml } from './matrix-html.js';
+export { renderMatrixMarkdown } from './matrix-markdown.js';
