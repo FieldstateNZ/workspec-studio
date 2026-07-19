@@ -1,0 +1,48 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderMatrixHtml > matches the committed golden snapshot (byte-determinism) 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Requirements Traceability Matrix</title>
+<style>
+:root { color-scheme: light dark; }
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 2rem; color: #1a1a1a; }
+  h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { border: 1px solid #999; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .status-pass { color: #0a7a2f; font-weight: 600; }
+  .status-fail { color: #b3261e; font-weight: 600; }
+  .status-skip { color: #8a6d00; font-weight: 600; }
+  .status-unproven { color: #666; font-style: italic; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a1a; color: #eee; }
+    th { background: #2a2a2a; }
+    tr:nth-child(even) td { background: #222; }
+    th, td { border-color: #444; }
+  }
+</style>
+</head>
+<body>
+<h1>Requirements Traceability Matrix</h1>
+<table>
+<thead>
+<tr><th>Feature</th><th>Rule</th><th>Scenario</th><th>Verifies</th><th>Status</th><th>Run</th><th>SHA</th></tr>
+</thead>
+<tbody>
+<tr><td></td><td>ghost-rule</td><td>A scenario whose Rule ref is dangling</td><td></td><td class="status-pass">pass</td><td>r1</td><td>abc1234</td></tr>
+<tr><td>Element authoring</td><td>Inline element creation</td><td>A failing scenario</td><td>Author an element without leaving the canvas</td><td class="status-fail">fail</td><td>r1</td><td>abc1234</td></tr>
+<tr><td>Element authoring</td><td>Inline element creation</td><td>Creates and persists inline</td><td>Author an element without leaving the canvas</td><td class="status-pass">pass</td><td>r1</td><td>abc1234</td></tr>
+<tr><td>Element authoring</td><td>Inline element creation</td><td>Never reported by any run</td><td>Author an element without leaving the canvas</td><td class="status-unproven">unproven</td><td></td><td></td></tr>
+<tr><td>Element authoring</td><td>A Rule | with a pipe</td><td>A scenario title with a &lt;tag&gt; and a comma, plus &quot;quotes&quot;</td><td>Author an element without leaving the canvas; A promise with a &quot;quote&quot; inside</td><td class="status-skip">skip</td><td>r1</td><td>abc1234</td></tr>
+<tr><td>ghost-feature</td><td>A rule whose feature ref is dangling</td><td>Proves the dangling-feature rule</td><td>Author an element without leaving the canvas</td><td class="status-pass">pass</td><td>r1</td><td>abc1234</td></tr>
+<tr><td>Reporting, Audit &amp; Compliance</td><td>An empty rule with no scenarios</td><td>(no scenarios — empty rule)</td><td>Author an element without leaving the canvas</td><td class="status-unproven">unproven</td><td></td><td></td></tr>
+</tbody>
+</table>
+</body>
+</html>
+"
+`;

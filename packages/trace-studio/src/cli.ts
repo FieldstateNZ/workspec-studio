@@ -1,6 +1,8 @@
-// The `workspec-trace` CLI — emit / ingest / verify over a working tree of
-// traceability artifacts (spec §6). This is the T4 milestone: shippable value,
-// zero frontend.
+// The `workspec-trace` CLI — emit / ingest / verify / matrix over a working
+// tree of traceability artifacts (spec §6). `emit`/`ingest`/`verify` were the
+// T4 milestone (shippable value, zero frontend); `matrix` is T6's export half
+// (spec §5/§6) — the RTM as a generated, byte-deterministic compliance
+// artifact (md/csv/html).
 //
 // `run(argv, io, deps)` is the testable entry point: it returns a process exit
 // code and writes through an injectable `CliIO` (defaulting to the real
@@ -10,8 +12,8 @@
 // test. `bin.ts` is the ONLY thing that touches `process`.
 //
 // Exit codes are the contract CI keys on: 0 = pass, 1 = gate failed (verify) or
-// a runtime error, 2 = usage error (unknown command/flag, missing arg, bad
-// value). This CLI NEVER invokes git — the human commits.
+// a write/runtime error (matrix), 2 = usage error (unknown command/flag,
+// missing arg, bad value). This CLI NEVER invokes git — the human commits.
 
 import { posix } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -20,6 +22,9 @@ import { buildModel } from '@workspec/trace-model';
 import type { Finding, Meter, TraceModel } from '@workspec/trace-model';
 import { emitters, getEmitter, groupScenariosByRule } from '@workspec/trace-emitters';
 import { DEFAULT_RUNS_DIR, FsRepository } from './fs-repository.js';
+import { resolveMatrixFormat } from './matrix-format.js';
+import { renderMatrix } from './matrix-render.js';
+import { buildMatrixRows } from './matrix-rows.js';
 import type { LoadIssue, TraceRepositoryPort } from './repository.js';
 
 /** Injectable IO. Primary command output goes to `out`; diagnostics/usage errors to `err`. */
@@ -63,6 +68,7 @@ Commands:
   ingest    Ingest a test toolchain's results into a run (evidence).
   verify    The CI gate: fail on validation errors, dangling refs, or a
             scenario-coverage / userReq-coverage / pass-rate floor.
+  matrix    Export the RTM (requirements traceability matrix) as md/csv/html.
 
 Run "workspec-trace <command> --help" for command options. This CLI never
 invokes git — you commit. Available emitters: ${EMITTER_NAMES}.
@@ -133,6 +139,33 @@ or pass-rate below --min-pass-rate. Error findings ALWAYS gate; the thresholds
 are opt-in (default 0 = no floor). v0 uses ABSOLUTE thresholds —
 regression-vs-baseline is v0.1 (spec §9.4). Exit codes: 0 pass, 1 gate failed,
 2 usage error.
+`;
+
+const MATRIX_HELP = `workspec-trace matrix — the RTM as a generated artifact (spec §5/§6)
+
+Usage:
+  workspec-trace matrix [--out <file>] [--format md|csv|html] [--dir <root>]
+                        [--runs-dir <dir>]
+
+Options:
+  --out <file>       Write the matrix here (repo-relative). The format is
+                      inferred from its extension (.md/.csv/.html/.htm)
+                      unless --format overrides it. Omit to print to stdout.
+  --format <fmt>     Force the export format: md, csv, or html. Overrides
+                      whatever --out's extension would imply.
+  --dir <root>       Working-tree root to load .workspec/ from (default: cwd).
+  --runs-dir <dir>   Where runs are read from (default: "${DEFAULT_RUNS_DIR}").
+
+Loads .workspec/, derives the trace model, and projects it to the
+requirements-traceability matrix (spec §5): one row per scenario — Feature,
+Rule (system-requirement), Scenario, Verifies (the userReqs the Rule
+verifies), Status (latest-run proof: pass/fail/skip/unproven), Run (latest
+run id), SHA — plus one row per EMPTY Rule (a Rule with no scenarios at all
+still needs surfacing: a requirement with no proof). Rows are ordered by
+feature slug, then Rule slug, then scenario slug, so the artifact is
+byte-stable and CI-diffable. A dangling scenario -> Rule or Rule -> feature
+ref is shown as-authored, never silently dropped. Exit codes: 0 success, 1
+write failure, 2 usage error (bad/unknown format, missing arg).
 `;
 
 // ── shared rendering ─────────────────────────────────────────────────────────
@@ -565,6 +598,74 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   return gate.verdict === 'pass' ? 0 : 1;
 }
 
+// ── matrix ───────────────────────────────────────────────────────────────────
+
+async function runMatrix(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
+  let values: { out?: string; format?: string; dir?: string; 'runs-dir'?: string; help?: boolean };
+  try {
+    ({ values } = parseArgs({
+      args: argv,
+      options: {
+        out: { type: 'string' },
+        format: { type: 'string' },
+        dir: { type: 'string' },
+        'runs-dir': { type: 'string' },
+        help: { type: 'boolean', short: 'h' },
+      },
+      allowPositionals: false,
+    }));
+  } catch (error) {
+    io.err(`matrix: ${(error as Error).message}\n`);
+    return 2;
+  }
+  if (values.help === true) {
+    io.out(MATRIX_HELP);
+    return 0;
+  }
+
+  const format = resolveMatrixFormat(values.out, values.format);
+  if (format === undefined) {
+    if (values.format !== undefined) {
+      io.err(`matrix: unknown --format "${values.format}" (expected md, csv, or html)\n`);
+    } else if (values.out !== undefined) {
+      io.err(
+        `matrix: cannot infer a format from --out "${values.out}" ` +
+          `(expected a .md, .csv, or .html extension, or pass --format)\n`,
+      );
+    } else {
+      io.err('matrix: either --out <file> or --format <md|csv|html> is required\n');
+    }
+    return 2;
+  }
+
+  const dir = values.dir ?? process.cwd();
+  const runsDir = values['runs-dir'] ?? DEFAULT_RUNS_DIR;
+  const repository = resolveRepository(deps, dir);
+
+  const { tree, issues } = await repository.loadTree();
+  warnLoadIssues('matrix', issues, io);
+  const { runs, issues: runIssues } = await repository.loadRuns(runsDir);
+  warnLoadIssues('matrix', runIssues, io);
+
+  const model = buildModel(tree, runs);
+  const rows = buildMatrixRows(model);
+  const content = renderMatrix(format, rows);
+
+  if (values.out === undefined) {
+    io.out(content);
+    return 0;
+  }
+
+  try {
+    await repository.writeFile(values.out, content);
+  } catch (error) {
+    io.err(`matrix: failed to write ${values.out}: ${(error as Error).message}\n`);
+    return 1;
+  }
+  io.out(`matrix: wrote ${values.out} (${format}, ${rows.length} row(s))\n`);
+  return 0;
+}
+
 // ── dispatch ─────────────────────────────────────────────────────────────────
 
 /**
@@ -582,6 +683,8 @@ export async function run(argv: string[], io: CliIO = defaultIO, deps?: RunDeps)
       return runIngest(rest, io, deps);
     case 'verify':
       return runVerify(rest, io, deps);
+    case 'matrix':
+      return runMatrix(rest, io, deps);
     case undefined:
     case 'help':
     case '--help':
