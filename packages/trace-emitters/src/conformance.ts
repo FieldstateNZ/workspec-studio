@@ -17,7 +17,8 @@
 import { buildModel } from '@workspec/trace-model';
 import type { TraceModel, TraceTree } from '@workspec/trace-model';
 import type { TestRun } from '@workspec/req-schema';
-import type { Emitter, EmittedFile, RuleWithScenarios, RunMeta, ScenarioInput } from './types.js';
+import { groupScenariosByRule } from './grouping.js';
+import type { Emitter, EmittedFile, RuleWithScenarios, RunMeta } from './types.js';
 
 /**
  * A mock test runner: given the Rules (with their scenarios) an emitter
@@ -47,28 +48,6 @@ function byString(a: string, b: string): number {
 }
 
 /**
- * Group a tree's scenarios under their parent Rule slug, then pair every Rule
- * with the scenarios it groups — the `emit`/mock-runner input shape. A Rule
- * with no scenarios still appears, with an empty `scenarios` array (an
- * "empty rule", spec §4.7).
- */
-function rulesWithScenarios(tree: TraceTree): RuleWithScenarios[] {
-  const scenariosByRule = new Map<string, ScenarioInput[]>();
-  for (const located of tree.scenarios) {
-    const ruleSlug = located.artifact.spec.systemRequirement;
-    const input: ScenarioInput = { slug: located.slug, artifact: located.artifact };
-    const list = scenariosByRule.get(ruleSlug);
-    if (list) list.push(input);
-    else scenariosByRule.set(ruleSlug, [input]);
-  }
-
-  return tree.systemRequirements.map((located) => ({
-    sysreq: { slug: located.slug, artifact: located.artifact },
-    scenarios: scenariosByRule.get(located.slug) ?? [],
-  }));
-}
-
-/**
  * Run the full emit → mock-run → ingest → derive loop and report, per tree
  * scenario, whether the model proves it. Pure: no clock, no IO — `meta`
  * carries the run identity/timestamp the emitter is forbidden to invent.
@@ -79,7 +58,7 @@ export function roundTrip(
   runner: MockRunner,
   meta: RunMeta,
 ): RoundTrip {
-  const rules = rulesWithScenarios(tree);
+  const rules = groupScenariosByRule(tree);
   const emitted = emitter.emit(rules);
   const run = emitter.ingest(runner(rules), meta);
   const model = buildModel(tree, [run]);

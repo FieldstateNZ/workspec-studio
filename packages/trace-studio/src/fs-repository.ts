@@ -6,6 +6,13 @@
 // a hand-written `metadata.slug`), and attaches the repo-relative source path so
 // findings can point at it.
 //
+// Five kinds are loaded: actor, feature, user-requirement, system-requirement
+// (a Gherkin Rule — no steps of its own, spec §4.4) and scenario (the fifth,
+// file-native kind: the executed unit carrying the given/when/then steps,
+// spec §4.5). `SystemRequirement` and `Scenario` both validate against their
+// reshaped `@workspec/req-schema` schemas; the loader itself needs no kind-
+// specific logic beyond another `loadKind` call site per kind.
+//
 // Validation failures are collected as `LoadIssue[]` and RETURNED, never thrown
 // past the CLI boundary (mirrors `@workspec/cost-studio`'s
 // `ArtifactValidationError`/`ParseIssue` handling) — so `verify` can surface a
@@ -25,12 +32,19 @@ import {
 import {
   ActorArtifact,
   FeatureArtifact,
+  ScenarioArtifact,
   SystemRequirementArtifact,
   TestRun as TestRunSchema,
   TYPE_DIRECTORIES as REQ_TYPE_DIRECTORIES,
   UserRequirementArtifact,
 } from '@workspec/req-schema';
-import type { Actor, Feature, SystemRequirement, UserRequirement } from '@workspec/req-schema';
+import type {
+  Actor,
+  Feature,
+  Scenario,
+  SystemRequirement,
+  UserRequirement,
+} from '@workspec/req-schema';
 import type { Located, TestRun, TraceTree } from '@workspec/trace-model';
 import type { LoadIssue, LoadedRuns, LoadedTree, TraceRepositoryPort } from './repository.js';
 import { resolveWithinRoot } from './path-containment.js';
@@ -40,12 +54,17 @@ export { RefEscapesRootError } from './path-containment.js';
 /** Default location of ingested runs (spec §4.5). Under `.workspec/`, so it is gitignore-able (spec §9.3). */
 export const DEFAULT_RUNS_DIR = `${WORKSPEC_DIR}/.runs` as const;
 
-/** The `.workspec/<type-dir>` each kind's artifacts live directly under (flat per spec §4). */
+/**
+ * The `.workspec/<type-dir>` each kind's artifacts live under. Most are flat;
+ * `UserRequirement`/`SystemRequirement` nest under `requirements/` (spec §4).
+ * `Scenario` is flat, alongside `features` (req-schema's `TYPE_DIRECTORIES`).
+ */
 const KIND_DIRS = {
   Actor: `${WORKSPEC_DIR}/${CORE_TYPE_DIRECTORIES.Actor}`,
   Feature: `${WORKSPEC_DIR}/${REQ_TYPE_DIRECTORIES.Feature}`,
   UserRequirement: `${WORKSPEC_DIR}/${REQ_TYPE_DIRECTORIES.UserRequirement}`,
   SystemRequirement: `${WORKSPEC_DIR}/${REQ_TYPE_DIRECTORIES.SystemRequirement}`,
+  Scenario: `${WORKSPEC_DIR}/${REQ_TYPE_DIRECTORIES.Scenario}`,
 } as const;
 
 /** One kind's loaded artifacts plus any problems the loader hit reading them. */
@@ -115,12 +134,14 @@ export class FsRepository implements TraceRepositoryPort {
       KIND_DIRS.SystemRequirement,
       SystemRequirementArtifact,
     );
+    const scenarios = await this.loadKind<Scenario>(KIND_DIRS.Scenario, ScenarioArtifact);
 
     const tree: TraceTree = {
       actors: actors.located,
       features: features.located,
       userRequirements: userRequirements.located,
       systemRequirements: systemRequirements.located,
+      scenarios: scenarios.located,
     };
     return {
       tree,
@@ -129,6 +150,7 @@ export class FsRepository implements TraceRepositoryPort {
         ...features.issues,
         ...userRequirements.issues,
         ...systemRequirements.issues,
+        ...scenarios.issues,
       ],
     };
   }

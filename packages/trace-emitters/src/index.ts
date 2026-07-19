@@ -29,6 +29,9 @@ export type {
   ScenarioInput,
 } from './types.js';
 
+// ── Emit-input grouping (tree → Rules-with-scenarios) ─────────────────────────
+export { groupScenariosByRule } from './grouping.js';
+
 // ── The cucumber emitter ──────────────────────────────────────────────────────
 export { cucumberEmitter, CUCUMBER_CONVENTIONS } from './cucumber.js';
 

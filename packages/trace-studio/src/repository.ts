@@ -102,6 +102,7 @@ export function createMemoryRepository(init: MemoryRepositoryInit = {}): MemoryR
     features: init.tree?.features ?? [],
     userRequirements: init.tree?.userRequirements ?? [],
     systemRequirements: init.tree?.systemRequirements ?? [],
+    scenarios: init.tree?.scenarios ?? [],
   };
 
   return {
