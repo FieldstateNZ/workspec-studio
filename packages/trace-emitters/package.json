@@ -1,7 +1,7 @@
 {
   "name": "@workspec/trace-emitters",
   "version": "0.1.0-alpha.5",
-  "description": "Pure emit/ingest functions for the WorkSpec Traceability Workbench's test-framework emitters (cucumber, junit) — each a named convention binding SysReq artifacts to a test toolchain in both directions. No IO, no DOM, no React. T0 bootstrap skeleton: cucumber lands in T3.",
+  "description": "Pure emit/ingest functions for the WorkSpec Traceability Workbench's test-framework emitters — each a named convention binding SysReq artifacts to a test toolchain in both directions. Ships the `cucumber` emitter (emit → .feature files, ingest → TestRun) and a round-trip conformance harness. No IO, no DOM, no React.",
   "keywords": [
     "traceability",
     "pure-function",
@@ -37,9 +37,13 @@
   },
   "scripts": {
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/req-schema": "workspace:*",
+    "@workspec/trace-model": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

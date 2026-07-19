@@ -903,6 +903,13 @@ importers:
         version: 2.9.0
 
   packages/trace-emitters:
+    dependencies:
+      '@workspec/req-schema':
+        specifier: workspace:*
+        version: link:../req-schema
+      '@workspec/trace-model':
+        specifier: workspace:*
+        version: link:../trace-model
     devDependencies:
       '@types/node':
         specifier: ^24.0.0

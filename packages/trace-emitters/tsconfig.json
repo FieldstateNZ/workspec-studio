@@ -7,19 +7,26 @@
     // tree (`files: ["dist"]` ships everything under dist/ in the npm
     // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
     // (never read by anything) keeps `tsc -b`'s self-bootstrap working
-    // without polluting `dist/` — same shadow-emit split as packages/cost-*.
+    // without polluting `dist/` — same shadow-emit split as packages/cost-*
+    // and packages/trace-model.
     "outDir": ".typecheck",
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
-    // Explicit, rather than relying on TypeScript's automatic `@types/*`
-    // discovery (see packages/cost-schema/tsconfig.json for the verified
-    // detail this mirrors). Not exercised by the T0 skeleton itself, but the
-    // cucumber emitter (T3) will read/write fixture files via `node:fs`,
-    // same as packages/cost-engine.
-    "types": ["node"]
+    // These are PURE emitters: no `node:*` imports, no Node globals — in src OR
+    // in tests (the fixtures are constructed in TypeScript, not loaded from
+    // disk). Pin `types: []` so a stray Node dependency fails the typecheck
+    // instead of silently compiling. Same contract as packages/trace-model.
+    "types": []
   },
-  // No TS Project References yet: this package has no `@workspec` sibling
-  // dependency until T3 wires the cucumber emitter to `@workspec/req-schema`
-  // (mirrors packages/cost-engine's `references` pattern, which will be
-  // added at that point).
+  // TS Project References: `tsc -b` type-checks against the REAL TypeScript
+  // source of every workspace dep this package imports (building their
+  // declarations on demand), so `typecheck` never has to run after `build` —
+  // matching CI, which typechecks BEFORE any dist/ exists. Both are pointed at
+  // the sibling's *build* config (rootDir "src", the published layout).
+  // schema-core is resolved transitively (req-schema already references it).
+  // Same pattern as packages/trace-model and packages/c4-model.
+  "references": [
+    { "path": "../req-schema/tsconfig.build.json" },
+    { "path": "../trace-model/tsconfig.build.json" }
+  ],
   "include": ["src"]
 }
