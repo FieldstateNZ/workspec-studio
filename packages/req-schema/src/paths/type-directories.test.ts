@@ -7,6 +7,7 @@ describe('TYPE_DIRECTORIES', () => {
     expect(typeDirectoryFor('Feature')).toBe('.workspec/features');
     expect(typeDirectoryFor('UserRequirement')).toBe('.workspec/requirements/user');
     expect(typeDirectoryFor('SystemRequirement')).toBe('.workspec/requirements/system');
+    expect(typeDirectoryFor('Scenario')).toBe('.workspec/scenarios');
   });
 
   it('agrees with the raw TYPE_DIRECTORIES map', () => {
@@ -15,7 +16,7 @@ describe('TYPE_DIRECTORIES', () => {
     );
   });
 
-  it('covers exactly the three kinds req-schema owns', () => {
+  it('covers exactly the four kinds req-schema owns', () => {
     expect(Object.keys(TYPE_DIRECTORIES).sort()).toEqual([...ARTIFACT_KINDS].sort());
   });
 });

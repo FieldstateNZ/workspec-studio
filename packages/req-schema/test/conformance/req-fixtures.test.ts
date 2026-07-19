@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 import { FeatureArtifact } from '../../src/schemas/feature.js';
+import { ScenarioArtifact } from '../../src/schemas/scenario.js';
 import { SystemRequirementArtifact } from '../../src/schemas/system-requirement.js';
 import { TestRun } from '../../src/schemas/test-run.js';
 import { UserRequirementArtifact } from '../../src/schemas/user-requirement.js';
@@ -24,6 +25,7 @@ const ARTIFACT_BY_KIND: Record<string, z.ZodType> = {
   Feature: FeatureArtifact,
   UserRequirement: UserRequirementArtifact,
   SystemRequirement: SystemRequirementArtifact,
+  Scenario: ScenarioArtifact,
 };
 
 describe('valid fixtures', () => {
@@ -31,6 +33,7 @@ describe('valid fixtures', () => {
     'element-authoring.yaml',
     'authoring-flow.yaml',
     'authoring-flow-linked.yaml',
+    'inline-create.yaml',
     'inline-create-persists.yaml',
     'inline-create-each-kind.yaml',
   ];
@@ -72,14 +75,19 @@ describe('invalid fixtures', () => {
       expectedPath: ['spec', 'status'],
     },
     {
-      file: 'system-requirement-missing-then.yaml',
+      file: 'system-requirement-missing-feature.yaml',
       schema: SystemRequirementArtifact,
+      expectedPath: ['spec', 'feature'],
+    },
+    {
+      file: 'scenario-missing-then.yaml',
+      schema: ScenarioArtifact,
       expectedPath: ['spec', 'then'],
     },
     {
-      file: 'system-requirement-nested-scenarios.yaml',
-      schema: SystemRequirementArtifact,
-      expectedPath: ['spec', 'then'],
+      file: 'scenario-bad-sysreq-ref.yaml',
+      schema: ScenarioArtifact,
+      expectedPath: ['spec', 'systemRequirement'],
     },
   ];
 

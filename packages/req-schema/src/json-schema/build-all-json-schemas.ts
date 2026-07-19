@@ -1,10 +1,12 @@
 import { buildJsonSchema } from '@workspec/schema-core';
 import {
   FEATURE_SCHEMA_URL,
+  SCENARIO_SCHEMA_URL,
   SYSTEM_REQUIREMENT_SCHEMA_URL,
   USER_REQUIREMENT_SCHEMA_URL,
 } from '../constants.js';
 import { FeatureArtifact } from '../schemas/feature.js';
+import { ScenarioArtifact } from '../schemas/scenario.js';
 import { SystemRequirementArtifact } from '../schemas/system-requirement.js';
 import { UserRequirementArtifact } from '../schemas/user-requirement.js';
 
@@ -36,6 +38,11 @@ export function buildAllJsonSchemas(): Record<string, unknown> {
       SystemRequirementArtifact,
       SYSTEM_REQUIREMENT_SCHEMA_URL,
       'WorkSpec System Requirement (v1alpha1)',
+    ),
+    'scenario.schema.json': buildJsonSchema(
+      ScenarioArtifact,
+      SCENARIO_SCHEMA_URL,
+      'WorkSpec Scenario (v1alpha1)',
     ),
   };
 }

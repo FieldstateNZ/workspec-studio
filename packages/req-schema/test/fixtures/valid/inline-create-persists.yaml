@@ -1,12 +1,11 @@
-# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/system-requirement.schema.json
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/scenario.schema.json
 apiVersion: workspec.io/v1alpha1
-kind: SystemRequirement
+kind: Scenario
 metadata:
   slug: inline-create-persists # scenario name = slug = identity
 spec:
   title: Creating an element inline saves it immediately
-  feature: element-authoring # intra-tree ref (containing)
-  userReqs: [authoring-flow] # intra-tree refs (verifies — makes it an RTM)
+  systemRequirement: inline-create # intra-tree ref → requirements/system/* (its Rule)
   given:
     - a canvas with no selected element
   when:

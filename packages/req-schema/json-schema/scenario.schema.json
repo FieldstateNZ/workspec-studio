@@ -1,0 +1,107 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/scenario.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec Scenario artifact.",
+  "properties": {
+    "apiVersion": {
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant.",
+      "type": "string"
+    },
+    "kind": {
+      "const": "Scenario",
+      "description": "Artifact kind discriminant.",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "A scenario: ONE Gherkin scenario, the executed unit. The file is the scenario, the slug is the scenario name is the identity. References its parent Rule via systemRequirement.",
+      "properties": {
+        "examples": {
+          "description": "Optional examples table → Scenario Outline. given/when/then may reference \"<placeholder>\" tokens keyed on these columns; no placeholder cross-validation in T1.",
+          "items": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "given": {
+          "description": "Gherkin \"Given\" steps (preconditions). Continuation steps are additional array items.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "systemRequirement": {
+          "description": "Bare-slug intra-tree ref → requirements/system/*: the parent Rule this scenario belongs to.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "then": {
+          "description": "Gherkin \"Then\" steps (the assertions). At least one — a scenario without an assertion is meaningless.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "title": {
+          "description": "One-line summary of what the scenario asserts.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "when": {
+          "description": "Gherkin \"When\" steps (the action). Continuation steps are additional array items.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "systemRequirement",
+        "then"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkSpec Scenario (v1alpha1)",
+  "type": "object"
+}

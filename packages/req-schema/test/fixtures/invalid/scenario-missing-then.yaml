@@ -1,13 +1,12 @@
-# Invalid: spec.then is required and non-empty — a scenario without an assertion
-# is meaningless. Here it is absent entirely.
+# Invalid: spec.then is required and non-empty — a scenario without an
+# assertion is meaningless (spec §4.5). Here it is absent entirely.
 apiVersion: workspec.io/v1alpha1
-kind: SystemRequirement
+kind: Scenario
 metadata:
   slug: inline-create-persists
 spec:
   title: Creating an element inline saves it immediately
-  feature: element-authoring
-  userReqs: [authoring-flow]
+  systemRequirement: inline-create
   given:
     - a canvas with no selected element
   when:

@@ -1,7 +1,7 @@
 {
   "name": "@workspec/req-schema",
   "version": "0.1.0-alpha.5",
-  "description": "Zod source of truth for WorkSpec Traceability Workbench requirement artifacts (Actor/Feature/UserRequirement/SystemRequirement) — TS types, runtime validation, and generated JSON Schema.",
+  "description": "Zod source of truth for WorkSpec Traceability Workbench requirement artifacts (Actor/Feature/UserRequirement/SystemRequirement/Scenario) — TS types, runtime validation, and generated JSON Schema.",
   "keywords": [
     "zod",
     "json-schema",
