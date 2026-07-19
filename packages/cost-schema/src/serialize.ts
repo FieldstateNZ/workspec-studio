@@ -27,6 +27,11 @@ import type { TagPlan, TagPlanEntry } from './tagplan.js';
 // key/array order. `stringify` runs with fixed options so output never
 // varies across environments.
 //
+// `metadata` now only ever carries the optional `slug` (schema-core's
+// `MetadataSchema`) — identity is loader-derived from the filename when
+// absent. `name` (optional, human-readable) moved to `spec.name` and is
+// emitted first within `spec`, mirroring its former prominence in `metadata`.
+//
 // These serializers do not themselves call into Zod — callers are expected to
 // pass already-validated data (e.g. the `data` returned by `parseInventoryYaml`
 // et al.), and `spec.parse.superRefine` in each schema module is what rejects
@@ -43,7 +48,9 @@ function sortedRecord<V>(record: Record<string, V>): Record<string, V> {
   return out;
 }
 
-function sortedNestedRecord<V>(record: Record<string, Record<string, V>>): Record<string, Record<string, V>> {
+function sortedNestedRecord<V>(
+  record: Record<string, Record<string, V>>,
+): Record<string, Record<string, V>> {
   const out: Record<string, Record<string, V>> = {};
   for (const key of Object.keys(record).sort()) {
     const value = record[key];
@@ -76,10 +83,10 @@ export function serializeInventoryYaml(inventory: Inventory): string {
     apiVersion: inventory.apiVersion,
     kind: inventory.kind,
     metadata: {
-      id: inventory.metadata.id,
-      ...(inventory.metadata.name !== undefined ? { name: inventory.metadata.name } : {}),
+      ...(inventory.metadata.slug !== undefined ? { slug: inventory.metadata.slug } : {}),
     },
     spec: {
+      ...(inventory.spec.name !== undefined ? { name: inventory.spec.name } : {}),
       asOf: inventory.spec.asOf,
       scope: { subscriptions: [...inventory.spec.scope.subscriptions] },
       resources,
@@ -111,10 +118,12 @@ export function serializeSpendYaml(spend: Spend): string {
     apiVersion: spend.apiVersion,
     kind: spend.kind,
     metadata: {
-      id: spend.metadata.id,
-      ...(spend.metadata.name !== undefined ? { name: spend.metadata.name } : {}),
+      ...(spend.metadata.slug !== undefined ? { slug: spend.metadata.slug } : {}),
     },
-    spec: { rows },
+    spec: {
+      ...(spend.spec.name !== undefined ? { name: spend.spec.name } : {}),
+      rows,
+    },
   };
 
   return schemaDirective(SPEND_SCHEMA_URL) + stringify(doc, YAML_OPTIONS);
@@ -136,7 +145,9 @@ function canonicalMatch(m: RuleMatch): RuleMatch {
     ...(m.nameGlob !== undefined ? { nameGlob: m.nameGlob } : {}),
     ...(m.resourceGroup !== undefined ? { resourceGroup: m.resourceGroup } : {}),
     ...(m.subscription !== undefined ? { subscription: m.subscription } : {}),
-    ...(m.tagEquals !== undefined ? { tagEquals: { name: m.tagEquals.name, value: m.tagEquals.value } } : {}),
+    ...(m.tagEquals !== undefined
+      ? { tagEquals: { name: m.tagEquals.name, value: m.tagEquals.value } }
+      : {}),
     ...(m.tagExists !== undefined ? { tagExists: m.tagExists } : {}),
   };
 }
@@ -162,10 +173,10 @@ export function serializeAttributionYaml(attribution: Attribution): string {
     apiVersion: attribution.apiVersion,
     kind: attribution.kind,
     metadata: {
-      id: attribution.metadata.id,
-      ...(attribution.metadata.name !== undefined ? { name: attribution.metadata.name } : {}),
+      ...(attribution.metadata.slug !== undefined ? { slug: attribution.metadata.slug } : {}),
     },
     spec: {
+      ...(attribution.spec.name !== undefined ? { name: attribution.spec.name } : {}),
       dimensions: attribution.spec.dimensions.map(canonicalDimension),
       rules: attribution.spec.rules.map(canonicalRule),
       ...(attribution.spec.overrides !== undefined
@@ -197,10 +208,10 @@ export function serializeTagPlanYaml(tagPlan: TagPlan): string {
     apiVersion: tagPlan.apiVersion,
     kind: tagPlan.kind,
     metadata: {
-      id: tagPlan.metadata.id,
-      ...(tagPlan.metadata.name !== undefined ? { name: tagPlan.metadata.name } : {}),
+      ...(tagPlan.metadata.slug !== undefined ? { slug: tagPlan.metadata.slug } : {}),
     },
     spec: {
+      ...(tagPlan.spec.name !== undefined ? { name: tagPlan.spec.name } : {}),
       baselineAsOf: tagPlan.spec.baselineAsOf,
       tagMapping: sortedRecord(tagPlan.spec.tagMapping),
       entries,

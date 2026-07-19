@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: TagPlan
 metadata:
-  id: demo
+  slug: demo
 spec:
   baselineAsOf: "2026-07-01T00:00:00Z"
   tagMapping:

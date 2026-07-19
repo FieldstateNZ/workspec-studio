@@ -39,7 +39,7 @@ function makeSeedInventory(): Inventory {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'seed' },
+    metadata: { slug: 'seed' },
     spec: {
       asOf: '2026-06-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1'] },
@@ -104,7 +104,7 @@ function makeSeedSpend(): Spend {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Spend',
-    metadata: { id: 'seed-spend' },
+    metadata: { slug: 'seed-spend' },
     spec: {
       rows: [
         { resourceId: 'res-network-1', amount: 30, currency: 'NZD', period: '2026-07', serviceCategory: 'Networking' },
@@ -123,7 +123,7 @@ function makeAttribution(): Attribution {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'prod' },
+    metadata: { slug: 'prod' },
     spec: {
       dimensions: [
         { id: 'product', label: 'Product', values: ['atrium', 'workspec'] },
@@ -168,7 +168,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
   it('runs the full loop, converges tags, and a second plan is all-noop', async () => {
     const repository = new FsRepository(dir);
     const provider = createMemoryProvider({ inventory: makeSeedInventory(), spend: [makeSeedSpend()] });
-    await repository.writeAttribution('prod.attribution.yaml', makeAttribution());
+    await repository.writeAttribution('.workspec/attributions/prod.yaml', makeAttribution());
 
     // 1. stocktake.
     const stocktakeCap = captureIO();
@@ -179,10 +179,10 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
     );
     expect(stocktakeCode).toBe(0);
     expect(await repository.listInventories()).toEqual([
-      { ref: 'estate.inventory.yaml', id: 'estate' },
+      { ref: '.workspec/inventories/estate.yaml', slug: 'estate' },
     ]);
     expect(await repository.listSpends()).toEqual([
-      { ref: 'estate.2026-07.spend.yaml', id: 'estate-2026-07' },
+      { ref: '.workspec/spends/estate-2026-07.yaml', slug: 'estate-2026-07' },
     ]);
 
     // 2. report — coverage headline for the primary dimension ("product").
@@ -208,14 +208,14 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
     expect(planCode).toBe(0);
     expect(planCap.err()).toContain('plan: +8 add · ~2 change · −0 remove · 1 noop');
     const planRefs = await repository.listTagPlans();
-    expect(planRefs).toEqual([{ ref: '2026-07.tagplan.yaml', id: '2026-07' }]);
-    const firstPlan = await repository.readTagPlan('2026-07.tagplan.yaml');
+    expect(planRefs).toEqual([{ ref: '.workspec/tagplans/2026-07.yaml', slug: '2026-07' }]);
+    const firstPlan = await repository.readTagPlan('.workspec/tagplans/2026-07.yaml');
     expect(firstPlan.spec.tagMapping).toEqual({ product: 'fs-product', costType: 'fs-cost-type' });
     expect(firstPlan.spec.entries).toHaveLength(11);
 
     // 4. apply.
     const applyCap = captureIO();
-    const applyCode = await run(['apply', '2026-07.tagplan.yaml'], applyCap.io, {
+    const applyCode = await run(['apply', '.workspec/tagplans/2026-07.yaml'], applyCap.io, {
       repository,
       provider,
     });
@@ -235,7 +235,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
     );
 
     // 6. the new inventory's tags match the plan's desired values.
-    const converged = await repository.readInventory('estate.inventory.yaml');
+    const converged = await repository.readInventory('.workspec/inventories/estate.yaml');
     const tagsOf = (id: string): Record<string, string> | undefined =>
       must(converged.spec.resources.find((r) => r.id === id)).tags;
     expect(tagsOf('res-vm-1')).toEqual({ 'fs-product': 'atrium', 'fs-cost-type': 'compute' });
@@ -258,7 +258,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
   it('apply refuses (no writes) when live state has drifted since the plan was computed', async () => {
     const repository = new FsRepository(dir);
     const provider = createMemoryProvider({ inventory: makeSeedInventory(), spend: [makeSeedSpend()] });
-    await repository.writeAttribution('prod.attribution.yaml', makeAttribution());
+    await repository.writeAttribution('.workspec/attributions/prod.yaml', makeAttribution());
 
     await run(['stocktake', '--subscription', 'sub-1', '--period', '2026-07'], captureIO().io, {
       repository,
@@ -270,7 +270,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
     provider.mutateLive('res-vm-1', { 'hand-edited': 'true' });
 
     const cap = captureIO();
-    const code = await run(['apply', '2026-07.tagplan.yaml'], cap.io, { repository, provider });
+    const code = await run(['apply', '.workspec/tagplans/2026-07.yaml'], cap.io, { repository, provider });
     expect(code).toBe(1);
     expect(cap.err()).toContain('refusing');
     expect(cap.err()).toContain('re-stocktake and re-plan');
@@ -283,7 +283,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
   it('--dry-run mutates nothing', async () => {
     const repository = new FsRepository(dir);
     const provider = createMemoryProvider({ inventory: makeSeedInventory(), spend: [makeSeedSpend()] });
-    await repository.writeAttribution('prod.attribution.yaml', makeAttribution());
+    await repository.writeAttribution('.workspec/attributions/prod.yaml', makeAttribution());
 
     await run(['stocktake', '--subscription', 'sub-1', '--period', '2026-07'], captureIO().io, {
       repository,
@@ -292,7 +292,7 @@ describe('cost-studio acceptance: stocktake -> report -> plan -> apply -> re-sto
     await run(['plan'], captureIO().io, { repository });
 
     const cap = captureIO();
-    const code = await run(['apply', '2026-07.tagplan.yaml', '--dry-run'], cap.io, {
+    const code = await run(['apply', '.workspec/tagplans/2026-07.yaml', '--dry-run'], cap.io, {
       repository,
       provider,
     });

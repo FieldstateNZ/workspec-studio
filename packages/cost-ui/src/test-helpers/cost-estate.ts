@@ -67,7 +67,7 @@ export function buildTestInventory(): Inventory {
   return {
     apiVersion: API_VERSION,
     kind: 'Inventory',
-    metadata: { id: 'test-estate' },
+    metadata: { slug: 'test-estate' },
     spec: {
       asOf: TEST_INVENTORY_AS_OF,
       scope: { subscriptions: [TEST_SUBSCRIPTION] },
@@ -88,7 +88,7 @@ export function buildTestSpend(): Spend {
   return {
     apiVersion: API_VERSION,
     kind: 'Spend',
-    metadata: { id: 'test-estate-2026-01' },
+    metadata: { slug: 'test-estate-2026-01' },
     spec: { rows },
   };
 }
@@ -97,7 +97,7 @@ export function buildTestAttribution(): Attribution {
   return {
     apiVersion: API_VERSION,
     kind: 'Attribution',
-    metadata: { id: 'test-estate' },
+    metadata: { slug: 'test-estate' },
     spec: {
       dimensions: [
         { id: 'product', label: 'Product', values: ['workspec', 'atrium', 'shared'] },
@@ -145,7 +145,7 @@ export function buildTestTagPlan(baselineAsOf: string): TagPlan {
   return {
     apiVersion: API_VERSION,
     kind: 'TagPlan',
-    metadata: { id: 'test-estate-2026-01' },
+    metadata: { slug: 'test-estate-2026-01' },
     spec: {
       baselineAsOf,
       tagMapping: { product: 'fs-product', costType: 'fs-cost-type', client: 'fs-client' },

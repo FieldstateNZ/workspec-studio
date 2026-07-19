@@ -9,6 +9,7 @@
     // src file reaches for Node globals or `node:*` modules.
     "types": []
   },
+  "references": [{ "path": "../schema-core/tsconfig.build.json" }],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

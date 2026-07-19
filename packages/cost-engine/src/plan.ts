@@ -75,19 +75,22 @@ export function plan(inventory: Inventory, attribution: Attribution, tagMapping:
 /**
  * A complete, schema-shaped `TagPlan` artifact: `plan()`'s entries plus the
  * artifact envelope. `spec.baselineAsOf` is always `inventory.spec.asOf` —
- * the drift-check anchor.
+ * the drift-check anchor. `metadata.slug` is optional (identity is normally
+ * the loader-derived filename slug assigned when the plan is written); an
+ * optional `name` is carried on `spec.name`, not `metadata`.
  */
 export function buildTagPlan(
   inventory: Inventory,
   attribution: Attribution,
   tagMapping: TagMapping,
-  metadata: { id: string; name?: string },
+  metadata: { slug?: string; name?: string },
 ): TagPlan {
   return {
     apiVersion: API_VERSION,
     kind: 'TagPlan',
-    metadata: { id: metadata.id, ...(metadata.name !== undefined ? { name: metadata.name } : {}) },
+    metadata: { ...(metadata.slug !== undefined ? { slug: metadata.slug } : {}) },
     spec: {
+      ...(metadata.name !== undefined ? { name: metadata.name } : {}),
       baselineAsOf: inventory.spec.asOf,
       tagMapping,
       entries: plan(inventory, attribution, tagMapping),

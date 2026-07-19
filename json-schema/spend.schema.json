@@ -1,81 +1,76 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schema.workspec.io/v1alpha1/spend.schema.json",
-  "title": "WorkSpec Spend (v1alpha1)",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec spend artifact: billed rows for a period.",
   "properties": {
     "apiVersion": {
-      "type": "string",
       "const": "workspec.io/v1alpha1",
-      "description": "Artifact API version discriminant."
+      "description": "Artifact API version discriminant.",
+      "type": "string"
     },
     "kind": {
-      "type": "string",
       "const": "Spend",
-      "description": "Artifact kind discriminant."
+      "description": "Artifact kind discriminant.",
+      "type": "string"
     },
     "metadata": {
-      "type": "object",
+      "description": "Common artifact identity.",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "description": "Stable spend id, e.g. \"prod-2026-06\"."
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional human-readable name."
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
         }
       },
-      "required": [
-        "id"
-      ],
-      "additionalProperties": false,
-      "description": "Spend identity."
+      "type": "object"
     },
     "spec": {
-      "type": "object",
+      "description": "The spend body: optional name, billed rows for a period.",
       "properties": {
+        "name": {
+          "description": "Optional human-readable name for this spend record.",
+          "minLength": 1,
+          "type": "string"
+        },
         "rows": {
-          "type": "array",
+          "description": "Spend rows. MUST be sorted ascending by (resourceId ?? sourceLabel, period, serviceCategory) — the sort-order contract (see README).",
           "items": {
-            "type": "object",
+            "description": "One spend row: an amount for a period, attributed to a resource (or left unresolved).",
             "properties": {
-              "resourceId": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Provider resource id this row is attributed to (matches an Inventory resource id). Required unless `unresolved` is true."
-              },
               "amount": {
-                "type": "number",
-                "description": "Spend amount for the period. Negative values are allowed (credits/refunds)."
+                "description": "Spend amount for the period. Negative values are allowed (credits/refunds).",
+                "type": "number"
               },
               "currency": {
-                "type": "string",
+                "description": "ISO 4217 currency code, e.g. \"NZD\".",
                 "pattern": "^[A-Z]{3}$",
-                "description": "ISO 4217 currency code, e.g. \"NZD\"."
+                "type": "string"
               },
               "period": {
-                "type": "string",
+                "description": "Billing period, ISO month \"YYYY-MM\".",
                 "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
-                "description": "Billing period, ISO month \"YYYY-MM\"."
+                "type": "string"
+              },
+              "resourceId": {
+                "description": "Provider resource id this row is attributed to (matches an Inventory resource id). Required unless `unresolved` is true.",
+                "minLength": 1,
+                "type": "string"
               },
               "serviceCategory": {
-                "type": "string",
+                "description": "Provider service/category, e.g. \"Virtual Machines\".",
                 "minLength": 1,
-                "description": "Provider service/category, e.g. \"Virtual Machines\"."
-              },
-              "unresolved": {
-                "type": "boolean",
-                "const": true,
-                "description": "Marks a row the provider could not match to an inventory resource. When true, `resourceId` must be absent and `sourceLabel` is required."
+                "type": "string"
               },
               "sourceLabel": {
-                "type": "string",
+                "description": "Free-text provider line description. Required when `unresolved`; harmless optional provenance alongside `resourceId` otherwise.",
                 "minLength": 1,
-                "description": "Free-text provider line description. Required when `unresolved`; harmless optional provenance alongside `resourceId` otherwise."
+                "type": "string"
+              },
+              "unresolved": {
+                "const": true,
+                "description": "Marks a row the provider could not match to an inventory resource. When true, `resourceId` must be absent and `sourceLabel` is required.",
+                "type": "boolean"
               }
             },
             "required": [
@@ -84,17 +79,15 @@
               "period",
               "serviceCategory"
             ],
-            "additionalProperties": false,
-            "description": "One spend row: an amount for a period, attributed to a resource (or left unresolved)."
+            "type": "object"
           },
-          "description": "Spend rows. MUST be sorted ascending by (resourceId ?? sourceLabel, period, serviceCategory) — the sort-order contract (see README)."
+          "type": "array"
         }
       },
       "required": [
         "rows"
       ],
-      "additionalProperties": false,
-      "description": "The spend body."
+      "type": "object"
     }
   },
   "required": [
@@ -103,6 +96,6 @@
     "metadata",
     "spec"
   ],
-  "additionalProperties": false,
-  "description": "A WorkSpec spend artifact: billed rows for a period."
+  "title": "WorkSpec Spend (v1alpha1)",
+  "type": "object"
 }

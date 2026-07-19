@@ -226,7 +226,10 @@ export async function fetchAzureSpend(scope: ProviderScope, period: string, opti
   const spend: Spend = {
     apiVersion: API_VERSION,
     kind: 'Spend',
-    metadata: { id: `${scope.subscriptions.join('-')}-${period}` },
+    // Identity is now the loader-derived filename slug, assigned by whatever
+    // writes this artifact to a repository — no natural human name either,
+    // so metadata is left empty.
+    metadata: {},
     spec: { rows },
   };
 

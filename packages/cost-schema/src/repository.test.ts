@@ -14,12 +14,20 @@ function must<T>(value: T | undefined): T {
 
 // ── Fixtures are factory-built, never shared mutable module state ─────────────
 
-function makeInventory(overrides: Partial<Inventory['metadata']> = {}): Inventory {
+/** Overrides split across `metadata.slug` and `spec.name` — the post-migration identity shape. */
+interface IdentityOverrides {
+  slug?: string;
+  name?: string;
+}
+
+function makeInventory(overrides: IdentityOverrides = {}): Inventory {
+  const slug = overrides.slug ?? 'inv-min';
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'inv-min', ...overrides },
+    metadata: { slug },
     spec: {
+      ...(overrides.name !== undefined ? { name: overrides.name } : {}),
       asOf: '2026-07-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1'] },
       resources: [
@@ -36,12 +44,14 @@ function makeInventory(overrides: Partial<Inventory['metadata']> = {}): Inventor
   } as Inventory;
 }
 
-function makeSpend(overrides: Partial<Spend['metadata']> = {}): Spend {
+function makeSpend(overrides: IdentityOverrides = {}): Spend {
+  const slug = overrides.slug ?? 'spend-min';
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Spend',
-    metadata: { id: 'spend-min', ...overrides },
+    metadata: { slug },
     spec: {
+      ...(overrides.name !== undefined ? { name: overrides.name } : {}),
       rows: [
         {
           resourceId: 'res-1',
@@ -55,24 +65,28 @@ function makeSpend(overrides: Partial<Spend['metadata']> = {}): Spend {
   } as Spend;
 }
 
-function makeAttribution(overrides: Partial<Attribution['metadata']> = {}): Attribution {
+function makeAttribution(overrides: IdentityOverrides = {}): Attribution {
+  const slug = overrides.slug ?? 'attr-min';
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'attr-min', ...overrides },
+    metadata: { slug },
     spec: {
+      ...(overrides.name !== undefined ? { name: overrides.name } : {}),
       dimensions: [{ id: 'product', label: 'Product', values: ['atrium'] }],
       rules: [{ id: 'r1', name: 'Catch-all', match: {}, assign: { product: 'atrium' } }],
     },
   } as Attribution;
 }
 
-function makeTagPlan(overrides: Partial<TagPlan['metadata']> = {}): TagPlan {
+function makeTagPlan(overrides: IdentityOverrides = {}): TagPlan {
+  const slug = overrides.slug ?? 'plan-min';
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'TagPlan',
-    metadata: { id: 'plan-min', ...overrides },
+    metadata: { slug },
     spec: {
+      ...(overrides.name !== undefined ? { name: overrides.name } : {}),
       baselineAsOf: '2026-07-01T00:00:00.000Z',
       tagMapping: { product: 'fs-product' },
       entries: [
@@ -132,53 +146,53 @@ describe('CostRepositoryPort surface', () => {
 });
 
 describe('createMemoryRepository', () => {
-  it('lists seeded inventories with { ref, id, name }', async () => {
+  it('lists seeded inventories with { ref, slug, name }', async () => {
     const repo = createMemoryRepository({
       inventories: { 'a.inventory.yaml': makeInventory({ name: 'Prod estate' }) },
     });
     const list = await repo.listInventories();
-    expect(list).toEqual([{ ref: 'a.inventory.yaml', id: 'inv-min', name: 'Prod estate' }]);
+    expect(list).toEqual([{ ref: 'a.inventory.yaml', slug: 'inv-min', name: 'Prod estate' }]);
   });
 
-  it('lists seeded spends with { ref, id, name }', async () => {
+  it('lists seeded spends with { ref, slug, name }', async () => {
     const repo = createMemoryRepository({ spends: { 'a.spend.yaml': makeSpend() } });
     const list = await repo.listSpends();
-    expect(list).toEqual([{ ref: 'a.spend.yaml', id: 'spend-min' }]);
+    expect(list).toEqual([{ ref: 'a.spend.yaml', slug: 'spend-min' }]);
   });
 
-  it('lists seeded attributions with { ref, id, name }', async () => {
+  it('lists seeded attributions with { ref, slug, name }', async () => {
     const repo = createMemoryRepository({
       attributions: { 'a.attribution.yaml': makeAttribution({ name: 'Prod attribution' }) },
     });
     const list = await repo.listAttributions();
     expect(list).toEqual([
-      { ref: 'a.attribution.yaml', id: 'attr-min', name: 'Prod attribution' },
+      { ref: 'a.attribution.yaml', slug: 'attr-min', name: 'Prod attribution' },
     ]);
   });
 
-  it('lists seeded tag plans with { ref, id, name }', async () => {
+  it('lists seeded tag plans with { ref, slug, name }', async () => {
     const repo = createMemoryRepository({ tagPlans: { 'a.tagplan.yaml': makeTagPlan() } });
     const list = await repo.listTagPlans();
-    expect(list).toEqual([{ ref: 'a.tagplan.yaml', id: 'plan-min' }]);
+    expect(list).toEqual([{ ref: 'a.tagplan.yaml', slug: 'plan-min' }]);
   });
 
   it('round-trips a written artifact of each kind', async () => {
     const repo = createMemoryRepository();
 
     await repo.writeInventory('i.inventory.yaml', makeInventory());
-    expect((await repo.readInventory('i.inventory.yaml')).metadata.id).toBe('inv-min');
+    expect((await repo.readInventory('i.inventory.yaml')).metadata.slug).toBe('inv-min');
     expect(await repo.listInventories()).toHaveLength(1);
 
     await repo.writeSpend('s.spend.yaml', makeSpend());
-    expect((await repo.readSpend('s.spend.yaml')).metadata.id).toBe('spend-min');
+    expect((await repo.readSpend('s.spend.yaml')).metadata.slug).toBe('spend-min');
     expect(await repo.listSpends()).toHaveLength(1);
 
     await repo.writeAttribution('at.attribution.yaml', makeAttribution());
-    expect((await repo.readAttribution('at.attribution.yaml')).metadata.id).toBe('attr-min');
+    expect((await repo.readAttribution('at.attribution.yaml')).metadata.slug).toBe('attr-min');
     expect(await repo.listAttributions()).toHaveLength(1);
 
     await repo.writeTagPlan('tp.tagplan.yaml', makeTagPlan());
-    expect((await repo.readTagPlan('tp.tagplan.yaml')).metadata.id).toBe('plan-min');
+    expect((await repo.readTagPlan('tp.tagplan.yaml')).metadata.slug).toBe('plan-min');
     expect(await repo.listTagPlans()).toHaveLength(1);
   });
 
@@ -207,9 +221,9 @@ describe('createMemoryRepository', () => {
       inventories: { 'a.inventory.yaml': makeInventory({ name: 'Original' }) },
     });
     const first = await repo.readInventory('a.inventory.yaml');
-    first.metadata.name = 'MUTATED';
+    first.spec.name = 'MUTATED';
     const second = await repo.readInventory('a.inventory.yaml');
-    expect(second.metadata.name).toBe('Original');
+    expect(second.spec.name).toBe('Original');
   });
 
   it('is isolated per factory call (no shared fixture)', async () => {

@@ -14,7 +14,7 @@ const attribution = buildDemoAttribution();
 const resourceIds = inventory.spec.resources.map((r) => r.id);
 
 function spendDocOf(rows: SpendRowType[]): Spend {
-  return { apiVersion: 'workspec.io/v1alpha1', kind: 'Spend', metadata: { id: 'prop' }, spec: { rows } };
+  return { apiVersion: 'workspec.io/v1alpha1', kind: 'Spend', metadata: { slug: 'prop' }, spec: { rows } };
 }
 
 /** An arbitrary spend row for one of the demo's 80 resources, integer amount 0..5000. */

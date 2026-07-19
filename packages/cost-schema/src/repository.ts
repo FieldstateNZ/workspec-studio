@@ -33,9 +33,9 @@ export type Ref = string;
 export interface InventoryRef {
   /** The opaque ref to pass back to `readInventory`/`writeInventory`. */
   ref: Ref;
-  /** The inventory's `metadata.id`. */
-  id: string;
-  /** The inventory's `metadata.name`, when known. */
+  /** The inventory's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The inventory's `spec.name`, when known. */
   name?: string;
 }
 
@@ -43,9 +43,9 @@ export interface InventoryRef {
 export interface SpendRef {
   /** The opaque ref to pass back to `readSpend`/`writeSpend`. */
   ref: Ref;
-  /** The spend's `metadata.id`. */
-  id: string;
-  /** The spend's `metadata.name`, when known. */
+  /** The spend's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The spend's `spec.name`, when known. */
   name?: string;
 }
 
@@ -53,9 +53,9 @@ export interface SpendRef {
 export interface AttributionRef {
   /** The opaque ref to pass back to `readAttribution`/`writeAttribution`. */
   ref: Ref;
-  /** The attribution's `metadata.id`. */
-  id: string;
-  /** The attribution's `metadata.name`, when known. */
+  /** The attribution's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The attribution's `spec.name`, when known. */
   name?: string;
 }
 
@@ -63,9 +63,9 @@ export interface AttributionRef {
 export interface TagPlanRef {
   /** The opaque ref to pass back to `readTagPlan`/`writeTagPlan`. */
   ref: Ref;
-  /** The tag plan's `metadata.id`. */
-  id: string;
-  /** The tag plan's `metadata.name`, when known. */
+  /** The tag plan's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The tag plan's `spec.name`, when known. */
   name?: string;
 }
 
@@ -206,8 +206,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): CostRep
       return Promise.resolve(
         [...inventories.entries()].map(([ref, inventory]) => ({
           ref,
-          id: inventory.metadata.id,
-          ...(inventory.metadata.name !== undefined ? { name: inventory.metadata.name } : {}),
+          ...(inventory.metadata.slug !== undefined ? { slug: inventory.metadata.slug } : {}),
+          ...(inventory.spec.name !== undefined ? { name: inventory.spec.name } : {}),
         })),
       );
     },
@@ -230,8 +230,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): CostRep
       return Promise.resolve(
         [...spends.entries()].map(([ref, spend]) => ({
           ref,
-          id: spend.metadata.id,
-          ...(spend.metadata.name !== undefined ? { name: spend.metadata.name } : {}),
+          ...(spend.metadata.slug !== undefined ? { slug: spend.metadata.slug } : {}),
+          ...(spend.spec.name !== undefined ? { name: spend.spec.name } : {}),
         })),
       );
     },
@@ -254,8 +254,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): CostRep
       return Promise.resolve(
         [...attributions.entries()].map(([ref, attribution]) => ({
           ref,
-          id: attribution.metadata.id,
-          ...(attribution.metadata.name !== undefined ? { name: attribution.metadata.name } : {}),
+          ...(attribution.metadata.slug !== undefined ? { slug: attribution.metadata.slug } : {}),
+          ...(attribution.spec.name !== undefined ? { name: attribution.spec.name } : {}),
         })),
       );
     },
@@ -278,8 +278,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): CostRep
       return Promise.resolve(
         [...tagPlans.entries()].map(([ref, tagPlan]) => ({
           ref,
-          id: tagPlan.metadata.id,
-          ...(tagPlan.metadata.name !== undefined ? { name: tagPlan.metadata.name } : {}),
+          ...(tagPlan.metadata.slug !== undefined ? { slug: tagPlan.metadata.slug } : {}),
+          ...(tagPlan.spec.name !== undefined ? { name: tagPlan.spec.name } : {}),
         })),
       );
     },

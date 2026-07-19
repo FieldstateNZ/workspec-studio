@@ -16,7 +16,7 @@ describe('CLOUD_PROVIDER_METHODS', () => {
       inventory: {
         apiVersion: 'workspec.io/v1alpha1',
         kind: 'Inventory',
-        metadata: { id: 'port-shape-check' },
+        metadata: { slug: 'port-shape-check' },
         spec: { asOf: '2024-01-01T00:00:00.000Z', scope: { subscriptions: ['sub-1'] }, resources: [] },
       },
     });

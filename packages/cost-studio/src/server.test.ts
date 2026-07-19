@@ -26,7 +26,7 @@ function makeInventory(): Inventory {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'estate' },
+    metadata: { slug: 'estate' },
     spec: {
       asOf: '2026-07-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1'] },
@@ -56,7 +56,7 @@ function makeAttribution(): Attribution {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'attr' },
+    metadata: { slug: 'attr' },
     spec: {
       dimensions: [{ id: 'product', label: 'Product', values: ['atrium', 'workspec'] }],
       rules: [
@@ -76,8 +76,8 @@ let dir: string;
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'cost-studio-host-'));
   const repo = new FsRepository(dir);
-  await repo.writeInventory('estate.inventory.yaml', makeInventory());
-  await repo.writeAttribution('attr.attribution.yaml', makeAttribution());
+  await repo.writeInventory('.workspec/inventories/estate.yaml', makeInventory());
+  await repo.writeAttribution('.workspec/attributions/attr.yaml', makeAttribution());
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
@@ -95,13 +95,13 @@ describe('host server — health + read APIs', () => {
     const app = createServer({ dir });
     const list = await request(app).get('/api/inventories');
     expect(list.status).toBe(200);
-    expect(list.body).toEqual([{ ref: 'estate.inventory.yaml', id: 'estate' }]);
+    expect(list.body).toEqual([{ ref: '.workspec/inventories/estate.yaml', slug: 'estate' }]);
 
     const read = await request(app).get(
-      `/api/inventory?ref=${encodeURIComponent('estate.inventory.yaml')}`,
+      `/api/inventory?ref=${encodeURIComponent('.workspec/inventories/estate.yaml')}`,
     );
     expect(read.status).toBe(200);
-    expect((read.body as Inventory).metadata.id).toBe('estate');
+    expect((read.body as Inventory).metadata.slug).toBe('estate');
     expect((read.body as Inventory).spec.resources).toHaveLength(2);
   });
 
@@ -109,10 +109,10 @@ describe('host server — health + read APIs', () => {
     const app = createServer({ dir });
     const list = await request(app).get('/api/attributions');
     expect(list.status).toBe(200);
-    expect(list.body).toEqual([{ ref: 'attr.attribution.yaml', id: 'attr' }]);
+    expect(list.body).toEqual([{ ref: '.workspec/attributions/attr.yaml', slug: 'attr' }]);
 
     const read = await request(app).get(
-      `/api/attribution?ref=${encodeURIComponent('attr.attribution.yaml')}`,
+      `/api/attribution?ref=${encodeURIComponent('.workspec/attributions/attr.yaml')}`,
     );
     expect(read.status).toBe(200);
     expect((read.body as Attribution).spec.rules.map((r) => r.id)).toEqual(['r1', 'r2']);
@@ -187,7 +187,7 @@ describe('host server — health + read APIs', () => {
 describe('host server — write round-trip through the port', () => {
   it('persists a validated attribution write and reads it back, byte-stable on disk', async () => {
     const app = createServer({ dir });
-    const ref = 'attr.attribution.yaml';
+    const ref = '.workspec/attributions/attr.yaml';
     const read = await request(app).get(`/api/attribution?ref=${encodeURIComponent(ref)}`);
     const attribution = read.body as Attribution;
     attribution.spec.rules = [
@@ -225,9 +225,9 @@ describe('host server — write round-trip through the port', () => {
 
   it('rejects an invalid inventory write with 422 (located issues, no write)', async () => {
     const app = createServer({ dir });
-    const before = await readFile(join(dir, 'estate.inventory.yaml'), 'utf8');
+    const before = await readFile(join(dir, '.workspec/inventories/estate.yaml'), 'utf8');
     const res = await request(app)
-      .put(`/api/inventory?ref=${encodeURIComponent('estate.inventory.yaml')}`)
+      .put(`/api/inventory?ref=${encodeURIComponent('.workspec/inventories/estate.yaml')}`)
       .send({ apiVersion: 'workspec.io/v1alpha1', kind: 'Inventory', metadata: {} });
     expect(res.status).toBe(422);
     expect(res.body.error).toBe('invalid inventory');
@@ -236,7 +236,7 @@ describe('host server — write round-trip through the port', () => {
     expect(must(res.body.issues[0]).path).toBeDefined();
 
     // The file on disk is untouched by the rejected write.
-    const after = await readFile(join(dir, 'estate.inventory.yaml'), 'utf8');
+    const after = await readFile(join(dir, '.workspec/inventories/estate.yaml'), 'utf8');
     expect(after).toBe(before);
   });
 
@@ -262,13 +262,13 @@ describe('host server — write round-trip through the port', () => {
     // simulate a hand-edited bad file — no writer of this repository would
     // ever produce this, but a human editing YAML directly can.
     await writeFile(
-      join(dir, 'estate.inventory.yaml'),
+      join(dir, '.workspec/inventories/estate.yaml'),
       ['apiVersion: workspec.io/v1alpha1', 'kind: Inventory', 'metadata: {}', 'spec: {}', ''].join(
         '\n',
       ),
     );
     const res = await request(app).get(
-      `/api/inventory?ref=${encodeURIComponent('estate.inventory.yaml')}`,
+      `/api/inventory?ref=${encodeURIComponent('.workspec/inventories/estate.yaml')}`,
     );
     expect(res.status).toBe(422);
     expect(res.body.error).toBe('invalid artifact');

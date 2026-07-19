@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Spend
 metadata:
-  id: demo
+  slug: demo
 spec:
   rows:
     - resourceId: /subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-a

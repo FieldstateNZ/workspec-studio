@@ -11,19 +11,30 @@ outputs, always in sync:
 This package is normative: every other `@workspec/cost-*` package (provider, engine, UI, CLI)
 depends on it, directly or transitively — never the reverse.
 
-## Artifacts & file naming (normative)
+Built on `@workspec/schema-core`'s K8s-style artifact envelope (`defineArtifact`): every kind is
+`{apiVersion, kind, metadata: {slug?}, spec}`. Identity is the artifact's filename slug, derived by
+the loader (`slugFromPath`, in `@workspec/schema-core`) — `metadata.slug` is optional and only
+needed when an author wants it visible without opening a directory listing. There is no
+`metadata.id` — the artifact carries no id of its own.
 
-| Artifact    | Suffix               | What it holds                                                       |
-| ----------- | -------------------- | -------------------------------------------------------------------- |
-| Inventory   | `*.inventory.yaml`   | A point-in-time stock-take of provider resources                     |
-| Spend       | `*.spend.yaml`       | Billed rows for a period, attributed to resources (or left unresolved) |
-| Attribution | `*.attribution.yaml` | Dimensions, ordered rules, and pinned overrides                      |
-| TagPlan     | `*.tagplan.yaml`     | The tagging actions needed to converge on an attribution result      |
+## Artifacts & type directories (normative)
 
-Files are discovered purely by these suffixes — no index, no database. The constants
-`INVENTORY_FILE_SUFFIX`/`SPEND_FILE_SUFFIX`/`ATTRIBUTION_FILE_SUFFIX`/`TAGPLAN_FILE_SUFFIX`, the
-matching globs, and `isInventoryFile()`/`isSpendFile()`/`isAttributionFile()`/`isTagPlanFile()` are
-exported for the repository layer (a later slice).
+| Artifact    | Kind          | Type directory (under `.workspec/`) | What it holds                                                          |
+| ----------- | ------------- | ----------------------------------- | ---------------------------------------------------------------------- |
+| Inventory   | `Inventory`   | `inventories`                       | A point-in-time stock-take of provider resources                       |
+| Spend       | `Spend`       | `spends`                            | Billed rows for a period, attributed to resources (or left unresolved) |
+| Attribution | `Attribution` | `attributions`                      | Dimensions, ordered rules, and pinned overrides                        |
+| TagPlan     | `TagPlan`     | `tagplans`                          | The tagging actions needed to converge on an attribution result        |
+
+`TYPE_DIRECTORIES`/`typeDirectoryFor(kind)` give the `.workspec/<dir>` path for each kind (e.g.
+`typeDirectoryFor('Inventory')` → `.workspec/inventories`). Discovery is a directory walk keyed off
+these — the repository layer (`@workspec/cost-studio`'s `FsRepository`) owns it; this package no
+longer ships filename-suffix/glob discovery helpers.
+
+Each kind's optional human-readable label lives at `spec.name` (it moved out of the old
+`metadata.name`); an artifact's own internal ids (Inventory resource ids, Attribution
+dimension/rule/value ids, etc.) are unaffected — those are ordinary `spec` fields, not artifact
+identity.
 
 ## The sort-order contract: `git diff` IS the drift report
 
@@ -138,14 +149,15 @@ committed `json-schema/*.schema.json`, so CI fails if the committed files are st
 
 ## Scripts
 
-| Script                                              | Does                                          |
-| ---------------------------------------------------- | ---------------------------------------------- |
-| `pnpm --filter @workspec/cost-schema build`         | tsup → `dist/` (ESM + `.d.ts`)                |
-| `pnpm --filter @workspec/cost-schema typecheck`     | `tsc --noEmit`                                |
-| `pnpm --filter @workspec/cost-schema test`          | vitest (schema, YAML mapping, round-trip, drift) |
-| `pnpm --filter @workspec/cost-schema gen:schema`    | regenerate `json-schema/`                     |
+| Script                                           | Does                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| `pnpm --filter @workspec/cost-schema build`      | tsup → `dist/` (ESM + `.d.ts`)                                |
+| `pnpm --filter @workspec/cost-schema typecheck`  | `tsc -b` (project references against `@workspec/schema-core`) |
+| `pnpm --filter @workspec/cost-schema test`       | vitest (schema, YAML mapping, round-trip, drift)              |
+| `pnpm --filter @workspec/cost-schema gen:schema` | regenerate `json-schema/`                                     |
 
 ## Dependency direction
 
-`cost-schema` has zero `@workspec` dependencies. Every other `@workspec/cost-*` package depends on
-it, directly or transitively — never the reverse.
+`cost-schema` depends on `@workspec/schema-core` (the shared K8s-style envelope, path/slug helpers,
+and JSON Schema generation) and nothing else in the `@workspec` scope. Every other
+`@workspec/cost-*` package depends on `cost-schema`, directly or transitively — never the reverse.

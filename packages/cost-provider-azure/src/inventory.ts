@@ -120,9 +120,10 @@ export async function fetchAzureInventory(scope: ProviderScope, options: FetchIn
   const inventory: Inventory = {
     apiVersion: API_VERSION,
     kind: 'Inventory',
-    // No natural "id" concept from Azure itself: derive a stable one from
-    // scope, so re-fetching the same scope reuses the same artifact identity.
-    metadata: { id: scope.subscriptions.join('-') },
+    // Identity is now the loader-derived filename slug, assigned by whatever
+    // writes this artifact to a repository — there is no natural human name
+    // to carry here either, so metadata is left empty.
+    metadata: {},
     spec: {
       asOf: clock(),
       scope: { subscriptions: [...scope.subscriptions] },

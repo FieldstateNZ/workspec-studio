@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: Inventory
 metadata:
-  id: fieldstate-azure
+  slug: fieldstate-azure
 spec:
   asOf: 2026-07-07T00:00:00Z
   scope:

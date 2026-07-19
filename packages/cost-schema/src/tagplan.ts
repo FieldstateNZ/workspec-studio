@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
+import { defineArtifact } from '@workspec/schema-core';
 import { identifier, resourceTagName, resourceTagValue } from './common.js';
 
 // ── TagPlan artifact (`*.tagplan.yaml`) ─────────────────────────────────────
@@ -9,6 +9,9 @@ import { identifier, resourceTagName, resourceTagValue } from './common.js';
 // produces, e.g. "workspec:60|atrium:40" — so this schema must NOT forbid `:`
 // or `|` in them. Like Inventory/Spend, `entries[]` sort order is part of the
 // schema contract.
+//
+// Built on `@workspec/schema-core`'s `defineArtifact` — see `inventory.ts` for
+// the envelope/identity note. `name` (optional) lives on `spec` now.
 
 /** One resource × tag entry in the tag plan. */
 export const TagPlanEntry = z
@@ -33,9 +36,10 @@ export const TagPlanEntry = z
   })
   .describe('One resource × tag entry in the tag plan.');
 
-/** The tag plan body: baseline anchor, dimension→tag mapping, and entries. */
+/** The tag plan body: optional name, baseline anchor, dimension→tag mapping, and entries. */
 export const TagPlanSpec = z
   .object({
+    name: z.string().min(1).optional().describe('Optional human-readable name for this tag plan.'),
     baselineAsOf: z
       .string()
       .datetime()
@@ -45,7 +49,9 @@ export const TagPlanSpec = z
       ),
     tagMapping: z
       .record(identifier, resourceTagName)
-      .describe('Dimension id → tag name mapping, e.g. { product: "fs-product" }. Must not be empty.'),
+      .describe(
+        'Dimension id → tag name mapping, e.g. { product: "fs-product" }. Must not be empty.',
+      ),
     entries: z
       .array(TagPlanEntry)
       .describe(
@@ -53,15 +59,9 @@ export const TagPlanSpec = z
           'sort-order contract (see README).',
       ),
   })
-  .describe('The tag plan body: baseline anchor, dimension→tag mapping, and entries.');
-
-/** TagPlan identity. */
-export const TagPlanMetadata = z
-  .object({
-    id: identifier.describe('Stable tag-plan id, e.g. "prod-2026-07".'),
-    name: z.string().min(1).optional().describe('Optional human-readable name.'),
-  })
-  .describe('TagPlan identity.');
+  .describe(
+    'The tag plan body: optional name, baseline anchor, dimension→tag mapping, and entries.',
+  );
 
 /**
  * A `*.tagplan.yaml` artifact: the tagging actions needed to converge a
@@ -73,13 +73,7 @@ export const TagPlanMetadata = z
  * non-null and different; noop ⇒ equal), `tagMapping` must not be empty, and
  * `entries[]` must already be sorted ascending by (resourceId, tag).
  */
-export const TagPlanArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('TagPlan').describe('Artifact kind discriminant.'),
-    metadata: TagPlanMetadata.describe('TagPlan identity.'),
-    spec: TagPlanSpec.describe('The tag plan body.'),
-  })
+export const TagPlanArtifact = defineArtifact('TagPlan', TagPlanSpec)
   .superRefine((doc, ctx) => {
     doc.spec.entries.forEach((entry, i) => {
       const { current, desired, action } = entry;
@@ -158,7 +152,7 @@ export const TagPlanArtifact = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['spec', 'entries', i],
-          message: `entries must be sorted ascending by (resourceId, tag): entry ${i} comes before entry ${i - 1}`,
+          message: `entries must be sorted ascending by (resourceId, tag): entry ${i} comes after entry ${i - 1}`,
         });
         break;
       }
@@ -186,7 +180,9 @@ export const TagPlanArtifact = z
       });
     }
   })
-  .describe('A WorkSpec tag-plan artifact: the tagging actions needed to converge on an attribution result.');
+  .describe(
+    'A WorkSpec tag-plan artifact: the tagging actions needed to converge on an attribution result.',
+  );
 
 /** Ascending comparison of two tag-plan entries by (resourceId, tag). */
 export function compareTagPlanEntries(a: TagPlanEntry, b: TagPlanEntry): number {
@@ -198,5 +194,4 @@ export function compareTagPlanEntries(a: TagPlanEntry, b: TagPlanEntry): number 
 // Inferred TypeScript types (Zod is the single source of truth).
 export type TagPlanEntry = z.infer<typeof TagPlanEntry>;
 export type TagPlanSpec = z.infer<typeof TagPlanSpec>;
-export type TagPlanMetadata = z.infer<typeof TagPlanMetadata>;
 export type TagPlan = z.infer<typeof TagPlanArtifact>;

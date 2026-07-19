@@ -16,12 +16,16 @@ additional rules (below).
 
 ## Artifacts
 
+Filed under `.workspec/<kind-dir>/<slug>.yaml` — the convention `workspec-cost` discovers by
+directory walk (no more filename-suffix scanning). `metadata` carries only `slug`; each artifact's
+optional human-readable name (if any) lives on `spec.name`.
+
 | File | Artifact |
 | ---- | -------- |
-| [`fieldstate-azure.inventory.yaml`](./fieldstate-azure.inventory.yaml) | Inventory — 80 resources, 9 resource groups |
-| [`fieldstate-azure.spend.yaml`](./fieldstate-azure.spend.yaml) | Spend — one billing period, `2026-07` |
-| [`fieldstate-azure.attribution.yaml`](./fieldstate-azure.attribution.yaml) | Attribution — 3 dimensions, 11 rules (`r1`–`r11`), 1 pinned override |
-| [`fieldstate-azure.tagplan.yaml`](./fieldstate-azure.tagplan.yaml) | TagPlan — the tagging diff computed from the attribution result |
+| [`.workspec/inventories/fieldstate-azure.yaml`](./.workspec/inventories/fieldstate-azure.yaml) | Inventory — 80 resources, 9 resource groups |
+| [`.workspec/spends/fieldstate-azure-2026-07.yaml`](./.workspec/spends/fieldstate-azure-2026-07.yaml) | Spend — one billing period, `2026-07` |
+| [`.workspec/attributions/fieldstate-azure.yaml`](./.workspec/attributions/fieldstate-azure.yaml) | Attribution — 3 dimensions, 11 rules (`r1`–`r11`), 1 pinned override |
+| [`.workspec/tagplans/fieldstate-azure.yaml`](./.workspec/tagplans/fieldstate-azure.yaml) | TagPlan — the tagging diff computed from the attribution result |
 
 ## Extending to 100% coverage: rules `r9`–`r11`
 
@@ -87,11 +91,12 @@ workspec-cost stocktake --subscription <id> --name fieldstate-azure --period 202
 ```
 
 Fetches the current inventory + spend from `@workspec/cost-provider-azure` and writes/overwrites
-`fieldstate-azure.inventory.yaml` / `fieldstate-azure.2026-07.spend.yaml` in place, printing a
-drift summary against whatever was previously committed (or `stocktake: no drift` / nothing on a
-first run). This example's inventory and spend files were seeded from the golden fixture rather
-than a real stock-take, so there's no live subscription to point this at here — a real run needs
-Azure auth; see `docs/cost/azure-setup.md` (written by a sibling task in this module).
+`.workspec/inventories/fieldstate-azure.yaml` / `.workspec/spends/fieldstate-azure-2026-07.yaml` in
+place, printing a drift summary against whatever was previously committed (or `stocktake: no
+drift` / nothing on a first run). This example's inventory and spend files were seeded from the
+golden fixture rather than a real stock-take, so there's no live subscription to point this at
+here — a real run needs Azure auth; see `docs/cost/azure-setup.md` (written by a sibling task in
+this module).
 
 ### 2. `validate` — real output
 
@@ -123,20 +128,21 @@ coffers   1,433   10.9%
 ### 4. `plan` — real output
 
 ```
-$ node packages/cost-studio/dist/bin.js plan --dir examples/fieldstate-azure-costs --out fieldstate-azure.tagplan.yaml
+$ node packages/cost-studio/dist/bin.js plan --dir examples/fieldstate-azure-costs --out .workspec/tagplans/fieldstate-azure.yaml
 plan: +234 add · ~3 change · −0 remove · 3 noop
-plan: wrote fieldstate-azure.tagplan.yaml
+plan: wrote .workspec/tagplans/fieldstate-azure.yaml
 ```
 
 Default tag mapping (`--map` not given): `product → fs-product`, `costType → fs-cost-type`,
-`client → fs-client`. The written [`fieldstate-azure.tagplan.yaml`](./fieldstate-azure.tagplan.yaml)
-is the committed artifact.
+`client → fs-client`. The written
+[`.workspec/tagplans/fieldstate-azure.yaml`](./.workspec/tagplans/fieldstate-azure.yaml) is the
+committed artifact.
 
 ### 5. `apply` — narrated, not run
 
 ```
-workspec-cost apply fieldstate-azure.tagplan.yaml --dry-run
-workspec-cost apply fieldstate-azure.tagplan.yaml
+workspec-cost apply .workspec/tagplans/fieldstate-azure.yaml --dry-run
+workspec-cost apply .workspec/tagplans/fieldstate-azure.yaml
 ```
 
 Reads the plan, finds the inventory matching its `baselineAsOf`, and calls the provider's

@@ -2,7 +2,7 @@
 apiVersion: workspec.io/v1alpha1
 kind: TagPlan
 metadata:
-  id: fieldstate-azure
+  slug: fieldstate-azure
 spec:
   baselineAsOf: 2026-07-07T00:00:00Z
   tagMapping:

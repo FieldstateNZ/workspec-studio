@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -34,7 +34,7 @@ function makeInventory(): Inventory {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Inventory',
-    metadata: { id: 'estate' },
+    metadata: { slug: 'estate' },
     spec: {
       asOf: '2026-07-01T00:00:00.000Z',
       scope: { subscriptions: ['sub-1'] },
@@ -64,7 +64,7 @@ function makeAttribution(): Attribution {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Attribution',
-    metadata: { id: 'attr' },
+    metadata: { slug: 'attr' },
     spec: {
       dimensions: [{ id: 'product', label: 'Product', values: ['atrium', 'workspec'] }],
       rules: [
@@ -84,7 +84,7 @@ function makeSpend(): Spend {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Spend',
-    metadata: { id: 'spend-2026-07' },
+    metadata: { slug: 'spend-2026-07' },
     spec: {
       rows: [
         {
@@ -162,11 +162,13 @@ describe('stocktake', () => {
     );
     expect(code).toBe(0);
     expect(cap.err()).not.toContain('drift');
-    expect(cap.err()).toContain('wrote estate.inventory.yaml, estate.2026-07.spend.yaml');
+    expect(cap.err()).toContain(
+      'wrote .workspec/inventories/estate.yaml, .workspec/spends/estate-2026-07.yaml',
+    );
 
     const inventories = await repository.listInventories();
-    expect(inventories).toEqual([{ ref: 'estate.inventory.yaml', id: 'estate' }]);
-    const written = await repository.readInventory('estate.inventory.yaml');
+    expect(inventories).toEqual([{ ref: '.workspec/inventories/estate.yaml', slug: 'estate' }]);
+    const written = await repository.readInventory('.workspec/inventories/estate.yaml');
     expect(written.spec.resources.map((r) => r.id)).toEqual(['res-a', 'res-b']);
   });
 
@@ -236,16 +238,12 @@ describe('stocktake', () => {
   it('notes when a previous inventory exists but fails to parse, and still overwrites it', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cost-studio-stocktake-'));
     try {
+      await mkdir(join(dir, '.workspec', 'inventories'), { recursive: true });
       await writeFile(
-        join(dir, 'estate.inventory.yaml'),
-        [
-          'apiVersion: workspec.io/v1alpha1',
-          'kind: Inventory',
-          'metadata:',
-          '  id: estate',
-          'spec: {}',
-          '',
-        ].join('\n'),
+        join(dir, '.workspec/inventories/estate.yaml'),
+        ['apiVersion: workspec.io/v1alpha1', 'kind: Inventory', 'metadata: {}', 'spec: {}', ''].join(
+          '\n',
+        ),
       );
       const provider = createMemoryProvider({ inventory: makeInventory(), spend: [makeSpend()] });
       const cap = captureIO();
@@ -256,13 +254,13 @@ describe('stocktake', () => {
       );
       expect(code).toBe(0);
       expect(cap.err()).toContain(
-        'stocktake: previous inventory at estate.inventory.yaml could not be parsed — drift summary skipped',
+        'stocktake: previous inventory at .workspec/inventories/estate.yaml could not be parsed — drift summary skipped',
       );
       expect(cap.err()).not.toContain('drifts:');
-      expect(cap.err()).toContain('wrote estate.inventory.yaml');
+      expect(cap.err()).toContain('wrote .workspec/inventories/estate.yaml');
 
       const repository = new FsRepository(dir);
-      const written = await repository.readInventory('estate.inventory.yaml');
+      const written = await repository.readInventory('.workspec/inventories/estate.yaml');
       expect(written.spec.resources.map((r) => r.id)).toEqual(['res-a', 'res-b']);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -282,14 +280,14 @@ describe('validate', () => {
   it('reports schema errors with located diagnostics and exits 1', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cost-studio-validate-'));
     try {
+      await mkdir(join(dir, '.workspec', 'inventories'), { recursive: true });
       await writeFile(
-        join(dir, 'bad.inventory.yaml'),
+        join(dir, '.workspec', 'inventories', 'bad.yaml'),
         [
           '# yaml-language-server: $schema=x',
           'apiVersion: workspec.io/v1alpha1',
           'kind: Inventory',
-          'metadata:',
-          '  id: estate',
+          'metadata: {}',
           'spec:',
           '  asOf: "2026-07-01T00:00:00.000Z"',
           '  scope:',
@@ -327,7 +325,7 @@ describe('validate', () => {
     const spend: Spend = {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'Spend',
-      metadata: { id: 'spend-with-orphan' },
+      metadata: { slug: 'spend-with-orphan' },
       spec: {
         rows: [
           {
@@ -341,14 +339,14 @@ describe('validate', () => {
       },
     };
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': inventory },
-      attributions: { 'a.attribution.yaml': attribution },
-      spends: { 's.spend.yaml': spend },
+      inventories: { '.workspec/inventories/i.yaml': inventory },
+      attributions: { '.workspec/attributions/a.yaml': attribution },
+      spends: { '.workspec/spends/s.yaml': spend },
     });
     const cap = captureIO();
     const code = await run(['validate'], cap.io, { repository });
     expect(code).toBe(0);
-    expect(cap.err()).toContain('a.attribution.yaml: warning: [orphan-spend-row]');
+    expect(cap.err()).toContain('.workspec/attributions/a.yaml: warning: [orphan-spend-row]');
     expect(cap.err()).toContain('artifact(s) OK');
   });
 
@@ -365,14 +363,14 @@ describe('validate', () => {
   it('--json reports a structured parse-error diagnostic on a schema violation', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cost-studio-validate-json-'));
     try {
+      await mkdir(join(dir, '.workspec', 'inventories'), { recursive: true });
       await writeFile(
-        join(dir, 'bad.inventory.yaml'),
+        join(dir, '.workspec', 'inventories', 'bad.yaml'),
         [
           '# yaml-language-server: $schema=x',
           'apiVersion: workspec.io/v1alpha1',
           'kind: Inventory',
-          'metadata:',
-          '  id: estate',
+          'metadata: {}',
           'spec:',
           '  asOf: "2026-07-01T00:00:00.000Z"',
           '  scope:',
@@ -412,7 +410,7 @@ describe('validate', () => {
     const spend: Spend = {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'Spend',
-      metadata: { id: 'spend-with-orphan' },
+      metadata: { slug: 'spend-with-orphan' },
       spec: {
         rows: [
           {
@@ -426,16 +424,16 @@ describe('validate', () => {
       },
     };
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': inventory },
-      attributions: { 'a.attribution.yaml': attribution },
-      spends: { 's.spend.yaml': spend },
+      inventories: { '.workspec/inventories/i.yaml': inventory },
+      attributions: { '.workspec/attributions/a.yaml': attribution },
+      spends: { '.workspec/spends/s.yaml': spend },
     });
     const cap = captureIO();
     const code = await run(['validate', '--json'], cap.io, { repository });
     expect(code).toBe(0);
     const parsed = JSON.parse(cap.out()) as { severity: string; code: string; file: string }[];
     expect(parsed).toContainEqual(
-      expect.objectContaining({ severity: 'warning', code: 'orphan-spend-row', file: 'a.attribution.yaml' }),
+      expect.objectContaining({ severity: 'warning', code: 'orphan-spend-row', file: '.workspec/attributions/a.yaml' }),
     );
   });
 });
@@ -443,9 +441,9 @@ describe('validate', () => {
 describe('report', () => {
   function seededRepository() {
     return createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
-      spends: { 's.spend.yaml': makeSpend() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
+      spends: { '.workspec/spends/s.yaml': makeSpend() },
     });
   }
 
@@ -505,14 +503,14 @@ describe('report', () => {
 
   it('prints orphan-spend-row diagnostics as stderr warnings', async () => {
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
       spends: {
-        's.spend.yaml': makeSpend(),
-        'orphan.spend.yaml': {
+        '.workspec/spends/s.yaml': makeSpend(),
+        '.workspec/spends/orphan.yaml': {
           apiVersion: 'workspec.io/v1alpha1',
           kind: 'Spend',
-          metadata: { id: 'orphan' },
+          metadata: { slug: 'orphan' },
           spec: {
             rows: [
               {
@@ -538,7 +536,7 @@ describe('plan', () => {
   it('errors with exit 2 when there is not exactly one attribution', async () => {
     const cap = captureIO();
     const code = await run(['plan'], cap.io, {
-      repository: createMemoryRepository({ inventories: { 'i.inventory.yaml': makeInventory() } }),
+      repository: createMemoryRepository({ inventories: { '.workspec/inventories/i.yaml': makeInventory() } }),
     });
     expect(code).toBe(2);
     expect(cap.err()).toContain('expected exactly 1 attribution, found 0');
@@ -546,9 +544,9 @@ describe('plan', () => {
 
   it('uses the default fs-<kebab-case> tag mapping and writes the plan', async () => {
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
-      spends: { 's.spend.yaml': makeSpend() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
+      spends: { '.workspec/spends/s.yaml': makeSpend() },
     });
     const cap = captureIO();
     const code = await run(['plan'], cap.io, { repository });
@@ -559,13 +557,13 @@ describe('plan', () => {
     expect(plans).toHaveLength(1);
     const plan = await repository.readTagPlan(must(plans[0]).ref);
     expect(plan.spec.tagMapping).toEqual({ product: 'fs-product' });
-    expect(must(plans[0]).ref).toBe('2026-07.tagplan.yaml');
+    expect(must(plans[0]).ref).toBe('.workspec/tagplans/2026-07.yaml');
   });
 
   it('overrides the tag mapping via repeatable --map', async () => {
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
     });
     const cap = captureIO();
     const code = await run(['plan', '--map', 'product=custom-tag'], cap.io, { repository });
@@ -577,8 +575,8 @@ describe('plan', () => {
 
   it('rejects an unknown dimension in --map with exit 2', async () => {
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
     });
     const cap = captureIO();
     const code = await run(['plan', '--map', 'bogus=fs-bogus'], cap.io, { repository });
@@ -588,8 +586,8 @@ describe('plan', () => {
 
   it('resolves (does not reject) to a clean usage error on an invalid --out', async () => {
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': makeAttribution() },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': makeAttribution() },
     });
     const cap = captureIO();
     const promise = run(['plan', '--out', 'Bad Name.tagplan.yaml'], cap.io, { repository });
@@ -602,7 +600,7 @@ describe('plan', () => {
     const attribution: Attribution = {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'Attribution',
-      metadata: { id: 'attr-never' },
+      metadata: { slug: 'attr-never' },
       spec: {
         dimensions: [{ id: 'product', label: 'Product', values: ['atrium'] }],
         rules: [
@@ -611,8 +609,8 @@ describe('plan', () => {
       },
     };
     const repository = createMemoryRepository({
-      inventories: { 'i.inventory.yaml': makeInventory() },
-      attributions: { 'a.attribution.yaml': attribution },
+      inventories: { '.workspec/inventories/i.yaml': makeInventory() },
+      attributions: { '.workspec/attributions/a.yaml': attribution },
     });
     const cap = captureIO();
     const code = await run(['plan'], cap.io, { repository });
@@ -628,7 +626,7 @@ describe('apply', () => {
     const tagPlan: TagPlan = {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'TagPlan',
-      metadata: { id: '2026-07' },
+      metadata: { slug: '2026-07' },
       spec: {
         baselineAsOf: inventory.spec.asOf,
         tagMapping: { product: 'fs-product' },
@@ -639,8 +637,8 @@ describe('apply', () => {
       },
     };
     const repository = createMemoryRepository({
-      inventories: { 'estate.inventory.yaml': inventory },
-      tagPlans: { 'plan.tagplan.yaml': tagPlan },
+      inventories: { '.workspec/inventories/estate.yaml': inventory },
+      tagPlans: { '.workspec/tagplans/plan.yaml': tagPlan },
     });
     const provider = createMemoryProvider({ inventory, clock: FIXED_CLOCK });
     return { repository, provider };
@@ -649,7 +647,7 @@ describe('apply', () => {
   it('applies a plan against the provider and reports per-entry results', async () => {
     const { repository, provider } = seed();
     const cap = captureIO();
-    const code = await run(['apply', 'plan.tagplan.yaml'], cap.io, { repository, provider });
+    const code = await run(['apply', '.workspec/tagplans/plan.yaml'], cap.io, { repository, provider });
     expect(code).toBe(0);
     expect(cap.err()).toContain('✓ A fs-product add');
     expect(cap.err()).toContain('✓ B fs-product add');
@@ -664,7 +662,7 @@ describe('apply', () => {
     const { repository, provider } = seed();
     provider.mutateLive('res-a', { 'hand-edited': 'true' });
     const cap = captureIO();
-    const code = await run(['apply', 'plan.tagplan.yaml'], cap.io, { repository, provider });
+    const code = await run(['apply', '.workspec/tagplans/plan.yaml'], cap.io, { repository, provider });
     expect(code).toBe(1);
     expect(cap.err()).toContain('refusing');
     expect(cap.err()).toContain('re-stocktake and re-plan');
@@ -677,7 +675,7 @@ describe('apply', () => {
   it('mutates nothing with --dry-run', async () => {
     const { repository, provider } = seed();
     const cap = captureIO();
-    const code = await run(['apply', 'plan.tagplan.yaml', '--dry-run'], cap.io, {
+    const code = await run(['apply', '.workspec/tagplans/plan.yaml', '--dry-run'], cap.io, {
       repository,
       provider,
     });
@@ -694,20 +692,20 @@ describe('apply', () => {
     // Overwrite with an inventory whose asOf no longer matches the plan.
     const drifted = makeInventory();
     drifted.spec.asOf = '2099-01-01T00:00:00.000Z';
-    await repository.writeInventory('estate.inventory.yaml', drifted);
+    await repository.writeInventory('.workspec/inventories/estate.yaml', drifted);
     const cap = captureIO();
-    const code = await run(['apply', 'plan.tagplan.yaml'], cap.io, { repository, provider });
+    const code = await run(['apply', '.workspec/tagplans/plan.yaml'], cap.io, { repository, provider });
     expect(code).toBe(1);
     expect(cap.err()).toContain('no inventory found with asOf matching');
   });
 
   it('refuses (no writes, no verify) when two inventories share the plan baseline asOf', async () => {
     const inventory = makeInventory();
-    const duplicate: Inventory = { ...inventory, metadata: { id: 'duplicate' } };
+    const duplicate: Inventory = { ...inventory, metadata: { slug: 'duplicate' } };
     const tagPlan: TagPlan = {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'TagPlan',
-      metadata: { id: '2026-07' },
+      metadata: { slug: '2026-07' },
       spec: {
         baselineAsOf: inventory.spec.asOf,
         tagMapping: { product: 'fs-product' },
@@ -718,23 +716,23 @@ describe('apply', () => {
     };
     const repository = createMemoryRepository({
       inventories: {
-        'estate.inventory.yaml': inventory,
-        'duplicate.inventory.yaml': duplicate,
+        '.workspec/inventories/estate.yaml': inventory,
+        '.workspec/inventories/duplicate.yaml': duplicate,
       },
-      tagPlans: { 'plan.tagplan.yaml': tagPlan },
+      tagPlans: { '.workspec/tagplans/plan.yaml': tagPlan },
     });
     const provider = createMemoryProvider({ inventory, clock: FIXED_CLOCK });
     const applyTagsSpy = vi.spyOn(provider, 'applyTags');
     const verifyBaselineSpy = vi.spyOn(provider, 'verifyBaseline');
 
     const cap = captureIO();
-    const code = await run(['apply', 'plan.tagplan.yaml'], cap.io, { repository, provider });
+    const code = await run(['apply', '.workspec/tagplans/plan.yaml'], cap.io, { repository, provider });
     expect(code).toBe(1);
     expect(cap.err()).toContain(
       "apply: refusing — 2 inventories share the plan's baselineAsOf",
     );
-    expect(cap.err()).toContain('duplicate.inventory.yaml');
-    expect(cap.err()).toContain('estate.inventory.yaml');
+    expect(cap.err()).toContain('.workspec/inventories/duplicate.yaml');
+    expect(cap.err()).toContain('.workspec/inventories/estate.yaml');
     expect(cap.err()).toContain('keep exactly one or re-plan');
     expect(applyTagsSpy).not.toHaveBeenCalled();
     expect(verifyBaselineSpy).not.toHaveBeenCalled();

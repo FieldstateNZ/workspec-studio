@@ -190,7 +190,10 @@ export function createMemoryProvider(seed: MemoryProviderSeed): MemoryCloudProvi
       const candidate: Spend = {
         apiVersion: API_VERSION,
         kind: 'Spend',
-        metadata: { id: period },
+        // Identity is now the loader-derived filename slug; `period` is a
+        // valid slug shape ("2024-01") and is the natural stand-in identity
+        // for this synthetic, not-yet-written artifact.
+        metadata: { slug: period },
         spec: { rows },
       };
 

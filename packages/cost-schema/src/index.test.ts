@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { COST_SCHEMA_PACKAGE, InventoryArtifact, isInventoryFile } from './index.js';
+import {
+  COST_SCHEMA_PACKAGE,
+  InventoryArtifact,
+  TYPE_DIRECTORIES,
+  typeDirectoryFor,
+} from './index.js';
 
 describe('@workspec/cost-schema', () => {
   it('exports its package identity', () => {
@@ -7,7 +12,8 @@ describe('@workspec/cost-schema', () => {
   });
 
   it('exports real schemas and constants (C1: no longer just the identity constant)', () => {
-    expect(isInventoryFile('foo.inventory.yaml')).toBe(true);
+    expect(typeDirectoryFor('Inventory')).toBe('.workspec/inventories');
+    expect(Object.keys(TYPE_DIRECTORIES)).toHaveLength(4);
     expect(InventoryArtifact).toBeDefined();
   });
 });

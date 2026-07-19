@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
-import { identifier, resourceTagName, resourceTagValue } from './common.js';
+import { defineArtifact } from '@workspec/schema-core';
+import { resourceTagName, resourceTagValue } from './common.js';
 
 // ── Inventory artifact (`*.inventory.yaml`) ─────────────────────────────────
 // A point-in-time stock-take of provider resources. The sort order of
@@ -8,6 +8,12 @@ import { identifier, resourceTagName, resourceTagValue } from './common.js';
 // superRefine): two stock-takes diffed with plain `git diff` should show only
 // the resources that actually changed, so the file itself must always be
 // serialized — and therefore validated — in the same canonical order.
+//
+// Built on `@workspec/schema-core`'s `defineArtifact`: the envelope
+// (apiVersion/kind/metadata) and identity (`metadata.slug`, loader-derived
+// from the filename when absent) are the shared shape every schema-core-based
+// kind uses. `name` (optional, human-readable) lives on `spec` now — it moved
+// out of the old hand-rolled `metadata.id`/`metadata.name` envelope.
 
 /** What was stock-taken: the subscriptions covered by this inventory. */
 export const InventoryScope = z
@@ -45,13 +51,11 @@ export const InventoryResource = z
   })
   .describe('A single stock-taken provider resource.');
 
-/** The inventory body: stock-take instant, scope, and resources. */
+/** The inventory body: optional name, stock-take instant, scope, and resources. */
 export const InventorySpec = z
   .object({
-    asOf: z
-      .string()
-      .datetime()
-      .describe('ISO 8601 UTC timestamp: the stock-take instant.'),
+    name: z.string().min(1).optional().describe('Optional human-readable name for this inventory.'),
+    asOf: z.string().datetime().describe('ISO 8601 UTC timestamp: the stock-take instant.'),
     scope: InventoryScope.describe('What was stock-taken.'),
     resources: z
       .array(InventoryResource)
@@ -60,15 +64,7 @@ export const InventorySpec = z
           'this is what makes a plain `git diff` between two stock-takes the drift report.',
       ),
   })
-  .describe('The inventory body: stock-take instant, scope, and resources.');
-
-/** Inventory identity. */
-export const InventoryMetadata = z
-  .object({
-    id: identifier.describe('Stable inventory id, e.g. "prod-2026-07".'),
-    name: z.string().min(1).optional().describe('Optional human-readable name.'),
-  })
-  .describe('Inventory identity.');
+  .describe('The inventory body: optional name, stock-take instant, scope, and resources.');
 
 /**
  * A `*.inventory.yaml` artifact: a point-in-time resource stock-take.
@@ -77,13 +73,7 @@ export const InventoryMetadata = z
  * unique across the file, and `resources[]` must already be sorted ascending
  * by `id` (the sort-order contract — see README).
  */
-export const InventoryArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('Inventory').describe('Artifact kind discriminant.'),
-    metadata: InventoryMetadata.describe('Inventory identity.'),
-    spec: InventorySpec.describe('The inventory body.'),
-  })
+export const InventoryArtifact = defineArtifact('Inventory', InventorySpec)
   .superRefine((doc, ctx) => {
     const seen = new Map<string, number>();
     doc.spec.resources.forEach((resource, i) => {
@@ -125,5 +115,4 @@ export function compareResourceIds(a: string, b: string): number {
 export type InventoryScope = z.infer<typeof InventoryScope>;
 export type InventoryResource = z.infer<typeof InventoryResource>;
 export type InventorySpec = z.infer<typeof InventorySpec>;
-export type InventoryMetadata = z.infer<typeof InventoryMetadata>;
 export type Inventory = z.infer<typeof InventoryArtifact>;

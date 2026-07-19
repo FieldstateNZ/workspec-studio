@@ -1,115 +1,94 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schema.workspec.io/v1alpha1/inventory.schema.json",
-  "title": "WorkSpec Inventory (v1alpha1)",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec inventory artifact: a point-in-time resource stock-take.",
   "properties": {
     "apiVersion": {
-      "type": "string",
       "const": "workspec.io/v1alpha1",
-      "description": "Artifact API version discriminant."
+      "description": "Artifact API version discriminant.",
+      "type": "string"
     },
     "kind": {
-      "type": "string",
       "const": "Inventory",
-      "description": "Artifact kind discriminant."
+      "description": "Artifact kind discriminant.",
+      "type": "string"
     },
     "metadata": {
-      "type": "object",
+      "description": "Common artifact identity.",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "description": "Stable inventory id, e.g. \"prod-2026-07\"."
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional human-readable name."
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
         }
       },
-      "required": [
-        "id"
-      ],
-      "additionalProperties": false,
-      "description": "Inventory identity."
+      "type": "object"
     },
     "spec": {
-      "type": "object",
+      "description": "The inventory body: optional name, stock-take instant, scope, and resources.",
       "properties": {
         "asOf": {
-          "type": "string",
+          "description": "ISO 8601 UTC timestamp: the stock-take instant.",
           "format": "date-time",
-          "description": "ISO 8601 UTC timestamp: the stock-take instant."
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+          "type": "string"
         },
-        "scope": {
-          "type": "object",
-          "properties": {
-            "subscriptions": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1
-              },
-              "minItems": 1,
-              "description": "Subscription ids/names covered by this stock-take."
-            }
-          },
-          "required": [
-            "subscriptions"
-          ],
-          "additionalProperties": false,
-          "description": "What was stock-taken."
+        "name": {
+          "description": "Optional human-readable name for this inventory.",
+          "minLength": 1,
+          "type": "string"
         },
         "resources": {
-          "type": "array",
+          "description": "Stock-taken resources. MUST be sorted ascending by `id` (plain JavaScript string comparison, i.e. UTF-16 code units) — this is what makes a plain `git diff` between two stock-takes the drift report.",
           "items": {
-            "type": "object",
+            "description": "A single stock-taken provider resource.",
             "properties": {
               "id": {
-                "type": "string",
+                "description": "Provider resource id, e.g. an Azure ARM resource id. Provider-neutral: any nonempty string. Unique across the file; resources are sorted ascending by this field (schema contract, see README).",
                 "minLength": 1,
-                "description": "Provider resource id, e.g. an Azure ARM resource id. Provider-neutral: any nonempty string. Unique across the file; resources are sorted ascending by this field (schema contract, see README)."
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Resource display name."
-              },
-              "type": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Provider resource type, e.g. \"Microsoft.Compute/virtualMachines\"."
+                "type": "string"
               },
               "location": {
-                "type": "string",
+                "description": "Provider region/location, e.g. \"australiaeast\".",
                 "minLength": 1,
-                "description": "Provider region/location, e.g. \"australiaeast\"."
+                "type": "string"
+              },
+              "name": {
+                "description": "Resource display name.",
+                "minLength": 1,
+                "type": "string"
               },
               "resourceGroup": {
-                "type": "string",
+                "description": "Resource group name.",
                 "minLength": 1,
-                "description": "Resource group name."
+                "type": "string"
               },
               "subscription": {
-                "type": "string",
+                "description": "Subscription id or name the resource belongs to.",
                 "minLength": 1,
-                "description": "Subscription id or name the resource belongs to."
+                "type": "string"
               },
               "tags": {
-                "type": "object",
                 "additionalProperties": {
-                  "type": "string",
+                  "description": "A resource tag value: at most 256 characters. No character restriction.",
                   "maxLength": 256,
-                  "description": "A resource tag value: at most 256 characters. No character restriction."
+                  "type": "string"
                 },
+                "description": "Resource tags, keyed by tag name.",
                 "propertyNames": {
-                  "minLength": 1,
+                  "description": "A resource tag name: 1-512 characters, must not contain < > % & \\ ? / (Azure rule).",
                   "maxLength": 512,
-                  "pattern": "^[^<>%&\\\\?/]*$"
+                  "minLength": 1,
+                  "pattern": "^[^<>%&\\\\?/]*$",
+                  "type": "string"
                 },
-                "description": "Resource tags, keyed by tag name."
+                "type": "object"
+              },
+              "type": {
+                "description": "Provider resource type, e.g. \"Microsoft.Compute/virtualMachines\".",
+                "minLength": 1,
+                "type": "string"
               }
             },
             "required": [
@@ -120,10 +99,27 @@
               "resourceGroup",
               "subscription"
             ],
-            "additionalProperties": false,
-            "description": "A single stock-taken provider resource."
+            "type": "object"
           },
-          "description": "Stock-taken resources. MUST be sorted ascending by `id` (plain JavaScript string comparison, i.e. UTF-16 code units) — this is what makes a plain `git diff` between two stock-takes the drift report."
+          "type": "array"
+        },
+        "scope": {
+          "description": "What was stock-taken.",
+          "properties": {
+            "subscriptions": {
+              "description": "Subscription ids/names covered by this stock-take.",
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "subscriptions"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -131,8 +127,7 @@
         "scope",
         "resources"
       ],
-      "additionalProperties": false,
-      "description": "The inventory body."
+      "type": "object"
     }
   },
   "required": [
@@ -141,6 +136,6 @@
     "metadata",
     "spec"
   ],
-  "additionalProperties": false,
-  "description": "A WorkSpec inventory artifact: a point-in-time resource stock-take."
+  "title": "WorkSpec Inventory (v1alpha1)",
+  "type": "object"
 }

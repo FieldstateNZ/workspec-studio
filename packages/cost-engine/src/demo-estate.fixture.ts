@@ -34,9 +34,9 @@ export const INVENTORY_AS_OF = '2026-07-07T00:00:00Z';
 export const SPEND_PERIOD = '2026-07';
 export const SPEND_CURRENCY = 'USD';
 
-export const INVENTORY_METADATA_ID = 'fieldstate-azure';
-export const SPEND_METADATA_ID = 'fieldstate-azure-2026-07';
-export const ATTRIBUTION_METADATA_ID = 'fieldstate-azure';
+export const INVENTORY_METADATA_SLUG = 'fieldstate-azure';
+export const SPEND_METADATA_SLUG = 'fieldstate-azure-2026-07';
+export const ATTRIBUTION_METADATA_SLUG = 'fieldstate-azure';
 
 /** Dimension id → tag name mapping used by the Plan review demo. */
 export const TAG_MAPPING: TagMapping = {
@@ -263,7 +263,7 @@ export function buildDemoInventory(): Inventory {
   return {
     apiVersion: API_VERSION,
     kind: 'Inventory',
-    metadata: { id: INVENTORY_METADATA_ID },
+    metadata: { slug: INVENTORY_METADATA_SLUG },
     spec: {
       asOf: INVENTORY_AS_OF,
       scope: { subscriptions: [SUBSCRIPTION_ID] },
@@ -284,7 +284,7 @@ export function buildDemoSpend(): Spend {
   return {
     apiVersion: API_VERSION,
     kind: 'Spend',
-    metadata: { id: SPEND_METADATA_ID },
+    metadata: { slug: SPEND_METADATA_SLUG },
     spec: { rows },
   };
 }
@@ -294,7 +294,7 @@ export function buildDemoAttribution(): Attribution {
   return {
     apiVersion: API_VERSION,
     kind: 'Attribution',
-    metadata: { id: ATTRIBUTION_METADATA_ID },
+    metadata: { slug: ATTRIBUTION_METADATA_SLUG },
     spec: {
       dimensions: [...RAW_DIMENSIONS],
       rules: [...RAW_RULES],
