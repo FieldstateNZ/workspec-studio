@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/user-requirement.schema.json
+# Demonstrates the LOCKED links decision: a cross-layer ref rides the shared
+# `linksField` pathRef (starts with `@workspace/`), NOT the spec §4.7
+# `<kind>:<slug>` kind-qualified shorthand (deferred pending Enterprise
+# parent-chain confirmation — spec §9.2).
+apiVersion: workspec.io/v1alpha1
+kind: UserRequirement
+metadata:
+  slug: authoring-flow-linked
+spec:
+  title: Author an element without leaving the canvas
+  actor: dev-lead
+  as: a dev lead
+  want: to author a new element inline on the canvas
+  so: that I don't break flow switching to a form
+  features: [element-authoring]
+  status: agreed
+  links:
+    - need: '@workspace/needs/frictionless-authoring'

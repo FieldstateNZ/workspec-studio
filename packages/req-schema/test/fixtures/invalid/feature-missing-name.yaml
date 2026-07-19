@@ -1,0 +1,7 @@
+# Invalid: spec.name is required and absent here (only the optional product is set).
+apiVersion: workspec.io/v1alpha1
+kind: Feature
+metadata:
+  slug: element-authoring
+spec:
+  product: workspec-studio

@@ -7,6 +7,7 @@ pnpm-lock.yaml
 json-schema
 packages/c4-schema/json-schema
 packages/schema-core/json-schema
+packages/req-schema/json-schema
 docs/c4/*.svg
 # Vendored/authored trees asserted byte-identical or schema-bound in tests
 packages/c4-schema/test/fixtures

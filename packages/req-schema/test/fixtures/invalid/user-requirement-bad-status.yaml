@@ -1,0 +1,13 @@
+# Invalid: spec.status "wip" is outside the enum (draft | agreed | implemented | verified).
+apiVersion: workspec.io/v1alpha1
+kind: UserRequirement
+metadata:
+  slug: authoring-flow
+spec:
+  title: Author an element without leaving the canvas
+  actor: dev-lead
+  as: a dev lead
+  want: to author a new element inline on the canvas
+  so: that I don't break flow switching to a form
+  features: [element-authoring]
+  status: wip
