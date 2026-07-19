@@ -3,15 +3,18 @@
 Host-agnostic React views for the WorkSpec Traceability Workbench: the persistent **meters bar**
 (Scenario coverage · UserReq coverage · Pass rate, spec §5), the **Requirements explorer**
 (filterable rows → click for the chain), the **Matrix** (the RTM — scenario rows grouped by Rule →
-Feature, with expand/collapse and an untested-only filter), and **Feature detail** (feature →
-userReqs → Rules → scenarios, with the empty-rule/no-sysreq cases explicit) — composed by `TraceApp`
-and themed via a `theme` prop. No host framework or CSS assumptions baked in (standalone lib +
-module-federation remote, mirroring `@workspec/cost-ui`'s shape).
+Feature, with expand/collapse and an untested-only filter), **Feature detail** (feature → userReqs
+→ Rules → scenarios, with the empty-rule/no-sysreq cases explicit), and **Run review** (the latest
+run, failures foregrounded) — composed by `TraceApp` and themed via a `theme` prop. No host
+framework or CSS assumptions baked in (standalone lib + module-federation remote, mirroring
+`@workspec/cost-ui`'s shape).
 
-## Status: T5 (#73) + T6 (#74) — Requirements, Matrix, and Feature detail
+## Status: T5 (#73) + T6 (#74) + T7 (#75) — all four views are live
 
-Run review lands in T7 (see [`docs/traceability/spec.md`](../../docs/traceability/spec.md) §7/§8);
-`TraceApp`'s nav already reserves its tab (rendered disabled).
+All four views (Requirements, Matrix, Feature detail, Run review) are wired into `TraceApp`'s nav
+(see [`docs/traceability/spec.md`](../../docs/traceability/spec.md) §7/§8). v0 stays latest-run-only
+(spec §9.4) — Run review renders `model.latestRun` alone; multi-run history is a deferred v0.1
+concern.
 
 This package renders an already-derived `TraceModel` from `@workspec/trace-model` — it never
 re-derives coverage, rollups, or findings itself. The Matrix is likewise a VIEW-LAYER PROJECTION
@@ -53,6 +56,13 @@ because the validated `TraceModel` (the 5-kind Rule model) doesn't carry everyth
   `TraceStudioCapabilities.generateSkeletons` stays unconsumed until that flow is scoped. There is no
   in-UI export button — the export IS the CLI (`workspec-trace matrix --out matrix.{md,csv,html}`,
   spec §6) — the toolbar shows a documented pointer to that command instead.
+- **`RunReviewView` is latest-run-only, with no run picker.** The mock lets you select among several
+  historical `TESTRUNS`; this view only ever renders `model.latestRun` (spec §9.4 — multi-run
+  history is v0.1). There is also no "unmatched tests" section — the mock's `rr.unmatched` modelled
+  tests that ran but resolved to no requirement ID, but the validated `TestRun.results` keys purely
+  on scenario slug (spec §4.5/§4.6), so `TraceModel` carries no equivalent concept. `RunRef.ci` is a
+  CI PROVIDER LABEL (e.g. "github-actions"), not a URL, so it renders as plain text rather than the
+  mock's clickable "CI run ↗" link.
 
 ## Scripts
 
@@ -77,7 +87,7 @@ double tests, the dev story, and simple embedders use.
 ## Module-federation
 
 `traceStudio` exposes `./MetersBar`, `./RequirementsExplorer`, `./MatrixView`, `./FeatureDetail`,
-`./TraceApp`, `./provider` (host contract + `TraceStudioProvider`), and `./reactProbe` (the
-single-React-instance canary). `react`/`react-dom`/`react/jsx-runtime`/`@tanstack/react-query` are
-shared singletons; `@workspec/trace-model`, `@workspec/req-schema`, and `@workspec/design` are
-bundled in.
+`./RunReviewView`, `./TraceApp`, `./provider` (host contract + `TraceStudioProvider`), and
+`./reactProbe` (the single-React-instance canary). `react`/`react-dom`/`react/jsx-runtime`/
+`@tanstack/react-query` are shared singletons; `@workspec/trace-model`, `@workspec/req-schema`, and
+`@workspec/design` are bundled in.

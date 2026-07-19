@@ -1,7 +1,7 @@
 {
   "name": "@workspec/trace-ui",
   "version": "0.1.0-alpha.5",
-  "description": "Host-agnostic React views for the WorkSpec Traceability Workbench: the persistent meters bar, the Requirements explorer, the Matrix (T6), and Feature detail (T5), composed by TraceApp and themed via a `theme` prop — no host framework or CSS assumptions baked in (standalone lib + module-federation remote). Run review lands in T7.",
+  "description": "Host-agnostic React views for the WorkSpec Traceability Workbench: the persistent meters bar, the Requirements explorer, the Matrix (T6), Feature detail (T5), and Run review (T7), composed by TraceApp and themed via a `theme` prop — no host framework or CSS assumptions baked in (standalone lib + module-federation remote).",
   "keywords": [
     "react",
     "traceability",
