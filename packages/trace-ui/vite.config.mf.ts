@@ -37,6 +37,7 @@ export default defineConfig({
       exposes: {
         './MetersBar': './src/mf/MetersBar.tsx',
         './RequirementsExplorer': './src/mf/RequirementsExplorer.tsx',
+        './MatrixView': './src/mf/MatrixView.tsx',
         './FeatureDetail': './src/mf/FeatureDetail.tsx',
         './TraceApp': './src/mf/TraceApp.tsx',
         // Auxiliary modules a host needs to mount the above:

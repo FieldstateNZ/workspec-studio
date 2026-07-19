@@ -53,7 +53,7 @@ describe('TraceApp', () => {
     });
   });
 
-  it('renders Matrix and Run review as disabled tabs (T6/T7 not wired yet)', async () => {
+  it('renders Run review as a disabled tab (T7 not wired yet) while Matrix is enabled', async () => {
     render(
       <TraceStudioProvider host={buildHost()}>
         <TraceApp />
@@ -61,8 +61,24 @@ describe('TraceApp', () => {
     );
 
     await screen.findByText('Scenario coverage');
-    expect(screen.getByRole('tab', { name: 'Matrix' })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: 'Matrix' })).not.toBeDisabled();
     expect(screen.getByRole('tab', { name: 'Run review' })).toBeDisabled();
+  });
+
+  it('can switch to the Matrix tab and see the RTM grouped by feature', async () => {
+    const user = userEvent.setup();
+    render(
+      <TraceStudioProvider host={buildHost()}>
+        <TraceApp />
+      </TraceStudioProvider>,
+    );
+
+    await screen.findByText('Scenario coverage');
+    await user.click(screen.getByRole('tab', { name: 'Matrix' }));
+    await waitFor(() => {
+      expect(screen.getByText('Element authoring')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Untested only/)).toBeInTheDocument();
   });
 
   it('supports starting on Feature detail via initialView', async () => {
