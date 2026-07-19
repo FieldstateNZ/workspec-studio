@@ -40,7 +40,7 @@
   },
   "scripts": {
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint .",
     "gen:schema": "tsx scripts/gen-json-schema.ts"

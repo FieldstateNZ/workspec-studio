@@ -18,5 +18,11 @@
     // mirrors).
     "types": ["node"]
   },
+  // TS Project Reference: lets `tsc -b` type-check against schema-core's real
+  // TypeScript source (building its declarations on demand), so `typecheck`
+  // never has to run after `build`. Points at schema-core's *build* config
+  // (rootDir "src", matching the published layout), not its default
+  // `tsconfig.json` (rootDir "."). Same pattern as packages/c4-model.
+  "references": [{ "path": "../schema-core/tsconfig.build.json" }],
   "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
 }
