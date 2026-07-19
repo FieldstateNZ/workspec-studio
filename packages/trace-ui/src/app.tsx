@@ -1,10 +1,10 @@
 // `TraceApp` — the shell: the persistent meters bar + a view switch
-// (Requirements | Feature detail for now; Matrix and Run review render as
-// DISABLED tabs — spec §8 lands them in T6/T7 — so the nav's shape doesn't
-// change again when they arrive). Fetches the current `TraceModel` through
-// the host's repository (`useTraceModel`, see `context.tsx`) and hands it
-// down to the pure views as a prop — `TraceApp` itself is the only component
-// in this package that touches the host. Must be rendered inside a
+// (Requirements | Matrix | Feature detail; Run review still renders as a
+// DISABLED tab — spec §8 lands it in T7 — so the nav's shape doesn't change
+// again when it arrives). Fetches the current `TraceModel` through the
+// host's repository (`useTraceModel`, see `context.tsx`) and hands it down
+// to the pure views as a prop — `TraceApp` itself is the only component in
+// this package that touches the host. Must be rendered inside a
 // `<TraceStudioProvider host={…} theme={…}>` (mirrors `@workspec/cost-ui`'s
 // `CostApp`, always used inside `CostStudioProvider`).
 //
@@ -15,13 +15,14 @@ import type { ReactElement } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspec/design/components';
 import { useTraceModel } from './context.js';
 import { FeatureDetail } from './feature-detail.js';
+import { MatrixView } from './matrix-view.js';
 import { MetersBar } from './meters-bar.js';
 import { RequirementsExplorer } from './requirements-explorer.js';
 
 /** The views `TraceApp` can switch between today. */
-export type TraceView = 'requirements' | 'feature';
+export type TraceView = 'requirements' | 'matrix' | 'feature';
 
-const VIEWS: readonly TraceView[] = ['requirements', 'feature'];
+const VIEWS: readonly TraceView[] = ['requirements', 'matrix', 'feature'];
 
 function isTraceView(value: string): value is TraceView {
   return (VIEWS as readonly string[]).includes(value);
@@ -29,12 +30,14 @@ function isTraceView(value: string): value is TraceView {
 
 const VIEW_LABEL: Record<TraceView, string> = {
   requirements: 'Requirements',
+  matrix: 'Matrix',
   feature: 'Feature detail',
 };
 
 /** The nav's own per-view hint (design §5's `nav.hint`) — distinct from `RequirementsExplorer`'s own "click a row for its chain" hint, which lives inside that view, not duplicated here. */
 const VIEW_HINT: Record<TraceView, string> = {
   requirements: 'the graph as a table — diagnostics flagged',
+  matrix: 'the RTM — scenario rows grouped by Rule → Feature',
   feature: "one feature's chain — Rules, scenarios, and proof",
 };
 
@@ -94,14 +97,6 @@ export function TraceApp(props: TraceAppProps): ReactElement {
                   </TabsTrigger>
                 ))}
                 <TabsTrigger
-                  value="matrix"
-                  className="trace-nav-trigger"
-                  disabled
-                  title="Matrix lands in T6 (#74)"
-                >
-                  Matrix
-                </TabsTrigger>
-                <TabsTrigger
                   value="run-review"
                   className="trace-nav-trigger"
                   disabled
@@ -116,6 +111,9 @@ export function TraceApp(props: TraceAppProps): ReactElement {
             <div className="trace-view">
               <TabsContent value="requirements">
                 <RequirementsExplorer model={model} />
+              </TabsContent>
+              <TabsContent value="matrix">
+                <MatrixView model={model} />
               </TabsContent>
               <TabsContent value="feature">
                 <FeatureDetail

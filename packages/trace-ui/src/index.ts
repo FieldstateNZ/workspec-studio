@@ -1,9 +1,9 @@
 // @workspec/trace-ui — host-agnostic React views for the WorkSpec
 // Traceability Workbench: the persistent meters bar, the Requirements
-// explorer, and Feature detail (T5, #73), composed by `TraceApp` and themed
-// via a `theme` prop — no host framework or CSS assumptions baked in
-// (standalone lib + module-federation remote, mirroring `@workspec/cost-ui`).
-// Matrix and Run review land in T6/T7 (see docs/traceability/spec.md §7/§8).
+// explorer, the Matrix (T6, #74), and Feature detail (T5, #73), composed by
+// `TraceApp` and themed via a `theme` prop — no host framework or CSS
+// assumptions baked in (standalone lib + module-federation remote, mirroring
+// `@workspec/cost-ui`). Run review lands in T7 (see docs/traceability/spec.md §7/§8).
 //
 // Styles ship compiled and separate: import `@workspec/trace-ui/styles.css`.
 export const TRACE_UI_PACKAGE = '@workspec/trace-ui' as const;
@@ -58,6 +58,8 @@ export { MetersBar } from './meters-bar.js';
 export type { MetersBarProps } from './meters-bar.js';
 export { RequirementsExplorer } from './requirements-explorer.js';
 export type { RequirementsExplorerProps } from './requirements-explorer.js';
+export { MatrixView } from './matrix-view.js';
+export type { MatrixViewProps } from './matrix-view.js';
 export { FeatureDetail } from './feature-detail.js';
 export type { FeatureDetailProps } from './feature-detail.js';
 

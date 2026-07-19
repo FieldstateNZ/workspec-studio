@@ -681,3 +681,122 @@
   font-size: 11px;
   color: var(--ink-muted);
 }
+
+/* ── Matrix (the RTM) ────────────────────────────────────────────────────── */
+
+.trace-matrix {
+  display: flex;
+  flex-direction: column;
+}
+.trace-matrix-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 13px var(--s-5);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.trace-matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+.trace-matrix-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.trace-matrix-hint {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-fade);
+  white-space: nowrap;
+}
+.trace-matrix-hint code {
+  font-family: var(--mono);
+  color: var(--ink-muted);
+}
+
+.trace-matrix-feature {
+  border-bottom: 1px solid var(--line);
+}
+.trace-matrix-feature-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 13px var(--s-5);
+  cursor: pointer;
+}
+.trace-matrix-feature-header:hover {
+  background: var(--bg-soft);
+}
+.trace-matrix-feature-name {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--ink);
+}
+.trace-matrix-feature-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+
+.trace-matrix-rules {
+  background: var(--panel-dark);
+}
+.trace-matrix-rule {
+  border-top: 1px solid color-mix(in oklab, var(--line) 55%, transparent);
+}
+.trace-matrix-rule-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 9px var(--s-5) 9px 36px;
+  cursor: pointer;
+}
+.trace-matrix-rule-header:hover {
+  background: var(--bg-soft);
+}
+.trace-matrix-rule-title {
+  font-size: 12.5px;
+  font-weight: 540;
+  color: var(--ink-soft);
+}
+.trace-matrix-rule-slug {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+
+.trace-matrix-chevron {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-fade);
+  width: 14px;
+  flex: 0 0 auto;
+}
+.trace-matrix-chevron--rule {
+  margin-left: 10px;
+}
+.trace-matrix-rollup {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.trace-matrix-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-5) var(--s-3) 62px;
+}
+.trace-matrix-nested-empty {
+  padding: 8px var(--s-5) 14px 62px;
+}

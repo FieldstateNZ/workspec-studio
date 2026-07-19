@@ -2,18 +2,23 @@
 
 Host-agnostic React views for the WorkSpec Traceability Workbench: the persistent **meters bar**
 (Scenario coverage · UserReq coverage · Pass rate, spec §5), the **Requirements explorer**
-(filterable rows → click for the chain), and **Feature detail** (feature → userReqs → Rules →
-scenarios, with the empty-rule/no-sysreq cases explicit) — composed by `TraceApp` and themed via a
-`theme` prop. No host framework or CSS assumptions baked in (standalone lib + module-federation
-remote, mirroring `@workspec/cost-ui`'s shape).
+(filterable rows → click for the chain), the **Matrix** (the RTM — scenario rows grouped by Rule →
+Feature, with expand/collapse and an untested-only filter), and **Feature detail** (feature →
+userReqs → Rules → scenarios, with the empty-rule/no-sysreq cases explicit) — composed by `TraceApp`
+and themed via a `theme` prop. No host framework or CSS assumptions baked in (standalone lib +
+module-federation remote, mirroring `@workspec/cost-ui`'s shape).
 
-## Status: T5 (#73) — Requirements + Feature detail
+## Status: T5 (#73) + T6 (#74) — Requirements, Matrix, and Feature detail
 
-Matrix and Run review land in T6/T7 (see [`docs/traceability/spec.md`](../../docs/traceability/spec.md)
-§7/§8); `TraceApp`'s nav already reserves their tabs (rendered disabled).
+Run review lands in T7 (see [`docs/traceability/spec.md`](../../docs/traceability/spec.md) §7/§8);
+`TraceApp`'s nav already reserves its tab (rendered disabled).
 
 This package renders an already-derived `TraceModel` from `@workspec/trace-model` — it never
-re-derives coverage, rollups, or findings itself.
+re-derives coverage, rollups, or findings itself. The Matrix is likewise a VIEW-LAYER PROJECTION
+over the model (its own `Feature → Rule → Scenario` grouping, derived via `sysreqsOf`/`scenariosOf`)
+— not a shared implementation with `@workspec/trace-studio`'s `buildMatrixRows` (that package's flat
+row projection for the `workspec-trace matrix` CLI export); trace-ui cannot depend on trace-studio,
+so the two projections are independently derived from the same model.
 
 ## Design adaptations from `docs/design/Traceability Workbench.dc.html`
 
@@ -40,6 +45,14 @@ because the validated `TraceModel` (the 5-kind Rule model) doesn't carry everyth
 - **Per-feature coverage/pass figures in `FeatureDetail`** are a local view-layer aggregation over
   the scenarios reachable from that feature's Rules — not a fourth model meter. The three repo-level
   meters (`MetersBar`) stay the only numbers this package calls "the" coverage/pass rate.
+- **`MatrixView` is latest-run-only (spec §9.4)** — each scenario shows its single latest-run
+  `proof`; the mock's per-run history sparkline is v0.1, not v0. There is no "Heatmap" density
+  toggle and no multi-select "Fix coverage" triage bar (the mock's `mx.sel`/`showTriage`/
+  `workspec-trace generate` flow) — v0 scopes the Matrix to expand/collapse groups, an untested-only
+  filter, and the empty-rule/uncovered-feature cases shown explicitly;
+  `TraceStudioCapabilities.generateSkeletons` stays unconsumed until that flow is scoped. There is no
+  in-UI export button — the export IS the CLI (`workspec-trace matrix --out matrix.{md,csv,html}`,
+  spec §6) — the toolbar shows a documented pointer to that command instead.
 
 ## Scripts
 
@@ -63,7 +76,8 @@ double tests, the dev story, and simple embedders use.
 
 ## Module-federation
 
-`traceStudio` exposes `./MetersBar`, `./RequirementsExplorer`, `./FeatureDetail`, `./TraceApp`,
-`./provider` (host contract + `TraceStudioProvider`), and `./reactProbe` (the single-React-instance
-canary). `react`/`react-dom`/`react/jsx-runtime`/`@tanstack/react-query` are shared singletons;
-`@workspec/trace-model`, `@workspec/req-schema`, and `@workspec/design` are bundled in.
+`traceStudio` exposes `./MetersBar`, `./RequirementsExplorer`, `./MatrixView`, `./FeatureDetail`,
+`./TraceApp`, `./provider` (host contract + `TraceStudioProvider`), and `./reactProbe` (the
+single-React-instance canary). `react`/`react-dom`/`react/jsx-runtime`/`@tanstack/react-query` are
+shared singletons; `@workspec/trace-model`, `@workspec/req-schema`, and `@workspec/design` are
+bundled in.
