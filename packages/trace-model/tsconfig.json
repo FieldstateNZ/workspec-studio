@@ -10,16 +10,18 @@
     // without polluting `dist/` — same shadow-emit split as packages/cost-*.
     "outDir": ".typecheck",
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
-    // Explicit, rather than relying on TypeScript's automatic `@types/*`
-    // discovery (see packages/cost-schema/tsconfig.json for the verified
-    // detail this mirrors). Not exercised by the T0 skeleton itself, but
-    // T2's golden fixtures will load via `node:fs`/`node:url`, same as
-    // packages/cost-engine.
-    "types": ["node"]
+    // This is a PURE engine: no `node:*` imports, no Node globals — in src OR
+    // in tests (the golden fixtures are constructed in TypeScript, not loaded
+    // from disk). Pin `types: []` so a stray Node dependency fails the
+    // typecheck instead of silently compiling.
+    "types": []
   },
-  // No TS Project References yet: this package has no `@workspec` sibling
-  // dependency until T2 wires the evidence join to `@workspec/req-schema`
-  // (mirrors packages/cost-engine's `references: [{ path: "../cost-schema/..." }]`
-  // pattern, which will be added at that point).
+  // TS Project Reference: lets `tsc -b` type-check against req-schema's real
+  // TypeScript source (building its declarations on demand, and schema-core's
+  // transitively — req-schema already references it), so `typecheck` never has
+  // to run after `build`. Points at the sibling's *build* config (rootDir
+  // "src", matching the published layout), not its default tsconfig.json. Same
+  // pattern as packages/c4-model and packages/req-schema.
+  "references": [{ "path": "../req-schema/tsconfig.build.json" }],
   "include": ["src"]
 }

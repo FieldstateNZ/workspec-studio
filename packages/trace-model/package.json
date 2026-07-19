@@ -1,7 +1,7 @@
 {
   "name": "@workspec/trace-model",
   "version": "0.1.0-alpha.5",
-  "description": "Pure, normative traceability engine for the WorkSpec Traceability Workbench — evidence join and coverage/pass/unproven derivation. No IO, no DOM, no React. T0 bootstrap skeleton: evidence join lands in T2.",
+  "description": "Pure, normative traceability engine for the WorkSpec Traceability Workbench — evidence join, coverage/pass-rate meters, unproven/orphan derivation, and structured findings. No IO, no DOM, no React.",
   "keywords": [
     "traceability",
     "pure-function",
@@ -35,9 +35,12 @@
   },
   "scripts": {
     "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/req-schema": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
