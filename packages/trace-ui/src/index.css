@@ -1,0 +1,42 @@
+/* The package stylesheet build entry, compiled by @tailwindcss/cli into
+   dist/styles.css (see the package.json `build` script) and by
+   @tailwindcss/vite for the module-federation remote. Mirrors
+   packages/cost-ui/src/index.css and packages/decision-ui/src/index.css —
+   see those files' comments for the full rationale (no preflight, layer
+   order, @source scanning). trace-ui adopts ONE component from
+   `@workspec/design/components` — `Tabs` (for TraceApp's Requirements /
+   Feature detail / Matrix / Run review switcher, mirroring `CostApp`'s own
+   use of Tabs) — so it needs the same scoped preflight stand-in + @source
+   scan cost-ui/decision-ui carry for their own adopted components. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@import './styles.css' layer(components);
+
+/* Scoped stand-in for the preflight rules the adopted Tabs component relies
+   on: box-sizing + zero-width solid borders, and form-control normalisation.
+   Scoped under .trace-root so the host page is never touched. */
+@layer base {
+  .trace-root *,
+  .trace-root *::before,
+  .trace-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .trace-root button,
+  .trace-root input,
+  .trace-root select,
+  .trace-root textarea {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+  }
+}
+
+@source '../node_modules/@workspec/design/dist/components';
+@source './';

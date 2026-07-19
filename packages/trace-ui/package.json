@@ -1,12 +1,13 @@
 {
   "name": "@workspec/trace-ui",
   "version": "0.1.0-alpha.5",
-  "description": "Host-agnostic React views for the WorkSpec Traceability Workbench (Requirements, Feature detail, Matrix, Run review), composed on @workspec/design — no host framework or CSS assumptions baked in. T0 bootstrap skeleton: views land starting T5.",
+  "description": "Host-agnostic React views for the WorkSpec Traceability Workbench: the persistent meters bar, the Requirements explorer, and Feature detail (T5), composed by TraceApp and themed via a `theme` prop — no host framework or CSS assumptions baked in (standalone lib + module-federation remote). Matrix and Run review land in T6/T7.",
   "keywords": [
     "react",
     "traceability",
     "ui",
-    "components"
+    "components",
+    "module-federation"
   ],
   "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/trace-ui#readme",
   "repository": {
@@ -26,7 +27,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,15 +37,44 @@
     "provenance": true
   },
   "scripts": {
-    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
-    "typecheck": "tsc --noEmit",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && tailwindcss --input src/index.css --output dist/styles.css --minify",
+    "build:mf": "vite build --config vite.config.mf.ts",
+    "typecheck": "tsc -b",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev": "vite"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "dependencies": {
+    "@workspec/design": "0.1.0-alpha.1",
+    "@workspec/req-schema": "workspace:^",
+    "@workspec/trace-model": "workspace:^"
   },
   "devDependencies": {
+    "@module-federation/vite": "^1.16.12",
+    "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/react-query": "^5.62.7",
+    "@vitest/expect": "4.1.10",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^24.0.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.14",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
+    "vite": "^7.0.0",
     "vitest": "^4.1.10"
   }
 }
