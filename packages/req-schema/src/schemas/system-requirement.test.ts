@@ -4,53 +4,36 @@ import { SystemRequirementArtifact, SystemRequirementSpec } from './system-requi
 
 function specFactory(overrides: Partial<SystemRequirementSpec> = {}): SystemRequirementSpec {
   return {
-    title: 'Creating an element inline saves it immediately',
+    title: 'Inline element creation',
     feature: 'element-authoring',
     userReqs: ['authoring-flow'],
-    given: ['a canvas with no selected element'],
-    when: ['the dev lead double-clicks empty canvas', 'and types a name and presses Enter'],
-    then: ['the element is persisted', 'and appears in the repo tree without a form submit'],
     ...overrides,
   };
 }
 
 describe('SystemRequirementSpec', () => {
-  it('accepts the §4.4 example', () => {
+  it('accepts the §4.4 example (a Rule: title + feature + userReqs, no steps)', () => {
     expect(SystemRequirementSpec.safeParse(specFactory()).success).toBe(true);
   });
 
-  it('accepts given/when omitted (only then is required)', () => {
-    const result = SystemRequirementSpec.safeParse({
-      title: 'A minimal scenario',
-      feature: 'element-authoring',
-      userReqs: ['authoring-flow'],
-      then: ['something is asserted'],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts an examples table (Scenario Outline) with mixed scalar values', () => {
-    const result = SystemRequirementSpec.safeParse(
-      specFactory({
-        when: ['the dev lead inline-creates a "<kind>"'],
-        then: ['a valid "<kind>" artifact is written'],
-        examples: [{ kind: 'component' }, { kind: 'container', count: 2, primary: true }],
-      }),
-    );
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects a missing then', () => {
-    const { then: _then, ...rest } = specFactory();
+  it('rejects a missing title', () => {
+    const { title: _title, ...rest } = specFactory();
     const result = SystemRequirementSpec.safeParse(rest);
     expect(result.success).toBe(false);
-    expect(result.success === false && result.error.issues[0]?.path).toEqual(['then']);
+    expect(result.success === false && result.error.issues[0]?.path).toEqual(['title']);
   });
 
-  it('rejects an empty then array (a scenario with no assertion is meaningless)', () => {
-    const result = SystemRequirementSpec.safeParse(specFactory({ then: [] }));
+  it('rejects an empty title', () => {
+    const result = SystemRequirementSpec.safeParse(specFactory({ title: '' }));
     expect(result.success).toBe(false);
-    expect(result.success === false && result.error.issues[0]?.path).toEqual(['then']);
+    expect(result.success === false && result.error.issues[0]?.path).toEqual(['title']);
+  });
+
+  it('rejects a missing feature', () => {
+    const { feature: _feature, ...rest } = specFactory();
+    const result = SystemRequirementSpec.safeParse(rest);
+    expect(result.success).toBe(false);
+    expect(result.success === false && result.error.issues[0]?.path).toEqual(['feature']);
   });
 
   it('rejects an invalid feature slug', () => {
@@ -58,17 +41,37 @@ describe('SystemRequirementSpec', () => {
     expect(result.success).toBe(false);
   });
 
+  it('rejects a missing userReqs', () => {
+    const { userReqs: _userReqs, ...rest } = specFactory();
+    const result = SystemRequirementSpec.safeParse(rest);
+    expect(result.success).toBe(false);
+    expect(result.success === false && result.error.issues[0]?.path).toEqual(['userReqs']);
+  });
+
   it('rejects an empty userReqs list', () => {
     expect(SystemRequirementSpec.safeParse(specFactory({ userReqs: [] })).success).toBe(false);
   });
 
-  it('strips a stray nested scenarios[] key (the file IS the scenario; no nesting is modelled)', () => {
+  it('accepts an optional links entry', () => {
+    const result = SystemRequirementSpec.safeParse(
+      specFactory({ links: [{ need: '@workspace/needs/frictionless-authoring' }] }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it('strips stray given/when/then/examples keys (those moved to Scenario, spec §4.5)', () => {
     const result = SystemRequirementSpec.safeParse({
       ...specFactory(),
-      scenarios: [{ then: ['nested assertion'] }],
+      given: ['a canvas'],
+      when: ['the dev lead double-clicks'],
+      then: ['the element is persisted'],
+      examples: [{ kind: 'component' }],
     });
     expect(result.success).toBe(true);
-    expect(result.success && 'scenarios' in result.data).toBe(false);
+    expect(result.success && 'given' in result.data).toBe(false);
+    expect(result.success && 'when' in result.data).toBe(false);
+    expect(result.success && 'then' in result.data).toBe(false);
+    expect(result.success && 'examples' in result.data).toBe(false);
   });
 });
 
@@ -77,7 +80,7 @@ describe('SystemRequirementArtifact', () => {
     const result = SystemRequirementArtifact.safeParse({
       apiVersion: API_VERSION,
       kind: 'SystemRequirement',
-      metadata: { slug: 'inline-create-persists' },
+      metadata: { slug: 'inline-create' },
       spec: specFactory(),
     });
     expect(result.success).toBe(true);
@@ -87,7 +90,7 @@ describe('SystemRequirementArtifact', () => {
     const result = SystemRequirementArtifact.safeParse({
       apiVersion: API_VERSION,
       kind: 'UserRequirement',
-      metadata: { slug: 'inline-create-persists' },
+      metadata: { slug: 'inline-create' },
       spec: specFactory(),
     });
     expect(result.success).toBe(false);

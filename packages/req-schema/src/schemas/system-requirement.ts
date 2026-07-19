@@ -1,61 +1,39 @@
 import { z } from 'zod';
-import { Slug, defineArtifact } from '@workspec/schema-core';
+import { Slug, linksField, defineArtifact } from '@workspec/schema-core';
 
 /**
- * The `SystemRequirement` spec (traceability spec §4.4): **the file IS the
- * scenario.** One Gherkin scenario per file — the scenario name is the slug is
- * the identity. There is NO nested `scenarios[]` array and NO scenario `id`
- * (this is the load-bearing correction folded in from spec review, §9.1).
- * Lives at `.workspec/requirements/system/<slug>.yaml`.
+ * The `SystemRequirement` spec (traceability spec §4.4): **a Gherkin Rule.**
+ * A named, verifiable statement that belongs to a `feature`, verifies one or
+ * more `userReqs`, and **groups scenarios** — but carries NO `given`/`when`/
+ * `then` steps of its own. Those live on the `Scenario` kind (§4.5), which
+ * references its parent Rule via `systemRequirement`. Lives at
+ * `.workspec/requirements/system/<slug>.yaml`.
+ *
+ * A Rule with no scenarios is an "empty rule" (§4.7) — a requirement with no
+ * proof at all — which is a derived finding at the model layer, not something
+ * this schema rejects: a Rule is a complete artifact on its own, scenarios
+ * arrive (or don't) independently.
  *
  * `feature` and `userReqs[]` are bare-slug intra-tree refs (the field implies
- * the kind): `feature` → `features/*` (the containing feature), `userReqs[]` →
- * `requirements/user/*` (the "verifies" edge that makes the tree an RTM).
- *
- * `given`/`when`/`then` are plain string arrays. Continuation steps ("and
- * types a name…") are just additional array items — no special handling.
- * `then` is required and non-empty: a scenario with no assertion is
- * meaningless. `examples` (optional) turns the scenario into a Scenario
- * Outline; `given`/`when`/`then` may then contain `<placeholder>` tokens.
- * T1 does NOT cross-validate placeholders against the examples table.
+ * the kind): `feature` → `features/*` (the containing feature), `userReqs[]`
+ * → `requirements/user/*` (the "verifies" edge that makes the tree an RTM).
+ * Dangling intra-tree refs are a `verify`-time failure (typo protection), not
+ * a schema error — the schema only enforces slug *shape*, not resolution.
  */
 export const SystemRequirementSpec = z
   .object({
-    title: z.string().min(1).describe('One-line summary of what the scenario asserts.'),
+    title: z.string().min(1).describe('One-line summary of the requirement this Rule states.'),
     feature: Slug.describe('Bare-slug intra-tree ref → features/*: the containing feature.'),
     userReqs: z
       .array(Slug)
       .min(1)
       .describe(
-        'Bare-slug intra-tree refs → requirements/user/*: the user-requirement(s) this scenario verifies (the "verifies" edge; at least one).',
+        'Bare-slug intra-tree refs → requirements/user/*: the user-requirement(s) this Rule verifies (the "verifies" edge; at least one).',
       ),
-    given: z
-      .array(z.string().min(1))
-      .optional()
-      .describe(
-        'Gherkin "Given" steps (preconditions). Continuation steps are additional array items.',
-      ),
-    when: z
-      .array(z.string().min(1))
-      .optional()
-      .describe(
-        'Gherkin "When" steps (the action). Continuation steps are additional array items.',
-      ),
-    then: z
-      .array(z.string().min(1))
-      .min(1)
-      .describe(
-        'Gherkin "Then" steps (the assertions). At least one — a scenario without an assertion is meaningless.',
-      ),
-    examples: z
-      .array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])))
-      .optional()
-      .describe(
-        'Optional examples table → Scenario Outline. given/when/then may reference "<placeholder>" tokens keyed on these columns; no placeholder cross-validation in T1.',
-      ),
+    links: linksField,
   })
   .describe(
-    'A system-requirement: ONE Gherkin scenario. The file is the scenario, the slug is the scenario name is the identity. No nested scenarios[], no scenario id.',
+    'A system-requirement: a Gherkin Rule. Groups the scenarios that prove it; has no steps of its own.',
   );
 
 /** A complete `SystemRequirement` artifact: the K8s-style envelope wrapping `SystemRequirementSpec`. */

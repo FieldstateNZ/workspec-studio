@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { Actor, Feature, SystemRequirement, UserRequirement } from '@workspec/req-schema';
+import type {
+  Actor,
+  Feature,
+  Scenario,
+  SystemRequirement,
+  UserRequirement,
+} from '@workspec/req-schema';
 import { buildModel } from './index.js';
 import type { Located, TestRun, TraceTree } from './index.js';
 
@@ -48,6 +54,7 @@ function userReq(
   };
 }
 
+/** A system-requirement — a Gherkin Rule: no steps of its own, groups scenarios. */
 function sysReq(
   slug: string,
   opts: { feature?: string; userReqs?: string[]; file?: string } = {},
@@ -63,6 +70,27 @@ function sysReq(
         title: slug,
         feature: opts.feature ?? 'f1',
         userReqs: opts.userReqs ?? ['u1'],
+        links: [],
+      },
+    },
+  };
+}
+
+/** A scenario — the executed unit — referencing its parent Rule via `systemRequirement`. */
+function scenario(
+  slug: string,
+  opts: { systemRequirement?: string; file?: string } = {},
+): Located<Scenario> {
+  return {
+    slug,
+    source: { file: opts.file ?? `scenarios/${slug}.yml` },
+    artifact: {
+      apiVersion: API_VERSION,
+      kind: 'Scenario',
+      metadata: {},
+      spec: {
+        title: slug,
+        systemRequirement: opts.systemRequirement ?? 's1',
         then: ['it holds'],
       },
     },
@@ -75,6 +103,7 @@ function tree(partial: Partial<TraceTree>): TraceTree {
     features: partial.features ?? [feature('f1')],
     userRequirements: partial.userRequirements ?? [],
     systemRequirements: partial.systemRequirements ?? [],
+    scenarios: partial.scenarios ?? [],
   };
 }
 
@@ -85,32 +114,55 @@ function run(id: string, ts: string, results: TestRun['results']): TestRun {
 describe('buildModel — empty and degenerate inputs', () => {
   it('an empty tree derives vacuous meters and no findings, never throwing', () => {
     const model = buildModel(
-      { actors: [], features: [], userRequirements: [], systemRequirements: [] },
+      { actors: [], features: [], userRequirements: [], systemRequirements: [], scenarios: [] },
       [],
     );
     expect(model.latestRun).toBeNull();
-    expect(model.coverage).toEqual({ numerator: 0, denominator: 0, ratio: 1 });
+    expect(model.scenarioCoverage).toEqual({ numerator: 0, denominator: 0, ratio: 1 });
+    expect(model.userReqCoverage).toEqual({ numerator: 0, denominator: 0, ratio: 1 });
     expect(model.passRate).toEqual({ numerator: 0, denominator: 0, ratio: 1 });
     expect(model.findings).toEqual([]);
   });
 
-  it('with no runs, every sysreq is unproven and pass-rate is vacuous', () => {
+  it('with no runs, every scenario is unproven, the rule is not proven, and pass-rate is vacuous', () => {
     const model = buildModel(
       tree({
         userRequirements: [userReq('u1')],
         systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [scenario('sc1', { systemRequirement: 's1' })],
       }),
       [],
     );
-    expect(model.systemRequirements[0]?.proof).toBe('unproven');
+    expect(model.scenarios[0]?.proof).toBe('unproven');
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+    expect(model.systemRequirements[0]?.empty).toBe(false);
     expect(model.passRate).toEqual({ numerator: 0, denominator: 0, ratio: 1 });
-    // A userReq with a verifier that has no passing evidence is not covered.
-    expect(model.coverage).toEqual({ numerator: 0, denominator: 1, ratio: 0 });
+    // A userReq with a verifier that isn't rule-proven is not covered.
+    expect(model.userReqCoverage).toEqual({ numerator: 0, denominator: 1, ratio: 0 });
   });
 });
 
-describe('buildModel — meters', () => {
-  it('coverage counts userReqs with ≥1 passing verifier over ALL userReqs', () => {
+describe('buildModel — the three meters', () => {
+  it('scenarioCoverage counts scenarios with a result in the latest run over ALL scenarios', () => {
+    const model = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [
+          sysReq('s1', { userReqs: ['u1'] }),
+          sysReq('s2', { userReqs: ['u1'] }),
+        ],
+        scenarios: [
+          scenario('sc1', { systemRequirement: 's1' }),
+          scenario('sc2', { systemRequirement: 's1' }),
+          scenario('sc3', { systemRequirement: 's2' }), // absent from the run → unproven
+        ],
+      }),
+      [run('r1', '2026-01-01T00:00:00Z', { sc1: 'pass', sc2: 'fail' })],
+    );
+    expect(model.scenarioCoverage).toEqual({ numerator: 2, denominator: 3, ratio: 2 / 3 });
+  });
+
+  it('userReqCoverage counts userReqs with ≥1 rule-proven verifier over ALL userReqs', () => {
     const model = buildModel(
       tree({
         userRequirements: [userReq('u1'), userReq('u2'), userReq('u3')],
@@ -119,55 +171,130 @@ describe('buildModel — meters', () => {
           sysReq('s2', { userReqs: ['u2'] }),
           // u3 has no verifier at all → orphan, uncovered.
         ],
+        scenarios: [
+          scenario('sc1', { systemRequirement: 's1' }), // pass → s1 rule-proven
+          scenario('sc2', { systemRequirement: 's2' }), // fail → s2 not rule-proven
+        ],
       }),
-      [run('r1', '2026-01-01T00:00:00Z', { s1: 'pass', s2: 'fail' })],
+      [run('r1', '2026-01-01T00:00:00Z', { sc1: 'pass', sc2: 'fail' })],
     );
-    // u1 covered (s1 pass), u2 not (s2 fail), u3 orphan → 1 of 3.
-    expect(model.coverage).toEqual({ numerator: 1, denominator: 3, ratio: 1 / 3 });
+    // u1 covered (s1 rule-proven), u2 not (s2 not proven), u3 orphan → 1 of 3.
+    expect(model.userReqCoverage).toEqual({ numerator: 1, denominator: 3, ratio: 1 / 3 });
   });
 
-  it('pass-rate counts passing over sysreqs WITH evidence (skip counts as evidence, absence does not)', () => {
+  it('passRate counts passing over scenarios WITH evidence (skip counts as evidence, absence does not)', () => {
     const model = buildModel(
       tree({
         userRequirements: [userReq('u1')],
-        systemRequirements: [
-          sysReq('s-pass', { userReqs: ['u1'] }),
-          sysReq('s-fail', { userReqs: ['u1'] }),
-          sysReq('s-skip', { userReqs: ['u1'] }),
-          sysReq('s-absent', { userReqs: ['u1'] }),
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [
+          scenario('sc-pass', { systemRequirement: 's1' }),
+          scenario('sc-fail', { systemRequirement: 's1' }),
+          scenario('sc-skip', { systemRequirement: 's1' }),
+          scenario('sc-absent', { systemRequirement: 's1' }),
         ],
       }),
-      [run('r1', '2026-01-01T00:00:00Z', { 's-pass': 'pass', 's-fail': 'fail', 's-skip': 'skip' })],
+      [
+        run('r1', '2026-01-01T00:00:00Z', {
+          'sc-pass': 'pass',
+          'sc-fail': 'fail',
+          'sc-skip': 'skip',
+        }),
+      ],
     );
-    // Evidenced = pass + fail + skip = 3 (s-absent is unproven); passing = 1.
+    // Evidenced = pass + fail + skip = 3 (sc-absent is unproven); passing = 1.
     expect(model.passRate).toEqual({ numerator: 1, denominator: 3, ratio: 1 / 3 });
   });
 });
 
-describe('buildModel — proof distinctness and latest-run-wins', () => {
-  it('pass / fail / skip / unproven are four distinct states', () => {
+describe('buildModel — ruleProven (spec §4.7: ≥1 scenario AND every one passes)', () => {
+  it('all-pass: every scenario a Rule groups passes → ruleProven', () => {
     const model = buildModel(
       tree({
         userRequirements: [userReq('u1')],
-        systemRequirements: [
-          sysReq('a', { userReqs: ['u1'] }),
-          sysReq('b', { userReqs: ['u1'] }),
-          sysReq('c', { userReqs: ['u1'] }),
-          sysReq('d', { userReqs: ['u1'] }),
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [
+          scenario('sc1', { systemRequirement: 's1' }),
+          scenario('sc2', { systemRequirement: 's1' }),
+        ],
+      }),
+      [run('r1', '2026-01-01T00:00:00Z', { sc1: 'pass', sc2: 'pass' })],
+    );
+    expect(model.systemRequirements[0]?.ruleProven).toBe(true);
+    expect(model.systemRequirements[0]?.empty).toBe(false);
+  });
+
+  it('one-failing: a single failing scenario is enough to un-prove the Rule', () => {
+    const model = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [
+          scenario('sc1', { systemRequirement: 's1' }),
+          scenario('sc2', { systemRequirement: 's1' }),
+        ],
+      }),
+      [run('r1', '2026-01-01T00:00:00Z', { sc1: 'pass', sc2: 'fail' })],
+    );
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+  });
+
+  it('one-unproven: a single scenario absent from the latest run is enough to un-prove the Rule', () => {
+    const model = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [
+          scenario('sc1', { systemRequirement: 's1' }),
+          scenario('sc2', { systemRequirement: 's1' }),
+        ],
+      }),
+      [run('r1', '2026-01-01T00:00:00Z', { sc1: 'pass' })], // sc2 absent → unproven
+    );
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+  });
+
+  it('empty: a Rule with no scenarios is never ruleProven, and is flagged empty', () => {
+    const model = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [],
+      }),
+      [],
+    );
+    expect(model.systemRequirements[0]?.empty).toBe(true);
+    expect(model.systemRequirements[0]?.ruleProven).toBe(false);
+    expect(model.systemRequirements[0]?.scenarios).toEqual([]);
+  });
+});
+
+describe('buildModel — scenario proof distinctness and latest-run-wins', () => {
+  it('pass / fail / skip / unproven are four distinct scenario proof states', () => {
+    const model = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [
+          scenario('a', { systemRequirement: 's1' }),
+          scenario('b', { systemRequirement: 's1' }),
+          scenario('c', { systemRequirement: 's1' }),
+          scenario('d', { systemRequirement: 's1' }),
         ],
       }),
       [run('r', '2026-01-01T00:00:00Z', { a: 'pass', b: 'fail', c: 'skip' })],
     );
-    const proof = Object.fromEntries(model.systemRequirements.map((s) => [s.slug, s.proof]));
+    const proof = Object.fromEntries(model.scenarios.map((s) => [s.slug, s.proof]));
     expect(proof).toEqual({ a: 'pass', b: 'fail', c: 'skip', d: 'unproven' });
   });
 
   it('the latest run by timestamp wins, regardless of input order', () => {
-    const newer = run('2026-02', '2026-02-01T00:00:00Z', { s1: 'fail' });
-    const older = run('2026-01', '2026-01-01T00:00:00Z', { s1: 'pass' });
+    const newer = run('2026-02', '2026-02-01T00:00:00Z', { sc1: 'fail' });
+    const older = run('2026-01', '2026-01-01T00:00:00Z', { sc1: 'pass' });
     const t = tree({
       userRequirements: [userReq('u1')],
       systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+      scenarios: [scenario('sc1', { systemRequirement: 's1' })],
     });
     for (const runs of [
       [older, newer],
@@ -175,16 +302,17 @@ describe('buildModel — proof distinctness and latest-run-wins', () => {
     ]) {
       const model = buildModel(t, runs);
       expect(model.latestRun?.id).toBe('2026-02');
-      expect(model.systemRequirements[0]?.proof).toBe('fail');
+      expect(model.scenarios[0]?.proof).toBe('fail');
     }
   });
 
   it('ties on timestamp break deterministically on the greater id', () => {
-    const a = run('run-a', '2026-01-01T00:00:00Z', { s1: 'pass' });
-    const b = run('run-b', '2026-01-01T00:00:00Z', { s1: 'fail' });
+    const a = run('run-a', '2026-01-01T00:00:00Z', { sc1: 'pass' });
+    const b = run('run-b', '2026-01-01T00:00:00Z', { sc1: 'fail' });
     const t = tree({
       userRequirements: [userReq('u1')],
       systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+      scenarios: [scenario('sc1', { systemRequirement: 's1' })],
     });
     expect(buildModel(t, [a, b]).latestRun?.id).toBe('run-b');
     expect(buildModel(t, [b, a]).latestRun?.id).toBe('run-b');
@@ -192,7 +320,7 @@ describe('buildModel — proof distinctness and latest-run-wins', () => {
 });
 
 describe('buildModel — findings', () => {
-  it('the orphan-userReq finding fires exactly when no sysreq verifies a userReq', () => {
+  it('the orphan-userReq finding fires exactly when no Rule verifies a userReq', () => {
     const withVerifier = buildModel(
       tree({
         userRequirements: [userReq('u1')],
@@ -210,20 +338,44 @@ describe('buildModel — findings', () => {
     expect(withoutVerifier.userRequirements[0]?.orphan).toBe(true);
   });
 
-  it('dangling intra-tree refs are flagged; cross-layer links are never checked', () => {
+  it('the empty-rule finding fires exactly when a Rule groups no scenarios', () => {
+    const withScenario = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+        scenarios: [scenario('sc1', { systemRequirement: 's1' })],
+      }),
+      [],
+    );
+    expect(withScenario.findings.some((f) => f.kind === 'empty-rule')).toBe(false);
+    expect(withScenario.systemRequirements[0]?.empty).toBe(false);
+
+    const withoutScenario = buildModel(
+      tree({
+        userRequirements: [userReq('u1')],
+        systemRequirements: [sysReq('s1', { userReqs: ['u1'] })],
+      }),
+      [],
+    );
+    const emptyFindings = withoutScenario.findings.filter((f) => f.kind === 'empty-rule');
+    expect(emptyFindings).toHaveLength(1);
+    expect(emptyFindings[0]?.slug).toBe('s1');
+    expect(withoutScenario.systemRequirements[0]?.empty).toBe(true);
+  });
+
+  it('dangling intra-tree refs are flagged for all five ref sites; cross-layer links are never checked', () => {
     const model = buildModel(
       tree({
         actors: [actor('dev-lead')],
         features: [feature('f1')],
         userRequirements: [
           // links present but NEVER dangling-checked (inert if unresolvable).
-          {
-            ...userReq('u1', { actor: 'missing-actor', features: ['missing-feature'] }),
-          },
+          { ...userReq('u1', { actor: 'missing-actor', features: ['missing-feature'] }) },
         ],
         systemRequirements: [
           sysReq('s1', { feature: 'missing-feature', userReqs: ['missing-ur'] }),
         ],
+        scenarios: [scenario('sc1', { systemRequirement: 'missing-rule' })],
       }),
       [],
     );
@@ -231,6 +383,7 @@ describe('buildModel — findings', () => {
     expect(dangling.map((f) => `${f.slug}:${f.field}:${f.ref}`).sort()).toEqual([
       's1:feature:missing-feature',
       's1:userReqs:missing-ur',
+      'sc1:systemRequirement:missing-rule',
       'u1:actor:missing-actor',
       'u1:features:missing-feature',
     ]);
@@ -238,7 +391,7 @@ describe('buildModel — findings', () => {
     expect(model.findings.some((f) => f.field === 'links')).toBe(false);
   });
 
-  it('a duplicate slug of the same kind flags each colliding file (error severity)', () => {
+  it('a duplicate slug of the same kind flags each colliding file (error severity), including scenarios', () => {
     const model = buildModel(
       tree({
         userRequirements: [userReq('u1')],
@@ -246,13 +399,19 @@ describe('buildModel — findings', () => {
           sysReq('dup', { userReqs: ['u1'], file: 'a.yml' }),
           sysReq('dup', { userReqs: ['u1'], file: 'b.yml' }),
         ],
+        scenarios: [
+          scenario('dup-scenario', { systemRequirement: 'dup', file: 'sc-a.yml' }),
+          scenario('dup-scenario', { systemRequirement: 'dup', file: 'sc-b.yml' }),
+        ],
       }),
       [],
     );
     const dups = model.findings.filter((f) => f.kind === 'duplicate-slug');
-    expect(dups).toHaveLength(2);
+    expect(dups).toHaveLength(4);
     expect(dups.every((f) => f.severity === 'error')).toBe(true);
-    expect(dups.map((f) => f.file).sort()).toEqual(['a.yml', 'b.yml']);
+    expect(dups.map((f) => f.file).sort()).toEqual(['a.yml', 'b.yml', 'sc-a.yml', 'sc-b.yml']);
+    // Deduped to a single canonical scenario node despite the two files.
+    expect(model.scenarios.filter((s) => s.slug === 'dup-scenario')).toHaveLength(1);
   });
 });
 
@@ -267,6 +426,10 @@ describe('buildModel — determinism and ordering', () => {
       sysReq('s-z', { feature: 'zeta', userReqs: ['u-z'] }),
       sysReq('s-a', { feature: 'alpha', userReqs: ['u-a'] }),
     ],
+    scenarios: [
+      scenario('sc-z', { systemRequirement: 's-z' }),
+      scenario('sc-a', { systemRequirement: 's-a' }),
+    ],
   });
 
   it('every node array is sorted by slug', () => {
@@ -274,6 +437,7 @@ describe('buildModel — determinism and ordering', () => {
     expect(model.features.map((f) => f.slug)).toEqual(['alpha', 'zeta']);
     expect(model.userRequirements.map((u) => u.slug)).toEqual(['u-a', 'u-z']);
     expect(model.systemRequirements.map((s) => s.slug)).toEqual(['s-a', 's-z']);
+    expect(model.scenarios.map((s) => s.slug)).toEqual(['sc-a', 'sc-z']);
   });
 
   it('findings are in a stable total order and input order does not matter', () => {
@@ -284,6 +448,7 @@ describe('buildModel — determinism and ordering', () => {
         features: [...messy.features].reverse(),
         userRequirements: [...messy.userRequirements].reverse(),
         systemRequirements: [...messy.systemRequirements].reverse(),
+        scenarios: [...messy.scenarios].reverse(),
       },
       [],
     );

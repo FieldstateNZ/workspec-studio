@@ -2,11 +2,17 @@
 // LOCATED-ARTIFACT input the engine consumes and the derived `TraceModel` it
 // produces. This contract is normative: identical input must yield identical
 // output across any conforming implementation (a future Rust CLI, WorkSpec
-// Enterprise). See docs/traceability/spec.md §4.5–§4.7 and the package README.
+// Enterprise). See docs/traceability/spec.md §4–§4.7 and the package README.
+//
+// Model revision: the Gherkin Rule is its own layer between feature and
+// scenario. A `SystemRequirement` IS a Rule — it groups scenarios and carries
+// no steps of its own. `Scenario` is the fifth, file-native kind: the executed
+// unit, the thing evidence actually keys on.
 
 import type {
   Actor,
   Feature,
+  Scenario,
   SystemRequirement,
   TestRun,
   UserRequirement,
@@ -18,7 +24,7 @@ import type {
 // CLI/loader) reads and validates each file, derives its slug from the
 // filename (`slugFromPath` — the file IS the identity), and hands the engine
 // each artifact WITH the source location diagnostics need. `runs` are the
-// parsed `TestRun[]` (ingested evidence, spec §4.5).
+// parsed `TestRun[]` (ingested evidence, spec §4.6).
 
 /** Where a located artifact was loaded from — carried so findings can point at it. */
 export interface SourceLocation {
@@ -44,25 +50,29 @@ export interface Located<A> {
  * A single traceability tree, as located artifacts. v0 is SINGLE-TREE (spec
  * §9.5): no cross-project resolution — that is Enterprise (#77). `actors` are
  * carried only so `userReq.actor` refs can be dangling-checked (spec §4.7).
+ * `scenarios` is the fifth kind: the executed units that reference their
+ * parent Rule (`SystemRequirement`) via `systemRequirement`.
  */
 export interface TraceTree {
   actors: readonly Located<Actor>[];
   features: readonly Located<Feature>[];
   userRequirements: readonly Located<UserRequirement>[];
   systemRequirements: readonly Located<SystemRequirement>[];
+  scenarios: readonly Located<Scenario>[];
 }
 
 // ── Output: derived model ────────────────────────────────────────────────────
 
-/** The three explicit verdicts a run records for a sysreq (spec §4.5). */
+/** The three explicit verdicts a run records for a scenario (spec §4.6). */
 export type EvidenceStatus = 'pass' | 'fail' | 'skip';
 
 /**
- * A sysreq's latest-run proof state. `pass`/`fail`/`skip` are the recorded
- * verdicts; `unproven` is the DERIVED fourth state — the sysreq is in the tree
- * but absent from the latest run (spec §4.5: absence → unproven, never stored).
+ * A scenario's latest-run proof state. `pass`/`fail`/`skip` are the recorded
+ * verdicts; `unproven` is the DERIVED fourth state — the scenario is in the
+ * tree but absent from the latest run (spec §4.6: absence → unproven, never
+ * stored).
  */
-export type SysReqProof = EvidenceStatus | 'unproven';
+export type ScenarioProof = EvidenceStatus | 'unproven';
 
 /** A run's identity, denormalised onto the model so consumers needn't re-scan `runs`. */
 export interface RunRef {
@@ -78,22 +88,15 @@ export interface RunRef {
 }
 
 /**
- * The latest-run evidence joined onto one sysreq (spec §4.5: keyed on the
- * sysreq slug ALONE — the file is the scenario, so there is no composite key).
- * Present only when the sysreq HAS a verdict in the latest run; a sysreq that
- * is `unproven` carries no `evidence`.
- *
- * NOTE: req-schema's `TestRun.results` is a flat `slug → verdict` map — it
- * carries no per-result `duration` or `failure` payload (spec §4.5). So this
- * shape exposes the verdict, the run it came from, and the run's timestamp/sha;
- * it deliberately does NOT invent a `failure`/`duration` field the evidence
- * format does not provide. (Issue #70's "duration, failure?" predates the
- * validated flat-map evidence shape.)
+ * The latest-run evidence joined onto one scenario (spec §4.6: keyed on the
+ * SCENARIO slug — the scenario is the executed unit, so there is no composite
+ * key). Present only when the scenario HAS a verdict in the latest run; a
+ * scenario that is `unproven` carries no `evidence`.
  */
 export interface Evidence {
-  /** The sysreq slug this evidence proves. */
-  sysreq: string;
-  /** Id of the latest run that carried a verdict for this sysreq. */
+  /** The scenario slug this evidence proves. */
+  scenario: string;
+  /** Id of the latest run that carried a verdict for this scenario. */
   runId: string;
   status: EvidenceStatus;
   /** The run's ISO-8601 timestamp (`TestRun.ts`). */
@@ -102,18 +105,45 @@ export interface Evidence {
   sha?: string;
 }
 
-/** One system-requirement's derivation: its verifies edges and latest-run proof. */
+/**
+ * One scenario's derivation: its parent Rule and its latest-run proof. The
+ * evidence join happens HERE — per scenario, keyed on the scenario slug
+ * (spec §4.6 revision).
+ */
+export interface ScenarioNode {
+  slug: string;
+  title: string;
+  /** The parent Rule slug (bare-slug ref → requirements/system/*, as authored). */
+  systemRequirement: string;
+  /** Latest-run proof state — `unproven` when absent from the latest run. */
+  proof: ScenarioProof;
+  /** The joined evidence, present iff `proof !== 'unproven'`. */
+  evidence?: Evidence;
+  source: SourceLocation;
+}
+
+/**
+ * One system-requirement's derivation: it IS a Gherkin Rule (spec §4.4) — a
+ * named statement that groups scenarios and verifies userReqs, with NO
+ * `proof`/`evidence` of its own (that lives on its scenarios). `ruleProven`
+ * is the strict predicate spec §4.7 defines: the Rule has ≥1 scenario AND
+ * every one of them proves `pass` in the latest run. `empty` is the Rule's
+ * own derived diagnostic: a Rule with no scenarios is a requirement with no
+ * proof at all.
+ */
 export interface SysReqNode {
   slug: string;
   title: string;
   /** The containing feature slug (bare-slug ref → features/*, as authored). */
   feature: string;
-  /** User-requirement slugs this scenario claims to verify (as authored), sorted. */
+  /** User-requirement slugs this Rule claims to verify (as authored), sorted. */
   verifies: string[];
-  /** Latest-run proof state — `unproven` when absent from the latest run. */
-  proof: SysReqProof;
-  /** The joined evidence, present iff `proof !== 'unproven'`. */
-  evidence?: Evidence;
+  /** Scenario slugs whose `systemRequirement` is this Rule, sorted. */
+  scenarios: string[];
+  /** True iff this Rule has ≥1 scenario AND every one of them is `pass` in the latest run (spec §4.7). */
+  ruleProven: boolean;
+  /** True iff this Rule has no scenarios — a requirement with no proof at all (spec §4.7). */
+  empty: boolean;
   source: SourceLocation;
 }
 
@@ -126,36 +156,35 @@ export interface UserReqNode {
   /** Feature slugs this requirement belongs to (as authored), sorted. */
   features: string[];
   status: UserRequirement['spec']['status'];
-  /** Slugs of the sysreqs whose `userReqs` include this slug (the verifies edge), sorted. */
+  /** Slugs of the Rules whose `userReqs` include this slug (the verifies edge), sorted. */
   verifiedBy: string[];
-  /** Subset of `verifiedBy` whose latest-run proof is `pass`, sorted. */
-  passingSysReqs: string[];
-  /** True iff ≥1 verifying sysreq passes in the latest run — the coverage predicate. */
+  /** Subset of `verifiedBy` whose `ruleProven` is `true`, sorted. */
+  provenBy: string[];
+  /** True iff ≥1 verifying Rule is rule-proven — the coverage predicate (spec §4.7). */
   covered: boolean;
-  /** True iff NO sysreq verifies it — the headline orphan finding (spec §4.6). */
+  /** True iff NO Rule verifies it — the headline orphan finding (spec §4.7). */
   orphan: boolean;
   source: SourceLocation;
 }
 
-/** One feature's derivation: the userReqs and sysreqs that attach to it. */
+/** One feature's derivation: the userReqs and sysreqs (Rules) that attach to it. */
 export interface FeatureNode {
   slug: string;
   name: string;
   /** userReq slugs that list this feature in `features[]`, sorted. */
   userRequirements: string[];
-  /** sysreq slugs whose `feature` is this feature, sorted. */
+  /** sysreq (Rule) slugs whose `feature` is this feature, sorted. */
   systemRequirements: string[];
-  /** True iff the feature has no userReqs OR no sysreqs — not fully wired (spec §4.6). */
+  /** True iff the feature has no userReqs OR no sysreqs — not fully wired (spec §4.7). */
   orphan: boolean;
   source: SourceLocation;
 }
 
 /**
  * A meter as numerator/denominator/ratio, never collapsed to a bare float —
- * so the UI/CLI can show "N of M", not just a percentage (spec §5: coverage
- * and pass-rate are two SEPARATE meters, never merged). `ratio` is raw and
- * unclamped; it is `1` when `denominator` is `0` (the vacuous case: nothing to
- * cover / no evidence yet).
+ * so the UI/CLI can show "N of M", not just a percentage (spec §5: the three
+ * meters are never merged). `ratio` is raw and unclamped; it is `1` when
+ * `denominator` is `0` (the vacuous case: nothing to cover / no evidence yet).
  */
 export interface Meter {
   numerator: number;
@@ -163,14 +192,15 @@ export interface Meter {
   ratio: number;
 }
 
-/** The finding taxonomy (spec §4.6 + issue #70 diagnostics). */
+/** The finding taxonomy (spec §4.7). */
 export type FindingKind =
-  'orphan-user-requirement' | 'orphan-feature' | 'dangling-ref' | 'duplicate-slug';
+  'orphan-user-requirement' | 'orphan-feature' | 'empty-rule' | 'dangling-ref' | 'duplicate-slug';
 
 /**
  * Severity lets the T4 `verify` CI gate decide what fails the build: dangling
  * intra-tree refs and duplicate slugs are `error` (typo/identity bugs the spec
- * §4.7 says make `verify` fail); the orphan findings are `warning` diagnostics.
+ * §4.7 says make `verify` fail); the orphan and empty-rule findings are
+ * `warning` diagnostics.
  */
 export type FindingSeverity = 'error' | 'warning';
 
@@ -190,7 +220,7 @@ export interface Finding {
   slug?: string;
   /** For `dangling-ref`: the authored ref value that did not resolve. */
   ref?: string;
-  /** For `dangling-ref`: the field the ref was authored in (e.g. "actor", "feature", "userReqs"). */
+  /** For `dangling-ref`: the field the ref was authored in (e.g. "actor", "feature", "userReqs", "systemRequirement"). */
   field?: string;
 }
 
@@ -202,15 +232,19 @@ export interface Finding {
 export interface TraceModel {
   /** The latest run all evidence is joined off (max `ts`, id-tiebroken), or `null` if there are no runs. */
   latestRun: RunRef | null;
-  /** System-requirements, sorted by slug. */
+  /** Scenarios — the executed units — sorted by slug. */
+  scenarios: ScenarioNode[];
+  /** System-requirements (Rules), sorted by slug. */
   systemRequirements: SysReqNode[];
   /** User-requirements, sorted by slug. */
   userRequirements: UserReqNode[];
   /** Features, sorted by slug. */
   features: FeatureNode[];
-  /** Coverage meter — userReq-centric: userReqs with ≥1 PASSING verifying sysreq ÷ all userReqs. */
-  coverage: Meter;
-  /** Pass-rate meter — sysreq-centric: passing sysreqs ÷ sysreqs WITH evidence in the latest run. */
+  /** Scenarios with a result in the latest run ÷ all scenarios (spec §4.7). */
+  scenarioCoverage: Meter;
+  /** UserReqs with ≥1 rule-proven verifying sysreq ÷ all userReqs (spec §4.7). */
+  userReqCoverage: Meter;
+  /** Passing scenarios ÷ scenarios with evidence in the latest run (`skip` counts as evidence). */
   passRate: Meter;
   /** Diagnostics, deterministically ordered. */
   findings: Finding[];

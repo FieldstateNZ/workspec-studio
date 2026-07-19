@@ -95,10 +95,10 @@ describe('cucumberEmitter.ingest — tag recovery + defensiveness', () => {
   it('recovers the slug from the FIRST tag when a scenario carries several', () => {
     const el: CucumberElement = {
       keyword: 'Scenario',
-      tags: [{ name: '@my-sysreq' }, { name: '@smoke' }],
+      tags: [{ name: '@my-scenario' }, { name: '@smoke' }],
       steps: steps('passed'),
     };
-    expect(Object.keys(ingest(report(el)).results)).toEqual(['my-sysreq']);
+    expect(Object.keys(ingest(report(el)).results)).toEqual(['my-scenario']);
   });
 
   it('ignores scenarios with no recoverable tag (e.g. a Background)', () => {

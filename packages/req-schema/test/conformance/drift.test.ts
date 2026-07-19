@@ -25,9 +25,10 @@ describe('JSON Schema drift', () => {
     },
   );
 
-  it('covers exactly the three committed schema files, no more, no fewer', () => {
+  it('covers exactly the four committed schema files, no more, no fewer', () => {
     expect(Object.keys(schemas).sort()).toEqual([
       'feature.schema.json',
+      'scenario.schema.json',
       'system-requirement.schema.json',
       'user-requirement.schema.json',
     ]);

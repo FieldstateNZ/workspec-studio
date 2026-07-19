@@ -26,61 +26,33 @@
       "type": "object"
     },
     "spec": {
-      "description": "A system-requirement: ONE Gherkin scenario. The file is the scenario, the slug is the scenario name is the identity. No nested scenarios[], no scenario id.",
+      "description": "A system-requirement: a Gherkin Rule. Groups the scenarios that prove it; has no steps of its own.",
       "properties": {
-        "examples": {
-          "description": "Optional examples table → Scenario Outline. given/when/then may reference \"<placeholder>\" tokens keyed on these columns; no placeholder cross-validation in T1.",
-          "items": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "propertyNames": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
         "feature": {
           "description": "Bare-slug intra-tree ref → features/*: the containing feature.",
           "maxLength": 64,
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
           "type": "string"
         },
-        "given": {
-          "description": "Gherkin \"Given\" steps (preconditions). Continuation steps are additional array items.",
+        "links": {
+          "description": "Cross-references to other artifacts or docs: exactly one {<linkType>: <pathRef>} pair per entry, plus an optional cardinality key ({from, to, label?}). Path refs must start with \"~/\" or \"@workspace/\".",
           "items": {
-            "minLength": 1,
-            "type": "string"
+            "additionalProperties": {},
+            "propertyNames": {
+              "description": "The link type, e.g. \"adr\", \"runbook\" — or \"cardinality\" for the optional cardinality key.",
+              "type": "string"
+            },
+            "type": "object"
           },
-          "type": "array"
-        },
-        "then": {
-          "description": "Gherkin \"Then\" steps (the assertions). At least one — a scenario without an assertion is meaningless.",
-          "items": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "minItems": 1,
           "type": "array"
         },
         "title": {
-          "description": "One-line summary of what the scenario asserts.",
+          "description": "One-line summary of the requirement this Rule states.",
           "minLength": 1,
           "type": "string"
         },
         "userReqs": {
-          "description": "Bare-slug intra-tree refs → requirements/user/*: the user-requirement(s) this scenario verifies (the \"verifies\" edge; at least one).",
+          "description": "Bare-slug intra-tree refs → requirements/user/*: the user-requirement(s) this Rule verifies (the \"verifies\" edge; at least one).",
           "items": {
             "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
             "maxLength": 64,
@@ -89,21 +61,12 @@
           },
           "minItems": 1,
           "type": "array"
-        },
-        "when": {
-          "description": "Gherkin \"When\" steps (the action). Continuation steps are additional array items.",
-          "items": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "type": "array"
         }
       },
       "required": [
         "title",
         "feature",
-        "userReqs",
-        "then"
+        "userReqs"
       ],
       "type": "object"
     }

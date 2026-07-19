@@ -15,6 +15,7 @@ beforeEach(async () => {
   await mkdir(join(dir, '.workspec', 'features'), { recursive: true });
   await mkdir(join(dir, '.workspec', 'requirements', 'user'), { recursive: true });
   await mkdir(join(dir, '.workspec', 'requirements', 'system'), { recursive: true });
+  await mkdir(join(dir, '.workspec', 'scenarios'), { recursive: true });
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
@@ -52,14 +53,23 @@ describe('FsRepository.loadTree', () => {
         status: 'agreed',
       },
     });
-    await writeYaml('.workspec/requirements/system/inline-create-persists.yaml', {
+    await writeYaml('.workspec/requirements/system/inline-create.yaml', {
       apiVersion: API_VERSION,
       kind: 'SystemRequirement',
       metadata: {},
       spec: {
-        title: 'Creating inline saves',
+        title: 'Inline element creation',
         feature: 'element-authoring',
         userReqs: ['authoring-flow'],
+      },
+    });
+    await writeYaml('.workspec/scenarios/inline-create-persists.yaml', {
+      apiVersion: API_VERSION,
+      kind: 'Scenario',
+      metadata: {},
+      spec: {
+        title: 'Creating an element inline saves it immediately',
+        systemRequirement: 'inline-create',
         then: ['it persists'],
       },
     });
@@ -69,11 +79,13 @@ describe('FsRepository.loadTree', () => {
     expect(tree.actors.map((a) => a.slug)).toEqual(['dev-lead']);
     expect(tree.features.map((f) => f.slug)).toEqual(['element-authoring']);
     expect(tree.userRequirements.map((u) => u.slug)).toEqual(['authoring-flow']);
-    expect(tree.systemRequirements.map((s) => s.slug)).toEqual(['inline-create-persists']);
+    expect(tree.systemRequirements.map((s) => s.slug)).toEqual(['inline-create']);
+    expect(tree.scenarios.map((s) => s.slug)).toEqual(['inline-create-persists']);
     // Source is the repo-relative path.
     expect(tree.systemRequirements[0]?.source.file).toBe(
-      '.workspec/requirements/system/inline-create-persists.yaml',
+      '.workspec/requirements/system/inline-create.yaml',
     );
+    expect(tree.scenarios[0]?.source.file).toBe('.workspec/scenarios/inline-create-persists.yaml');
   });
 
   it('derives the slug from the FILENAME, ignoring a divergent metadata.slug', async () => {
@@ -113,6 +125,57 @@ describe('FsRepository.loadTree', () => {
     ).toBe(true);
   });
 
+  it('loads a scenario (the fifth kind), including one with an examples table', async () => {
+    await writeYaml('.workspec/requirements/system/inline-create.yaml', {
+      apiVersion: API_VERSION,
+      kind: 'SystemRequirement',
+      metadata: {},
+      spec: {
+        title: 'Inline element creation',
+        feature: 'element-authoring',
+        userReqs: ['authoring-flow'],
+      },
+    });
+    await writeYaml('.workspec/scenarios/inline-create-each-kind.yaml', {
+      apiVersion: API_VERSION,
+      kind: 'Scenario',
+      metadata: {},
+      spec: {
+        title: 'Inline create works for each element kind',
+        systemRequirement: 'inline-create',
+        when: ['the dev lead inline-creates a "<kind>"'],
+        then: ['a valid "<kind>" artifact is written'],
+        examples: [{ kind: 'component' }, { kind: 'container' }],
+      },
+    });
+
+    const { tree, issues } = await new FsRepository(dir).loadTree();
+    expect(issues).toEqual([]);
+    expect(tree.scenarios.map((s) => s.slug)).toEqual(['inline-create-each-kind']);
+    expect(tree.scenarios[0]?.artifact.spec.examples).toEqual([
+      { kind: 'component' },
+      { kind: 'container' },
+    ]);
+  });
+
+  it('collects an invalid scenario (missing required `then`) as a schema diagnostic', async () => {
+    await writeYaml('.workspec/scenarios/no-then.yaml', {
+      apiVersion: API_VERSION,
+      kind: 'Scenario',
+      metadata: {},
+      spec: {
+        title: 'A scenario with no assertion',
+        systemRequirement: 'inline-create',
+        // `then` omitted — required, non-empty per the Scenario schema.
+      },
+    });
+    const { tree, issues } = await new FsRepository(dir).loadTree();
+    expect(tree.scenarios).toEqual([]);
+    expect(
+      issues.some((i) => i.kind === 'schema' && i.file === '.workspec/scenarios/no-then.yaml'),
+    ).toBe(true);
+  });
+
   it('flags a filename that is not a valid slug', async () => {
     await writeYaml('.workspec/features/Not A Slug.yaml', {
       apiVersion: API_VERSION,
@@ -133,6 +196,7 @@ describe('FsRepository.loadTree', () => {
       expect(issues).toEqual([]);
       expect(tree.actors).toEqual([]);
       expect(tree.systemRequirements).toEqual([]);
+      expect(tree.scenarios).toEqual([]);
     } finally {
       await rm(empty, { recursive: true, force: true });
     }

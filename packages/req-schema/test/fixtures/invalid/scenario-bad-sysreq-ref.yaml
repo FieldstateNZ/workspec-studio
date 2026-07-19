@@ -1,0 +1,12 @@
+# Invalid: spec.systemRequirement is not a valid Slug ("Inline Create" has
+# uppercase + a space) — the bare-slug intra-tree ref to its parent Rule
+# (spec §4.5) must already be slug-shaped.
+apiVersion: workspec.io/v1alpha1
+kind: Scenario
+metadata:
+  slug: inline-create-persists
+spec:
+  title: Creating an element inline saves it immediately
+  systemRequirement: Inline Create
+  then:
+    - the element is persisted

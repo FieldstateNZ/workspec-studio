@@ -1,0 +1,9 @@
+# Invalid: spec.feature is required (the Rule's containing feature, spec §4.4)
+# and absent here.
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create
+spec:
+  title: Inline element creation
+  userReqs: [authoring-flow]

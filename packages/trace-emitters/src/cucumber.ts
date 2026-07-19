@@ -1,34 +1,46 @@
-// The `cucumber` emitter — emit (sysreqs → .feature files) + ingest (Cucumber
-// JSON report → TestRun), plus a mock runner that closes the round-trip loop.
+// The `cucumber` emitter — emit (Rules+scenarios → .feature files) + ingest
+// (Cucumber JSON report → TestRun), plus a mock runner that closes the
+// round-trip loop.
 //
 // Both directions are bound by ONE convention (`req-tag-on-scenario`): emit
-// writes the sysreq slug as the scenario's `@<slug>` tag; ingest recovers the
+// writes each scenario's OWN slug as its `@<slug>` tag; ingest recovers the
 // slug from that SAME tag. Pure and deterministic — no IO, no clock, no throw.
 // See docs/traceability/spec.md §3/§4.4/§4.5.
 
-import type { SystemRequirement, TestRun } from '@workspec/req-schema';
+import type { Scenario, TestRun } from '@workspec/req-schema';
 import { renderFeatureFile } from './gherkin.js';
-import type { Emitter, EmitterConvention, EmittedFile, RunMeta, SysReqInput } from './types.js';
+import type {
+  Emitter,
+  EmitterConvention,
+  EmittedFile,
+  RuleWithScenarios,
+  RunMeta,
+} from './types.js';
 
 /** The emitter's name — becomes `TestRun.emitter` on ingest and the registry key. */
 const CUCUMBER_NAME = 'cucumber';
 
-/** The three conventions this emitter declares and honors (spec §3), as UI-displayable data. */
+/** The four conventions this emitter declares and honors (spec §3), as UI-displayable data. */
 export const CUCUMBER_CONVENTIONS: readonly EmitterConvention[] = [
   {
-    name: 'feature-file-per-sysreq',
+    name: 'feature-file-per-rule',
     description:
-      'Each system-requirement emits exactly one .feature file (one Scenario), named for the sysreq slug.',
+      'Each system-requirement (Rule) emits exactly one .feature file, named for the sysreq slug.',
+  },
+  {
+    name: 'rule-groups-scenarios',
+    description:
+      'The file is Feature: > Rule: > one Scenario:/Scenario Outline: per scenario the Rule groups.',
   },
   {
     name: 'req-tag-on-scenario',
     description:
-      'The emitted scenario carries the sysreq slug as a Gherkin tag (@<slug>) — the load-bearing binding ingest keys back on.',
+      'Each emitted scenario carries its OWN scenario slug as a Gherkin tag (@<scenario-slug>) — the load-bearing binding ingest keys back on.',
   },
   {
     name: 'outline-from-examples',
     description:
-      'A sysreq with an examples table emits a Scenario Outline + Examples block; otherwise a plain Scenario.',
+      'A scenario with an examples table emits a Scenario Outline + Examples block; otherwise a plain Scenario.',
   },
 ];
 
@@ -97,7 +109,7 @@ function asString(value: unknown): string | undefined {
 type Verdict = 'pass' | 'fail' | 'skip';
 
 /**
- * Recover the sysreq slug from a scenario element's tags (the
+ * Recover the scenario slug from a scenario element's tags (the
  * `req-tag-on-scenario` convention). Uses the FIRST tag that carries a name,
  * stripping a leading `@`. Returns `undefined` when no tag is present — the
  * caller then ignores the element (a `Background`, or an untagged scenario in a
@@ -170,8 +182,8 @@ function foldVerdict(existing: Verdict | undefined, next: Verdict): Verdict {
 }
 
 /**
- * Parse a Cucumber JSON report into a `TestRun` (spec §4.5), keyed on the
- * sysreq slug ALONE. Defensive: never throws — a non-array report, or any
+ * Parse a Cucumber JSON report into a `TestRun` (spec §4.6), keyed on the
+ * SCENARIO slug ALONE. Defensive: never throws — a non-array report, or any
  * malformed feature/element/step, is skipped rather than fatal. `results` keys
  * are sorted so the output is byte-stable / CI-diffable.
  */
@@ -206,9 +218,9 @@ function ingest(raw: unknown, meta: RunMeta): TestRun {
 export const cucumberEmitter: Emitter = {
   name: CUCUMBER_NAME,
   conventions: CUCUMBER_CONVENTIONS,
-  emit(sysreqs: readonly SysReqInput[]): EmittedFile[] {
-    return sysreqs
-      .map((input) => ({ path: `${input.slug}.feature`, content: renderFeatureFile(input) }))
+  emit(rules: readonly RuleWithScenarios[]): EmittedFile[] {
+    return rules
+      .map((rule) => ({ path: `${rule.sysreq.slug}.feature`, content: renderFeatureFile(rule) }))
       .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   },
   ingest,
@@ -217,21 +229,23 @@ export const cucumberEmitter: Emitter = {
 // ── The mock runner (test double) — closes the round-trip loop ────────────────
 //
 // A real cucumber run of the emitted `.feature` files produces a Cucumber JSON
-// report; `mockCucumberRun` SYNTHESISES that report from the same sysreq inputs
-// `emit` consumed — one feature per sysreq, each scenario tagged `@<slug>` with
+// report; `mockCucumberRun` SYNTHESISES that report from the same rules+
+// scenarios `emit` consumed — one Cucumber "feature" per Rule (mirroring
+// `emit`'s one-file-per-Rule shape), one element per scenario (an `examples`
+// table expands to one element PER ROW), each tagged `@<scenario-slug>` with
 // step statuses mirroring the emit shape. That is exactly the seam the
 // round-trip conformance harness exercises (emit → run → ingest → prove).
 
-/** Which sysreqs the mock runner should report as non-passing (default: all pass). */
+/** Which scenarios the mock runner should report as non-passing (default: all pass). */
 export interface MockRunOptions {
-  /** Slugs whose scenario should report a failed step. */
+  /** Scenario slugs whose scenario should report a failed step. */
   failing?: readonly string[];
-  /** Slugs whose scenario should report only skipped steps. */
+  /** Scenario slugs whose scenario should report only skipped steps. */
   skipping?: readonly string[];
 }
 
-/** Flatten a sysreq spec's given/when/then into ordered `{ keyword, name }` steps. */
-function flattenSteps(spec: SystemRequirement['spec']): { keyword: string; name: string }[] {
+/** Flatten a scenario spec's given/when/then into ordered `{ keyword, name }` steps. */
+function flattenSteps(spec: Scenario['spec']): { keyword: string; name: string }[] {
   const blocks: [string, readonly string[]][] = [
     ['Given', spec.given ?? []],
     ['When', spec.when ?? []],
@@ -253,7 +267,7 @@ function stepStatus(outcome: Verdict, index: number, lastIndex: number): Cucumbe
   return 'passed';
 }
 
-function scenarioSteps(spec: SystemRequirement['spec'], outcome: Verdict): CucumberStep[] {
+function scenarioSteps(spec: Scenario['spec'], outcome: Verdict): CucumberStep[] {
   const flat = flattenSteps(spec);
   const lastIndex = flat.length - 1;
   return flat.map((step, index) => ({
@@ -265,37 +279,44 @@ function scenarioSteps(spec: SystemRequirement['spec'], outcome: Verdict): Cucum
 
 /**
  * Synthesise the Cucumber JSON report a passing (or, per `options`, partly
- * failing/skipping) run of the emitted features would produce. A sysreq with an
- * `examples` table expands to one element PER ROW — all carrying the same
- * `@<slug>` tag — so ingest's outline-row fold is exercised too.
+ * failing/skipping) run of the emitted features would produce. A scenario with
+ * an `examples` table expands to one element PER ROW — all carrying the same
+ * `@<scenario-slug>` tag — so ingest's outline-row fold is exercised too.
  */
 export function mockCucumberRun(
-  sysreqs: readonly SysReqInput[],
+  rules: readonly RuleWithScenarios[],
   options: MockRunOptions = {},
 ): CucumberReport {
   const failing = new Set(options.failing ?? []);
   const skipping = new Set(options.skipping ?? []);
 
-  return sysreqs.map(({ slug, sysreq }) => {
-    const spec = sysreq.spec;
-    const examples = spec.examples ?? [];
-    const hasExamples = examples.length > 0;
-    const rowCount = hasExamples ? examples.length : 1;
+  return rules.map((rule) => {
+    const elements: CucumberElement[] = rule.scenarios.flatMap(({ slug, artifact }) => {
+      const spec = artifact.spec;
+      const examples = spec.examples ?? [];
+      const hasExamples = examples.length > 0;
+      const rowCount = hasExamples ? examples.length : 1;
 
-    const outcomeForRow = (rowIndex: number): Verdict => {
-      if (skipping.has(slug)) return 'skip';
-      if (failing.has(slug) && rowIndex === rowCount - 1) return 'fail';
-      return 'pass';
+      const outcomeForRow = (rowIndex: number): Verdict => {
+        if (skipping.has(slug)) return 'skip';
+        if (failing.has(slug) && rowIndex === rowCount - 1) return 'fail';
+        return 'pass';
+      };
+
+      return Array.from({ length: rowCount }, (_unused, rowIndex) => ({
+        keyword: hasExamples ? 'Scenario Outline' : 'Scenario',
+        type: 'scenario',
+        name: spec.title,
+        tags: [{ name: `@${slug}` }],
+        steps: scenarioSteps(spec, outcomeForRow(rowIndex)),
+      }));
+    });
+
+    return {
+      uri: `${rule.sysreq.slug}.feature`,
+      keyword: 'Feature',
+      name: rule.sysreq.artifact.spec.feature,
+      elements,
     };
-
-    const elements: CucumberElement[] = Array.from({ length: rowCount }, (_unused, rowIndex) => ({
-      keyword: hasExamples ? 'Scenario Outline' : 'Scenario',
-      type: 'scenario',
-      name: spec.title,
-      tags: [{ name: `@${slug}` }],
-      steps: scenarioSteps(spec, outcomeForRow(rowIndex)),
-    }));
-
-    return { uri: `${slug}.feature`, keyword: 'Feature', name: spec.feature, elements };
   });
 }

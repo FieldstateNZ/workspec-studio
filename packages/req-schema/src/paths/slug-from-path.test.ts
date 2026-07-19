@@ -23,4 +23,10 @@ describe('slugFromPath over req-schema type directories', () => {
   it('recovers the slug from a flat feature path', () => {
     expect(slugFromPath('.workspec/features/element-authoring.yaml')).toBe('element-authoring');
   });
+
+  it('recovers the slug from a flat scenario path', () => {
+    const path = `${typeDirectoryFor('Scenario')}/inline-create-persists.yaml`;
+    expect(path).toBe('.workspec/scenarios/inline-create-persists.yaml');
+    expect(slugFromPath(path)).toBe('inline-create-persists');
+  });
 });

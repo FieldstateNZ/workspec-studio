@@ -4,14 +4,15 @@ import type { ArtifactKind } from './artifact-kind.js';
 /**
  * Maps each traceability artifact kind to its type directory name under
  * `.workspec/`. Mirrors `@workspec/schema-core`'s `TYPE_DIRECTORIES` shape.
- * Two of the three are nested (`requirements/user`, `requirements/system`) —
+ * Two of the four are nested (`requirements/user`, `requirements/system`) —
  * `slugFromPath` still recovers the slug as the filename stem regardless of
- * directory depth.
+ * directory depth. `Scenario` is flat, alongside `features`.
  */
 export const TYPE_DIRECTORIES: Record<ArtifactKind, string> = {
   Feature: 'features',
   UserRequirement: 'requirements/user',
   SystemRequirement: 'requirements/system',
+  Scenario: 'scenarios',
 };
 
 /**

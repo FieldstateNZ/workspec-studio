@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
 /**
- * A single verdict a run reports for a system-requirement. `pass` / `fail` /
- * `skip` — and *absence* of a key (see `TestRun.results`) — are four distinct
- * states. Absence means "unproven", but that is a derivation the model layer
- * makes; the schema only records the three explicit verdicts.
+ * A single verdict a run reports for a scenario. `pass` / `fail` / `skip` — and
+ * *absence* of a key (see `TestRun.results`) — are four distinct states. Absence
+ * means "unproven", but that is a derivation the model layer makes; the schema
+ * only records the three explicit verdicts.
  */
 export const TestResult = z
   .enum(['pass', 'fail', 'skip'])
   .describe(
-    'A per-sysreq verdict: pass | fail | skip. Absence of a key is a distinct fourth state.',
+    'A per-scenario verdict: pass | fail | skip. Absence of a key is a distinct fourth state.',
   );
 
 /**
@@ -18,11 +18,11 @@ export const TestResult = z
  * output (Cucumber JSON / JUnit XML). Machine-ingested JSON — so it is a FLAT
  * object, NOT a `defineArtifact` K8s envelope.
  *
- * `results` **keys on the sysreq slug alone** — because the file IS the
- * scenario there is no composite `<sysreq>/<id>` key and no scenario id to
- * stabilise. `pass` / `fail` / `skip` / *absence* are distinct; absence (the
- * slug not being a key) means the sysreq is unproven, which the model layer
- * derives — not the schema.
+ * `results` **keys on the scenario slug alone** — the scenario is the executed
+ * unit and its own file-native kind, so there is no composite `<sysreq>/<id>`
+ * key and no nested scenario id to stabilise. `pass` / `fail` / `skip` /
+ * *absence* are distinct; absence (the slug not being a key) means the scenario
+ * is unproven, which the model layer derives — not the schema.
  *
  * The on-disk home (`.runs/`, default gitignored per spec §9.3) is deferred to
  * the ingest CLI (T4) and is deliberately NOT encoded here.
@@ -43,14 +43,14 @@ export const TestRun = z
     results: z
       .record(z.string(), TestResult)
       .describe(
-        'Per-sysreq verdicts keyed on the sysreq slug alone. Absence of a slug key means unproven (derived at the model layer).',
+        'Per-scenario verdicts keyed on the scenario slug alone. Absence of a slug key means unproven (derived at the model layer).',
       ),
   })
   .describe(
-    'An ingested test run (evidence). Machine-produced JSON, never authored; keyed on sysreq slug.',
+    'An ingested test run (evidence). Machine-produced JSON, never authored; keyed on scenario slug.',
   );
 
-/** Inferred type of a single per-sysreq verdict. */
+/** Inferred type of a single per-scenario verdict. */
 export type TestResult = z.infer<typeof TestResult>;
 
 /** Inferred type of an ingested test run. */

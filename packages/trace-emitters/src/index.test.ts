@@ -27,10 +27,11 @@ describe('@workspec/trace-emitters', () => {
     expect(getEmitter('nope')).toBeUndefined();
   });
 
-  it('declares the three spec §3 conventions', () => {
+  it('declares the four spec §3 conventions, in the spec table order', () => {
     expect(cucumberEmitter.conventions).toBe(CUCUMBER_CONVENTIONS);
     expect(CUCUMBER_CONVENTIONS.map((c) => c.name)).toEqual([
-      'feature-file-per-sysreq',
+      'feature-file-per-rule',
+      'rule-groups-scenarios',
       'req-tag-on-scenario',
       'outline-from-examples',
     ]);

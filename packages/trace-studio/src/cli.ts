@@ -18,8 +18,7 @@ import { parseArgs } from 'node:util';
 import { TestRun as TestRunSchema } from '@workspec/req-schema';
 import { buildModel } from '@workspec/trace-model';
 import type { Finding, Meter, TraceModel } from '@workspec/trace-model';
-import { emitters, getEmitter } from '@workspec/trace-emitters';
-import type { SysReqInput } from '@workspec/trace-emitters';
+import { emitters, getEmitter, groupScenariosByRule } from '@workspec/trace-emitters';
 import { DEFAULT_RUNS_DIR, FsRepository } from './fs-repository.js';
 import type { LoadIssue, TraceRepositoryPort } from './repository.js';
 
@@ -60,16 +59,16 @@ Usage:
   workspec-trace <command> [options]
 
 Commands:
-  emit      Emit test files from system-requirements (greenfield).
+  emit      Emit test files from system-requirements (Rules) + scenarios (greenfield).
   ingest    Ingest a test toolchain's results into a run (evidence).
   verify    The CI gate: fail on validation errors, dangling refs, or a
-            coverage / pass-rate floor.
+            scenario-coverage / userReq-coverage / pass-rate floor.
 
 Run "workspec-trace <command> --help" for command options. This CLI never
 invokes git — you commit. Available emitters: ${EMITTER_NAMES}.
 `;
 
-const EMIT_HELP = `workspec-trace emit — system-requirements -> test files (greenfield)
+const EMIT_HELP = `workspec-trace emit — Rules + scenarios -> test files (greenfield)
 
 Usage:
   workspec-trace emit --emitter <name> [--feature <slug>] [--out <dir>]
@@ -77,14 +76,16 @@ Usage:
 
 Options:
   --emitter <name>   Emitter convention to use (${EMITTER_NAMES}). Required.
-  --feature <slug>   Only emit sysreqs whose feature is this slug.
+  --feature <slug>   Only emit Rules (system-requirements) whose feature is this slug.
   --out <dir>        Directory to write test files into (default: "features").
   --dir <root>       Working-tree root to load .workspec/ from (default: cwd).
   --json             Print the written-file report as JSON.
 
-Loads every system-requirement under .workspec/requirements/system, runs the
-emitter, and WRITES the returned test files under --out. The only command that
-writes test files. Invalid sysreq files are skipped with a warning.
+Loads every system-requirement (a Gherkin Rule, spec §4.4) and every scenario
+under .workspec/, groups each Rule with the scenarios whose systemRequirement
+is it, runs the emitter (one file per Rule — the feature-file-per-rule
+convention), and WRITES the returned test files under --out. The only command
+that writes test files. Invalid Rule/scenario files are skipped with a warning.
 `;
 
 const INGEST_HELP = `workspec-trace ingest — test results -> a run (evidence)
@@ -104,7 +105,7 @@ Options:
   --runs-dir <dir>   Where to write the run (default: "${DEFAULT_RUNS_DIR}").
   --json             Print the run summary as JSON.
 
-Reads <results-file> (a Cucumber JSON report), maps scenarios back to sysreq
+Reads <results-file> (a Cucumber JSON report), maps scenarios back to scenario
 slugs via the emitter's tag convention, and writes <runs-dir>/<id>.json. The
 runs dir is gitignore-able (spec §9.3); commit it to keep an auditable history.
 `;
@@ -112,22 +113,26 @@ runs dir is gitignore-able (spec §9.3); commit it to keep an auditable history.
 const VERIFY_HELP = `workspec-trace verify — the CI gate
 
 Usage:
-  workspec-trace verify [--min-coverage <0..1>] [--min-pass-rate <0..1>]
-                        [--dir <root>] [--runs-dir <dir>] [--json]
+  workspec-trace verify [--min-scenario-coverage <0..1>] [--min-userreq-coverage <0..1>]
+                        [--min-pass-rate <0..1>] [--dir <root>] [--runs-dir <dir>] [--json]
 
 Options:
-  --min-coverage <0..1>    Fail if coverage ratio is below this (default: 0).
-  --min-pass-rate <0..1>   Fail if pass-rate ratio is below this (default: 0).
-  --dir <root>             Working-tree root (default: cwd).
-  --runs-dir <dir>         Where runs are read from (default: "${DEFAULT_RUNS_DIR}").
-  --json                   Emit the machine-readable model summary for CI.
+  --min-scenario-coverage <0..1>  Fail if scenario coverage ratio is below this (default: 0).
+  --min-userreq-coverage <0..1>   Fail if userReq coverage ratio is below this (default: 0).
+  --min-pass-rate <0..1>          Fail if pass-rate ratio is below this (default: 0).
+  --dir <root>                    Working-tree root (default: cwd).
+  --runs-dir <dir>                Where runs are read from (default: "${DEFAULT_RUNS_DIR}").
+  --json                          Emit the machine-readable model summary for CI.
 
-Loads .workspec/, derives the model, and FAILS (exit 1) on: any loader
-validation issue; any error-severity finding (dangling intra-tree ref or
-duplicate slug — spec §4.7); coverage below --min-coverage; or pass-rate below
---min-pass-rate. Error findings ALWAYS gate; the thresholds are opt-in (default
-0 = no floor). v0 uses ABSOLUTE thresholds — regression-vs-baseline is v0.1
-(spec §9.4). Exit codes: 0 pass, 1 gate failed, 2 usage error.
+Loads .workspec/, derives the model's THREE meters — scenario coverage, userReq
+coverage, pass rate (spec §4.7/§5, shown side by side, never collapsed) — and
+FAILS (exit 1) on: any loader validation issue; any error-severity finding
+(dangling intra-tree ref or duplicate slug — spec §4.7); scenario coverage
+below --min-scenario-coverage; userReq coverage below --min-userreq-coverage;
+or pass-rate below --min-pass-rate. Error findings ALWAYS gate; the thresholds
+are opt-in (default 0 = no floor). v0 uses ABSOLUTE thresholds —
+regression-vs-baseline is v0.1 (spec §9.4). Exit codes: 0 pass, 1 gate failed,
+2 usage error.
 `;
 
 // ── shared rendering ─────────────────────────────────────────────────────────
@@ -198,13 +203,25 @@ async function runEmit(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
   const { tree, issues } = await repository.loadTree();
   warnLoadIssues('emit', issues, io);
 
-  let sysreqs = tree.systemRequirements;
-  if (values.feature !== undefined) {
-    sysreqs = sysreqs.filter((s) => s.artifact.spec.feature === values.feature);
+  // A scenario whose parent Rule isn't in the tree can't be emitted (it lands
+  // under a group key nothing retrieves) — warn so the author isn't left with a
+  // silently incomplete suite. Checked against ALL rules, not the
+  // --feature-filtered set. `verify` also flags this as a dangling-ref.
+  const ruleSlugs = new Set(tree.systemRequirements.map((s) => s.slug));
+  for (const scenario of tree.scenarios) {
+    const parent = scenario.artifact.spec.systemRequirement;
+    if (!ruleSlugs.has(parent)) {
+      io.err(`emit: scenario "${scenario.slug}" references unknown rule "${parent}" — skipped\n`);
+    }
   }
 
-  const inputs: SysReqInput[] = sysreqs.map((s) => ({ slug: s.slug, sysreq: s.artifact }));
-  const files = emitter.emit(inputs);
+  const systemRequirements =
+    values.feature !== undefined
+      ? tree.systemRequirements.filter((s) => s.artifact.spec.feature === values.feature)
+      : tree.systemRequirements;
+
+  const rules = groupScenariosByRule({ ...tree, systemRequirements });
+  const files = emitter.emit(rules);
 
   const written: string[] = [];
   for (const file of files) {
@@ -380,7 +397,8 @@ interface VerifyGate {
 function evaluateGate(
   model: TraceModel,
   loadIssues: readonly LoadIssue[],
-  minCoverage: number,
+  minScenarioCoverage: number,
+  minUserReqCoverage: number,
   minPassRate: number,
 ): VerifyGate {
   const reasons: string[] = [];
@@ -391,8 +409,15 @@ function evaluateGate(
   if (errorFindings.length > 0) {
     reasons.push(`${errorFindings.length} error finding(s)`);
   }
-  if (model.coverage.ratio < minCoverage) {
-    reasons.push(`coverage ${pct(model.coverage.ratio)} below floor ${pct(minCoverage)}`);
+  if (model.scenarioCoverage.ratio < minScenarioCoverage) {
+    reasons.push(
+      `scenario coverage ${pct(model.scenarioCoverage.ratio)} below floor ${pct(minScenarioCoverage)}`,
+    );
+  }
+  if (model.userReqCoverage.ratio < minUserReqCoverage) {
+    reasons.push(
+      `userReq coverage ${pct(model.userReqCoverage.ratio)} below floor ${pct(minUserReqCoverage)}`,
+    );
   }
   if (model.passRate.ratio < minPassRate) {
     reasons.push(`pass-rate ${pct(model.passRate.ratio)} below floor ${pct(minPassRate)}`);
@@ -416,7 +441,11 @@ function renderVerifyHuman(
   gate: VerifyGate,
   io: CliIO,
 ): void {
-  io.out(`Coverage:  ${meterText(model.coverage)}    Pass rate: ${meterText(model.passRate)}\n`);
+  io.out(
+    `Scenario coverage: ${meterText(model.scenarioCoverage)}    ` +
+      `UserReq coverage: ${meterText(model.userReqCoverage)}    ` +
+      `Pass rate: ${meterText(model.passRate)}\n`,
+  );
   io.out(
     model.latestRun !== null
       ? `Latest run: ${model.latestRun.id} @ ${model.latestRun.ts}\n`
@@ -441,7 +470,8 @@ function renderVerifyHuman(
 
 async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
   let values: {
-    'min-coverage'?: string;
+    'min-scenario-coverage'?: string;
+    'min-userreq-coverage'?: string;
     'min-pass-rate'?: string;
     dir?: string;
     'runs-dir'?: string;
@@ -452,7 +482,8 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     ({ values } = parseArgs({
       args: argv,
       options: {
-        'min-coverage': { type: 'string' },
+        'min-scenario-coverage': { type: 'string' },
+        'min-userreq-coverage': { type: 'string' },
         'min-pass-rate': { type: 'string' },
         dir: { type: 'string' },
         'runs-dir': { type: 'string' },
@@ -470,9 +501,18 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     return 0;
   }
 
-  const minCoverage = parseThreshold(values['min-coverage']);
-  if (minCoverage === null) {
-    io.err(`verify: --min-coverage must be a number in [0, 1], got "${values['min-coverage']}"\n`);
+  const minScenarioCoverage = parseThreshold(values['min-scenario-coverage']);
+  if (minScenarioCoverage === null) {
+    io.err(
+      `verify: --min-scenario-coverage must be a number in [0, 1], got "${values['min-scenario-coverage']}"\n`,
+    );
+    return 2;
+  }
+  const minUserReqCoverage = parseThreshold(values['min-userreq-coverage']);
+  if (minUserReqCoverage === null) {
+    io.err(
+      `verify: --min-userreq-coverage must be a number in [0, 1], got "${values['min-userreq-coverage']}"\n`,
+    );
     return 2;
   }
   const minPassRate = parseThreshold(values['min-pass-rate']);
@@ -492,7 +532,13 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   const loadIssues: LoadIssue[] = [...loadedTree.issues, ...loadedRuns.issues];
 
   const model = buildModel(loadedTree.tree, loadedRuns.runs);
-  const gate = evaluateGate(model, loadIssues, minCoverage, minPassRate);
+  const gate = evaluateGate(
+    model,
+    loadIssues,
+    minScenarioCoverage,
+    minUserReqCoverage,
+    minPassRate,
+  );
 
   if (values.json === true) {
     io.out(
@@ -500,8 +546,9 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
         {
           verdict: gate.verdict,
           reasons: gate.reasons,
-          thresholds: { minCoverage, minPassRate },
-          coverage: model.coverage,
+          thresholds: { minScenarioCoverage, minUserReqCoverage, minPassRate },
+          scenarioCoverage: model.scenarioCoverage,
+          userReqCoverage: model.userReqCoverage,
           passRate: model.passRate,
           latestRun: model.latestRun,
           findings: model.findings,

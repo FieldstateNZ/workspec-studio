@@ -1,12 +1,11 @@
-# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/system-requirement.schema.json
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/scenario.schema.json
 apiVersion: workspec.io/v1alpha1
-kind: SystemRequirement
+kind: Scenario
 metadata:
   slug: inline-create-each-kind
 spec:
   title: Inline create works for each element kind
-  feature: element-authoring
-  userReqs: [authoring-flow]
+  systemRequirement: inline-create
   given:
     - a canvas
   when:

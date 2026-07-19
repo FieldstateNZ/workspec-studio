@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/system-requirement.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: SystemRequirement
+metadata:
+  slug: inline-create # a Rule — groups scenarios, has no steps of its own
+spec:
+  title: Inline element creation
+  feature: element-authoring # intra-tree ref (containing)
+  userReqs: [authoring-flow] # intra-tree refs (verifies — makes it an RTM)
