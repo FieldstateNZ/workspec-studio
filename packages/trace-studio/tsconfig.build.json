@@ -4,7 +4,18 @@
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+    // `types: ["node"]` is inherited from tsconfig.json and KEPT (unlike the
+    // pure packages, which override it to `[]` in their build config): this is
+    // a Node CLI whose published output still references `process`/`node:*`.
   },
+  // Same project references as the typecheck config — the build must also map
+  // sibling imports back to their source declarations on demand.
+  "references": [
+    { "path": "../schema-core/tsconfig.build.json" },
+    { "path": "../req-schema/tsconfig.build.json" },
+    { "path": "../trace-model/tsconfig.build.json" },
+    { "path": "../trace-emitters/tsconfig.build.json" }
+  ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }
