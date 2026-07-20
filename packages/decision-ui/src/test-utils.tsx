@@ -14,16 +14,18 @@ import {
 import type { Catalog, Decision, DecisionRepositoryPort } from '@workspec/decision-schema';
 // The real example artifacts, imported as raw strings (Vite `?raw`) so tests run
 // against the same golden data the engine snapshot locks — no filesystem access.
-import hostingDecisionYaml from '../../../examples/hosting-platform/hosting-platform.decision.yaml?raw';
-import hostingCatalogYaml from '../../../examples/hosting-platform/platform.catalog.yaml?raw';
+// The fixtures moved under `.workspec/<type-dir>/<slug>.yaml` (S3's directory-walk
+// discovery convention) when the decision family migrated onto schema-core.
+import hostingDecisionYaml from '../../../examples/hosting-platform/.workspec/decisions/hosting-platform.yaml?raw';
+import hostingCatalogYaml from '../../../examples/hosting-platform/.workspec/catalogs/platform.yaml?raw';
 import { DecisionStudioProvider } from './context.js';
 import { createInertLinkResolver } from './host.js';
 import type { DecisionStudioHost, LinkResolver } from './host.js';
 import type { ThemeName } from './themes.js';
 
 /** The stable refs the hosting-platform memory repository is seeded under. */
-export const HOSTING_DECISION_REF = 'hosting-platform.decision.yaml';
-export const HOSTING_CATALOG_REF = 'platform.catalog.yaml';
+export const HOSTING_DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
+export const HOSTING_CATALOG_REF = '.workspec/catalogs/platform.yaml';
 
 /** Parse the hosting-platform decision from the example file (throws on any schema error). */
 export function loadHostingDecision(): Decision {

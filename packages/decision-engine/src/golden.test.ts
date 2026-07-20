@@ -21,9 +21,11 @@ let result: DecisionCostResult;
 
 beforeAll(() => {
   const decisionRes = parseDecisionYaml(
-    read('examples/hosting-platform/hosting-platform.decision.yaml'),
+    read('examples/hosting-platform/.workspec/decisions/hosting-platform.yaml'),
   );
-  const catalogRes = parseCatalogYaml(read('examples/hosting-platform/platform.catalog.yaml'));
+  const catalogRes = parseCatalogYaml(
+    read('examples/hosting-platform/.workspec/catalogs/platform.yaml'),
+  );
   if (!decisionRes.ok) throw new Error('decision fixture failed to parse');
   if (!catalogRes.ok) throw new Error('catalog fixture failed to parse');
   decision = decisionRes.data;

@@ -26,7 +26,7 @@ import {
   toggleOptionEnv,
 } from './edits.js';
 import { Button, Lbl } from '@workspec/design/components';
-import { resolveCatalogRef } from './host.js';
+import { decisionSlug, resolveCatalogRef } from './host.js';
 import { LinksBlock } from './links.js';
 import { OptionCard } from './option-card.js';
 import { DecisionStatusPill, Icon } from './primitives.js';
@@ -109,13 +109,13 @@ function WorkspaceView(props: {
     <div className="ds-wrap">
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
-          <Lbl>{`Decision · ${draft.metadata.id}`}</Lbl>
-          <h1 className="ds-dechead-title">{draft.metadata.title}</h1>
+          <Lbl>{`Decision · ${decisionSlug(draft, decisionRef)}`}</Lbl>
+          <h1 className="ds-dechead-title">{draft.spec.title}</h1>
           <p className="ds-ctx">{draft.spec.context}</p>
           <LinksBlock links={draft.spec.links ?? []} resolve={resolveLink} />
         </div>
         <div className="ds-actions">
-          <DecisionStatusPill status={draft.metadata.status} />
+          <DecisionStatusPill status={draft.spec.status} />
           {navigate !== undefined && (
             <>
               <Button

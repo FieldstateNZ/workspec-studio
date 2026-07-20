@@ -16,7 +16,7 @@ import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs
 
 /** Options for {@link createServer}. */
 export interface CreateServerOptions {
-  /** Directory of `*.decision.yaml` / `*.catalog.yaml` artifacts to serve. */
+  /** Root containing `.workspec/{decisions,catalogs}/` artifacts to serve. */
   dir: string;
   /**
    * Directory of the built Vite client to serve at `/`. Defaults to the

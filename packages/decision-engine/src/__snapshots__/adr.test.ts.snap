@@ -4,7 +4,7 @@ exports[`renderAdrMarkdown (hosting-platform) > produces a stable Markdown ADR w
 "# Hosting platform for the data and delivery services
 
 - **Status:** Proposed
-- **Decision:** \`dec-hosting\`
+- **Decision:** \`hosting-platform\`
 - **Deciders:** Platform Engineering
 - **Created:** 2026-07-01
 - **Currency:** NZD

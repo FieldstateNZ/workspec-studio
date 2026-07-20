@@ -2,11 +2,11 @@
 apiVersion: workspec.io/v1alpha1
 kind: Catalog
 metadata:
-  id: postgres
+  slug: postgres
+spec:
   name: 'Postgres platform catalog'
   currency: NZD
   asOf: '2026-07-01'
-spec:
   # Pricing modes are multipliers on a SKU's PAYG monthly list price.
   # Committed modes (reserved) bill 24×7 and ignore schedule; only non-committed
   # modes (payg, spot) benefit from scheduling a line off.

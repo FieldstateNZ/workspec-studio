@@ -131,11 +131,11 @@ function cn(...parts: (string | undefined)[]): string {
 // ── Decision status pill ────────────────────────────────────────────────────────
 
 /**
- * A decision's lifecycle status. Derived from the schema's `metadata.status`
+ * A decision's lifecycle status. Derived from the schema's `spec.status`
  * enum (the source of truth) so the pill stays in sync if the schema ever
  * adds or renames a status, instead of duplicating the union here.
  */
-export type DecisionLifecycleStatus = Decision['metadata']['status'];
+export type DecisionLifecycleStatus = Decision['spec']['status'];
 
 const DECISION_STATUS_TONE: Record<DecisionLifecycleStatus, StatusTone> = {
   exploring: 'warn',

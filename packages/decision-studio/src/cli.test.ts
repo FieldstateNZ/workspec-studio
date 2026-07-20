@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +9,7 @@ import type { CliIO } from './cli.js';
 const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');
-const INVALID_DIR = repoPath('packages/decision-schema/test/fixtures/invalid');
+const INVALID_FIXTURES_DIR = repoPath('packages/decision-schema/test/fixtures/invalid');
 
 // Capturing IO double (factory-built per test).
 function captureIO(): { io: CliIO; out: () => string; err: () => string } {
@@ -22,18 +22,48 @@ function captureIO(): { io: CliIO; out: () => string; err: () => string } {
   };
 }
 
-// The invalid-fixture battery from S1 with each fixture's expected first-issue
-// line (mirrors packages/decision-schema/src/invalid-fixtures.expected.ts).
-const INVALID_FIXTURES: { file: string; line: number }[] = [
-  { file: 'bad-status.decision.yaml', line: 7 },
-  { file: 'missing-context.decision.yaml', line: 9 },
-  { file: 'unknown-discriminator.decision.yaml', line: 24 },
-  { file: 'negative-weight.decision.yaml', line: 16 },
-  { file: 'wrong-type-amount.decision.yaml', line: 25 },
-  { file: 'dangling-env-key.decision.yaml', line: 25 },
-  { file: 'score-out-of-range.decision.yaml', line: 27 },
-  { file: 'bad-schedule-pct.catalog.yaml', line: 17 },
+// The invalid-fixture battery from S1 (mirrors
+// packages/decision-schema/src/invalid-fixtures.expected.ts): each fixture is
+// copied into a fresh `.workspec/<kind-dir>/<slug>.yaml` under a bare slug
+// filename (the old `<slug>.decision.yaml` / `<slug>.catalog.yaml` middle
+// infix is not a valid slug — it would be silently skipped by discovery), so
+// the ref reported in a diagnostic is `.workspec/<kind-dir>/<slug>.yaml`. The
+// fixture CONTENT (and so its internal line numbers) is copied byte-for-byte.
+const INVALID_FIXTURES: { file: string; kindDir: string; slug: string; line: number }[] = [
+  { file: 'bad-status.decision.yaml', kindDir: 'decisions', slug: 'bad-status', line: 8 },
+  { file: 'missing-context.decision.yaml', kindDir: 'decisions', slug: 'missing-context', line: 7 },
+  {
+    file: 'unknown-discriminator.decision.yaml',
+    kindDir: 'decisions',
+    slug: 'unknown-discriminator',
+    line: 24,
+  },
+  { file: 'negative-weight.decision.yaml', kindDir: 'decisions', slug: 'negative-weight', line: 16 },
+  {
+    file: 'wrong-type-amount.decision.yaml',
+    kindDir: 'decisions',
+    slug: 'wrong-type-amount',
+    line: 25,
+  },
+  { file: 'dangling-env-key.decision.yaml', kindDir: 'decisions', slug: 'dangling-env-key', line: 25 },
+  {
+    file: 'score-out-of-range.decision.yaml',
+    kindDir: 'decisions',
+    slug: 'score-out-of-range',
+    line: 27,
+  },
+  { file: 'bad-schedule-pct.catalog.yaml', kindDir: 'catalogs', slug: 'bad-schedule-pct', line: 17 },
 ];
+
+/** Copies the invalid-fixture battery into `root/.workspec/<kindDir>/<slug>.yaml`. */
+async function seedInvalidFixtures(root: string): Promise<void> {
+  for (const { file, kindDir, slug } of INVALID_FIXTURES) {
+    const text = await readFile(join(INVALID_FIXTURES_DIR, file), 'utf8');
+    const dest = join(root, '.workspec', kindDir, `${slug}.yaml`);
+    await mkdir(join(root, '.workspec', kindDir), { recursive: true });
+    await writeFile(dest, text, 'utf8');
+  }
+}
 
 let dir: string;
 beforeEach(async () => {
@@ -54,33 +84,39 @@ describe('validate', () => {
   });
 
   it('catches every invalid S1 fixture with the correct file:line and exits non-zero', async () => {
+    await seedInvalidFixtures(dir);
     const cap = captureIO();
-    const code = await run(['validate', '--dir', INVALID_DIR], cap.io);
+    const code = await run(['validate', '--dir', dir], cap.io);
     expect(code).not.toBe(0);
     const output = cap.err();
-    for (const { file, line } of INVALID_FIXTURES) {
-      expect(output, `expected ${file}:${line} in output`).toContain(`${file}:${line}:`);
+    for (const { kindDir, slug, line } of INVALID_FIXTURES) {
+      const ref = `.workspec/${kindDir}/${slug}.yaml`;
+      expect(output, `expected ${ref}:${line} in output`).toContain(`${ref}:${line}:`);
     }
     // Every reported fixture line is an error.
     expect(output).toContain('error:');
   });
 
   it('flags a dangling authored SKU-line reference as a fatal error', async () => {
+    await mkdir(join(dir, '.workspec', 'catalogs'), { recursive: true });
+    await mkdir(join(dir, '.workspec', 'decisions'), { recursive: true });
     await writeFile(
-      join(dir, 'x.catalog.yaml'),
-      await readFile(join(HOSTING_DIR, 'platform.catalog.yaml')),
+      join(dir, '.workspec', 'catalogs', 'x.yaml'),
+      await readFile(join(HOSTING_DIR, '.workspec', 'catalogs', 'platform.yaml')),
     );
     // A decision referencing a sku that does not exist in the catalog.
     await writeFile(
-      join(dir, 'x.decision.yaml'),
+      join(dir, '.workspec', 'decisions', 'x.yaml'),
       [
         '# yaml-language-server: $schema=x',
         'apiVersion: workspec.io/v1alpha1',
         'kind: Decision',
-        'metadata: { id: d, title: "D", status: exploring }',
+        'metadata: {}',
         'spec:',
+        '  title: "D"',
+        '  status: exploring',
         '  context: "c"',
-        '  catalog: ./x.catalog.yaml',
+        '  catalog: x',
         '  currency: NZD',
         '  environments: [prod]',
         '  criteria: [{ id: cost, label: "Cost", weight: 1 }]',
@@ -103,24 +139,30 @@ describe('validate', () => {
     const cap = captureIO();
     const code = await run(['validate', '--dir', dir], cap.io);
     expect(code).toBe(1);
-    expect(cap.err()).toMatch(/x\.decision\.yaml:\d+:\d+: error: unknown sku "does_not_exist"/);
+    expect(cap.err()).toMatch(
+      /\.workspec\/decisions\/x\.yaml:\d+:\d+: error: unknown sku "does_not_exist"/,
+    );
   });
 
   it('surfaces a dangling lever reference as a NON-fatal warning', async () => {
+    await mkdir(join(dir, '.workspec', 'catalogs'), { recursive: true });
+    await mkdir(join(dir, '.workspec', 'decisions'), { recursive: true });
     await writeFile(
-      join(dir, 'x.catalog.yaml'),
-      await readFile(join(HOSTING_DIR, 'platform.catalog.yaml')),
+      join(dir, '.workspec', 'catalogs', 'x.yaml'),
+      await readFile(join(HOSTING_DIR, '.workspec', 'catalogs', 'platform.yaml')),
     );
     await writeFile(
-      join(dir, 'x.decision.yaml'),
+      join(dir, '.workspec', 'decisions', 'x.yaml'),
       [
         '# yaml-language-server: $schema=x',
         'apiVersion: workspec.io/v1alpha1',
         'kind: Decision',
-        'metadata: { id: d, title: "D", status: exploring }',
+        'metadata: {}',
         'spec:',
+        '  title: "D"',
+        '  status: exploring',
         '  context: "c"',
-        '  catalog: ./x.catalog.yaml',
+        '  catalog: x',
         '  currency: NZD',
         '  environments: [prod]',
         '  criteria: [{ id: cost, label: "Cost", weight: 1 }]',
@@ -166,8 +208,9 @@ describe('validate', () => {
   });
 
   it('--json reports a structured parse-error diagnostic on the invalid fixtures', async () => {
+    await seedInvalidFixtures(dir);
     const cap = captureIO();
-    const code = await run(['validate', '--dir', INVALID_DIR, '--json'], cap.io);
+    const code = await run(['validate', '--dir', dir, '--json'], cap.io);
     expect(code).not.toBe(0);
     const parsed = JSON.parse(cap.out()) as {
       severity: string;

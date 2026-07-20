@@ -10,7 +10,8 @@
   "references": [
     { "path": "../decision-schema/tsconfig.build.json" },
     { "path": "../decision-engine/tsconfig.build.json" },
-    { "path": "../decision-ui/tsconfig.build.json" }
+    { "path": "../decision-ui/tsconfig.build.json" },
+    { "path": "../schema-core/tsconfig.build.json" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]

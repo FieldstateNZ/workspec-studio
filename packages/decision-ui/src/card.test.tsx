@@ -47,9 +47,9 @@ describe('DecisionCard — compact read-only summary', () => {
     // Record an outcome choosing App Service (annual $16,104).
     const decided = {
       ...decision,
-      metadata: { ...decision.metadata, status: 'decided' as const },
       spec: {
         ...decision.spec,
+        status: 'decided' as const,
         outcome: {
           option: 'appsvc',
           rationale: 'We accept a lower scale ceiling for zero migration and minimal ops.',

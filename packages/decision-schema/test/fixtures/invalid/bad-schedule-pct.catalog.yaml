@@ -2,10 +2,10 @@
 apiVersion: workspec.io/v1alpha1
 kind: Catalog
 metadata:
-  id: cat-min
+  slug: cat-min
+spec:
   currency: NZD
   asOf: '2026-07-01'
-spec:
   pricingModes:
     - id: payg
       label: 'PAYG'

@@ -70,7 +70,7 @@ export interface AdrLink {
 
 /** The presentation-agnostic ADR model. Both `render-adr` and the UI consume it. */
 export interface AdrModel {
-  /** The decision id. */
+  /** The decision's identity — the `.workspec/decisions/<slug>.yaml` slug. */
   id: string;
   /** The decision title (ADR heading). */
   title: string;
@@ -122,7 +122,7 @@ export function formatMoney(value: number): string {
 
 // ── Model builder ─────────────────────────────────────────────────────────────
 
-function statusOf(status: Decision['metadata']['status']): AdrStatus {
+function statusOf(status: Decision['spec']['status']): AdrStatus {
   if (status === 'decided') return 'Accepted';
   if (status === 'superseded') return 'Superseded';
   return 'Proposed';
@@ -131,6 +131,10 @@ function statusOf(status: Decision['metadata']['status']): AdrStatus {
 /**
  * Build the structured ADR model from a decision and its catalog.
  *
+ * `slug` is the decision's identity — under the `.workspec/decisions/<slug>.yaml`
+ * convention there is no more `metadata.id`; the caller (CLI, host) knows the
+ * slug from the ref it read the decision by and threads it through here.
+ *
  * The winner is the recorded `outcome.option` when the decision is decided,
  * otherwise the engine's `recommend()` pick. Consequences come from the winner's
  * criteria scores (≥4 → strength, ≤2 → weakness, each with its authored note if
@@ -138,7 +142,7 @@ function statusOf(status: Decision['metadata']['status']): AdrStatus {
  * the headroom recoverable by reserving steady prod, or — when the winner is
  * already cheapest — a "lowest run-rate" note.
  */
-export function buildAdrModel(decision: Decision, catalog: Catalog): AdrModel {
+export function buildAdrModel(decision: Decision, catalog: Catalog, slug: string): AdrModel {
   const result = compute(decision, catalog);
   const outcome = decision.spec.outcome;
   const decided = outcome !== undefined;
@@ -224,14 +228,14 @@ export function buildAdrModel(decision: Decision, catalog: Catalog): AdrModel {
   }));
 
   return {
-    id: decision.metadata.id,
-    title: decision.metadata.title,
-    status: statusOf(decision.metadata.status),
+    id: slug,
+    title: decision.spec.title,
+    status: statusOf(decision.spec.status),
     context: decision.spec.context,
     currency: decision.spec.currency,
     environments: decision.spec.environments,
-    deciders: decision.metadata.deciders ?? [],
-    created: decision.metadata.created,
+    deciders: decision.spec.deciders ?? [],
+    created: decision.spec.created,
     decidedBy: outcome?.decidedBy,
     decidedAt: outcome?.decidedAt,
     consideredOptions,

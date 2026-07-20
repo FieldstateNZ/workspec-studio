@@ -23,15 +23,15 @@ export const invalidCases: readonly InvalidCase[] = [
     file: 'bad-status.decision.yaml',
     kind: 'decision',
     reason: 'status is not one of the allowed enum values',
-    path: 'metadata.status',
-    line: 7,
+    path: 'spec.status',
+    line: 8,
   },
   {
     file: 'missing-context.decision.yaml',
     kind: 'decision',
     reason: 'required spec.context is absent',
     path: 'spec.context',
-    line: 9,
+    line: 7,
   },
   {
     file: 'unknown-discriminator.decision.yaml',

@@ -27,7 +27,7 @@ import {
 } from './context.js';
 import { Button, Card, Lbl, Textarea } from '@workspec/design/components';
 import { decide, reopen, setRationale, suggestRationale } from './decide.js';
-import { repositoryId, resolveCatalogRef } from './host.js';
+import { decisionSlug, repositoryId, resolveCatalogRef } from './host.js';
 import { money } from './format.js';
 import { DecisionStatusPill, Flag, Icon } from './primitives.js';
 
@@ -100,28 +100,27 @@ function RationaleEditor(props: {
 }
 
 /**
- * Best-effort resolver for the decision that supersedes `decisionId` — the one
- * whose `metadata.supersedes` names it. Only runs for a superseded decision
+ * Best-effort resolver for the decision that supersedes `slug` — the one
+ * whose `spec.supersedes` names it (a bare decision slug, not the gone
+ * `metadata.id`). Matched against `listDecisions()` entries; each candidate's
+ * identity is derived via {@link decisionSlug} rather than trusting its own
+ * (optional) `metadata.slug` alone. Only runs for a superseded decision
  * (`enabled`), so the common path never scans the repository.
  */
 function useSupersededBy(
-  decisionId: string,
+  slug: string,
   enabled: boolean,
-): { ref: Ref; id: string; title?: string } | null {
+): { ref: Ref; slug: string; title: string } | null {
   const repository = useRepository();
   const query = useQuery({
-    queryKey: ['ds', 'supersededBy', repositoryId(repository), decisionId],
+    queryKey: ['ds', 'supersededBy', repositoryId(repository), slug],
     enabled,
     queryFn: async () => {
       const refs = await repository.listDecisions();
       for (const entry of refs) {
         const other = await repository.readDecision(entry.ref);
-        if (other.metadata.supersedes === decisionId) {
-          return {
-            ref: entry.ref,
-            id: other.metadata.id,
-            ...(other.metadata.title !== undefined ? { title: other.metadata.title } : {}),
-          };
+        if (other.spec.supersedes === slug) {
+          return { ref: entry.ref, slug: decisionSlug(other, entry.ref), title: entry.title };
         }
       }
       return null;
@@ -136,13 +135,17 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
   const navigate = useNavigate();
   const writeDecision = useWriteDecision();
 
-  const model: AdrModel = useMemo(() => buildAdrModel(decision, catalog), [decision, catalog]);
+  const slug = decisionSlug(decision, decisionRef);
+  const model: AdrModel = useMemo(
+    () => buildAdrModel(decision, catalog, slug),
+    [decision, catalog, slug],
+  );
 
-  const decided = decision.metadata.status === 'decided';
-  const superseded = decision.metadata.status === 'superseded';
+  const decided = decision.spec.status === 'decided';
+  const superseded = decision.spec.status === 'superseded';
   const canDecide = capabilities.decide && !superseded;
 
-  const supersededBy = useSupersededBy(decision.metadata.id, superseded);
+  const supersededBy = useSupersededBy(slug, superseded);
 
   // Decide form state — seeded from the engine's recommended winner.
   const [winner, setWinner] = useState<string>(
@@ -164,7 +167,7 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
   const onDecide = (): void => {
     if (winner === '') return;
     const decidedAt = new Date().toISOString().slice(0, 10);
-    const decidedBy = decision.metadata.deciders?.[0];
+    const decidedBy = decision.spec.deciders?.[0];
     // exactOptionalPropertyTypes: omit `decidedBy` entirely rather than set it
     // to `undefined` when there's no first decider.
     commit(
@@ -331,7 +334,7 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
               <h4>Superseded</h4>
               <p className="ds-rail-p">
                 This decision has been superseded and is read-only.
-                {supersededBy !== null && ` See ${supersededBy.title ?? supersededBy.id}.`}
+                {supersededBy !== null && ` See ${supersededBy.title}.`}
               </p>
               {supersededBy !== null && navigate !== undefined && (
                 <Button
@@ -341,7 +344,7 @@ function AdrView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog
                   onClick={() =>
                     navigate({
                       kind: 'decision',
-                      label: supersededBy.title ?? supersededBy.id,
+                      label: supersededBy.title,
                       target: supersededBy.ref,
                     })
                   }

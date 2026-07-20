@@ -2,13 +2,13 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-postgres
+  slug: postgres-hosting
+spec:
   title: 'Postgres: managed PaaS vs self-hosted on Kubernetes'
   status: decided
   created: '2026-07-01'
   deciders:
     - 'Platform Engineering'
-spec:
   context: >-
     The analytics warehouse and the delivery service's application database both need a production
     Postgres with a real HA story. We can buy it as a managed PaaS (Azure
@@ -16,7 +16,7 @@ spec:
     AKS cluster with the CloudNativePG operator. This decision costs all three
     shapes across dev / test / prod and weighs them on ops burden, resilience,
     performance control, lock-in and data residency.
-  catalog: ./postgres.catalog.yaml
+  catalog: postgres
   currency: NZD
   environments:
     - dev

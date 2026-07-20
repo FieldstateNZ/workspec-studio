@@ -93,7 +93,7 @@ function CompareView(props: {
 
   const options = decision.spec.options;
   const envs = decision.spec.environments;
-  const decided = decision.metadata.status === 'decided';
+  const decided = decision.spec.status === 'decided';
   const winnerId = decision.spec.outcome?.option ?? null;
 
   const commit = (next: Decision): void => {
@@ -137,10 +137,10 @@ function CompareView(props: {
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
           <Lbl>Compare · like-for-like · same workloads on each platform</Lbl>
-          <h1 className="ds-dechead-title ds-dechead-title-sub">{decision.metadata.title}</h1>
+          <h1 className="ds-dechead-title ds-dechead-title-sub">{decision.spec.title}</h1>
         </div>
         <div className="ds-actions">
-          <DecisionStatusPill status={decision.metadata.status} />
+          <DecisionStatusPill status={decision.spec.status} />
           {navigate !== undefined && (
             <Button
               variant="secondary"

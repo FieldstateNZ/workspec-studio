@@ -11,20 +11,20 @@ function must<T>(value: T | undefined): T {
 }
 
 // ── Fixtures are factory-built, never shared mutable module state ─────────────
+// Identity is the filename slug (`metadata.slug`, optional per schema-core's
+// `MetadataSchema`); these factories write it explicitly so the in-memory
+// repository's `list*` output is deterministic across test runs.
 
-function makeDecision(overrides: Partial<Decision['metadata']> = {}): Decision {
+function makeDecision(): Decision {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Decision',
-    metadata: {
-      id: 'dec-min',
+    metadata: { slug: 'dec-min' },
+    spec: {
       title: 'Minimal decision',
       status: 'exploring',
-      ...overrides,
-    },
-    spec: {
       context: 'A minimal decision for tests.',
-      catalog: './min.catalog.yaml',
+      catalog: 'min',
       currency: 'NZD',
       environments: ['dev', 'prod'],
       criteria: [{ id: 'cost', label: 'Cost', weight: 1 }],
@@ -45,8 +45,11 @@ function makeCatalog(): Catalog {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Catalog',
-    metadata: { id: 'cat-min', name: 'Minimal catalog', currency: 'NZD', asOf: '2026-07-01' },
+    metadata: { slug: 'cat-min' },
     spec: {
+      name: 'Minimal catalog',
+      currency: 'NZD',
+      asOf: '2026-07-01',
       pricingModes: [{ id: 'payg', label: 'PAYG', mult: 1, committed: false }],
       schedules: [{ id: 'always', label: '24x7', pct: 1 }],
       skus: [{ id: 'd4s_v5', label: 'D4s v5', family: 'General compute', price: 190 }],
@@ -90,23 +93,23 @@ describe('DecisionRepositoryPort surface', () => {
 });
 
 describe('createMemoryRepository', () => {
-  it('lists seeded decisions with { ref, id, title }', async () => {
+  it('lists seeded decisions with { ref, slug, title }', async () => {
     const repo = createMemoryRepository({ decisions: { 'a.decision.yaml': makeDecision() } });
     const list = await repo.listDecisions();
-    expect(list).toEqual([{ ref: 'a.decision.yaml', id: 'dec-min', title: 'Minimal decision' }]);
+    expect(list).toEqual([{ ref: 'a.decision.yaml', slug: 'dec-min', title: 'Minimal decision' }]);
   });
 
-  it('lists seeded catalogs with metadata.name as title', async () => {
+  it('lists seeded catalogs with spec.name as title', async () => {
     const repo = createMemoryRepository({ catalogs: { 'min.catalog.yaml': makeCatalog() } });
     const list = await repo.listCatalogs();
-    expect(list).toEqual([{ ref: 'min.catalog.yaml', id: 'cat-min', title: 'Minimal catalog' }]);
+    expect(list).toEqual([{ ref: 'min.catalog.yaml', slug: 'cat-min', title: 'Minimal catalog' }]);
   });
 
   it('round-trips a written decision', async () => {
     const repo = createMemoryRepository();
     await repo.writeDecision('d.decision.yaml', makeDecision());
     const read = await repo.readDecision('d.decision.yaml');
-    expect(read.metadata.id).toBe('dec-min');
+    expect(read.metadata.slug).toBe('dec-min');
     expect(await repo.listDecisions()).toHaveLength(1);
   });
 
@@ -127,9 +130,9 @@ describe('createMemoryRepository', () => {
   it('returns deep clones so external mutation cannot corrupt the store', async () => {
     const repo = createMemoryRepository({ decisions: { 'a.decision.yaml': makeDecision() } });
     const first = await repo.readDecision('a.decision.yaml');
-    first.metadata.title = 'MUTATED';
+    first.spec.title = 'MUTATED';
     const second = await repo.readDecision('a.decision.yaml');
-    expect(second.metadata.title).toBe('Minimal decision');
+    expect(second.spec.title).toBe('Minimal decision');
   });
 
   it('is isolated per factory call (no shared fixture)', async () => {
