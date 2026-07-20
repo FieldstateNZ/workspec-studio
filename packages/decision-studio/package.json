@@ -47,9 +47,11 @@
     "e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@workspec/decision-engine": "workspace:*",
     "@workspec/decision-schema": "workspace:*",
     "@workspec/decision-ui": "workspace:*",
+    "@workspec/mcp-core": "workspace:*",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2",
     "yaml": "^2.6.0"

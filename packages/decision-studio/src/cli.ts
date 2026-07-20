@@ -6,15 +6,15 @@
 // can drive it and capture output without spawning a process. `bin.ts` is the
 // only thing that touches `process`.
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import type { Catalog, Decision, ParseIssue } from '@workspec/decision-schema';
-import { parseCatalogYaml, parseDecisionYaml } from '@workspec/decision-schema';
-import { buildAdrModel, renderAdrMarkdown, validateRefs } from '@workspec/decision-engine';
+import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
+import { collectDiagnostics } from './collect-diagnostics.js';
+import { formatDiagnostic } from './format-diagnostic.js';
 import { ArtifactValidationError, FsRepository } from './fs-repository.js';
-import { collectLeverRefWarnings } from './lever-refs.js';
-import { makeLocator } from './locate.js';
+import { runMcp } from './run-mcp.js';
 import { runServe } from './serve.js';
 
 /** Injectable IO. `out` is reserved for artifacts (e.g. ADR markdown); `err` for diagnostics. */
@@ -37,6 +37,7 @@ Commands:
   serve        Run the localhost host shell over a directory (DEFAULT command).
   validate     Validate every decision + catalog under a directory (CI-friendly).
   render-adr   Render a decision to a deterministic Markdown ADR.
+  mcp          Run the decisions MCP server over stdio.
 
 With no command, "serve" runs. Run "workspec-decisions <command> --help" for
 command options.
@@ -57,18 +58,10 @@ references inside levers are reported as (non-fatal) warnings. Prints
 "file:line:col: message" diagnostics and exits non-zero on any error.
 `;
 
-/** One machine-readable validate finding — mirrors `@workspec/c4-model`'s `C4Diagnostic` shape. */
-export interface ValidateDiagnostic {
-  readonly severity: 'error' | 'warning';
-  readonly code: string;
-  readonly message: string;
-  /** Ref (repo-relative path) of the artifact this diagnostic is about. */
-  readonly file: string;
-  /** 1-based source line inside `file`, when known. */
-  readonly line?: number;
-  /** 1-based source column, present only alongside `line`. */
-  readonly col?: number;
-}
+// Re-exported for existing external importers of `ValidateDiagnostic` from
+// this module; the type itself now lives with `collectDiagnostics` in
+// `collect-diagnostics.ts`, its actual producer.
+export type { ValidateDiagnostic } from './collect-diagnostics.js';
 
 const RENDER_HELP = `workspec-decisions render-adr — render a decision as a Markdown ADR
 
@@ -123,124 +116,23 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
   }
 
   const repo = new FsRepository(dir);
-  let errorCount = 0;
-  let warningCount = 0;
-  let fileCount = 0;
-  const diagnostics: ValidateDiagnostic[] = [];
+  // `fileCount` (every discovered artifact, valid or not) is independent of
+  // the diagnostics list (which only has entries for problems), so it's
+  // computed from the same discovery `collectDiagnostics` uses internally —
+  // a second, cheap directory walk, not a second validation pass.
+  const [catalogs, decisions, diagnostics] = await Promise.all([
+    repo.listCatalogs(),
+    repo.listDecisions(),
+    collectDiagnostics(repo),
+  ]);
+  const fileCount = catalogs.length + decisions.length;
 
-  // Catalogs first — validate each independently and cache the valid ones so a
-  // decision's ref-check reuses them.
-  const catalogCache = new Map<string, Catalog>();
-  for (const { ref } of await repo.listCatalogs()) {
-    fileCount += 1;
-    const parsed = parseCatalogYaml(await readFile(repo.resolve(ref), 'utf8'));
-    if (parsed.ok) {
-      catalogCache.set(ref, parsed.data);
-    } else {
-      for (const issue of parsed.errors) {
-        io.err(issueDiagnostic(ref, issue));
-        diagnostics.push({
-          severity: 'error',
-          code: 'parse-error',
-          message: issue.message,
-          file: ref,
-          line: issue.line,
-          col: issue.col,
-        });
-        errorCount += 1;
-      }
-    }
-  }
-
-  for (const { ref } of await repo.listDecisions()) {
-    fileCount += 1;
-    const text = await readFile(repo.resolve(ref), 'utf8');
-    const parsed = parseDecisionYaml(text);
-    if (!parsed.ok) {
-      for (const issue of parsed.errors) {
-        io.err(issueDiagnostic(ref, issue));
-        diagnostics.push({
-          severity: 'error',
-          code: 'parse-error',
-          message: issue.message,
-          file: ref,
-          line: issue.line,
-          col: issue.col,
-        });
-        errorCount += 1;
-      }
-      continue; // an invalid decision cannot be ref-checked
-    }
-
-    const decision = parsed.data;
-    const catalogRef = repo.resolveCatalogRef(ref, decision);
-    let catalog = catalogCache.get(catalogRef);
-    if (catalog === undefined) {
-      try {
-        catalog = await repo.readCatalog(catalogRef);
-      } catch (error) {
-        const why = error instanceof ArtifactValidationError ? 'is invalid' : 'cannot be read';
-        io.err(`${ref}:1:1: error: referenced catalog "${catalogRef}" ${why}\n`);
-        diagnostics.push({
-          severity: 'error',
-          code: 'dangling-catalog-ref',
-          message: `referenced catalog "${catalogRef}" ${why}`,
-          file: ref,
-          line: 1,
-          col: 1,
-        });
-        errorCount += 1;
-        continue;
-      }
-    }
-
-    // Authored SKU-line references — FATAL.
-    const refErrors = validateRefs(decision, catalog);
-    if (refErrors.length > 0) {
-      const locate = makeLocator(text);
-      for (const refError of refErrors) {
-        const oi = decision.spec.options.findIndex((o) => o.id === refError.optionId);
-        const option = oi >= 0 ? decision.spec.options[oi] : undefined;
-        const li = option ? option.lines.findIndex((l) => l.id === refError.lineId) : -1;
-        const path =
-          oi >= 0 && li >= 0
-            ? ['spec', 'options', oi, 'lines', li, refError.field]
-            : ['spec', 'options'];
-        const pos = locate(path);
-        io.err(`${ref}:${pos.line}:${pos.col}: error: ${refError.message}\n`);
-        diagnostics.push({
-          severity: 'error',
-          code: `dangling-${refError.field}-ref`,
-          message: refError.message,
-          file: ref,
-          line: pos.line,
-          col: pos.col,
-        });
-        errorCount += 1;
-      }
-    }
-
-    // Lever references — NON-fatal warnings (the engine falls back to PAYG/24×7).
-    const warnings = collectLeverRefWarnings(decision, catalog);
-    if (warnings.length > 0) {
-      const locate = makeLocator(text);
-      for (const warning of warnings) {
-        const pos = locate(warning.path);
-        io.err(`${ref}:${pos.line}:${pos.col}: warning: ${warning.message}\n`);
-        diagnostics.push({
-          severity: 'warning',
-          code: `dangling-lever-${warning.field}-ref`,
-          message: warning.message,
-          file: ref,
-          line: pos.line,
-          col: pos.col,
-        });
-        warningCount += 1;
-      }
-    }
-  }
+  for (const diagnostic of diagnostics) io.err(formatDiagnostic(diagnostic));
 
   if (json) io.out(`${JSON.stringify(diagnostics)}\n`);
+
+  const errorCount = diagnostics.filter((d) => d.severity === 'error').length;
+  const warningCount = diagnostics.filter((d) => d.severity === 'warning').length;
 
   if (errorCount === 0) {
     const suffix = warningCount > 0 ? `, ${warningCount} warning(s)` : '';
@@ -343,6 +235,8 @@ export async function run(argv: string[], io: CliIO = defaultIO): Promise<number
       return runValidate(rest, io);
     case 'render-adr':
       return runRenderAdr(rest, io);
+    case 'mcp':
+      return runMcp(rest, io);
     case undefined:
       // No subcommand → start the host (the default command).
       return runServe(rest, io);
