@@ -2,20 +2,20 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-hosting
+  slug: hosting-platform
+spec:
   title: 'Hosting platform for the data and delivery services'
   status: exploring
   created: '2026-07-01'
   deciders:
     - 'Platform Engineering'
-spec:
   context: >-
     The data-management and delivery services need a consolidated hosting
     platform. The delivery service runs on App Service today; the data
     warehouse and batch jobs are outgrowing it. We need a like-for-like
     comparison of where these workloads should run — costed across dev / test /
     prod and weighed on ops, scale, isolation and lock-in.
-  catalog: ./platform.catalog.yaml
+  catalog: platform
   currency: NZD
   environments:
     - dev

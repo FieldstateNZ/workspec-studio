@@ -6,10 +6,10 @@ Azure Container Apps across dev / test / prod.
 
 ## Artifacts
 
-| File                                                                 | Artifact                                         |
-| -------------------------------------------------------------------- | ------------------------------------------------ |
-| [`platform.catalog.yaml`](./platform.catalog.yaml)                   | Catalog — pricing modes, schedules, SKUs         |
-| [`hosting-platform.decision.yaml`](./hosting-platform.decision.yaml) | Decision — four costed options, criteria, levers |
+| File                                                                            | Artifact                                         |
+| -------------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`.workspec/catalogs/platform.yaml`](./.workspec/catalogs/platform.yaml)          | Catalog — pricing modes, schedules, SKUs         |
+| [`.workspec/decisions/hosting-platform.yaml`](./.workspec/decisions/hosting-platform.yaml) | Decision — four costed options, criteria, levers |
 
 These are the **golden fixture** ported from the design prototype's `engine.js`. They validate
 against `@workspec/decision-schema` and become the cross-implementation conformance artifact the

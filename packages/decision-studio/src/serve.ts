@@ -15,7 +15,7 @@ Usage:
   workspec-decisions [serve] [--dir <path>] [--port <n>] [--host <addr>]
 
 Options:
-  --dir <path>    Directory of *.decision.yaml / *.catalog.yaml to serve
+  --dir <path>    Root containing .workspec/{decisions,catalogs}/ to serve
                   (default: current directory).
   --port <n>      Port to listen on (default: 4173).
   --host <addr>   Address to bind (default: 127.0.0.1 — localhost only).

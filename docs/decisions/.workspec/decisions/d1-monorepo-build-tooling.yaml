@@ -2,19 +2,19 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-d1-monorepo-tooling
+  slug: d1-monorepo-build-tooling
+spec:
   title: 'D1 — Monorepo structure & build tooling'
   status: decided
   created: '2026-07-01'
   deciders:
     - 'Fieldstate Dev Lead'
-spec:
   context: >-
     The four packages (schema ← engine ← ui ← studio) need a monorepo layout, a
     build, and a task runner. Costs below are the ongoing monthly carrying effort
     of each choice (config drift, upgrades, CI wiring) in loaded engineer-days;
     one-off setup was roughly comparable across all three, so it is not costed.
-  catalog: ./decisions.catalog.yaml
+  catalog: decisions
   currency: NZD
   environments:
     - ongoing

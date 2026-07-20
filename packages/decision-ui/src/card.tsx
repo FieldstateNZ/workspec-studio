@@ -18,7 +18,7 @@ import { compute, recommend } from '@workspec/decision-engine';
 import type { Catalog, Decision, Ref } from '@workspec/decision-schema';
 import { Card, Lbl } from '@workspec/design/components';
 import { useCatalog, useDecision } from './context.js';
-import { resolveCatalogRef } from './host.js';
+import { decisionSlug, resolveCatalogRef } from './host.js';
 import { money } from './format.js';
 import { DecisionStatusPill } from './primitives.js';
 
@@ -63,14 +63,14 @@ export function DecisionCard(props: DecisionCardProps): ReactElement {
   const catalog = catalogQuery.data;
   if (catalog === undefined) return <CardShell tone="error">Catalog not found.</CardShell>;
 
-  return <CardView decision={decision} catalog={catalog} />;
+  return <CardView decisionRef={decisionRef} decision={decision} catalog={catalog} />;
 }
 
-function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement {
-  const { decision, catalog } = props;
+function CardView(props: { decisionRef: Ref; decision: Decision; catalog: Catalog }): ReactElement {
+  const { decisionRef, decision, catalog } = props;
   const result = useMemo(() => compute(decision, catalog), [decision, catalog]);
 
-  const status = decision.metadata.status;
+  const status = decision.spec.status;
   const decided = status === 'decided';
   const outcome = decision.spec.outcome;
 
@@ -87,11 +87,11 @@ function CardView(props: { decision: Decision; catalog: Catalog }): ReactElement
   return (
     <Card className="ds-card">
       <div className="ds-card-head">
-        <Lbl>{`Decision · ${decision.metadata.id}`}</Lbl>
+        <Lbl>{`Decision · ${decisionSlug(decision, decisionRef)}`}</Lbl>
         <DecisionStatusPill status={status} />
       </div>
 
-      <h3 className="ds-card-title">{decision.metadata.title}</h3>
+      <h3 className="ds-card-title">{decision.spec.title}</h3>
 
       {hasChoice ? (
         <div className="ds-card-choice">

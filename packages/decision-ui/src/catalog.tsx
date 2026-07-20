@@ -216,9 +216,9 @@ function CatalogView(props: { catalogRef: Ref; initialCatalog: Catalog }): React
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
           <Lbl>Cost catalog · the priced tables every model draws from</Lbl>
-          <h1 className="ds-dechead-title">{draft.metadata.name ?? 'Cost catalog'}</h1>
+          <h1 className="ds-dechead-title">{draft.spec.name ?? 'Cost catalog'}</h1>
           <p className="ds-ctx">
-            {`${draft.metadata.currency} · prices as of ${draft.metadata.asOf}. `}
+            {`${draft.spec.currency} · prices as of ${draft.spec.asOf}. `}
             SKUs, pricing modes and schedules feed the engine directly — editing a price reprices
             every option that references it.
           </p>

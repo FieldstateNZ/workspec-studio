@@ -51,7 +51,7 @@ export function Shell(props: ShellProps): ReactNode {
             {list.length === 0 && <option value="">No decisions found</option>}
             {list.map((d) => (
               <option key={d.ref} value={d.ref}>
-                {d.title ?? d.id}
+                {d.title ?? d.slug}
               </option>
             ))}
           </select>

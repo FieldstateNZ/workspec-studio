@@ -14,8 +14,10 @@ function makeCatalog(): unknown {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Catalog',
-    metadata: { id: 'cat', currency: 'NZD', asOf: '2026-07-01' },
+    metadata: { slug: 'cat' },
     spec: {
+      currency: 'NZD',
+      asOf: '2026-07-01',
       pricingModes: [{ id: 'payg', label: 'PAYG', mult: 1, committed: false }],
       schedules: [{ id: 'always', label: '24x7', pct: 1 }],
       skus: [{ id: 'd4s_v5', label: 'D4s v5', family: 'compute', price: 190 }],
@@ -27,10 +29,12 @@ function makeDecision(): Record<string, unknown> {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Decision',
-    metadata: { id: 'dec', title: 'T', status: 'exploring' },
+    metadata: { slug: 'dec' },
     spec: {
+      title: 'T',
+      status: 'exploring',
       context: 'ctx',
-      catalog: './x.catalog.yaml',
+      catalog: 'x',
       currency: 'NZD',
       environments: ['dev', 'prod'],
       criteria: [{ id: 'cost', label: 'Cost', weight: 1 }],
@@ -209,7 +213,7 @@ describe('DecisionArtifact cross-field integrity', () => {
 
   it('accepts a well-formed decided outcome', () => {
     const doc = makeDecision();
-    (doc.metadata as { status: string }).status = 'decided';
+    (doc.spec as { status: string }).status = 'decided';
     (doc.spec as { outcome?: unknown }).outcome = {
       option: 'a',
       rationale: 'we accept X for Y',

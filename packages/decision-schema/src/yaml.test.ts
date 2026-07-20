@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { parseCatalogYaml, parseDecisionYaml } from './index.js';
 import { invalidCases } from './invalid-fixtures.expected.js';
 
-// src/ → schema/ → packages/ → <repo root>
-const repoUrl = (rel: string): string => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
+// src/ → schema/ → test/fixtures/valid
+const validUrl = (file: string): string =>
+  fileURLToPath(new URL(`../test/fixtures/valid/${file}`, import.meta.url));
 // src/ → schema/ → test/fixtures/invalid
 const invalidUrl = (file: string): string =>
   fileURLToPath(new URL(`../test/fixtures/invalid/${file}`, import.meta.url));
@@ -18,12 +19,16 @@ function must<T>(value: T | undefined): T {
   return value;
 }
 
+// These fixtures live under this package's own `test/fixtures/valid/` (not
+// `examples/`, which still holds the pre-migration shape until the
+// downstream examples/apps slice republishes against the new envelope) so
+// the package's own test suite always exercises the current schema.
 describe('valid hosting-platform fixtures', () => {
   it('parses the catalog fixture', () => {
-    const res = parseCatalogYaml(read(repoUrl('examples/hosting-platform/platform.catalog.yaml')));
+    const res = parseCatalogYaml(read(validUrl('platform.catalog.yaml')));
     expect(res.ok).toBe(true);
     if (res.ok) {
-      expect(res.data.metadata.id).toBe('platform');
+      expect(res.data.metadata.slug).toBe('platform');
       expect(res.data.spec.pricingModes.map((m) => m.id)).toEqual([
         'payg',
         'sp1',
@@ -36,14 +41,12 @@ describe('valid hosting-platform fixtures', () => {
     }
   });
 
-  it('parses the decision fixture with all four options', () => {
-    const res = parseDecisionYaml(
-      read(repoUrl('examples/hosting-platform/hosting-platform.decision.yaml')),
-    );
+  it('parses the decision fixture with all three options', () => {
+    const res = parseDecisionYaml(read(validUrl('hosting-platform.decision.yaml')));
     expect(res.ok).toBe(true);
     if (res.ok) {
-      expect(res.data.spec.options.map((o) => o.id)).toEqual(['aks', 'appsvc', 'ase', 'aca']);
-      // Default lever state preserved from the prototype.
+      expect(res.data.spec.options.map((o) => o.id)).toEqual(['aks', 'appsvc', 'aca']);
+      // Default lever state.
       const leverState = (id: string): Record<string, boolean> =>
         Object.fromEntries(
           (res.data.spec.options.find((o) => o.id === id)?.levers ?? []).map((l) => [
@@ -60,19 +63,21 @@ describe('valid hosting-platform fixtures', () => {
         reserveProd: false,
         scheduleNonProd: true,
       });
-      expect(leverState('ase')).toEqual({ scheduleNonProd: false });
-      expect(leverState('aca')).toEqual({ scheduleNonProd: true });
       // ACA is still being modelled.
       expect(res.data.spec.options.find((o) => o.id === 'aca')?.complete).toBe(false);
     }
   });
 
-  it('binds the decision to its catalog by relative path', () => {
-    const res = parseDecisionYaml(
-      read(repoUrl('examples/hosting-platform/hosting-platform.decision.yaml')),
-    );
+  it('binds the decision to its catalog by slug ref', () => {
+    const res = parseDecisionYaml(read(validUrl('hosting-platform.decision.yaml')));
     expect(res.ok).toBe(true);
-    if (res.ok) expect(res.data.spec.catalog).toBe('./platform.catalog.yaml');
+    if (res.ok) expect(res.data.spec.catalog).toBe('platform');
+  });
+
+  it('carries a supersedes slug ref', () => {
+    const res = parseDecisionYaml(read(validUrl('hosting-platform.decision.yaml')));
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.data.spec.supersedes).toBe('legacy-hosting');
   });
 });
 

@@ -3,8 +3,13 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo",
+    // Reset the `types: ["node"]` the typecheck config needs for tests: the
+    // published surface is browser-safe, so the build must fail if a non-test
+    // src file reaches for Node globals or `node:*` modules.
+    "types": []
   },
+  "references": [{ "path": "../schema-core/tsconfig.build.json" }],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

@@ -2,11 +2,11 @@
 apiVersion: workspec.io/v1alpha1
 kind: Catalog
 metadata:
-  id: project-effort
+  slug: decisions
+spec:
   name: 'Project effort catalog'
   currency: NZD
   asOf: '2026-07-01'
-spec:
   # These are the project's OWN architecture decisions, dogfooded through the
   # same format. The "cost" here is ongoing effort — a loaded engineer-day — plus
   # any SaaS seats a choice drags in. Costs are the *ongoing monthly* carrying

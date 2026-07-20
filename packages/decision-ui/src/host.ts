@@ -6,6 +6,7 @@
 // WorkSpec Enterprise or as a module-federation remote (S6) with no forks.
 
 import type { Decision, DecisionRepositoryPort, LinkType, Ref } from '@workspec/decision-schema';
+import { typeDirectoryFor } from '@workspec/decision-schema';
 
 /**
  * A navigation target the host understands. The UI hands one to
@@ -99,41 +100,46 @@ export function repositoryId(repository: DecisionRepositoryPort): string {
 }
 
 // ── Catalog ref resolution (mirrors FsRepository.resolveCatalogRef) ──────────
-// A decision names its catalog by a path relative to itself (`spec.catalog`).
-// The UI resolves that against the decision's ref using pure POSIX path math, so
-// the same logic works for filesystem refs, http refs, and memory refs without
-// pulling in `node:path` (which is not available in the browser).
+// A decision names its catalog by a bare intra-tree SLUG (`spec.catalog`), not
+// a path relative to itself — the catalog lives at
+// `.workspec/catalogs/<slug>.yaml` regardless of where the decision file is.
+// `decisionRef` is accepted (and ignored, beyond typing) for call-site
+// symmetry with `FsRepository.resolveCatalogRef` and the pre-migration
+// signature every call site here already threads through.
 
-function posixDirname(ref: string): string {
-  const slash = ref.lastIndexOf('/');
-  return slash === -1 ? '.' : ref.slice(0, slash) || '/';
+/**
+ * Resolve the catalog ref a decision points at (`spec.catalog`): always
+ * `.workspec/catalogs/<slug>.yaml`. Matches `FsRepository.resolveCatalogRef`
+ * so a decision's catalog can be read back through the same port.
+ */
+export function resolveCatalogRef(_decisionRef: Ref, decision: Decision): Ref {
+  return `${typeDirectoryFor('Catalog')}/${decision.spec.catalog}.yaml`;
 }
 
-function posixNormalize(path: string): string {
-  const isAbsolute = path.startsWith('/');
-  const parts = path.split('/');
-  const stack: string[] = [];
-  for (const part of parts) {
-    if (part === '' || part === '.') continue;
-    if (part === '..') {
-      if (stack.length > 0 && stack[stack.length - 1] !== '..') stack.pop();
-      else if (!isAbsolute) stack.push('..');
-    } else {
-      stack.push(part);
-    }
-  }
-  const joined = stack.join('/');
-  return isAbsolute ? `/${joined}` : joined || '.';
+// ── Decision identity (there is no more `metadata.id`) ───────────────────────
+// Identity is now the filename slug: `.workspec/decisions/<slug>.yaml`. The
+// authoritative source is a repository's `listDecisions()` (`DecisionRef.slug`,
+// filename-derived by `FsRepository`), but the views below only carry a
+// `Decision` + its `Ref` at the point they need to display identity, not a
+// full `DecisionRef` list entry. `decisionSlug` is the local stand-in: prefer
+// the artifact's own `metadata.slug` when authored, otherwise recover the
+// filename stem from `ref` (mirroring `@workspec/schema-core`'s
+// `slugFromPath`), falling back to the raw ref for a non-file-shaped ref
+// (e.g. an opaque id in a test double).
+
+function slugFromRef(ref: Ref): string | null {
+  if (!ref.endsWith('.yaml')) return null;
+  const withoutExtension = ref.slice(0, -'.yaml'.length);
+  const lastSlash = withoutExtension.lastIndexOf('/');
+  const slug = lastSlash === -1 ? withoutExtension : withoutExtension.slice(lastSlash + 1);
+  return slug.length > 0 ? slug : null;
 }
 
 /**
- * Resolve the catalog ref a decision points at, given the decision's own ref.
- * `resolveCatalogRef("examples/x.decision.yaml", …spec.catalog="./y.catalog.yaml")`
- * → `"examples/y.catalog.yaml"`. Matches `FsRepository.resolveCatalogRef` so a
- * decision's catalog can be read back through the same port.
+ * A decision's display identity: `metadata.slug` when the artifact carries
+ * one explicitly, otherwise the filename-derived slug of `ref`, otherwise
+ * `ref` itself.
  */
-export function resolveCatalogRef(decisionRef: Ref, decision: Decision): Ref {
-  const dir = posixDirname(decisionRef);
-  const joined = posixNormalize(`${dir}/${decision.spec.catalog}`);
-  return joined.replace(/^\.\//, '');
+export function decisionSlug(decision: Decision, ref: Ref): string {
+  return decision.metadata.slug ?? slugFromRef(ref) ?? ref;
 }

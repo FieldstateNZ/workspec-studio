@@ -2,20 +2,20 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-d5-enterprise-seam
+  slug: d5-enterprise-mount-seam
+spec:
   title: 'D5 — Enterprise mount seam for the UI'
   status: decided
   created: '2026-07-01'
   deciders:
     - 'Fieldstate Dev Lead'
-spec:
   context: >-
     The open-core promise is that the SAME decision-ui runs standalone and inside
     WorkSpec Enterprise's shell, with no component forks — links that are inert
     labels standalone come alive against the enterprise graph. How should
     Enterprise mount the UI? Costs below are ongoing monthly integration +
     maintenance effort in loaded engineer-days.
-  catalog: ./decisions.catalog.yaml
+  catalog: decisions
   currency: NZD
   environments:
     - ongoing

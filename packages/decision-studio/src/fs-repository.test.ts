@@ -1,6 +1,6 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
@@ -9,6 +9,8 @@ import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs
 const repoPath = (rel: string): string =>
   fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const HOSTING_DIR = repoPath('examples/hosting-platform');
+const DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
+const CATALOG_REF = '.workspec/catalogs/platform.yaml';
 
 /** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
 function must<T>(value: T | undefined): T {
@@ -26,37 +28,43 @@ afterEach(async () => {
 });
 
 describe('FsRepository discovery', () => {
-  it('finds the hosting-platform decision + catalog fixtures with metadata ids', async () => {
+  it('finds the hosting-platform decision + catalog fixtures with filename-derived slugs', async () => {
     const repo = new FsRepository(HOSTING_DIR);
     const decisions = await repo.listDecisions();
     const catalogs = await repo.listCatalogs();
 
     expect(decisions).toEqual([
       {
-        ref: 'hosting-platform.decision.yaml',
-        id: 'dec-hosting',
+        ref: DECISION_REF,
+        slug: 'hosting-platform',
         title: 'Hosting platform for the data and delivery services',
       },
     ]);
     expect(catalogs).toEqual([
-      { ref: 'platform.catalog.yaml', id: 'platform', title: 'Hosting platform catalog' },
+      { ref: CATALOG_REF, slug: 'platform', title: 'Hosting platform catalog' },
     ]);
   });
 
-  it('walks nested directories and skips node_modules/dist/.git', async () => {
-    await mkdir(join(dir, 'a', 'b'), { recursive: true });
-    await mkdir(join(dir, 'node_modules', 'pkg'), { recursive: true });
-    await mkdir(join(dir, 'dist'), { recursive: true });
-    await writeFile(
-      join(dir, 'a', 'b', 'nested.decision.yaml'),
-      await readFile(join(HOSTING_DIR, 'hosting-platform.decision.yaml')),
-    );
-    await writeFile(join(dir, 'node_modules', 'pkg', 'ignored.decision.yaml'), 'noise');
-    await writeFile(join(dir, 'dist', 'ignored.catalog.yaml'), 'noise');
-
+  it('does not discover an artifact written outside its kind directory', async () => {
     const repo = new FsRepository(dir);
-    const decisions = await repo.listDecisions();
-    expect(decisions.map((d) => d.ref)).toEqual(['a/b/nested.decision.yaml']);
+    const hosting = new FsRepository(HOSTING_DIR);
+    const decision = await hosting.readDecision(DECISION_REF);
+    await repo.writeDecision('stray.yaml', decision);
+    await repo.writeDecision('.workspec/catalogs/wrong-dir.yaml', decision);
+    expect(await repo.listDecisions()).toEqual([]);
+  });
+
+  it('does not recurse into a subdirectory of a kind directory', async () => {
+    const repo = new FsRepository(dir);
+    const hosting = new FsRepository(HOSTING_DIR);
+    const decision = await hosting.readDecision(DECISION_REF);
+    await repo.writeDecision('.workspec/decisions/team-a/nested.yaml', decision);
+    expect(await repo.listDecisions()).toEqual([]);
+  });
+
+  it('an absent kind directory yields zero artifacts, not an error', async () => {
+    const repo = new FsRepository(dir);
+    expect(await repo.listDecisions()).toEqual([]);
     expect(await repo.listCatalogs()).toEqual([]);
   });
 });
@@ -64,7 +72,9 @@ describe('FsRepository discovery', () => {
 describe('FsRepository.resolve — ref containment (issue #52)', () => {
   it('still resolves a normal relative ref (no regression)', () => {
     const repo = new FsRepository(dir);
-    expect(repo.resolve('a/b.decision.yaml')).toBe(join(dir, 'a', 'b.decision.yaml'));
+    expect(repo.resolve('.workspec/decisions/a.yaml')).toBe(
+      join(dir, '.workspec', 'decisions', 'a.yaml'),
+    );
   });
 
   it('rejects a POSIX absolute ref instead of trusting it unchanged', () => {
@@ -81,10 +91,10 @@ describe('FsRepository.resolve — ref containment (issue #52)', () => {
 describe('FsRepository read', () => {
   it('reads + validates the hosting-platform fixtures', async () => {
     const repo = new FsRepository(HOSTING_DIR);
-    const decision = await repo.readDecision('hosting-platform.decision.yaml');
-    const catalog = await repo.readCatalog('platform.catalog.yaml');
-    expect(decision.metadata.id).toBe('dec-hosting');
-    expect(catalog.metadata.id).toBe('platform');
+    const decision = await repo.readDecision(DECISION_REF);
+    const catalog = await repo.readCatalog(CATALOG_REF);
+    expect(decision.metadata.slug).toBe('hosting-platform');
+    expect(catalog.metadata.slug).toBe('platform');
   });
 
   it('throws ArtifactValidationError with located issues on an invalid file', async () => {
@@ -94,11 +104,10 @@ describe('FsRepository read', () => {
         '# yaml-language-server: $schema=x',
         'apiVersion: workspec.io/v1alpha1',
         'kind: Catalog',
-        'metadata:',
-        '  id: c',
+        'metadata: {}',
+        'spec:',
         '  currency: NZD',
         '  asOf: "2026-07-01"',
-        'spec:',
         '  pricingModes:',
         '    - id: payg',
         '      label: "PAYG"',
@@ -125,7 +134,7 @@ describe('FsRepository read', () => {
     } catch (error) {
       const e = error as ArtifactValidationError;
       expect(must(e.issues[0]).path).toBe('spec.schedules.0.pct');
-      expect(must(e.issues[0]).line).toBe(17);
+      expect(must(e.issues[0]).line).toBe(16);
     }
   });
 });
@@ -133,19 +142,18 @@ describe('FsRepository read', () => {
 describe('FsRepository write (round-trip + comment preservation)', () => {
   it('round-trips the hosting-platform decision preserving data and comments', async () => {
     // Seed the temp dir with the real hosting-platform fixtures.
-    const decisionText = await readFile(
-      join(HOSTING_DIR, 'hosting-platform.decision.yaml'),
-      'utf8',
-    );
-    const catalogText = await readFile(join(HOSTING_DIR, 'platform.catalog.yaml'), 'utf8');
-    await writeFile(join(dir, 'hosting-platform.decision.yaml'), decisionText);
-    await writeFile(join(dir, 'platform.catalog.yaml'), catalogText);
+    const decisionText = await readFile(join(HOSTING_DIR, DECISION_REF), 'utf8');
+    const catalogText = await readFile(join(HOSTING_DIR, CATALOG_REF), 'utf8');
+    await mkdir(dirname(join(dir, DECISION_REF)), { recursive: true });
+    await mkdir(dirname(join(dir, CATALOG_REF)), { recursive: true });
+    await writeFile(join(dir, DECISION_REF), decisionText);
+    await writeFile(join(dir, CATALOG_REF), catalogText);
 
     const repo = new FsRepository(dir);
-    const before = await repo.readDecision('hosting-platform.decision.yaml');
-    await repo.writeDecision('hosting-platform.decision.yaml', before);
+    const before = await repo.readDecision(DECISION_REF);
+    await repo.writeDecision(DECISION_REF, before);
 
-    const written = await readFile(join(dir, 'hosting-platform.decision.yaml'), 'utf8');
+    const written = await readFile(join(dir, DECISION_REF), 'utf8');
     // Directive header present exactly once.
     expect(written.match(/yaml-language-server/g)).toHaveLength(1);
     expect(written.startsWith('# yaml-language-server: $schema=')).toBe(true);
@@ -155,34 +163,36 @@ describe('FsRepository write (round-trip + comment preservation)', () => {
     expect(written).toContain('# Matches the flat `api` line');
 
     // Data round-trips exactly.
-    const after = await repo.readDecision('hosting-platform.decision.yaml');
+    const after = await repo.readDecision(DECISION_REF);
     expect(after).toEqual(before);
   });
 
   it('preserves the catalog section comments on round-trip', async () => {
-    const catalogText = await readFile(join(HOSTING_DIR, 'platform.catalog.yaml'), 'utf8');
-    await writeFile(join(dir, 'platform.catalog.yaml'), catalogText);
+    const catalogText = await readFile(join(HOSTING_DIR, CATALOG_REF), 'utf8');
+    await mkdir(dirname(join(dir, CATALOG_REF)), { recursive: true });
+    await writeFile(join(dir, CATALOG_REF), catalogText);
     const repo = new FsRepository(dir);
-    const before = await repo.readCatalog('platform.catalog.yaml');
-    await repo.writeCatalog('platform.catalog.yaml', before);
-    const written = await readFile(join(dir, 'platform.catalog.yaml'), 'utf8');
+    const before = await repo.readCatalog(CATALOG_REF);
+    await repo.writeCatalog(CATALOG_REF, before);
+    const written = await readFile(join(dir, CATALOG_REF), 'utf8');
     expect(written).toContain('# Pricing modes are multipliers');
     expect(written).toContain('# SKUs are priced');
-    expect(await repo.readCatalog('platform.catalog.yaml')).toEqual(before);
+    expect(await repo.readCatalog(CATALOG_REF)).toEqual(before);
   });
 
   it('patches a changed value while keeping surrounding comments', async () => {
-    const catalogText = await readFile(join(HOSTING_DIR, 'platform.catalog.yaml'), 'utf8');
-    await writeFile(join(dir, 'platform.catalog.yaml'), catalogText);
+    const catalogText = await readFile(join(HOSTING_DIR, CATALOG_REF), 'utf8');
+    await mkdir(dirname(join(dir, CATALOG_REF)), { recursive: true });
+    await writeFile(join(dir, CATALOG_REF), catalogText);
     const repo = new FsRepository(dir);
-    const catalog = await repo.readCatalog('platform.catalog.yaml');
+    const catalog = await repo.readCatalog(CATALOG_REF);
     // Bump a SKU price and write back.
     must(catalog.spec.skus[0]).price = 999;
-    await repo.writeCatalog('platform.catalog.yaml', catalog);
+    await repo.writeCatalog(CATALOG_REF, catalog);
 
-    const reread = await repo.readCatalog('platform.catalog.yaml');
+    const reread = await repo.readCatalog(CATALOG_REF);
     expect(must(reread.spec.skus[0]).price).toBe(999);
-    const written = await readFile(join(dir, 'platform.catalog.yaml'), 'utf8');
+    const written = await readFile(join(dir, CATALOG_REF), 'utf8');
     expect(written).toContain('# Pricing modes are multipliers'); // comment survived the edit
     expect(written).toContain('999');
   });
@@ -191,18 +201,18 @@ describe('FsRepository write (round-trip + comment preservation)', () => {
     const repo = new FsRepository(dir);
     // Read the hosting-platform catalog from the example dir, write it to a brand-new ref.
     const exampleRepo = new FsRepository(HOSTING_DIR);
-    const catalog = await exampleRepo.readCatalog('platform.catalog.yaml');
-    await repo.writeCatalog('nested/new.catalog.yaml', catalog);
-    const written = await readFile(join(dir, 'nested', 'new.catalog.yaml'), 'utf8');
+    const catalog = await exampleRepo.readCatalog(CATALOG_REF);
+    await repo.writeCatalog('.workspec/catalogs/new.yaml', catalog);
+    const written = await readFile(join(dir, '.workspec', 'catalogs', 'new.yaml'), 'utf8');
     expect(written.startsWith('# yaml-language-server: $schema=')).toBe(true);
-    expect(await repo.readCatalog('nested/new.catalog.yaml')).toEqual(catalog);
+    expect(await repo.readCatalog('.workspec/catalogs/new.yaml')).toEqual(catalog);
   });
 
   it('rejects writes that fail Zod validation', async () => {
     const repo = new FsRepository(dir);
-    const catalog = await new FsRepository(HOSTING_DIR).readCatalog('platform.catalog.yaml');
+    const catalog = await new FsRepository(HOSTING_DIR).readCatalog(CATALOG_REF);
     must(catalog.spec.schedules[0]).pct = 1.5; // out of range
-    await expect(repo.writeCatalog('platform.catalog.yaml', catalog)).rejects.toBeInstanceOf(
+    await expect(repo.writeCatalog(CATALOG_REF, catalog)).rejects.toBeInstanceOf(
       ArtifactValidationError,
     );
   });

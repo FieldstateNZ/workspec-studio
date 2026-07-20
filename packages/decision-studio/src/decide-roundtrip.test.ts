@@ -59,9 +59,9 @@ describe('decide flow round-trips to YAML on disk', () => {
 
     // Re-reading validates, and the SAME renderer render-adr uses includes it.
     const reread = await repo.readDecision(ref);
-    expect(reread.metadata.status).toBe('decided');
+    expect(reread.spec.status).toBe('decided');
     expect(reread.spec.outcome?.option).toBe('aks');
-    const markdown = renderAdrMarkdown(buildAdrModel(reread, catalog));
+    const markdown = renderAdrMarkdown(buildAdrModel(reread, catalog, 'hosting-platform'));
     expect(markdown).toContain('- **Status:** Accepted');
     expect(markdown).toContain('- **Decided by:** Platform Engineering');
     expect(markdown).toContain(RATIONALE);
@@ -78,7 +78,7 @@ describe('decide flow round-trips to YAML on disk', () => {
     await repo.writeDecision(ref, reopen(decidedOnDisk));
 
     const reopened = await repo.readDecision(ref);
-    expect(reopened.metadata.status).toBe('exploring');
+    expect(reopened.spec.status).toBe('exploring');
     expect(reopened.spec.outcome).toBeUndefined();
   });
 });

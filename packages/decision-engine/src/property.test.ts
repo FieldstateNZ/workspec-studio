@@ -10,9 +10,11 @@ import { applyLevers, computeOption, lineEnvCost } from './cost.js';
 const repoUrl = (rel: string): string => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 const read = (rel: string): string => readFileSync(repoUrl(rel), 'utf8');
 
-const catalogRes = parseCatalogYaml(read('examples/hosting-platform/platform.catalog.yaml'));
+const catalogRes = parseCatalogYaml(
+  read('examples/hosting-platform/.workspec/catalogs/platform.yaml'),
+);
 const decisionRes = parseDecisionYaml(
-  read('examples/hosting-platform/hosting-platform.decision.yaml'),
+  read('examples/hosting-platform/.workspec/decisions/hosting-platform.yaml'),
 );
 if (!catalogRes.ok) throw new Error('catalog fixture failed to parse');
 if (!decisionRes.ok) throw new Error('decision fixture failed to parse');

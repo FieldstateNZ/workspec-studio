@@ -10,8 +10,10 @@ function makeCatalog(): Catalog {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Catalog',
-    metadata: { id: 'cat', currency: 'NZD', asOf: '2026-07-01' },
+    metadata: { slug: 'cat' },
     spec: {
+      currency: 'NZD',
+      asOf: '2026-07-01',
       pricingModes: [
         { id: 'payg', label: 'PAYG', mult: 1, committed: false },
         { id: 'sp3', label: '3yr SP', mult: 0.56, committed: true },
@@ -241,10 +243,12 @@ describe('computeOption', () => {
     return {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'Decision',
-      metadata: { id: 'd', title: 'T', status: 'exploring' },
+      metadata: { slug: 'd' },
       spec: {
+        title: 'T',
+        status: 'exploring',
         context: 'c',
-        catalog: './x.catalog.yaml',
+        catalog: 'x',
         currency: 'NZD',
         environments: ['dev', 'test', 'prod'],
         criteria: [],
@@ -299,10 +303,12 @@ describe('validateRefs', () => {
     return {
       apiVersion: 'workspec.io/v1alpha1',
       kind: 'Decision',
-      metadata: { id: 'd', title: 'T', status: 'exploring' },
+      metadata: { slug: 'd' },
       spec: {
+        title: 'T',
+        status: 'exploring',
         context: 'c',
-        catalog: './x.catalog.yaml',
+        catalog: 'x',
         currency: 'NZD',
         environments: ['prod'],
         criteria: [],

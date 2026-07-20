@@ -26,7 +26,7 @@ const EXAMPLE = resolve(STUDIO_ROOT, '../../examples/hosting-platform');
 const PORT = Number(process.env.E2E_PORT ?? 4188);
 const BASE = `http://127.0.0.1:${PORT}`;
 
-const DECISION_FILE = 'hosting-platform.decision.yaml';
+const DECISION_FILE = '.workspec/decisions/hosting-platform.yaml';
 
 let server: ChildProcess;
 let tmpDir: string;
@@ -41,8 +41,8 @@ interface DiskOption {
   levers?: DiskLever[];
 }
 interface DiskDecision {
-  metadata: { status: string };
   spec: {
+    status: string;
     options: DiskOption[];
     outcome?: { option: string; rationale: string; decidedAt?: string };
   };
@@ -81,7 +81,7 @@ test.beforeAll(async () => {
 
   // Sanity: the copy starts life `exploring` with no outcome.
   const before = readDecisionOnDisk();
-  expect(before.metadata.status).toBe('exploring');
+  expect(before.spec.status).toBe('exploring');
   expect(before.spec.outcome).toBeUndefined();
 
   // 2. Boot the BUILT server exactly as `npx @workspec/decision-studio` would.
@@ -162,9 +162,9 @@ test('open → toggle lever → cost changes → decide → ADR → YAML on disk
   await expect(winningCard).toContainText('chosen');
 
   // ── The *.decision.yaml ON DISK gained status:decided + a recorded outcome ──
-  await expect.poll(() => readDecisionOnDisk().metadata.status).toBe('decided');
+  await expect.poll(() => readDecisionOnDisk().spec.status).toBe('decided');
   const disk = readDecisionOnDisk();
-  expect(disk.metadata.status).toBe('decided');
+  expect(disk.spec.status).toBe('decided');
   expect(disk.spec.outcome).toBeDefined();
   expect(disk.spec.outcome?.option).toBe('aks');
   expect(disk.spec.outcome?.rationale).toContain('unbounded scale ceiling');

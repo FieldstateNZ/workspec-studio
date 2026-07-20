@@ -26,19 +26,19 @@ export type Ref = string;
 export interface DecisionRef {
   /** The opaque ref to pass back to `readDecision`/`writeDecision`. */
   ref: Ref;
-  /** The decision's `metadata.id`. */
-  id: string;
-  /** The decision's `metadata.title`, when known. */
-  title?: string;
+  /** The decision's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The decision's `spec.title`. */
+  title: string;
 }
 
 /** A catalog list entry: its ref plus enough identity to render a picker. */
 export interface CatalogRef {
   /** The opaque ref to pass back to `readCatalog`/`writeCatalog`. */
   ref: Ref;
-  /** The catalog's `metadata.id`. */
-  id: string;
-  /** The catalog's `metadata.name`, when known. */
+  /** The catalog's `metadata.slug`, when the artifact carries one explicitly. */
+  slug?: string;
+  /** The catalog's `spec.name`, when known. */
   title?: string;
 }
 
@@ -129,8 +129,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): Decisio
       return Promise.resolve(
         [...decisions.entries()].map(([ref, decision]) => ({
           ref,
-          id: decision.metadata.id,
-          ...(decision.metadata.title !== undefined ? { title: decision.metadata.title } : {}),
+          ...(decision.metadata.slug !== undefined ? { slug: decision.metadata.slug } : {}),
+          title: decision.spec.title,
         })),
       );
     },
@@ -153,8 +153,8 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): Decisio
       return Promise.resolve(
         [...catalogs.entries()].map(([ref, catalog]) => ({
           ref,
-          id: catalog.metadata.id,
-          ...(catalog.metadata.name !== undefined ? { title: catalog.metadata.name } : {}),
+          ...(catalog.metadata.slug !== undefined ? { slug: catalog.metadata.slug } : {}),
+          ...(catalog.spec.name !== undefined ? { title: catalog.spec.name } : {}),
         })),
       );
     },

@@ -51,8 +51,8 @@ Options:
   --dir <path>   Directory to scan (default: current directory).
   --json         Also print the diagnostics array as JSON to stdout.
 
-Zod-validates every *.decision.yaml and *.catalog.yaml, then checks each
-decision's authored SKU-line references against its catalog. Dangling
+Zod-validates every artifact under .workspec/decisions and .workspec/catalogs,
+then checks each decision's authored SKU-line references against its catalog. Dangling
 references inside levers are reported as (non-fatal) warnings. Prints
 "file:line:col: message" diagnostics and exits non-zero on any error.
 `;
@@ -73,12 +73,12 @@ export interface ValidateDiagnostic {
 const RENDER_HELP = `workspec-decisions render-adr — render a decision as a Markdown ADR
 
 Usage:
-  workspec-decisions render-adr [--dir <path>] [--decision <ref|id>] [--out <file>]
+  workspec-decisions render-adr [--dir <path>] [--decision <ref|slug>] [--out <file>]
 
 Options:
-  --dir <path>        Directory to scan (default: current directory).
-  --decision <ref|id> Which decision to render (required if more than one).
-  --out <file>        Write the ADR here (default: stdout).
+  --dir <path>          Directory to scan (default: current directory).
+  --decision <ref|slug> Which decision to render (required if more than one).
+  --out <file>          Write the ADR here (default: stdout).
 
 The output is a GENERATED ARTIFACT — deterministic Markdown derived from the
 YAML. It is never committed (the repo's .gitignore ignores *.adr.md).
@@ -280,24 +280,27 @@ async function runRenderAdr(argv: string[], io: CliIO): Promise<number> {
 
   const decisions = await repo.listDecisions();
   if (decisions.length === 0) {
-    io.err(`render-adr: no *.decision.yaml found under ${dir}\n`);
+    io.err(`render-adr: no decisions found under ${dir}\n`);
     return 1;
   }
 
   let ref: string;
+  let slug: string;
   if (values.decision !== undefined) {
     const wanted = values.decision;
-    const found = decisions.find((d) => d.ref === wanted || d.id === wanted);
+    const found = decisions.find((d) => d.ref === wanted || d.slug === wanted);
     if (found === undefined) {
       io.err(`render-adr: no decision matching "${wanted}"\n`);
       return 1;
     }
     ref = found.ref;
+    slug = found.slug ?? wanted;
   } else if (decisions.length === 1 && decisions[0] !== undefined) {
     ref = decisions[0].ref;
+    slug = decisions[0].slug ?? ref;
   } else {
-    io.err('render-adr: multiple decisions found; pass --decision <ref|id>:\n');
-    for (const d of decisions) io.err(`  ${d.ref} (${d.id})\n`);
+    io.err('render-adr: multiple decisions found; pass --decision <ref|slug>:\n');
+    for (const d of decisions) io.err(`  ${d.ref} (${d.slug})\n`);
     return 1;
   }
 
@@ -318,7 +321,7 @@ async function runRenderAdr(argv: string[], io: CliIO): Promise<number> {
     return 1;
   }
 
-  const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog));
+  const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog, slug));
   if (values.out !== undefined) {
     const outPath = resolve(process.cwd(), values.out);
     await writeFile(outPath, markdown, 'utf8');

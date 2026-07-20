@@ -1,21 +1,30 @@
 // FsRepository — the standalone, filesystem-backed implementation of the S3
-// repository port. It discovers `*.decision.yaml` / `*.catalog.yaml` artifacts
-// by a manual recursive walk of a root directory (no glob dependency), reads
-// them through the schema's parse+validate helpers, and writes them back with
-// the `$schema` directive header and preserved comments.
+// `DecisionRepositoryPort`. Discovery is a per-kind DIRECTORY WALK of
+// `.workspec/<type-dir>` (from `@workspec/decision-schema`'s `typeDirectoryFor`)
+// — a flat, non-recursive `readdir`, not a whole-tree walk keyed off filename
+// suffixes. Identity is the FILENAME: a `.workspec/<kind-dir>/<slug>.yaml`
+// artifact's slug is derived from its filename via `slugFromPath`
+// (`@workspec/schema-core`), the file IS the identity — mirroring
+// `@workspec/cost-studio`'s and `@workspec/trace-studio`'s `FsRepository`s.
 //
-// Refs are repo-root-relative POSIX paths (`examples/hosting-platform/platform.catalog.yaml`)
+// Unlike those, writes here go through `serializeArtifact` (`./serialize.js`),
+// a comment-preserving patch step: Decision Studio's artifacts are hand-authored
+// and re-edited through the UI, so an author's section comments and lever notes
+// must survive a round-trip — byte-stable-from-scratch serialization is not the
+// product contract here the way it is for cost/traceability artifacts.
+//
+// Refs are repo-root-relative POSIX paths (`.workspec/decisions/hosting-platform.yaml`)
 // so they are stable and platform-independent.
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, posix, relative, resolve, sep } from 'node:path';
+import { dirname, posix, resolve } from 'node:path';
+import { FILE_EXTENSION, Slug, slugFromPath } from '@workspec/schema-core';
 import {
   CATALOG_SCHEMA_DIRECTIVE,
   DECISION_SCHEMA_DIRECTIVE,
-  isCatalogFile,
-  isDecisionFile,
   parseCatalogYaml,
   parseDecisionYaml,
+  typeDirectoryFor,
 } from '@workspec/decision-schema';
 import type {
   Catalog,
@@ -24,6 +33,7 @@ import type {
   DecisionRef,
   DecisionRepositoryPort,
   ParseIssue,
+  ParseResult,
   Ref,
 } from '@workspec/decision-schema';
 import { CatalogArtifact, DecisionArtifact } from '@workspec/decision-schema';
@@ -31,9 +41,6 @@ import { resolveWithinRoot } from './path-containment.js';
 import { serializeArtifact } from './serialize.js';
 
 export { RefEscapesRootError } from './path-containment.js';
-
-/** Directories never descended into during discovery. */
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'coverage']);
 
 /**
  * Thrown by `read*` when a file fails parse or schema validation. Carries the
@@ -53,26 +60,11 @@ export class ArtifactValidationError extends Error {
   }
 }
 
-function toPosixRef(root: string, absPath: string): Ref {
-  return relative(root, absPath).split(sep).join('/');
-}
-
-async function walk(dir: string, onFile: (absPath: string) => void): Promise<void> {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return; // unreadable dir → skip
-  }
-  for (const entry of entries) {
-    const full = resolve(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (SKIP_DIRS.has(entry.name)) continue;
-      await walk(full, onFile);
-    } else if (entry.isFile()) {
-      if (isDecisionFile(entry.name) || isCatalogFile(entry.name)) onFile(full);
-    }
-  }
+/** One `list*` entry: the ref, its filename-derived slug, and a best-effort title. */
+interface KindRef {
+  ref: Ref;
+  slug: string;
+  title?: string;
 }
 
 /**
@@ -101,64 +93,75 @@ export class FsRepository implements DecisionRepositoryPort {
     return resolveWithinRoot(this.root, ref);
   }
 
-  /** Resolve the catalog ref a decision points at (relative to the decision file). */
-  resolveCatalogRef(decisionRef: Ref, decision: Decision): Ref {
-    const dir = posix.dirname(decisionRef.split(sep).join('/'));
-    const joined = posix.normalize(posix.join(dir, decision.spec.catalog));
-    return joined.replace(/^\.\//, '');
+  /**
+   * Resolve the catalog SLUG a decision points at (`spec.catalog`) to its ref:
+   * `.workspec/catalogs/<slug>.yaml`. `decisionRef` is accepted (and ignored,
+   * beyond typing) for call-site symmetry with the pre-migration signature —
+   * the catalog ref no longer depends on where the decision file itself lives,
+   * since `spec.catalog` is a bare intra-tree slug, not a relative path.
+   */
+  resolveCatalogRef(_decisionRef: Ref, decision: Decision): Ref {
+    return posix.join(typeDirectoryFor('Catalog'), `${decision.spec.catalog}${FILE_EXTENSION}`);
   }
 
-  private async discover(): Promise<{ decisions: Ref[]; catalogs: Ref[] }> {
-    const decisions: Ref[] = [];
-    const catalogs: Ref[] = [];
-    await walk(this.root, (abs) => {
-      const ref = toPosixRef(this.root, abs);
-      if (isDecisionFile(abs)) decisions.push(ref);
-      else if (isCatalogFile(abs)) catalogs.push(ref);
-    });
-    decisions.sort();
-    catalogs.sort();
-    return { decisions, catalogs };
+  /**
+   * Lists one kind's artifacts: a flat (non-recursive) read of `kindDir`,
+   * filtered to `.yaml` files whose filename stem is a valid slug (a file
+   * that fails either check is not a WorkSpec artifact of this kind and is
+   * silently skipped). `slug` is always the FILENAME-derived identity (never
+   * a hand-written `metadata.slug`) — the file IS the identity, per the
+   * `.workspec/<kind-dir>/<slug>.yaml` convention. `title` is a best-effort
+   * read via `titleOf`: a file that fails to parse/validate still lists (by
+   * its filename slug alone) so `validate` can find and report it.
+   */
+  private async listKind<T>(
+    kindDir: string,
+    parse: (text: string) => ParseResult<T>,
+    titleOf: (data: T) => string | undefined,
+  ): Promise<KindRef[]> {
+    let entries;
+    try {
+      entries = await readdir(this.resolve(kindDir), { withFileTypes: true });
+    } catch {
+      return []; // absent kind dir → no artifacts of this kind
+    }
+
+    const names = entries
+      .filter((e) => e.isFile() && e.name.endsWith(FILE_EXTENSION))
+      .map((e) => e.name)
+      .sort();
+
+    const out: KindRef[] = [];
+    for (const name of names) {
+      const slug = slugFromPath(name);
+      if (slug === null || !Slug.safeParse(slug).success) continue; // not a valid artifact filename
+
+      const ref = posix.join(kindDir, name);
+      let title: string | undefined;
+      try {
+        const parsed = parse(await readFile(this.resolve(ref), 'utf8'));
+        if (parsed.ok) title = titleOf(parsed.data);
+      } catch {
+        /* keep the filename-derived slug only */
+      }
+      out.push({ ref, slug, ...(title !== undefined ? { title } : {}) });
+    }
+    return out;
   }
 
   async listDecisions(): Promise<DecisionRef[]> {
-    const { decisions } = await this.discover();
-    const out: DecisionRef[] = [];
-    for (const ref of decisions) {
-      let id = posix.basename(ref).replace(/\.decision\.yaml$/, '');
-      let title: string | undefined;
-      try {
-        const parsed = parseDecisionYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          title = parsed.data.metadata.title;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(title !== undefined ? { ref, id, title } : { ref, id });
-    }
-    return out;
+    const refs = await this.listKind<Decision>(
+      typeDirectoryFor('Decision'),
+      parseDecisionYaml,
+      (d) => d.spec.title,
+    );
+    // DecisionRef.title is required — a decision that fails to parse still
+    // lists, falling back to its filename slug as the display title.
+    return refs.map(({ ref, slug, title }) => ({ ref, slug, title: title ?? slug }));
   }
 
   async listCatalogs(): Promise<CatalogRef[]> {
-    const { catalogs } = await this.discover();
-    const out: CatalogRef[] = [];
-    for (const ref of catalogs) {
-      let id = posix.basename(ref).replace(/\.catalog\.yaml$/, '');
-      let title: string | undefined;
-      try {
-        const parsed = parseCatalogYaml(await readFile(this.resolve(ref), 'utf8'));
-        if (parsed.ok) {
-          id = parsed.data.metadata.id;
-          title = parsed.data.metadata.name;
-        }
-      } catch {
-        /* keep filename-derived id */
-      }
-      out.push(title !== undefined ? { ref, id, title } : { ref, id });
-    }
-    return out;
+    return this.listKind<Catalog>(typeDirectoryFor('Catalog'), parseCatalogYaml, (c) => c.spec.name);
   }
 
   async readDecision(ref: Ref): Promise<Decision> {
