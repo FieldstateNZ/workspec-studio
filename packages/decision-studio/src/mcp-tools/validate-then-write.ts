@@ -1,9 +1,16 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
 
-/** One issue from a Zod `safeParse` failure — only the shape this module needs, so it stays zod-import-free. */
+/**
+ * One issue from a Zod `safeParse` failure — only the shape this module
+ * needs, so it stays zod-import-free. `path` is `PropertyKey[]` (not
+ * `(string | number)[]`) to match Zod 4's `$ZodIssue.path`, which can in
+ * principle contain a `symbol` segment (never happens for the string/number
+ * object and array keys these artifacts use, but the type must still widen
+ * to satisfy structural assignability from a real `ZodError`).
+ */
 interface SafeParseIssue {
-  readonly path: (string | number)[];
+  readonly path: readonly PropertyKey[];
   readonly message: string;
 }
 

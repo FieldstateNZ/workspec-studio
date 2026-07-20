@@ -1,6 +1,6 @@
 import { isNode, LineCounter, parseDocument } from 'yaml';
 import type { Document } from 'yaml';
-import type { z, ZodTypeAny } from 'zod';
+import type { z } from 'zod';
 import { DecisionArtifact } from './decision.js';
 import { CatalogArtifact } from './catalog.js';
 import type { Decision } from './decision.js';
@@ -53,7 +53,7 @@ function locate(
   return { line: 1, col: 1 };
 }
 
-function parseArtifact<S extends ZodTypeAny>(text: string, schema: S): ParseResult<z.infer<S>> {
+function parseArtifact<T>(text: string, schema: z.ZodType<T>): ParseResult<T> {
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter, prettyErrors: true });
 
