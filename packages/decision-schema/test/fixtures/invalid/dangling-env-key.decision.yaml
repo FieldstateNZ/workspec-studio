@@ -2,12 +2,12 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-min
+  slug: dec-min
+spec:
   title: 'Minimal'
   status: exploring
-spec:
   context: 'ctx'
-  catalog: ./x.catalog.yaml
+  catalog: x
   currency: NZD
   environments: [dev, prod]
   criteria:

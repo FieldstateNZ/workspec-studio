@@ -5,6 +5,7 @@ import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
 import { createMemoryRepository } from '@workspec/decision-schema';
 import type { Decision } from '@workspec/decision-schema';
 import { DecisionAdr } from './adr.js';
+import { decisionSlug } from './host.js';
 import {
   HOSTING_CATALOG_REF,
   HOSTING_DECISION_REF,
@@ -58,13 +59,15 @@ describe('DecisionAdr — decide round-trips through the port', () => {
 
     // Persisted through the port with status + outcome.
     const stored = await repository.readDecision(HOSTING_DECISION_REF);
-    expect(stored.metadata.status).toBe('decided');
+    expect(stored.spec.status).toBe('decided');
     expect(stored.spec.outcome?.option).toBe('aks'); // recommended default winner
     expect(stored.spec.outcome?.rationale).toBe(rationaleText);
     expect(stored.spec.outcome?.decidedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // The SAME renderer the CLI uses now carries the rationale.
-    const markdown = renderAdrMarkdown(buildAdrModel(stored, loadHostingCatalog()));
+    const markdown = renderAdrMarkdown(
+      buildAdrModel(stored, loadHostingCatalog(), decisionSlug(stored, HOSTING_DECISION_REF)),
+    );
     expect(markdown).toContain(rationaleText);
     expect(markdown).toContain('- **Status:** Accepted');
 
@@ -75,7 +78,7 @@ describe('DecisionAdr — decide round-trips through the port', () => {
   it('reopens a decided decision back to exploring', async () => {
     const user = userEvent.setup();
     const decided = loadHostingDecision();
-    decided.metadata.status = 'decided';
+    decided.spec.status = 'decided';
     decided.spec.outcome = { option: 'aks', rationale: 'Prior rationale.' };
     const repository = createMemoryRepository({
       decisions: { [HOSTING_DECISION_REF]: decided },
@@ -88,14 +91,14 @@ describe('DecisionAdr — decide round-trips through the port', () => {
     await user.click(await screen.findByRole('button', { name: /Reopen decision/ }));
 
     const stored = await repository.readDecision(HOSTING_DECISION_REF);
-    expect(stored.metadata.status).toBe('exploring');
+    expect(stored.spec.status).toBe('exploring');
     expect(stored.spec.outcome).toBeUndefined();
   });
 
   it('persists an inline rationale edit on a decided record', async () => {
     const user = userEvent.setup();
     const decided = loadHostingDecision();
-    decided.metadata.status = 'decided';
+    decided.spec.status = 'decided';
     decided.spec.outcome = { option: 'aks', rationale: 'Original rationale.' };
     const repository = createMemoryRepository({
       decisions: { [HOSTING_DECISION_REF]: decided },
@@ -118,13 +121,13 @@ describe('DecisionAdr — decide round-trips through the port', () => {
 describe('DecisionAdr — superseded is read-only with a pointer', () => {
   function supersededRepo(): ReturnType<typeof createMemoryRepository> {
     const old: Decision = loadHostingDecision();
-    old.metadata.id = 'dec-old';
-    old.metadata.status = 'superseded';
+    old.metadata.slug = 'dec-old';
+    old.spec.status = 'superseded';
     const next: Decision = loadHostingDecision();
-    next.metadata.id = 'dec-new';
-    next.metadata.title = 'Hosting platform (revised)';
-    next.metadata.status = 'decided';
-    next.metadata.supersedes = 'dec-old';
+    next.metadata.slug = 'dec-new';
+    next.spec.title = 'Hosting platform (revised)';
+    next.spec.status = 'decided';
+    next.spec.supersedes = 'dec-old';
     next.spec.outcome = { option: 'aks', rationale: 'Revised choice.' };
     return createMemoryRepository({
       decisions: { 'old.decision.yaml': old, 'new.decision.yaml': next },

@@ -1,11 +1,17 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
+import { defineArtifact } from '@workspec/schema-core';
 import { identifier } from './common.js';
 
 // ── Catalog artifact (`*.catalog.yaml`) ─────────────────────────────────────
 // Porting decision P3: the OSS v1 catalog is the *simple engine model* — the
 // pricing tables `compute()` reads — NOT the rich provider/resource/tier/usage
 // model from the prototype's `catalog-data.js` (deferred to Enterprise).
+//
+// Built on `@workspec/schema-core`'s `defineArtifact`: the envelope
+// (apiVersion/kind/metadata) and identity (`metadata.slug`, loader-derived
+// from the filename when absent) are the shared shape every schema-core-based
+// kind uses. `name`/`currency`/`asOf` (former `metadata` fields) now live on
+// `spec` — they moved out of the old hand-rolled `metadata.id`/`...` envelope.
 
 /** A pricing mode: a named multiplier on a SKU's PAYG list price. */
 export const PricingMode = z
@@ -64,10 +70,9 @@ export const Sku = z
   })
   .describe('A SKU: a priced catalogue item, quoted as a monthly PAYG list price.');
 
-/** Catalog identity and provenance. */
-export const CatalogMetadata = z
+/** The catalog body: optional name, currency, price-capture date, and the priced tables the engine reads. */
+export const CatalogSpec = z
   .object({
-    id: identifier.describe('Stable catalog id, e.g. "platform".'),
     name: z.string().min(1).optional().describe('Optional human-readable catalog name.'),
     currency: z.string().min(1).describe('ISO 4217 currency code for all prices, e.g. "NZD".'),
     asOf: z
@@ -76,12 +81,6 @@ export const CatalogMetadata = z
       .describe(
         'Date the prices were captured, ISO 8601 (e.g. "2026-07-01"). Kept as a string so YAML does not coerce it to a date.',
       ),
-  })
-  .describe('Catalog identity and price provenance.');
-
-/** The priced tables the engine reads. */
-export const CatalogSpec = z
-  .object({
     pricingModes: z
       .array(PricingMode)
       .min(1)
@@ -92,24 +91,18 @@ export const CatalogSpec = z
       .describe('Available schedule presets referenced by SKU lines.'),
     skus: z.array(Sku).min(1).describe('Priced catalogue items referenced by SKU lines.'),
   })
-  .describe('The priced tables (modes, schedules, SKUs) the engine reads.');
+  .describe(
+    'The catalog body: optional name, currency, price-capture date, and the priced tables (modes, schedules, SKUs) the engine reads.',
+  );
 
 /** A `*.catalog.yaml` artifact: the simple engine pricing model (P3). */
-export const CatalogArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('Catalog').describe('Artifact kind discriminant.'),
-    metadata: CatalogMetadata.describe('Catalog identity and provenance.'),
-    spec: CatalogSpec.describe('The priced tables the engine reads.'),
-  })
-  .describe(
-    'A WorkSpec catalog artifact: the simple engine pricing model (pricing modes, schedules, SKUs).',
-  );
+export const CatalogArtifact = defineArtifact('Catalog', CatalogSpec).describe(
+  'A WorkSpec catalog artifact: the simple engine pricing model (pricing modes, schedules, SKUs).',
+);
 
 // Inferred TypeScript types (Zod is the single source of truth).
 export type PricingMode = z.infer<typeof PricingMode>;
 export type Schedule = z.infer<typeof Schedule>;
 export type Sku = z.infer<typeof Sku>;
-export type CatalogMetadata = z.infer<typeof CatalogMetadata>;
 export type CatalogSpec = z.infer<typeof CatalogSpec>;
 export type Catalog = z.infer<typeof CatalogArtifact>;

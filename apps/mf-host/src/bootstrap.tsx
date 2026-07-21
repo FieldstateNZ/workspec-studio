@@ -33,8 +33,8 @@ import {
   createCostSeedRepository,
 } from './cost-seed.js';
 // The hosting-platform fixtures as raw strings, parsed at runtime into the MemoryRepository.
-import hostingDecisionYaml from '../../../examples/hosting-platform/hosting-platform.decision.yaml?raw';
-import hostingCatalogYaml from '../../../examples/hosting-platform/platform.catalog.yaml?raw';
+import hostingDecisionYaml from '../../../examples/hosting-platform/.workspec/decisions/hosting-platform.yaml?raw';
+import hostingCatalogYaml from '../../../examples/hosting-platform/.workspec/catalogs/platform.yaml?raw';
 import './smoke.css';
 
 // Stamp the host React for the single-instance probe (must precede remote loads).
@@ -57,8 +57,8 @@ const TagPlanView = (await import('costStudio/TagPlanView')).default;
 const { reactProbe: costReactProbe } = await import('costStudio/reactProbe');
 
 // ── Seed the in-memory repository from the hosting-platform fixtures ───────────
-const DECISION_REF = 'hosting-platform.decision.yaml';
-const CATALOG_REF = 'platform.catalog.yaml';
+const DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
+const CATALOG_REF = '.workspec/catalogs/platform.yaml';
 
 const decision = parseDecisionYaml(hostingDecisionYaml);
 if (!decision.ok)

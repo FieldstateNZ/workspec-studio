@@ -1,22 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
   API_VERSION,
-  CATALOG_FILE_GLOB,
-  CATALOG_FILE_SUFFIX,
+  ARTIFACT_KINDS,
   CATALOG_SCHEMA_DIRECTIVE,
   CATALOG_SCHEMA_URL,
-  DECISION_FILE_GLOB,
-  DECISION_FILE_SUFFIX,
   DECISION_SCHEMA_DIRECTIVE,
   DECISION_SCHEMA_URL,
+  DECISION_SCHEMA_PACKAGE,
   SCHEMA_BASE_URL,
   SCHEMA_VERSION,
-  isCatalogFile,
-  isDecisionFile,
+  TYPE_DIRECTORIES,
   schemaDirective,
+  typeDirectoryFor,
 } from './index.js';
 
-describe('@workspec/decision-schema constants', () => {
+describe('@workspec/decision-schema', () => {
+  it('exports its package identity', () => {
+    expect(DECISION_SCHEMA_PACKAGE).toBe('@workspec/decision-schema');
+  });
+
   it('exposes the artifact schema version', () => {
     expect(SCHEMA_VERSION).toBe('v1alpha1');
   });
@@ -41,21 +43,10 @@ describe('@workspec/decision-schema constants', () => {
   });
 });
 
-describe('normative file naming', () => {
-  it('defines the suffixes and globs', () => {
-    expect(DECISION_FILE_SUFFIX).toBe('.decision.yaml');
-    expect(CATALOG_FILE_SUFFIX).toBe('.catalog.yaml');
-    expect(DECISION_FILE_GLOB).toBe('*.decision.yaml');
-    expect(CATALOG_FILE_GLOB).toBe('*.catalog.yaml');
-  });
-
-  it('classifies filenames by suffix', () => {
-    expect(isDecisionFile('hosting-platform.decision.yaml')).toBe(true);
-    expect(isDecisionFile('platform.catalog.yaml')).toBe(false);
-    expect(isCatalogFile('platform.catalog.yaml')).toBe(true);
-    expect(isCatalogFile('hosting-platform.decision.yaml')).toBe(false);
-    // A plain .yaml is neither.
-    expect(isDecisionFile('notes.yaml')).toBe(false);
-    expect(isCatalogFile('notes.yaml')).toBe(false);
+describe('TYPE_DIRECTORIES', () => {
+  it('maps each owned kind to its .workspec directory (discovery is a directory walk, not a suffix/glob)', () => {
+    expect(typeDirectoryFor('Decision')).toBe('.workspec/decisions');
+    expect(typeDirectoryFor('Catalog')).toBe('.workspec/catalogs');
+    expect(Object.keys(TYPE_DIRECTORIES).sort()).toEqual([...ARTIFACT_KINDS].sort());
   });
 });

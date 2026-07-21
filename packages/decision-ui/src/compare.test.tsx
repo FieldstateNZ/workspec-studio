@@ -74,7 +74,7 @@ describe('DecisionCompare — the pick row gates on capabilities.decide', () => 
 
     // The write went through the port with status + outcome.
     const stored = await repository.readDecision(HOSTING_DECISION_REF);
-    expect(stored.metadata.status).toBe('decided');
+    expect(stored.spec.status).toBe('decided');
     expect(stored.spec.outcome?.option).toBe('aks');
     expect((stored.spec.outcome?.rationale ?? '').length).toBeGreaterThan(0);
 

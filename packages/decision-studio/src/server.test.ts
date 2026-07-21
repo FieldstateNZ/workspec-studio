@@ -1,6 +1,6 @@
-import { cp, mkdtemp, rm } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,8 +10,15 @@ import { createDecisionMcpProvider } from './mcp-provider.js';
 import { createServer } from './server.js';
 
 const HOSTING_DIR = fileURLToPath(new URL('../../../examples/hosting-platform', import.meta.url));
-const DECISION_REF = 'hosting-platform.decision.yaml';
-const CATALOG_REF = 'platform.catalog.yaml';
+const DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
+const CATALOG_REF = '.workspec/catalogs/platform.yaml';
+
+/** Copies a fixture ref into `dir`, creating any nested parent directories first. */
+async function seedRef(dir: string, ref: string): Promise<void> {
+  const dest = join(dir, ref);
+  await mkdir(dirname(dest), { recursive: true });
+  await cp(join(HOSTING_DIR, ref), dest);
+}
 
 // MCP transport requires both content types in Accept; a canonical initialize body.
 const MCP_ACCEPT = 'application/json, text/event-stream';
@@ -34,8 +41,8 @@ describe('host server — read API over the hosting-platform example', () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'ds-host-read-'));
-    await cp(join(HOSTING_DIR, DECISION_REF), join(dir, DECISION_REF));
-    await cp(join(HOSTING_DIR, CATALOG_REF), join(dir, CATALOG_REF));
+    await seedRef(dir, DECISION_REF);
+    await seedRef(dir, CATALOG_REF);
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -46,7 +53,9 @@ describe('host server — read API over the hosting-platform example', () => {
     const res = await request(app).get('/api/decisions');
     expect(res.status).toBe(200);
     expect(res.body).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'dec-hosting', ref: DECISION_REF })]),
+      expect.arrayContaining([
+        expect.objectContaining({ slug: 'hosting-platform', ref: DECISION_REF }),
+      ]),
     );
   });
 
@@ -55,7 +64,7 @@ describe('host server — read API over the hosting-platform example', () => {
     const res = await request(app).get(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`);
     expect(res.status).toBe(200);
     const decision = res.body as Decision;
-    expect(decision.metadata.id).toBe('dec-hosting');
+    expect(decision.metadata.slug).toBe('hosting-platform');
     expect(decision.spec.options.map((o) => o.id)).toEqual(['aks', 'appsvc', 'ase', 'aca']);
   });
 
@@ -63,7 +72,7 @@ describe('host server — read API over the hosting-platform example', () => {
     const app = createServer({ dir });
     const res = await request(app).get(`/api/catalog?ref=${encodeURIComponent(CATALOG_REF)}`);
     expect(res.status).toBe(200);
-    expect(res.body.metadata.id).toBe('platform');
+    expect(res.body.metadata.slug).toBe('platform');
     expect(res.body.spec.skus.length).toBeGreaterThan(0);
   });
 
@@ -136,8 +145,8 @@ describe('host server — write round-trip through the port', () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'ds-host-write-'));
-    await cp(join(HOSTING_DIR, DECISION_REF), join(dir, DECISION_REF));
-    await cp(join(HOSTING_DIR, CATALOG_REF), join(dir, CATALOG_REF));
+    await seedRef(dir, DECISION_REF);
+    await seedRef(dir, CATALOG_REF);
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -147,7 +156,7 @@ describe('host server — write round-trip through the port', () => {
     const app = createServer({ dir });
     const read = await request(app).get(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`);
     const decision = read.body as Decision;
-    decision.metadata.title = 'Edited via the host API';
+    decision.spec.title = 'Edited via the host API';
 
     const write = await request(app)
       .put(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`)
@@ -155,7 +164,7 @@ describe('host server — write round-trip through the port', () => {
     expect(write.status).toBe(204);
 
     const reread = await request(app).get(`/api/decision?ref=${encodeURIComponent(DECISION_REF)}`);
-    expect((reread.body as Decision).metadata.title).toBe('Edited via the host API');
+    expect((reread.body as Decision).spec.title).toBe('Edited via the host API');
   });
 
   it('500s a PUT to ref "." (served root, EISDIR on write) with a generic body — no path leaked', async () => {
@@ -298,7 +307,7 @@ describe('host server — MCP mount (smoke)', () => {
     // catalog must be in it.
     const block = body.result.content[0];
     if (block === undefined) throw new Error('expected a content block');
-    const catalogs = JSON.parse(block.text) as { id: string }[];
-    expect(catalogs.some((c) => c.id === 'platform')).toBe(true);
+    const catalogs = JSON.parse(block.text) as { slug: string }[];
+    expect(catalogs.some((c) => c.slug === 'platform')).toBe(true);
   });
 });

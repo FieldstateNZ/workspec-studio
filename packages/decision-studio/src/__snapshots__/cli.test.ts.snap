@@ -4,7 +4,7 @@ exports[`render-adr > renders a deterministic Markdown ADR to stdout with golden
 "# Hosting platform for the data and delivery services
 
 - **Status:** Proposed
-- **Decision:** \`dec-hosting\`
+- **Decision:** \`hosting-platform\`
 - **Deciders:** Platform Engineering
 - **Created:** 2026-07-01
 - **Currency:** NZD

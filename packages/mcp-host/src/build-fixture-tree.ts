@@ -64,13 +64,18 @@ export interface FixtureTree {
 export async function buildFixtureTree(): Promise<FixtureTree> {
   const dir = await mkdtemp(join(tmpdir(), 'mcp-host-fixture-'));
 
-  // ── decisions: copy the real hosting-platform example (decision + catalog) ──
-  const hostingPlatformDir = join(REPO_ROOT, 'examples', 'hosting-platform');
+  // ── decisions: copy the real hosting-platform example's .workspec/ tree ──
+  const hostingPlatformWorkspec = join(REPO_ROOT, 'examples', 'hosting-platform', '.workspec');
+  await mkdir(join(dir, '.workspec', 'decisions'), { recursive: true });
+  await mkdir(join(dir, '.workspec', 'catalogs'), { recursive: true });
   await copyFile(
-    join(hostingPlatformDir, 'hosting-platform.decision.yaml'),
-    join(dir, 'hosting-platform.decision.yaml'),
+    join(hostingPlatformWorkspec, 'decisions', 'hosting-platform.yaml'),
+    join(dir, '.workspec', 'decisions', 'hosting-platform.yaml'),
   );
-  await copyFile(join(hostingPlatformDir, 'platform.catalog.yaml'), join(dir, 'platform.catalog.yaml'));
+  await copyFile(
+    join(hostingPlatformWorkspec, 'catalogs', 'platform.yaml'),
+    join(dir, '.workspec', 'catalogs', 'platform.yaml'),
+  );
 
   // ── cost: copy the real fieldstate-azure-costs example's .workspec/ tree ──
   const costWorkspec = join(REPO_ROOT, 'examples', 'fieldstate-azure-costs', '.workspec');

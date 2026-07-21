@@ -1,9 +1,21 @@
 // @workspec/decision-schema — the Zod source of truth for Decision Studio
 // artifacts. One definition yields three outputs: TypeScript types (`z.infer`),
 // runtime validation (`safeParse`), and JSON Schema (draft 2020-12) for editor
-// IntelliSense. See `docs/decisions/workspec-decision-schema-v0.1.md` for the spec.
+// IntelliSense. Built on `@workspec/schema-core`'s K8s-style envelope
+// (`defineArtifact`) — see `docs/decisions/workspec-decision-schema-v0.1.md`
+// for the spec.
 
-// ── Version, URLs, directives and file-naming constants ─────────────────────
+/**
+ * This package's own identity. A few consumers import this constant as a
+ * smoke test of the wiring, matching the pattern in `@workspec/cost-schema`.
+ */
+export const DECISION_SCHEMA_PACKAGE = '@workspec/decision-schema' as const;
+
+// ── Version, URL and directive constants. `SCHEMA_VERSION`/`API_VERSION`/
+// `SCHEMA_BASE_URL`/`JSON_SCHEMA_DIALECT`/`schemaDirective` are
+// `@workspec/schema-core`'s (re-exported here, values unchanged from this
+// package's former local copies); the two `*_SCHEMA_URL`/`*_SCHEMA_DIRECTIVE`
+// constants are this package's own. ────────────────────────────────────────
 export {
   SCHEMA_VERSION,
   API_VERSION,
@@ -14,33 +26,22 @@ export {
   schemaDirective,
   DECISION_SCHEMA_DIRECTIVE,
   CATALOG_SCHEMA_DIRECTIVE,
-  DECISION_FILE_SUFFIX,
-  CATALOG_FILE_SUFFIX,
-  DECISION_FILE_GLOB,
-  CATALOG_FILE_GLOB,
-  DECISION_FILE_GLOB_RECURSIVE,
-  CATALOG_FILE_GLOB_RECURSIVE,
-  isDecisionFile,
-  isCatalogFile,
 } from './constants.js';
+
+// ── Kind list and type directories (decision-schema's own two kinds) ───────
+export { ARTIFACT_KINDS } from './paths/artifact-kind.js';
+export type { ArtifactKind } from './paths/artifact-kind.js';
+export { TYPE_DIRECTORIES, typeDirectoryFor } from './paths/type-directories.js';
 
 // ── Shared primitives ───────────────────────────────────────────────────────
 export { identifier } from './common.js';
 
 // ── Catalog artifact: schemas + inferred types ──────────────────────────────
-export {
-  PricingMode,
-  Schedule,
-  Sku,
-  CatalogMetadata,
-  CatalogSpec,
-  CatalogArtifact,
-} from './catalog.js';
+export { PricingMode, Schedule, Sku, CatalogSpec, CatalogArtifact } from './catalog.js';
 export type {
   PricingMode as PricingModeType,
   Schedule as ScheduleType,
   Sku as SkuType,
-  CatalogMetadata as CatalogMetadataType,
   CatalogSpec as CatalogSpecType,
   Catalog,
 } from './catalog.js';
@@ -59,7 +60,6 @@ export {
   Criterion,
   Outcome,
   Link,
-  DecisionMetadata,
   DecisionSpec,
   DecisionArtifact,
 } from './decision.js';
@@ -76,7 +76,6 @@ export type {
   Criterion as CriterionType,
   Outcome as OutcomeType,
   Link as LinkType,
-  DecisionMetadata as DecisionMetadataType,
   DecisionSpec as DecisionSpecType,
   Decision,
 } from './decision.js';

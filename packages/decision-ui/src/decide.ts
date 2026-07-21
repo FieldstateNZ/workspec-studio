@@ -60,7 +60,7 @@ export function suggestRationale(decision: Decision, optionId: string): string {
 }
 
 /**
- * Record an outcome on a decision: set `metadata.status` to `decided` and stamp
+ * Record an outcome on a decision: set `spec.status` to `decided` and stamp
  * `spec.outcome`. Falls back to {@link suggestRationale} when `rationale` is
  * blank so the persisted artifact is always valid. Pure — returns a new decision.
  */
@@ -83,8 +83,7 @@ export function decide(
   };
   return {
     ...decision,
-    metadata: { ...decision.metadata, status: 'decided' },
-    spec: { ...decision.spec, outcome },
+    spec: { ...decision.spec, status: 'decided', outcome },
   };
 }
 
@@ -96,8 +95,7 @@ export function reopen(decision: Decision): Decision {
   const { outcome: _dropped, ...spec } = decision.spec;
   return {
     ...decision,
-    metadata: { ...decision.metadata, status: 'exploring' },
-    spec,
+    spec: { ...spec, status: 'exploring' },
   };
 }
 

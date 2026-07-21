@@ -14,65 +14,33 @@
       "type": "string"
     },
     "metadata": {
-      "description": "Decision identity and lifecycle.",
+      "description": "Common artifact identity.",
       "properties": {
-        "created": {
-          "description": "Creation date, ISO 8601.",
-          "minLength": 1,
-          "type": "string"
-        },
-        "deciders": {
-          "description": "People accountable for the decision.",
-          "items": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "id": {
-          "description": "Stable decision id, e.g. \"dec-hosting\".",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "type": "string"
-        },
-        "status": {
-          "description": "Lifecycle status: exploring → decided; a decided decision may later be superseded.",
-          "enum": [
-            "exploring",
-            "decided",
-            "superseded"
-          ],
-          "type": "string"
-        },
-        "supersedes": {
-          "description": "Id of a decision this one supersedes.",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "type": "string"
-        },
-        "title": {
-          "description": "Decision title.",
-          "minLength": 1,
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
           "type": "string"
         }
       },
-      "required": [
-        "id",
-        "title",
-        "status"
-      ],
       "type": "object"
     },
     "spec": {
       "description": "The decision body.",
       "properties": {
         "catalog": {
-          "description": "Relative path to the catalog artifact, e.g. \"./platform.catalog.yaml\".",
-          "minLength": 1,
+          "description": "Bare-slug intra-tree ref → catalogs/*: the catalog this decision prices against. Resolved by the loader to `.workspec/catalogs/<slug>.yaml`.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
           "type": "string"
         },
         "context": {
           "description": "The problem framing: what is being decided and why.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "created": {
+          "description": "Creation date, ISO 8601.",
           "minLength": 1,
           "type": "string"
         },
@@ -115,6 +83,14 @@
           "description": "ISO 4217 currency for all amounts; should match the catalog.",
           "minLength": 1,
           "type": "string"
+        },
+        "deciders": {
+          "description": "People accountable for the decision.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
         },
         "environments": {
           "description": "Ordered environment ids, e.g. [\"dev\",\"test\",\"prod\"].",
@@ -651,9 +627,31 @@
             "rationale"
           ],
           "type": "object"
+        },
+        "status": {
+          "description": "Lifecycle status: exploring → decided; a decided decision may later be superseded.",
+          "enum": [
+            "exploring",
+            "decided",
+            "superseded"
+          ],
+          "type": "string"
+        },
+        "supersedes": {
+          "description": "Bare-slug intra-tree ref → decisions/*: the decision this one supersedes.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "title": {
+          "description": "Decision title.",
+          "minLength": 1,
+          "type": "string"
         }
       },
       "required": [
+        "title",
+        "status",
         "context",
         "catalog",
         "currency",

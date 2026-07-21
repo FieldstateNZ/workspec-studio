@@ -8,10 +8,10 @@ cluster), costed across dev / test / prod.
 
 ## Artifacts
 
-| File                                                                 | Artifact                                                            |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| [`postgres.catalog.yaml`](./postgres.catalog.yaml)                   | Catalog — pricing modes, schedules, SKUs                            |
-| [`postgres-hosting.decision.yaml`](./postgres-hosting.decision.yaml) | Decision — three costed options, criteria, levers, recorded outcome |
+| File                                                                                        | Artifact                                                            |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`.workspec/catalogs/postgres.yaml`](./.workspec/catalogs/postgres.yaml)                         | Catalog — pricing modes, schedules, SKUs                            |
+| [`.workspec/decisions/postgres-hosting.yaml`](./.workspec/decisions/postgres-hosting.yaml) | Decision — three costed options, criteria, levers, recorded outcome |
 
 Both carry the `$schema` directive header, validate against `@workspec/decision-schema`, and
 compute through `@workspec/decision-engine`. Unlike the hosting-platform fixture (which stays `exploring`),

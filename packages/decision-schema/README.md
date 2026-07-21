@@ -11,16 +11,38 @@ outputs, always in sync:
 See [`docs/workspec-decision-schema-v0.1.md`](../../docs/decisions/workspec-decision-schema-v0.1.md) for the
 full schema spec.
 
-## Artifacts & file naming (normative)
+Built on `@workspec/schema-core`'s K8s-style artifact envelope (`defineArtifact`): every kind is
+`{apiVersion, kind, metadata: {slug?}, spec}`. Identity is the artifact's filename slug, derived by
+the loader (`slugFromPath`, in `@workspec/schema-core`) — `metadata.slug` is optional and only
+needed when an author wants it visible without opening a directory listing. There is no
+`metadata.id` — the artifact carries no id of its own.
 
-| Artifact | Suffix            | What it holds                                               |
-| -------- | ----------------- | ----------------------------------------------------------- |
-| Decision | `*.decision.yaml` | Options, criteria, per-env costs, levers, outcome           |
-| Catalog  | `*.catalog.yaml`  | Pricing modes, schedules, SKUs (the engine's priced tables) |
+## Artifacts & type directories (normative)
 
-Files are discovered purely by these suffixes — no index, no database. The constants
-`DECISION_FILE_SUFFIX`, `CATALOG_FILE_SUFFIX`, the globs, and `isDecisionFile()` / `isCatalogFile()`
-are exported for the repository layer.
+| Artifact | Kind       | Type directory (under `.workspec/`) | What it holds                                               |
+| -------- | ---------- | ----------------------------------- | ----------------------------------------------------------- |
+| Decision | `Decision` | `decisions`                         | Options, criteria, per-env costs, levers, outcome           |
+| Catalog  | `Catalog`  | `catalogs`                          | Pricing modes, schedules, SKUs (the engine's priced tables) |
+
+`TYPE_DIRECTORIES`/`typeDirectoryFor(kind)` give the `.workspec/<dir>` path for each kind (e.g.
+`typeDirectoryFor('Decision')` → `.workspec/decisions`). Discovery is a directory walk keyed off
+these — the repository layer (`@workspec/decision-studio`'s `FsRepository`) owns it; this package
+no longer ships filename-suffix/glob discovery helpers.
+
+Each kind's former `metadata` fields now live on `spec`: Decision's `title`/`status`/`created`/
+`deciders`/`supersedes`, Catalog's `name`/`currency`/`asOf`. Two of those are cross-artifact refs,
+now bare slugs instead of an id or a relative path:
+
+- `spec.supersedes` (Decision, optional) — the **slug** of the decision this one supersedes
+  (`decisions/<slug>.yaml`). Used to be the superseded decision's old `metadata.id`.
+- `spec.catalog` (Decision, required) — the **slug** of the catalog this decision prices against
+  (`catalogs/<slug>.yaml`), resolved by the loader to `.workspec/catalogs/<slug>.yaml`. Used to be a
+  relative file path, e.g. `"./platform.catalog.yaml"`.
+
+Both are schema-shape-only: a dangling ref (no such decision/catalog slug) is a `verify`-time
+concern for the host, not a schema validation error. An artifact's own internal ids (criterion ids,
+option ids, `outcome.decidedBy`, catalog SKU/mode/schedule ids, etc.) are unaffected — those are
+ordinary `spec` fields, not artifact identity.
 
 ## Usage
 
@@ -59,7 +81,7 @@ JSON Schema:
 The acceptance criterion "opening a fixture gives completion and hover docs" is verified like so:
 
 1. Install the **YAML** extension (`redhat.vscode-yaml`).
-2. Open `examples/hosting-platform/hosting-platform.decision.yaml`.
+2. Open `packages/decision-schema/test/fixtures/valid/hosting-platform.decision.yaml`.
 3. Because every field carries a Zod `.describe(...)`, those descriptions surface as **hover
    docs** on each key, and Ctrl/⌘-Space offers **completion** for property names and enum values
    (e.g. `status:` suggests `exploring` / `decided` / `superseded`).
@@ -90,9 +112,16 @@ committed `json-schema/*.schema.json`, so CI fails if the committed files are st
 
 ## Scripts
 
-| Script                                               | Does                                 |
-| ---------------------------------------------------- | ------------------------------------ |
-| `pnpm --filter @workspec/decision-schema build`      | tsup → `dist/` (ESM + `.d.ts`)       |
-| `pnpm --filter @workspec/decision-schema typecheck`  | `tsc --noEmit`                       |
-| `pnpm --filter @workspec/decision-schema test`       | vitest (schema, YAML mapping, drift) |
-| `pnpm --filter @workspec/decision-schema gen:schema` | regenerate `json-schema/`            |
+| Script                                               | Does                                                          |
+| ---------------------------------------------------- | ------------------------------------------------------------- |
+| `pnpm --filter @workspec/decision-schema build`      | tsup → `dist/` (ESM + `.d.ts`)                                |
+| `pnpm --filter @workspec/decision-schema typecheck`  | `tsc -b` (project references against `@workspec/schema-core`) |
+| `pnpm --filter @workspec/decision-schema test`       | vitest (schema, YAML mapping, drift)                          |
+| `pnpm --filter @workspec/decision-schema gen:schema` | regenerate `json-schema/`                                     |
+
+## Dependency direction
+
+`decision-schema` depends on `@workspec/schema-core` (the shared K8s-style envelope, path/slug
+helpers, and JSON Schema generation) and nothing else in the `@workspec` scope. Every other
+`@workspec/decision-*` package depends on `decision-schema`, directly or transitively — never the
+reverse.

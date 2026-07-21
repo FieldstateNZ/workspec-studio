@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { API_VERSION } from './constants.js';
+import { defineArtifact, Slug } from '@workspec/schema-core';
 import { identifier } from './common.js';
 
 // ── Line (discriminated union on `flat`) ────────────────────────────────────
@@ -242,10 +242,28 @@ export const Link = z
   })
   .describe('An external reference the host resolves.');
 
-/** Decision identity and lifecycle. */
-export const DecisionMetadata = z
+/**
+ * The decision body: lifecycle (former `metadata` fields), problem framing,
+ * catalog ref, envs, criteria, options, and outcome.
+ *
+ * Built on `@workspec/schema-core`'s `defineArtifact`: the envelope
+ * (apiVersion/kind/metadata) and identity (`metadata.slug`, loader-derived
+ * from the filename when absent) are the shared shape every schema-core-based
+ * kind uses. `title`/`status`/`created`/`deciders`/`supersedes` (former
+ * `metadata` fields) now live here — they moved out of the old hand-rolled
+ * `metadata.id`/`...` envelope; there is no more `metadata.id`, identity is
+ * the filename slug.
+ *
+ * `supersedes` and `catalog` are bare-slug intra-tree refs (the field implies
+ * the kind): `supersedes` → `decisions/*` (the decision this one supersedes),
+ * `catalog` → `catalogs/*` (the catalog this decision prices against, resolved
+ * by the loader to `.workspec/catalogs/<slug>.yaml`). Both used to be
+ * identifier-shaped (`supersedes`) or a relative file path (`catalog`); dangling
+ * refs are a `verify`-time failure (typo protection), not a schema error — the
+ * schema only enforces slug *shape*, not resolution.
+ */
+export const DecisionSpec = z
   .object({
-    id: identifier.describe('Stable decision id, e.g. "dec-hosting".'),
     title: z.string().min(1).describe('Decision title.'),
     status: z
       .enum(['exploring', 'decided', 'superseded'])
@@ -257,18 +275,14 @@ export const DecisionMetadata = z
       .array(z.string().min(1))
       .optional()
       .describe('People accountable for the decision.'),
-    supersedes: identifier.optional().describe('Id of a decision this one supersedes.'),
-  })
-  .describe('Decision identity and lifecycle.');
-
-/** The decision body: context, catalog ref, envs, criteria, options, outcome. */
-export const DecisionSpec = z
-  .object({
+    supersedes: Slug.optional().describe(
+      'Bare-slug intra-tree ref → decisions/*: the decision this one supersedes.',
+    ),
     context: z.string().min(1).describe('The problem framing: what is being decided and why.'),
-    catalog: z
-      .string()
-      .min(1)
-      .describe('Relative path to the catalog artifact, e.g. "./platform.catalog.yaml".'),
+    catalog: Slug.describe(
+      'Bare-slug intra-tree ref → catalogs/*: the catalog this decision prices against. ' +
+        'Resolved by the loader to `.workspec/catalogs/<slug>.yaml`.',
+    ),
     currency: z
       .string()
       .min(1)
@@ -294,15 +308,10 @@ export const DecisionSpec = z
  * must be a declared environment; every score key must be a declared criterion;
  * and a recorded `outcome.option` must reference an existing option. (Catalog
  * ref integrity — sku/mode/schedule — is validated by the engine, which has the
- * catalog in hand.)
+ * catalog in hand. `supersedes`/`catalog` slug-ref *resolution* is a loader/
+ * `verify`-time concern, not enforced here.)
  */
-export const DecisionArtifact = z
-  .object({
-    apiVersion: z.literal(API_VERSION).describe('Artifact API version discriminant.'),
-    kind: z.literal('Decision').describe('Artifact kind discriminant.'),
-    metadata: DecisionMetadata.describe('Decision identity and lifecycle.'),
-    spec: DecisionSpec.describe('The decision body.'),
-  })
+export const DecisionArtifact = defineArtifact('Decision', DecisionSpec)
   .superRefine((doc, ctx) => {
     const envs = new Set(doc.spec.environments);
     const criteriaIds = new Set(doc.spec.criteria.map((c) => c.id));
@@ -371,6 +380,5 @@ export type Option = z.infer<typeof Option>;
 export type Criterion = z.infer<typeof Criterion>;
 export type Outcome = z.infer<typeof Outcome>;
 export type Link = z.infer<typeof Link>;
-export type DecisionMetadata = z.infer<typeof DecisionMetadata>;
 export type DecisionSpec = z.infer<typeof DecisionSpec>;
 export type Decision = z.infer<typeof DecisionArtifact>;

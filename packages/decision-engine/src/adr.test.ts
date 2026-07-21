@@ -19,9 +19,11 @@ let catalog: Catalog;
 
 beforeAll(() => {
   const decisionRes = parseDecisionYaml(
-    read('examples/hosting-platform/hosting-platform.decision.yaml'),
+    read('examples/hosting-platform/.workspec/decisions/hosting-platform.yaml'),
   );
-  const catalogRes = parseCatalogYaml(read('examples/hosting-platform/platform.catalog.yaml'));
+  const catalogRes = parseCatalogYaml(
+    read('examples/hosting-platform/.workspec/catalogs/platform.yaml'),
+  );
   if (!decisionRes.ok) throw new Error('decision fixture failed to parse');
   if (!catalogRes.ok) throw new Error('catalog fixture failed to parse');
   decision = decisionRes.data;
@@ -40,7 +42,7 @@ describe('formatMoney (deterministic, P8)', () => {
 
 describe('buildAdrModel (hosting-platform, exploring)', () => {
   it('proposes the recommended option (aks) with Proposed status', () => {
-    const model = buildAdrModel(decision, catalog);
+    const model = buildAdrModel(decision, catalog, 'hosting-platform');
     expect(model.status).toBe('Proposed');
     expect(model.decision.decided).toBe(false);
     expect(model.decision.optionId).toBe('aks');
@@ -48,7 +50,7 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
   });
 
   it('carries the S2 golden annual costs on the considered options', () => {
-    const model = buildAdrModel(decision, catalog);
+    const model = buildAdrModel(decision, catalog, 'hosting-platform');
     const byId = Object.fromEntries(model.consideredOptions.map((o) => [o.id, o]));
     expect(must(byId['aks']).annual).toBe(54336.576);
     expect(must(byId['appsvc']).annual).toBe(16104);
@@ -58,7 +60,7 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
   });
 
   it('derives consequences from the winner criteria + a premium/headroom line', () => {
-    const model = buildAdrModel(decision, catalog);
+    const model = buildAdrModel(decision, catalog, 'hosting-platform');
     // aks: scaleCeiling 5, isolation 4, lockIn 4 => strengths; opsBurden 2, migration 2 => weaknesses.
     const strengths = model.consequences.filter((c) => c.kind === 'strength');
     const weaknesses = model.consequences.filter((c) => c.kind === 'weakness');
@@ -73,13 +75,13 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
   it('uses the authored rationale once a decision is decided', () => {
     const decided: Decision = {
       ...decision,
-      metadata: { ...decision.metadata, status: 'decided' },
       spec: {
         ...decision.spec,
+        status: 'decided',
         outcome: { option: 'appsvc', rationale: 'We accept weaker scale for the lowest run-rate.' },
       },
     };
-    const model = buildAdrModel(decided, catalog);
+    const model = buildAdrModel(decided, catalog, 'hosting-platform');
     expect(model.status).toBe('Accepted');
     expect(model.decision.decided).toBe(true);
     expect(model.decision.optionId).toBe('appsvc');
@@ -89,7 +91,7 @@ describe('buildAdrModel (hosting-platform, exploring)', () => {
 
 describe('renderAdrMarkdown (hosting-platform)', () => {
   it('produces a stable Markdown ADR with full golden costs', () => {
-    const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog));
+    const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog, 'hosting-platform'));
     expect(markdown).toContain('# Hosting platform for the data and delivery services');
     expect(markdown).toContain('**Status:** Proposed');
     expect(markdown).toContain('$54,336.58');

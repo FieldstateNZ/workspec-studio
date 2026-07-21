@@ -14,7 +14,19 @@
       "type": "string"
     },
     "metadata": {
-      "description": "Catalog identity and provenance.",
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "The catalog body: optional name, currency, price-capture date, and the priced tables (modes, schedules, SKUs) the engine reads.",
       "properties": {
         "asOf": {
           "description": "Date the prices were captured, ISO 8601 (e.g. \"2026-07-01\"). Kept as a string so YAML does not coerce it to a date.",
@@ -26,28 +38,11 @@
           "minLength": 1,
           "type": "string"
         },
-        "id": {
-          "description": "Stable catalog id, e.g. \"platform\".",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-          "type": "string"
-        },
         "name": {
           "description": "Optional human-readable catalog name.",
           "minLength": 1,
           "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "currency",
-        "asOf"
-      ],
-      "type": "object"
-    },
-    "spec": {
-      "description": "The priced tables the engine reads.",
-      "properties": {
+        },
         "pricingModes": {
           "description": "Available pricing modes referenced by SKU lines.",
           "items": {
@@ -176,6 +171,8 @@
         }
       },
       "required": [
+        "currency",
+        "asOf",
         "pricingModes",
         "schedules",
         "skus"

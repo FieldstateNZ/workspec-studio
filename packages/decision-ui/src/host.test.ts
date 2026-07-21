@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { Decision, LinkType } from '@workspec/decision-schema';
-import { createInertLinkResolver, repositoryId, resolveCatalogRef } from './host.js';
+import { createInertLinkResolver, decisionSlug, repositoryId, resolveCatalogRef } from './host.js';
 import { createMemoryRepository } from '@workspec/decision-schema';
 
 function decisionWithCatalog(catalog: string): Decision {
   return {
     apiVersion: 'workspec.io/v1alpha1',
     kind: 'Decision',
-    metadata: { id: 'd', title: 'd', status: 'exploring' },
+    metadata: {},
     spec: {
+      title: 'd',
+      status: 'exploring',
       context: 'c',
       catalog,
       currency: 'USD',
@@ -20,23 +22,43 @@ function decisionWithCatalog(catalog: string): Decision {
 }
 
 describe('resolveCatalogRef', () => {
-  it('resolves a sibling catalog relative to a bare decision ref', () => {
-    const decision = decisionWithCatalog('./platform.catalog.yaml');
-    expect(resolveCatalogRef('hosting-platform.decision.yaml', decision)).toBe(
-      'platform.catalog.yaml',
+  it('resolves the catalog slug to `.workspec/catalogs/<slug>.yaml`', () => {
+    const decision = decisionWithCatalog('platform');
+    expect(resolveCatalogRef('.workspec/decisions/hosting-platform.yaml', decision)).toBe(
+      '.workspec/catalogs/platform.yaml',
     );
   });
 
-  it('resolves relative to a nested decision ref (matches FsRepository)', () => {
-    const decision = decisionWithCatalog('./platform.catalog.yaml');
-    expect(resolveCatalogRef('examples/hosting-platform/x.decision.yaml', decision)).toBe(
-      'examples/hosting-platform/platform.catalog.yaml',
+  it('ignores the decision ref — the catalog ref never depends on where the decision lives', () => {
+    const decision = decisionWithCatalog('shared-prices');
+    expect(resolveCatalogRef('some/nested/dir/x.yaml', decision)).toBe(
+      '.workspec/catalogs/shared-prices.yaml',
+    );
+    expect(resolveCatalogRef('anything-at-all', decision)).toBe(
+      '.workspec/catalogs/shared-prices.yaml',
+    );
+  });
+});
+
+describe('decisionSlug', () => {
+  it('prefers an authored metadata.slug over the ref', () => {
+    const decision = decisionWithCatalog('platform');
+    decision.metadata.slug = 'authored-slug';
+    expect(decisionSlug(decision, '.workspec/decisions/hosting-platform.yaml')).toBe(
+      'authored-slug',
     );
   });
 
-  it('resolves parent-relative catalog paths', () => {
-    const decision = decisionWithCatalog('../shared/prices.catalog.yaml');
-    expect(resolveCatalogRef('team/x.decision.yaml', decision)).toBe('shared/prices.catalog.yaml');
+  it('falls back to the filename stem of the ref when metadata.slug is absent', () => {
+    const decision = decisionWithCatalog('platform');
+    expect(decisionSlug(decision, '.workspec/decisions/hosting-platform.yaml')).toBe(
+      'hosting-platform',
+    );
+  });
+
+  it('falls back to the raw ref when it is not `.yaml`-shaped', () => {
+    const decision = decisionWithCatalog('platform');
+    expect(decisionSlug(decision, 'opaque-memory-ref')).toBe('opaque-memory-ref');
   });
 });
 

@@ -2,20 +2,20 @@
 apiVersion: workspec.io/v1alpha1
 kind: Decision
 metadata:
-  id: dec-d4-catalog-scope
+  slug: d4-catalog-model-scope
+spec:
   title: 'D4 — Catalog model scope for OSS v1'
   status: decided
   created: '2026-07-01'
   deciders:
     - 'Fieldstate Dev Lead'
-spec:
   context: >-
     The design prototype carried two pricing models: a simple engine model
     (pricingModes/schedules/skus) that actually feeds compute(), and a rich
     provider/resource/tier/usage/custom model that does not. OSS v1 must pick a
     catalog schema. Costs below are the ongoing monthly build + maintenance
     effort of carrying each model, in loaded engineer-days.
-  catalog: ./decisions.catalog.yaml
+  catalog: decisions
   currency: NZD
   environments:
     - ongoing

@@ -8,7 +8,7 @@
 // the protocol-boundary (wire-name dispatch, isError-on-throw) behaviour this
 // provider is mounted through.
 
-import { chmod, cp, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,11 +21,41 @@ import { FsRepository } from './fs-repository.js';
 import { createDecisionMcpProvider } from './mcp-provider.js';
 
 const HOSTING_DIR = fileURLToPath(new URL('../../../examples/hosting-platform', import.meta.url));
-const INVALID_DIR = fileURLToPath(
+const INVALID_FIXTURES_DIR = fileURLToPath(
   new URL('../../../packages/decision-schema/test/fixtures/invalid', import.meta.url),
 );
-const DECISION_REF = 'hosting-platform.decision.yaml';
-const CATALOG_REF = 'platform.catalog.yaml';
+const DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
+const CATALOG_REF = '.workspec/catalogs/platform.yaml';
+
+// The invalid-fixture battery from S1 (mirrors `cli.test.ts`'s
+// `seedInvalidFixtures`): each fixture is copied into a fresh
+// `.workspec/<kind-dir>/<slug>.yaml` under a bare slug filename — the old
+// `<slug>.decision.yaml` / `<slug>.catalog.yaml` middle infix is not a valid
+// slug, so it would be silently skipped by directory-based discovery.
+const INVALID_FIXTURES: { file: string; kindDir: string; slug: string }[] = [
+  { file: 'bad-status.decision.yaml', kindDir: 'decisions', slug: 'bad-status' },
+  { file: 'missing-context.decision.yaml', kindDir: 'decisions', slug: 'missing-context' },
+  {
+    file: 'unknown-discriminator.decision.yaml',
+    kindDir: 'decisions',
+    slug: 'unknown-discriminator',
+  },
+  { file: 'negative-weight.decision.yaml', kindDir: 'decisions', slug: 'negative-weight' },
+  { file: 'wrong-type-amount.decision.yaml', kindDir: 'decisions', slug: 'wrong-type-amount' },
+  { file: 'dangling-env-key.decision.yaml', kindDir: 'decisions', slug: 'dangling-env-key' },
+  { file: 'score-out-of-range.decision.yaml', kindDir: 'decisions', slug: 'score-out-of-range' },
+  { file: 'bad-schedule-pct.catalog.yaml', kindDir: 'catalogs', slug: 'bad-schedule-pct' },
+];
+
+/** Copies the invalid-fixture battery into `root/.workspec/<kindDir>/<slug>.yaml`. */
+async function seedInvalidFixtures(root: string): Promise<void> {
+  for (const { file, kindDir, slug } of INVALID_FIXTURES) {
+    const text = await readFile(join(INVALID_FIXTURES_DIR, file), 'utf8');
+    const dest = join(root, '.workspec', kindDir, `${slug}.yaml`);
+    await mkdir(join(root, '.workspec', kindDir), { recursive: true });
+    await writeFile(dest, text, 'utf8');
+  }
+}
 
 /** Finds a tool by its module-local name (not the namespaced wire name). */
 function tool(repo: FsRepository, name: string): McpToolDef {
@@ -65,9 +95,9 @@ describe('list_catalogs / read_catalog', () => {
     const repo = new FsRepository(dir);
     const result = await tool(repo, 'list_catalogs').handler({});
     expect(result.isError).not.toBe(true);
-    const catalogs = JSON.parse(textOf(result)) as { ref: string; id: string }[];
+    const catalogs = JSON.parse(textOf(result)) as { ref: string; slug: string }[];
     expect(catalogs).toEqual(
-      expect.arrayContaining([expect.objectContaining({ ref: CATALOG_REF, id: 'platform' })]),
+      expect.arrayContaining([expect.objectContaining({ ref: CATALOG_REF, slug: 'platform' })]),
     );
   });
 
@@ -75,8 +105,8 @@ describe('list_catalogs / read_catalog', () => {
     const repo = new FsRepository(dir);
     const result = await tool(repo, 'read_catalog').handler({ ref: CATALOG_REF });
     expect(result.isError).not.toBe(true);
-    const catalog = JSON.parse(textOf(result)) as { metadata: { id: string } };
-    expect(catalog.metadata.id).toBe('platform');
+    const catalog = JSON.parse(textOf(result)) as { metadata: { slug: string } };
+    expect(catalog.metadata.slug).toBe('platform');
   });
 
   it('reports an isError (not a throw) for a ref that escapes the served root', async () => {
@@ -87,7 +117,7 @@ describe('list_catalogs / read_catalog', () => {
 
   it('reports an isError (not a throw) for a missing ref', async () => {
     const repo = new FsRepository(dir);
-    const result = await tool(repo, 'read_catalog').handler({ ref: 'nope.catalog.yaml' });
+    const result = await tool(repo, 'read_catalog').handler({ ref: '.workspec/catalogs/nope.yaml' });
     expect(result.isError).toBe(true);
   });
 });
@@ -97,9 +127,11 @@ describe('list_decisions / read_decision', () => {
     const repo = new FsRepository(dir);
     const result = await tool(repo, 'list_decisions').handler({});
     expect(result.isError).not.toBe(true);
-    const decisions = JSON.parse(textOf(result)) as { ref: string; id: string }[];
+    const decisions = JSON.parse(textOf(result)) as { ref: string; slug: string }[];
     expect(decisions).toEqual(
-      expect.arrayContaining([expect.objectContaining({ ref: DECISION_REF, id: 'dec-hosting' })]),
+      expect.arrayContaining([
+        expect.objectContaining({ ref: DECISION_REF, slug: 'hosting-platform' }),
+      ]),
     );
   });
 
@@ -107,8 +139,8 @@ describe('list_decisions / read_decision', () => {
     const repo = new FsRepository(dir);
     const result = await tool(repo, 'read_decision').handler({ ref: DECISION_REF });
     expect(result.isError).not.toBe(true);
-    const decision = JSON.parse(textOf(result)) as { metadata: { id: string } };
-    expect(decision.metadata.id).toBe('dec-hosting');
+    const decision = JSON.parse(textOf(result)) as { metadata: { slug: string } };
+    expect(decision.metadata.slug).toBe('hosting-platform');
   });
 });
 
@@ -155,19 +187,19 @@ describe('write_catalog', () => {
     const repo = new FsRepository(dir);
     const valid = await repo.readCatalog(CATALOG_REF);
     const result = await tool(repo, 'write_catalog').handler({
-      ref: '../outside.catalog.yaml',
+      ref: '../outside.yaml',
       catalog: valid,
     });
     expect(result.isError).toBe(true);
   });
 
   it('rejects a backslash-traversal ref up front, creating no garbage file (issue #52)', async () => {
-    // On POSIX, `..\..\x.catalog.yaml` is one literal filename — it would pass
+    // On POSIX, `..\..\x.yaml` is one literal filename — it would pass
     // `resolveWithinRoot` and get written inside root. The ref-shape pre-check
     // (`readRefArg`) rejects it before it reaches the repo.
     const repo = new FsRepository(dir);
     const valid = await repo.readCatalog(CATALOG_REF);
-    const badRef = String.raw`..\..\x.catalog.yaml`;
+    const badRef = String.raw`..\..\x.yaml`;
 
     const result = await tool(repo, 'write_catalog').handler({ ref: badRef, catalog: valid });
 
@@ -186,7 +218,7 @@ describe('write_decision', () => {
 
     const valid = await repo.readDecision(DECISION_REF);
     const invalid = structuredClone(valid) as unknown as Record<string, unknown>;
-    (invalid.metadata as Record<string, unknown>).status = 'not-a-real-status';
+    (invalid.spec as Record<string, unknown>).status = 'not-a-real-status';
 
     const result = await tool(repo, 'write_decision').handler({
       ref: DECISION_REF,
@@ -213,7 +245,12 @@ describe('write_decision', () => {
 
 describe('validate', () => {
   it('returns the same diagnostics shape collectDiagnostics produces, on a known-bad fixture', async () => {
-    const repo = new FsRepository(INVALID_DIR);
+    // `dir` already carries the valid hosting-platform decision + catalog
+    // (seeded in `beforeEach`); layer the known-bad S1 fixture battery in
+    // alongside them under their own slugs — the repo just sees more
+    // artifacts, some clean and some broken.
+    await seedInvalidFixtures(dir);
+    const repo = new FsRepository(dir);
     const expected = await collectDiagnostics(repo);
 
     const result = await tool(repo, 'validate').handler({});
@@ -271,9 +308,9 @@ describe('validate', () => {
 });
 
 describe('render_adr', () => {
-  it('renders the hosting-platform decision to Markdown, by id', async () => {
+  it('renders the hosting-platform decision to Markdown, by slug', async () => {
     const repo = new FsRepository(dir);
-    const result = await tool(repo, 'render_adr').handler({ decision: 'dec-hosting' });
+    const result = await tool(repo, 'render_adr').handler({ decision: 'hosting-platform' });
     expect(result.isError).not.toBe(true);
     expect(textOf(result)).toContain('# Hosting platform for the data and delivery services');
   });
