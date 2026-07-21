@@ -13,31 +13,19 @@
 // report; `plan`/`apply` follow the same "you commit, we never do" rule.
 
 import { parseArgs } from 'node:util';
-import { FILE_EXTENSION, Slug, slugFromPath } from '@workspec/schema-core';
-import { compareResourceIds, typeDirectoryFor } from '@workspec/cost-schema';
-import type {
-  Attribution,
-  CostRepositoryPort,
-  Inventory,
-  InventoryResourceType,
-  ParseIssue,
-  Spend,
-  TagPlan,
-  TagPlanEntryType,
-} from '@workspec/cost-schema';
-import { attribute, buildTagPlan, resolveAttribution } from '@workspec/cost-engine';
-import type { AttributeResult, Coverage, Rollup, TagMapping } from '@workspec/cost-engine';
-import { computeDriftReport } from '@workspec/cost-provider';
-import type {
-  CloudProviderPort,
-  Drift,
-  DriftReport,
-  DriftableResource,
-  ProviderScope,
-} from '@workspec/cost-provider';
+import type { CostRepositoryPort, ParseIssue } from '@workspec/cost-schema';
+import type { CloudProviderPort, Drift } from '@workspec/cost-provider';
 import { createAzureProvider } from '@workspec/cost-provider-azure';
+import { computeApply } from './apply-core.js';
+import { collectDiagnostics } from './collect-diagnostics.js';
+import { formatDiagnostic } from './format-diagnostic.js';
 import { ArtifactValidationError, FsRepository } from './fs-repository.js';
+import { computePlan } from './plan-core.js';
+import { computeReport } from './report-core.js';
+import { renderReport } from './report-render.js';
+import { runMcp } from './run-mcp.js';
 import { runServe } from './serve.js';
+import { runStocktakeCore } from './stocktake-core.js';
 
 /** Injectable IO. `out` is reserved for artifacts (report's table/json/csv); `err` for diagnostics. */
 export interface CliIO {
@@ -85,6 +73,7 @@ Commands:
   plan        Compute the tag plan needed to converge on an attribution.
   apply       Apply (or dry-run) a tag plan against the live provider.
   serve       Run the localhost Cost Studio host over a directory.
+  mcp         Run the cost MCP server over stdio.
 
 Run "workspec-cost <command> --help" for command options. With no command,
 this help is printed — "serve" is NOT the implicit default (divergence from
@@ -129,18 +118,10 @@ spends found) and prints its diagnostics as non-fatal warnings. Prints
 "ref:line:col: error: message" diagnostics and exits non-zero on any error.
 `;
 
-/** One machine-readable validate finding — mirrors `@workspec/c4-model`'s `C4Diagnostic` shape. */
-export interface ValidateDiagnostic {
-  readonly severity: 'error' | 'warning';
-  readonly code: string;
-  readonly message: string;
-  /** Ref (repo-relative path) of the artifact this diagnostic is about. */
-  readonly file: string;
-  /** 1-based source line inside `file`, when known. */
-  readonly line?: number;
-  /** 1-based source column, present only alongside `line`. */
-  readonly col?: number;
-}
+// Re-exported for existing external importers of `ValidateDiagnostic` from
+// this module; the type itself now lives with `collectDiagnostics` in
+// `collect-diagnostics.ts`, its actual producer.
+export type { ValidateDiagnostic } from './collect-diagnostics.js';
 
 const REPORT_HELP = `workspec-cost report — coverage headline + rollup by dimension
 
@@ -197,72 +178,16 @@ function issueDiagnostic(ref: string, issue: ParseIssue): string {
   return `${ref}:${loc}: error: ${issue.message}${path}\n`;
 }
 
-/**
- * Prints located diagnostics for a failed read; returns the number of errors
- * reported. When `diagnostics` is given, also appends a machine-readable
- * `ValidateDiagnostic` per issue (used by `validate --json`; other callers
- * omit it and just get the printed text + count).
- */
-function reportReadError(
-  ref: string,
-  error: unknown,
-  io: CliIO,
-  diagnostics?: ValidateDiagnostic[],
-): number {
+/** Prints located diagnostics for a failed read (mirrors `formatDiagnostic`'s "parse-error"/"read-error" shape). */
+function reportReadError(ref: string, error: unknown, io: CliIO): void {
   if (error instanceof ArtifactValidationError) {
-    for (const issue of error.issues) {
-      io.err(issueDiagnostic(ref, issue));
-      diagnostics?.push({
-        severity: 'error',
-        code: 'parse-error',
-        message: issue.message,
-        file: ref,
-        line: issue.line,
-        col: issue.col,
-      });
-    }
-    return error.issues.length;
+    for (const issue of error.issues) io.err(issueDiagnostic(ref, issue));
+    return;
   }
-  const message = (error as Error).message;
-  io.err(`${ref}:1:1: error: ${message}\n`);
-  diagnostics?.push({
-    severity: 'error',
-    code: 'read-error',
-    message,
-    file: ref,
-    line: 1,
-    col: 1,
-  });
-  return 1;
+  io.err(`${ref}:1:1: error: ${(error as Error).message}\n`);
 }
 
 // ── stocktake ────────────────────────────────────────────────────────────
-
-function monthOf(iso: string): string {
-  return iso.slice(0, 7);
-}
-
-/** Builds the `{id -> DriftableResource}` map `computeDriftReport` expects, via the return-type boundary (mirrors `@workspec/cost-provider`'s own `asDriftable`). */
-function asDriftable(resources: readonly InventoryResourceType[]): ReadonlyMap<string, DriftableResource> {
-  return new Map(resources.map((r) => [r.id, r]));
-}
-
-function inventoryDrift(oldInventory: Inventory, newInventory: Inventory): DriftReport {
-  const oldMap = asDriftable(oldInventory.spec.resources);
-  const newMap = asDriftable(newInventory.spec.resources);
-  const targetIds = [...new Set([...oldMap.keys(), ...newMap.keys()])].sort(compareResourceIds);
-  return computeDriftReport(targetIds, oldMap, newMap);
-}
-
-function driftSummary(report: DriftReport): string {
-  if (report.inSync) return 'no drift';
-  const appeared = report.drifts.filter((d) => d.kind === 'resource-appeared').length;
-  const disappeared = report.drifts.filter((d) => d.kind === 'resource-disappeared').length;
-  const tagsChanged = report.drifts.filter((d) => d.kind === 'tags-changed').length;
-  const total = report.drifts.length;
-  const word = total === 1 ? 'drift' : 'drifts';
-  return `${total} ${word}: +${appeared} appeared · −${disappeared} disappeared · ~${tagsChanged} tags changed`;
-}
 
 async function runStocktake(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
   let values: {
@@ -293,74 +218,39 @@ async function runStocktake(argv: string[], io: CliIO, deps: RunDeps | undefined
     return 0;
   }
 
-  const subscriptions = values.subscription ?? [];
-  if (subscriptions.length === 0) {
-    io.err('stocktake: at least one --subscription is required\n');
-    return 2;
-  }
-  if (values.period !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(values.period)) {
-    io.err(`stocktake: --period must be an ISO month "YYYY-MM", got "${values.period}"\n`);
-    return 2;
-  }
-
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
   const provider = resolveProvider(deps);
   const clock = resolveClock(deps);
 
-  const name = values.name ?? 'estate';
-  // Validate the slug EARLY — before touching the provider at all — so a bad
-  // --name fails fast with a clean usage error instead of paying for a
-  // provider round-trip only to have the write reject at the very end. --name
-  // becomes the filename stem (`.workspec/inventories/<name>.yaml`), so it
-  // must already be a valid slug, not just any old identifier.
-  const nameCheck = Slug.safeParse(name);
-  if (!nameCheck.success) {
-    io.err(
-      `stocktake: invalid --name "${name}": ${nameCheck.error.issues[0]?.message ?? 'must be a valid slug'}\n`,
-    );
-    return 2;
+  const outcome = await runStocktakeCore(
+    {
+      subscriptions: values.subscription ?? [],
+      ...(values.name !== undefined ? { name: values.name } : {}),
+      ...(values.period !== undefined ? { period: values.period } : {}),
+    },
+    { repository, provider, clock },
+  );
+
+  switch (outcome.kind) {
+    case 'usage-error':
+      io.err(`stocktake: ${outcome.message}\n`);
+      return 2;
+    case 'write-error':
+      io.err(`stocktake: ${outcome.message}\n`);
+      return 2;
+    case 'ok':
+      if (outcome.previousStatus === 'unparseable') {
+        io.err(
+          `stocktake: previous inventory at ${outcome.inventoryRef} could not be parsed — drift summary skipped\n`,
+        );
+      }
+      if (outcome.driftSummary !== undefined) {
+        io.err(`stocktake: ${outcome.driftSummary}\n`);
+      }
+      io.err(`stocktake: wrote ${outcome.inventoryRef}, ${outcome.spendRef}\n`);
+      return 0;
   }
-  const period = values.period ?? monthOf(clock());
-  const scope: ProviderScope = { subscriptions };
-
-  const inventoryRef = `${typeDirectoryFor('Inventory')}/${name}${FILE_EXTENSION}`;
-  const spendSlug = `${name}-${period}`;
-  const spendRef = `${typeDirectoryFor('Spend')}/${spendSlug}${FILE_EXTENSION}`;
-
-  let oldInventory: Inventory | undefined;
-  try {
-    oldInventory = await repository.readInventory(inventoryRef);
-  } catch (error) {
-    oldInventory = undefined;
-    if (error instanceof ArtifactValidationError) {
-      io.err(`stocktake: previous inventory at ${inventoryRef} could not be parsed — drift summary skipped\n`);
-    }
-  }
-
-  const fetchedInventory = await provider.fetchInventory(scope);
-  const newInventory: Inventory = { ...fetchedInventory, metadata: { slug: name } };
-
-  const fetchedSpend = await provider.fetchSpend(scope, period);
-  const newSpend: Spend = { ...fetchedSpend, metadata: { slug: spendSlug } };
-
-  if (oldInventory !== undefined) {
-    io.err(`stocktake: ${driftSummary(inventoryDrift(oldInventory, newInventory))}\n`);
-  }
-
-  // Backstop: the name check above should catch every invalid --name before
-  // we get here, but a repository validation rejection must never escape
-  // run() as an unhandled promise rejection (bin.ts would degrade it to a
-  // generic exit 1) — wrap the writes and turn any failure into a clean exit.
-  try {
-    await repository.writeInventory(inventoryRef, newInventory);
-    await repository.writeSpend(spendRef, newSpend);
-  } catch (error) {
-    io.err(`stocktake: ${(error as Error).message}\n`);
-    return 2;
-  }
-  io.err(`stocktake: wrote ${inventoryRef}, ${spendRef}\n`);
-  return 0;
 }
 
 // ── validate ─────────────────────────────────────────────────────────────
@@ -398,65 +288,13 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
   // summary line every other outcome prints (mirrors decision-studio's
   // validate, which never special-cases zero files either).
 
-  let errorCount = 0;
-  let warningCount = 0;
-  const diagnostics: ValidateDiagnostic[] = [];
-
-  const validInventories: { ref: string; data: Inventory }[] = [];
-  for (const { ref } of invRefs) {
-    try {
-      validInventories.push({ ref, data: await repository.readInventory(ref) });
-    } catch (error) {
-      errorCount += reportReadError(ref, error, io, diagnostics);
-    }
-  }
-
-  const validSpends: Spend[] = [];
-  for (const { ref } of spendRefs) {
-    try {
-      validSpends.push(await repository.readSpend(ref));
-    } catch (error) {
-      errorCount += reportReadError(ref, error, io, diagnostics);
-    }
-  }
-
-  const validAttributions: { ref: string; data: Attribution }[] = [];
-  for (const { ref } of attrRefs) {
-    try {
-      validAttributions.push({ ref, data: await repository.readAttribution(ref) });
-    } catch (error) {
-      errorCount += reportReadError(ref, error, io, diagnostics);
-    }
-  }
-
-  for (const { ref } of planRefs) {
-    try {
-      await repository.readTagPlan(ref);
-    } catch (error) {
-      errorCount += reportReadError(ref, error, io, diagnostics);
-    }
-  }
-
-  if (validInventories.length >= 1 && validAttributions.length >= 1) {
-    for (const inv of validInventories) {
-      for (const attr of validAttributions) {
-        const result = attribute(inv.data, validSpends, attr.data);
-        const suffix = validInventories.length > 1 ? ` (inventory: ${inv.ref})` : '';
-        for (const diagnostic of result.diagnostics) {
-          io.err(`${attr.ref}: warning: [${diagnostic.code}] ${diagnostic.message}${suffix}\n`);
-          diagnostics.push({
-            severity: 'warning',
-            code: diagnostic.code,
-            message: `${diagnostic.message}${suffix}`,
-            file: attr.ref,
-          });
-          warningCount += 1;
-        }
-      }
-    }
-  }
+  const diagnostics = await collectDiagnostics(repository);
+  for (const diagnostic of diagnostics) io.err(formatDiagnostic(diagnostic));
 
   if (values.json === true) io.out(`${JSON.stringify(diagnostics)}\n`);
+
+  const errorCount = diagnostics.filter((d) => d.severity === 'error').length;
+  const warningCount = diagnostics.filter((d) => d.severity === 'warning').length;
 
   if (errorCount === 0) {
     const suffix = warningCount > 0 ? `, ${warningCount} warning(s)` : '';
@@ -468,71 +306,6 @@ async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined)
 }
 
 // ── report ───────────────────────────────────────────────────────────────
-
-function formatMoney(amount: number): string {
-  return Math.round(amount).toLocaleString('en-US');
-}
-
-interface RollupRow {
-  key: string;
-  amount: number;
-  share: number;
-}
-
-function rollupRows(rollup: Rollup, totalSpend: number): RollupRow[] {
-  const unattributed = rollup.buckets.find((b) => b.key === 'unattributed');
-  const rest = rollup.buckets
-    .filter((b) => b.key !== 'unattributed')
-    .sort((a, b) => (b.amount !== a.amount ? b.amount - a.amount : a.key < b.key ? -1 : 1));
-  const ordered = unattributed !== undefined ? [...rest, unattributed] : rest;
-  return ordered.map((b) => ({
-    key: b.key,
-    amount: b.amount,
-    share: totalSpend !== 0 ? b.amount / totalSpend : 0,
-  }));
-}
-
-function renderHeadline(coverage: Coverage): string {
-  const pct = (coverage.ratio * 100).toFixed(1);
-  // Name the dimension this coverage number refers to — always the primary
-  // dimension — so "--by costType" output can't be misread as costType's
-  // own coverage (the headline is always about the primary dimension).
-  return `coverage[${coverage.dimensionId}] ${pct}% · $${formatMoney(coverage.unattributedSpend)}/mo unattributed · ${coverage.unattributedCount} resources`;
-}
-
-function renderTable(dimensionLabel: string, rows: RollupRow[]): string {
-  const amountStrs = rows.map((r) => formatMoney(r.amount));
-  const shareStrs = rows.map((r) => `${(r.share * 100).toFixed(1)}%`);
-  const keyWidth = Math.max(dimensionLabel.length, ...rows.map((r) => r.key.length));
-  const amountWidth = Math.max('$/mo'.length, ...amountStrs.map((s) => s.length));
-  const shareWidth = Math.max('share%'.length, ...shareStrs.map((s) => s.length));
-
-  const lines = [
-    `${dimensionLabel.padEnd(keyWidth)}  ${'$/mo'.padStart(amountWidth)}  ${'share%'.padStart(shareWidth)}`,
-  ];
-  rows.forEach((r, i) => {
-    const amountStr = amountStrs[i] ?? '';
-    const shareStr = shareStrs[i] ?? '';
-    lines.push(`${r.key.padEnd(keyWidth)}  ${amountStr.padStart(amountWidth)}  ${shareStr.padStart(shareWidth)}`);
-  });
-  return `${lines.join('\n')}\n`;
-}
-
-function csvField(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
-}
-
-function renderCsv(dimensionId: string, rows: RollupRow[]): string {
-  const lines = ['dimension,value,amount,share'];
-  for (const row of rows) {
-    const amount = Math.round(row.amount * 100) / 100;
-    const share = Math.round(row.share * 100 * 100) / 100;
-    lines.push(`${csvField(dimensionId)},${csvField(row.key)},${amount},${share}`);
-  }
-  return `${lines.join('\n')}\n`;
-}
-
-const REPORT_DIAGNOSTIC_CODES = new Set(['mixed-currency', 'orphan-spend-row']);
 
 async function runReport(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
   let values: { by?: string; format?: string; dir?: string; help?: boolean };
@@ -559,140 +332,42 @@ async function runReport(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
 
-  const invRefs = await repository.listInventories();
-  const attrRefs = await repository.listAttributions();
-  if (invRefs.length !== 1) {
-    io.err(`report: expected exactly 1 inventory, found ${invRefs.length}\n`);
-    return 2;
-  }
-  if (attrRefs.length !== 1) {
-    io.err(`report: expected exactly 1 attribution, found ${attrRefs.length}\n`);
-    return 2;
-  }
-  const invRef = invRefs[0];
-  const attrRef = attrRefs[0];
-  if (invRef === undefined || attrRef === undefined) {
-    io.err('report: internal error resolving artifact refs\n');
-    return 1;
-  }
-
-  let inventory: Inventory;
-  let attribution: Attribution;
-  try {
-    inventory = await repository.readInventory(invRef.ref);
-  } catch (error) {
-    reportReadError(invRef.ref, error, io);
-    return 1;
-  }
-  try {
-    attribution = await repository.readAttribution(attrRef.ref);
-  } catch (error) {
-    reportReadError(attrRef.ref, error, io);
-    return 1;
-  }
-
-  const spendRefs = await repository.listSpends();
-  const spends: Spend[] = [];
-  for (const { ref } of spendRefs) {
-    try {
-      spends.push(await repository.readSpend(ref));
-    } catch (error) {
-      reportReadError(ref, error, io);
-      return 1;
-    }
-  }
-
-  const result: AttributeResult = attribute(inventory, spends, attribution);
-
-  const by = values.by ?? result.primaryDimensionId;
-  const dimension = attribution.spec.dimensions.find((d) => d.id === by);
-  if (dimension === undefined) {
-    io.err(`report: unknown dimension "${by}" (not declared in the attribution)\n`);
-    return 2;
-  }
-
-  const primaryCoverage = result.coverage.find((c) => c.isPrimary);
-  const rollup = result.rollups.find((r) => r.dimensionId === by);
-  if (primaryCoverage === undefined || rollup === undefined) {
-    io.err('report: internal error computing coverage/rollup\n');
-    return 1;
-  }
-
-  for (const diagnostic of result.diagnostics) {
-    if (REPORT_DIAGNOSTIC_CODES.has(diagnostic.code)) {
-      io.err(`report: warning: [${diagnostic.code}] ${diagnostic.message}\n`);
-    }
-  }
-
-  const format = values.format ?? 'table';
-  const rows = rollupRows(rollup, result.totals.inventorySpend);
-  switch (format) {
-    case 'table':
-      io.out(`${renderHeadline(primaryCoverage)}\n\n${renderTable(dimension.label, rows)}`);
-      return 0;
-    case 'json':
-      io.out(
-        `${JSON.stringify(
-          { rollup, coverage: result.coverage, totals: result.totals },
-          null,
-          2,
-        )}\n`,
-      );
-      return 0;
-    case 'csv':
-      io.out(renderCsv(dimension.id, rows));
-      return 0;
-    default:
-      io.err(`report: unknown --format "${format}" (expected table, json, or csv)\n`);
+  const outcome = await computeReport(repository, { ...(values.by !== undefined ? { by: values.by } : {}) });
+  switch (outcome.kind) {
+    case 'usage-error':
+      io.err(`report: ${outcome.message}\n`);
       return 2;
+    case 'read-error':
+      reportReadError(outcome.ref, outcome.error, io);
+      return 1;
+    case 'internal-error':
+      io.err(`report: ${outcome.message}\n`);
+      return 1;
+    case 'ok':
+      break;
   }
+
+  for (const warning of outcome.warnings) {
+    io.err(`report: warning: [${warning.code}] ${warning.message}\n`);
+  }
+
+  const rendered = renderReport(values.format, {
+    dimensionId: outcome.dimensionId,
+    dimensionLabel: outcome.dimensionLabel,
+    primaryCoverage: outcome.primaryCoverage,
+    coverage: outcome.coverage,
+    rollup: outcome.rollup,
+    totals: outcome.totals,
+  });
+  if ('usageError' in rendered) {
+    io.err(`report: ${rendered.usageError}\n`);
+    return 2;
+  }
+  io.out(rendered.text);
+  return 0;
 }
 
 // ── plan ─────────────────────────────────────────────────────────────────
-
-function kebabCase(id: string): string {
-  return id
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/_/g, '-')
-    .toLowerCase();
-}
-
-function defaultTagMapping(attribution: Attribution): TagMapping {
-  const mapping: TagMapping = {};
-  for (const dimension of attribution.spec.dimensions) {
-    mapping[dimension.id] = `fs-${kebabCase(dimension.id)}`;
-  }
-  return mapping;
-}
-
-function parseMapArg(raw: string): [string, string] {
-  const eq = raw.indexOf('=');
-  if (eq <= 0 || eq === raw.length - 1) {
-    throw new Error(`invalid --map "${raw}" (expected "dimensionId=tagName")`);
-  }
-  return [raw.slice(0, eq), raw.slice(eq + 1)];
-}
-
-function latestPeriod(spends: readonly Spend[], inventory: Inventory): string {
-  const periods = spends.flatMap((s) => s.spec.rows.map((r) => r.period)).sort();
-  const latest = periods.at(-1);
-  return latest ?? monthOf(inventory.spec.asOf);
-}
-
-interface ActionCounts {
-  add: number;
-  change: number;
-  remove: number;
-  noop: number;
-}
-
-function countActions(entries: readonly TagPlanEntryType[]): ActionCounts {
-  const counts: ActionCounts = { add: 0, change: 0, remove: 0, noop: 0 };
-  for (const entry of entries) {
-    counts[entry.action] += 1;
-  }
-  return counts;
-}
 
 async function runPlan(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
   let values: { map?: string[]; out?: string; dir?: string; help?: boolean };
@@ -716,124 +391,39 @@ async function runPlan(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
     return 0;
   }
 
-  // Validate the tag plan's slug EARLY — right after parsing flags, before
-  // any repository reads — so a bad --out fails fast with a clean usage
-  // error instead of a repository validation rejection surfacing only at the
-  // write, at the very end of the command. --out's filename stem becomes
-  // `metadata.slug`, so it must both end in ".yaml" and be a valid slug.
-  if (values.out !== undefined) {
-    const outSlug = slugFromPath(values.out);
-    if (outSlug === null) {
-      io.err(`plan: invalid --out "${values.out}": must end in "${FILE_EXTENSION}"\n`);
-      return 2;
-    }
-    const outSlugCheck = Slug.safeParse(outSlug);
-    if (!outSlugCheck.success) {
-      io.err(
-        `plan: invalid --out "${values.out}": ${outSlugCheck.error.issues[0]?.message ?? 'must be a valid slug'}\n`,
-      );
-      return 2;
-    }
-  }
-
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
 
-  const invRefs = await repository.listInventories();
-  const attrRefs = await repository.listAttributions();
-  if (invRefs.length !== 1) {
-    io.err(`plan: expected exactly 1 inventory, found ${invRefs.length}\n`);
-    return 2;
-  }
-  if (attrRefs.length !== 1) {
-    io.err(`plan: expected exactly 1 attribution, found ${attrRefs.length}\n`);
-    return 2;
-  }
-  const invRef = invRefs[0];
-  const attrRef = attrRefs[0];
-  if (invRef === undefined || attrRef === undefined) {
-    io.err('plan: internal error resolving artifact refs\n');
-    return 1;
-  }
-
-  let inventory: Inventory;
-  let attribution: Attribution;
-  try {
-    inventory = await repository.readInventory(invRef.ref);
-  } catch (error) {
-    reportReadError(invRef.ref, error, io);
-    return 1;
-  }
-  try {
-    attribution = await repository.readAttribution(attrRef.ref);
-  } catch (error) {
-    reportReadError(attrRef.ref, error, io);
-    return 1;
-  }
-
-  const dimensionIds = new Set(attribution.spec.dimensions.map((d) => d.id));
-  const tagMapping = defaultTagMapping(attribution);
-  for (const raw of values.map ?? []) {
-    let dim: string;
-    let tag: string;
-    try {
-      [dim, tag] = parseMapArg(raw);
-    } catch (error) {
-      io.err(`plan: ${(error as Error).message}\n`);
-      return 2;
-    }
-    if (!dimensionIds.has(dim)) {
-      io.err(`plan: unknown dimension "${dim}" in --map (not declared in the attribution)\n`);
-      return 2;
-    }
-    tagMapping[dim] = tag;
-  }
-
-  const spendRefs = await repository.listSpends();
-  const spends: Spend[] = [];
-  for (const { ref } of spendRefs) {
-    try {
-      spends.push(await repository.readSpend(ref));
-    } catch (error) {
-      reportReadError(ref, error, io);
-      return 1;
-    }
-  }
-
-  const outRef =
-    values.out ?? `${typeDirectoryFor('TagPlan')}/${latestPeriod(spends, inventory)}${FILE_EXTENSION}`;
-  const outSlug = slugFromPath(outRef);
-  const tagPlan: TagPlan = buildTagPlan(inventory, attribution, tagMapping, {
-    ...(outSlug !== null ? { slug: outSlug } : {}),
+  const outcome = await computePlan(repository, {
+    ...(values.map !== undefined ? { map: values.map } : {}),
+    ...(values.out !== undefined ? { out: values.out } : {}),
   });
 
-  const primaryDimension = attribution.spec.dimensions[0];
-  if (tagPlan.spec.entries.length === 0 && primaryDimension !== undefined) {
-    const { resolutions } = resolveAttribution(inventory, attribution);
-    const anyResolved = resolutions.some((r) => r.assignments[primaryDimension.id] !== undefined);
-    if (!anyResolved) {
-      io.err('plan: no resources are attributable (nothing to tag) — check your attribution rules\n');
+  switch (outcome.kind) {
+    case 'usage-error':
+      io.err(`plan: ${outcome.message}\n`);
+      return 2;
+    case 'read-error':
+      reportReadError(outcome.ref, outcome.error, io);
       return 1;
+    case 'internal-error':
+      io.err(`plan: ${outcome.message}\n`);
+      return 1;
+    case 'nothing-attributable':
+      io.err(`plan: ${outcome.message}\n`);
+      return 1;
+    case 'write-error':
+      io.err(`plan: ${outcome.message}\n`);
+      return 2;
+    case 'ok': {
+      const { counts } = outcome;
+      io.err(
+        `plan: +${counts.add} add · ~${counts.change} change · −${counts.remove} remove · ${counts.noop} noop\n`,
+      );
+      io.err(`plan: wrote ${outcome.outRef}\n`);
+      return 0;
     }
   }
-
-  // Backstop: the --out check above should catch every invalid id before we
-  // get here, but a repository validation rejection must never escape run()
-  // as an unhandled promise rejection — wrap the write and turn any failure
-  // into a clean exit instead.
-  try {
-    await repository.writeTagPlan(outRef, tagPlan);
-  } catch (error) {
-    io.err(`plan: ${(error as Error).message}\n`);
-    return 2;
-  }
-
-  const counts = countActions(tagPlan.spec.entries);
-  io.err(
-    `plan: +${counts.add} add · ~${counts.change} change · −${counts.remove} remove · ${counts.noop} noop\n`,
-  );
-  io.err(`plan: wrote ${outRef}\n`);
-  return 0;
 }
 
 // ── apply ────────────────────────────────────────────────────────────────
@@ -894,84 +484,44 @@ async function runApply(argv: string[], io: CliIO, deps: RunDeps | undefined): P
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
   const provider = resolveProvider(deps);
-
-  let plan: TagPlan;
-  try {
-    plan = await repository.readTagPlan(planRef);
-  } catch (error) {
-    reportReadError(planRef, error, io);
-    return 1;
-  }
-
-  const invRefs = await repository.listInventories();
-  // Collect EVERY inventory whose asOf string-equals the plan's baseline —
-  // not just the first by sorted ref. With two (or more) inventories sharing
-  // that asOf, silently picking the first can gate against the wrong one in
-  // either direction (a stale "in sync" pass, or a spurious drift refusal).
-  const matches: { ref: string; inventory: Inventory }[] = [];
-  for (const { ref } of invRefs) {
-    try {
-      const candidate = await repository.readInventory(ref);
-      if (candidate.spec.asOf === plan.spec.baselineAsOf) {
-        matches.push({ ref, inventory: candidate });
-      }
-    } catch {
-      // An unrelated invalid inventory doesn't block finding the right one.
-    }
-  }
-  if (matches.length === 0) {
-    io.err(
-      `apply: no inventory found with asOf matching the plan's baseline (${plan.spec.baselineAsOf}) — re-stocktake and re-plan\n`,
-    );
-    return 1;
-  }
-  if (matches.length > 1) {
-    const refs = matches.map((m) => m.ref).join(', ');
-    io.err(
-      `apply: refusing — ${matches.length} inventories share the plan's baselineAsOf (${plan.spec.baselineAsOf}): ${refs}; keep exactly one or re-plan\n`,
-    );
-    return 1;
-  }
-  const onlyMatch = matches[0];
-  if (onlyMatch === undefined) {
-    io.err('apply: internal error resolving baseline inventory\n');
-    return 1;
-  }
-  const baseline = onlyMatch.inventory;
-  const baselineRef = onlyMatch.ref;
-
-  const plannedResourceIds = [...new Set(plan.spec.entries.map((e) => e.resourceId))].sort(
-    compareResourceIds,
-  );
-  const driftReport = await provider.verifyBaseline(baseline, plannedResourceIds);
-  if (!driftReport.inSync) {
-    io.err(
-      `apply: refusing — live state has drifted from the plan's baseline inventory (${baselineRef ?? ''}):\n`,
-    );
-    for (const drift of driftReport.drifts) {
-      io.err(`  ${driftMarker(drift.kind)} ${drift.resourceId} ${driftLabel(drift.kind)}\n`);
-    }
-    io.err('apply: re-stocktake and re-plan before applying\n');
-    return 1;
-  }
-
   const dryRun = values['dry-run'] === true;
-  const applyResult = await provider.applyTags(plan, { dryRun });
 
-  const nameById = new Map(baseline.spec.resources.map((r) => [r.id, r.name]));
-  for (const entry of applyResult.results) {
-    const displayName = nameById.get(entry.resourceId) ?? entry.resourceId;
-    if (entry.ok) {
-      io.err(`✓ ${displayName} ${entry.tag} ${entry.action}\n`);
-    } else {
-      io.err(`✗ ${displayName} ${entry.tag} ${entry.action}: ${entry.error ?? 'failed'}\n`);
+  const outcome = await computeApply({ repository, provider }, { planRef, dryRun });
+
+  switch (outcome.kind) {
+    case 'read-error':
+      reportReadError(outcome.ref, outcome.error, io);
+      return 1;
+    case 'no-baseline':
+      io.err(`apply: ${outcome.message}\n`);
+      return 1;
+    case 'multiple-baseline':
+      io.err(`apply: refusing — ${outcome.message}\n`);
+      return 1;
+    case 'drift': {
+      io.err(`apply: refusing — ${outcome.message}:\n`);
+      for (const drift of outcome.drifts) {
+        io.err(`  ${driftMarker(drift.kind)} ${drift.resourceId} ${driftLabel(drift.kind)}\n`);
+      }
+      io.err('apply: re-stocktake and re-plan before applying\n');
+      return 1;
+    }
+    case 'ok': {
+      const { result } = outcome;
+      for (const entry of result.results) {
+        const displayName = outcome.nameById[entry.resourceId] ?? entry.resourceId;
+        if (entry.ok) {
+          io.err(`✓ ${displayName} ${entry.tag} ${entry.action}\n`);
+        } else {
+          io.err(`✗ ${displayName} ${entry.tag} ${entry.action}: ${entry.error ?? 'failed'}\n`);
+        }
+      }
+      io.err(
+        `apply: ${result.applied} applied · ${result.skippedNoop} noop · ${result.failed} failed${outcome.dryRun ? ' (dry run)' : ''}\n`,
+      );
+      return result.failed > 0 ? 1 : 0;
     }
   }
-
-  io.err(
-    `apply: ${applyResult.applied} applied · ${applyResult.skippedNoop} noop · ${applyResult.failed} failed${dryRun ? ' (dry run)' : ''}\n`,
-  );
-  return applyResult.failed > 0 ? 1 : 0;
 }
 
 // ── dispatch ─────────────────────────────────────────────────────────────
@@ -998,6 +548,8 @@ export async function run(argv: string[], io: CliIO = defaultIO, deps?: RunDeps)
       return runApply(rest, io, deps);
     case 'serve':
       return runServe(rest, io);
+    case 'mcp':
+      return runMcp(rest, io);
     case undefined:
     case 'help':
     case '--help':

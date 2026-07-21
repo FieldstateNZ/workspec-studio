@@ -15,6 +15,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attribution, Inventory } from '@workspec/cost-schema';
 import { createServer } from './server.js';
 import { FsRepository } from './fs-repository.js';
+import { createCostMcpProvider } from './mcp-provider.js';
+
+// MCP transport requires both content types in Accept; a canonical initialize body.
+const MCP_ACCEPT = 'application/json, text/event-stream';
+const INITIALIZE_BODY = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2025-06-18',
+    capabilities: {},
+    clientInfo: { name: 'server-test', version: '0.0.0' },
+  },
+};
 
 /** Narrows a possibly-undefined lookup/index result, failing the test loudly if absent. */
 function must<T>(value: T | undefined): T {
@@ -305,5 +319,113 @@ describe('host server — static client + SPA fallback', () => {
     const res = await request(app).get('/');
     expect(res.status).toBe(200);
     expect(res.text).toContain('Cost Studio API is running');
+  });
+});
+
+describe('host server — MCP mount (smoke)', () => {
+  it('is absent without an mcpProvider', async () => {
+    const app = createServer({ dir });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Content-Type', 'application/json')
+      .send({ jsonrpc: '2.0', id: 1, method: 'initialize' });
+    // No route registered at all: falls through to the SPA/API-hint catch-all,
+    // never a 200 MCP response.
+    expect(res.status).not.toBe(200);
+  });
+
+  it('initializes an MCP session at /mcp when mcpProvider is supplied', async () => {
+    const mcpProvider = createCostMcpProvider(new FsRepository(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(200);
+    // Response mode defaults to SSE (`text/event-stream`), one `data: <json>`
+    // line — see `mount-mcp-http.test.ts` in @workspec/mcp-core for the same
+    // parsing approach.
+    const dataLine = res.text.split('\n').find((line: string) => line.startsWith('data: '));
+    expect(dataLine).toBeDefined();
+    const body = JSON.parse((dataLine as string).slice('data: '.length)) as {
+      result: { serverInfo: { name: string } };
+    };
+    expect(body.result.serverInfo.name).toBe('workspec-mcp');
+  });
+
+  it('rejects a hostile Host header with 403 through the mounted app', async () => {
+    const mcpProvider = createCostMcpProvider(new FsRepository(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Host', 'evil.com')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects a hostile cross-origin Origin header with 403 through the mounted app', async () => {
+    const mcpProvider = createCostMcpProvider(new FsRepository(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Origin', 'https://evil.com')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('allows a legitimate localhost request (200)', async () => {
+    const mcpProvider = createCostMcpProvider(new FsRepository(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Origin', 'http://127.0.0.1:4173')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('drives cost_list_inventories via tools/call over /mcp end-to-end', async () => {
+    const mcpProvider = createCostMcpProvider(new FsRepository(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'cost_list_inventories', arguments: {} },
+      });
+
+    expect(res.status).toBe(200);
+    const dataLine = res.text.split('\n').find((line: string) => line.startsWith('data: '));
+    expect(dataLine).toBeDefined();
+    const body = JSON.parse((dataLine as string).slice('data: '.length)) as {
+      result: { content: { type: string; text: string }[]; isError?: boolean };
+    };
+    expect(body.result.isError).not.toBe(true);
+    // The tool returns the inventory list as JSON text; the seeded "estate"
+    // inventory must be in it.
+    const block = body.result.content[0];
+    if (block === undefined) throw new Error('expected a content block');
+    const inventories = JSON.parse(block.text) as { slug: string }[];
+    expect(inventories.some((i) => i.slug === 'estate')).toBe(true);
   });
 });

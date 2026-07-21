@@ -4,13 +4,28 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFsSource } from '@workspec/c4-model/fs';
 import { parseLayoutYaml } from '@workspec/c4-schema';
+import { createC4McpProvider } from './mcp-provider.js';
 import { createServer } from './server.js';
 
 const REPRESENTATIVE_DIR = fileURLToPath(
   new URL('../../c4-schema/test/fixtures/representative', import.meta.url),
 );
 const LAYOUT_PATH = '.workspec/diagrams/.layout/system-context.yaml';
+
+// MCP transport requires both content types in Accept; a canonical initialize body.
+const MCP_ACCEPT = 'application/json, text/event-stream';
+const INITIALIZE_BODY = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2025-06-18',
+    capabilities: {},
+    clientInfo: { name: 'server-test', version: '0.0.0' },
+  },
+};
 
 let dir: string;
 beforeEach(async () => {
@@ -228,5 +243,55 @@ describe('host server — unclassified errors return a generic 500 (no path/mess
     } finally {
       errorSpy.mockRestore();
     }
+  });
+});
+
+describe('host server — MCP mount (smoke)', () => {
+  it('is absent without an mcpProvider', async () => {
+    const app = createServer({ dir });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Content-Type', 'application/json')
+      .send({ jsonrpc: '2.0', id: 1, method: 'initialize' });
+    // No route registered at all: falls through to the SPA/API-hint catch-all,
+    // never a 200 MCP response.
+    expect(res.status).not.toBe(200);
+  });
+
+  it('initializes an MCP session at /mcp when mcpProvider is supplied, listing the c4 tools', async () => {
+    const mcpProvider = createC4McpProvider(createFsSource(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(200);
+    // Response mode defaults to SSE (`text/event-stream`), one `data: <json>`
+    // line — see `mount-mcp-http.test.ts` in @workspec/mcp-core for the same
+    // parsing approach.
+    const dataLine = res.text.split('\n').find((line: string) => line.startsWith('data: '));
+    expect(dataLine).toBeDefined();
+    const body = JSON.parse((dataLine as string).slice('data: '.length)) as {
+      result: { serverInfo: { name: string } };
+    };
+    expect(body.result.serverInfo.name).toBe('workspec-mcp');
+  });
+
+  it('rejects a hostile Host header with 403 through the mounted app', async () => {
+    const mcpProvider = createC4McpProvider(createFsSource(dir));
+    const app = createServer({ dir, mcpProvider });
+
+    const res = await request(app)
+      .post('/mcp')
+      .set('Host', 'evil.com')
+      .set('Accept', MCP_ACCEPT)
+      .set('Content-Type', 'application/json')
+      .send(INITIALIZE_BODY);
+
+    expect(res.status).toBe(403);
   });
 });

@@ -1,7 +1,7 @@
 import type { McpToolDef } from '@workspec/mcp-core';
+import { readRefArg } from '@workspec/mcp-core';
 import type { FsRepository } from '../fs-repository.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
-import { readRefArg } from './read-ref-arg.js';
 
 const INPUT_SCHEMA = {
   type: 'object',

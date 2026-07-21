@@ -34,6 +34,14 @@ export { createServer } from './server.js';
 export type { CreateServerOptions } from './server.js';
 export { runServe } from './serve.js';
 
+// ── Shared validate diagnostics core (CLI `validate` + the `validate` MCP tool) ─
+export { collectDiagnostics } from './collect-diagnostics.js';
+export type { ValidateDiagnostic } from './collect-diagnostics.js';
+
+// ── MCP provider (mount via @workspec/mcp-core's assembleMcpServer) ────────────
+export { createCostMcpProvider } from './mcp-provider.js';
+export type { CostMcpProviderDeps } from './mcp-provider.js';
+
 // ── CLI entry (also the executable's `run`) ───────────────────────────────────
 export { run } from './cli.js';
 export type { CliIO, RunDeps } from './cli.js';

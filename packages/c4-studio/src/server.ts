@@ -25,10 +25,13 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import type { Express, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import type { C4Model } from '@workspec/c4-model';
 import { loadC4Model } from '@workspec/c4-model';
 import { createFsSource } from '@workspec/c4-model/fs';
-import { isLayoutFile, parseLayoutYaml, serializeLayout, WORKSPEC_DIR } from '@workspec/c4-schema';
+import { isLayoutFile, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
+import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
+import type { McpToolProvider } from '@workspec/mcp-core';
+import { modelToWire } from './model-to-wire.js';
+import { isWorkspecPath } from './workspec-path.js';
 
 /** Options for {@link createServer}. */
 export interface CreateServerOptions {
@@ -40,6 +43,12 @@ export interface CreateServerOptions {
    * API is still served and `/` returns a short hint.
    */
   clientDir?: string;
+  /**
+   * When present, mounts an MCP server (`@workspec/mcp-core`'s
+   * `mountMcpHttp`, stateless, at `/mcp`) alongside the JSON API. Absent by
+   * default — most callers (tests, the client dev server) don't need it.
+   */
+  mcpProvider?: McpToolProvider;
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -57,26 +66,15 @@ function defaultClientDir(): string | undefined {
  * outside `.workspec/**`. The whole file-proxy API exists to serve the
  * `.workspec/` tree to the explorer client — nothing under the served root's
  * other directories (`.git/`, `.env`, source files) is ever a legitimate
- * request, so it's refused at the parameter gate, not per route.
+ * request, so it's refused at the parameter gate, not per route. Delegates
+ * the actual shape+confinement check to `isWorkspecPath` (shared with the
+ * `c4` MCP tools' `write_layout`), so this and the MCP surface can never
+ * drift on what "confined to `.workspec/`" means.
  */
 function pathParam(req: Request, name: string): string | undefined {
   const raw = req.query[name];
   if (typeof raw !== 'string' || raw.length === 0) return undefined;
-  if (raw.startsWith('/') || raw.includes('..') || raw.includes('\0')) return undefined;
-  if (raw !== WORKSPEC_DIR && !raw.startsWith(`${WORKSPEC_DIR}/`)) return undefined;
-  return raw;
-}
-
-/** `C4Model.elements` is `Record<kind, ReadonlyMap<slug, LoadedElement>>` — not JSON-serialisable as-is. */
-function modelToWire(model: C4Model): unknown {
-  return {
-    elements: Object.fromEntries(
-      Object.entries(model.elements).map(([kind, bySlug]) => [kind, Object.fromEntries(bySlug)]),
-    ),
-    diagrams: model.diagrams,
-    spec: model.spec,
-    diagnostics: model.diagnostics,
-  };
+  return isWorkspecPath(raw) ? raw : undefined;
 }
 
 /**
@@ -209,6 +207,13 @@ export function createServer(options: CreateServerOptions): Express {
       .then(() => res.status(204).end())
       .catch((error: unknown) => sendInternalError(res, error, path));
   });
+
+  // Mounted before the static/SPA fallback below — that fallback's catch-all
+  // GET (`/^(?!\/api\/).*/`) would otherwise swallow `/mcp` before this
+  // route ever saw the request.
+  if (options.mcpProvider !== undefined) {
+    mountMcpHttp(app, assembleMcpServer([options.mcpProvider]));
+  }
 
   // Static client + SPA fallback (only for non-API GETs).
   const clientDir = options.clientDir ?? defaultClientDir();

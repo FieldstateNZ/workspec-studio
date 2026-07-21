@@ -1,10 +1,8 @@
 import { buildDecisionJsonSchema, DecisionArtifact } from '@workspec/decision-schema';
 import type { McpToolDef } from '@workspec/mcp-core';
+import { readObjectArg, readRefArg, validateThenWrite } from '@workspec/mcp-core';
 import type { FsRepository } from '../fs-repository.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
-import { readObjectArg } from './read-object-arg.js';
-import { readRefArg } from './read-ref-arg.js';
-import { validateThenWrite } from './validate-then-write.js';
 
 /**
  * The generated JSON Schema for a `Decision` artifact — see
@@ -41,7 +39,13 @@ export function buildWriteDecisionTool(repo: FsRepository): McpToolDef {
         ref = readRefArg(args, 'ref');
         const candidate = readObjectArg(args, 'decision');
         const parsed = DecisionArtifact.safeParse(candidate);
-        return await validateThenWrite(parsed, ref, (r, data) => repo.writeDecision(r, data), 'decision');
+        return await validateThenWrite(
+          parsed,
+          ref,
+          (r, data) => repo.writeDecision(r, data),
+          'decision',
+          mapRepoErrorToResult,
+        );
       } catch (error) {
         return mapRepoErrorToResult(error, ref);
       }

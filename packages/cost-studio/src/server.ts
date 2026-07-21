@@ -24,6 +24,8 @@ import {
   SpendArtifact,
   TagPlanArtifact,
 } from '@workspec/cost-schema';
+import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
+import type { McpToolProvider } from '@workspec/mcp-core';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 /** Options for {@link createServer}. */
@@ -36,6 +38,12 @@ export interface CreateServerOptions {
    * API is still served and `/` returns a short hint.
    */
   clientDir?: string;
+  /**
+   * When present, mounts an MCP server (`@workspec/mcp-core`'s
+   * `mountMcpHttp`, stateless, at `/mcp`) alongside the JSON API. Absent by
+   * default — most callers (tests, the client dev server) don't need it.
+   */
+  mcpProvider?: McpToolProvider;
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -325,6 +333,13 @@ export function createServer(options: CreateServerOptions): Express {
         sendInternalError(res, error, ref);
       });
   });
+
+  // Mounted before the static/SPA fallback below — that fallback's catch-all
+  // GET (`/^(?!\/api\/).*/`) would otherwise swallow `/mcp` before this
+  // route ever saw the request.
+  if (options.mcpProvider !== undefined) {
+    mountMcpHttp(app, assembleMcpServer([options.mcpProvider]));
+  }
 
   // Static client + SPA fallback (only for non-API GETs).
   const clientDir = options.clientDir ?? defaultClientDir();

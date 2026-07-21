@@ -1,0 +1,37 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as
+    // packages/trace-studio.
+    "rootDir": "src",
+    "outDir": ".typecheck",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // This IS a Node CLI (bin.ts/cli.ts touch `process`, run-http.ts binds a
+    // socket) — so node globals/types are EXPECTED here, unlike a pure
+    // schema/model package. Set explicitly rather than relying on automatic
+    // `@types/*` discovery, which under this repo's pinned typescript@^6 +
+    // @types/node@^24 does not resolve `process`/`node:*` for this package
+    // without it (same quirk documented in packages/trace-studio/tsconfig.json).
+    "types": ["node"]
+  },
+  // TS Project References: let `tsc -b` type-check against every dependency's
+  // real TypeScript source (building their declarations on demand), so
+  // `typecheck` never has to run after `build` — matching CI, which
+  // typechecks BEFORE any dist/ exists. Points at each dependency's *build*
+  // config (rootDir "src", the published dist/ layout the package.json
+  // "types" field advertises). mcp-host is the aggregator: it imports all
+  // five directly (mcp-core + the four `*-studio` packages).
+  "references": [
+    { "path": "../mcp-core/tsconfig.build.json" },
+    { "path": "../decision-studio/tsconfig.build.json" },
+    { "path": "../cost-studio/tsconfig.build.json" },
+    { "path": "../c4-studio/tsconfig.build.json" },
+    { "path": "../trace-studio/tsconfig.build.json" }
+  ],
+  "include": ["src"]
+}

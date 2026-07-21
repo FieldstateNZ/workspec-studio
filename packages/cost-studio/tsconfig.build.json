@@ -11,6 +11,7 @@
     { "path": "../cost-provider-azure/tsconfig.build.json" },
     { "path": "../cost-schema/tsconfig.build.json" },
     { "path": "../cost-ui/tsconfig.build.json" },
+    { "path": "../mcp-core/tsconfig.build.json" },
     { "path": "../schema-core/tsconfig.build.json" }
   ],
   "include": ["src/**/*.ts"],

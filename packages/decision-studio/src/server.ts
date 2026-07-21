@@ -12,10 +12,9 @@ import express from 'express';
 import type { Express, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { CatalogArtifact, DecisionArtifact } from '@workspec/decision-schema';
-import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
+import { assembleMcpServer, isSafeRelativeRef, mountMcpHttp } from '@workspec/mcp-core';
 import type { McpToolProvider } from '@workspec/mcp-core';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
-import { isSafeRelativeRef } from './ref-shape.js';
 
 /** Options for {@link createServer}. */
 export interface CreateServerOptions {

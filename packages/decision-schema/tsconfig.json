@@ -9,7 +9,8 @@
     // (never read by anything) keeps `tsc -b`'s self-bootstrap working
     // without polluting `dist/` — same shadow-emit split as packages/c4-*.
     "outDir": ".typecheck",
-    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    "types": ["node"]
   },
   "include": ["src"]
 }

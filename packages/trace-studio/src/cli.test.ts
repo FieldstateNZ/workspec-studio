@@ -383,6 +383,34 @@ describe('ingest', () => {
     expect(code).toBe(2);
     expect(cap.err()).toContain('unknown emitter');
   });
+
+  it('exits 2 (not 1) on an unknown emitter even when the results file is also missing', async () => {
+    // Regression: the usage error (bad --emitter) must never be masked by a
+    // read failure just because the results-file read happens to run first —
+    // `runIngest` validates the emitter/id BEFORE attempting the read.
+    const repository = createMemoryRepository();
+    const cap = captureIO();
+    const code = await run(['ingest', 'missing.json', '--emitter', 'nope'], cap.io, {
+      repository,
+      clock: FIXED_CLOCK,
+    });
+    expect(code).toBe(2);
+    expect(cap.err()).toContain('unknown emitter');
+    expect(cap.err()).not.toContain('cannot read results file');
+  });
+
+  it('exits 2 (not 1) on an invalid --id even when the results file is also missing', async () => {
+    const repository = createMemoryRepository();
+    const cap = captureIO();
+    const code = await run(
+      ['ingest', 'missing.json', '--emitter', 'cucumber', '--id', '../escape'],
+      cap.io,
+      { repository, clock: FIXED_CLOCK },
+    );
+    expect(code).toBe(2);
+    expect(cap.err()).toContain('invalid id');
+    expect(cap.err()).not.toContain('cannot read results file');
+  });
 });
 
 // ── verify (in-memory: gate + exit codes) ──────────────────────────────────────

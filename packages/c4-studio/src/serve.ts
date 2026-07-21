@@ -5,19 +5,24 @@
 // long-running host wants; the `--help` path returns without binding.
 
 import type { AddressInfo } from 'node:net';
+import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { createFsSource } from '@workspec/c4-model/fs';
 import type { CliIO } from './cli.js';
+import { createC4McpProvider } from './mcp-provider.js';
 import { createServer } from './server.js';
 
 export const SERVE_HELP = `workspec-c4 serve — run the localhost C4 Studio host
 
 Usage:
-  workspec-c4 [serve] [--dir <path>] [--port <n>] [--host <addr>]
+  workspec-c4 [serve] [--dir <path>] [--port <n>] [--host <addr>] [--mcp]
 
 Options:
   --dir <path>    Directory containing .workspec/ to serve (default: current directory).
   --port <n>      Port to listen on (default: 4174).
   --host <addr>   Address to bind (default: 127.0.0.1 — localhost only).
+  --mcp           Also mount an MCP server (stateless, localhost-only) at /mcp,
+                  exposing get_model/validate/render/import_aspire/write_layout as tools.
 
 Serves the built client and a thin JSON API over the working tree: mounts
 C4Explorer with { editLayout: true } — browse diagrams, drill down, and
@@ -27,7 +32,7 @@ drag-to-pin writes .layout/ files back into the tree. No database: the
 
 /** Run the host. Resolves to the process exit code (on server close / bind error). */
 export async function runServe(argv: string[], io: CliIO): Promise<number> {
-  let values: { dir?: string; port?: string; host?: string; help?: boolean };
+  let values: { dir?: string; port?: string; host?: string; mcp?: boolean; help?: boolean };
   try {
     ({ values } = parseArgs({
       args: argv,
@@ -35,6 +40,7 @@ export async function runServe(argv: string[], io: CliIO): Promise<number> {
         dir: { type: 'string' },
         port: { type: 'string' },
         host: { type: 'string' },
+        mcp: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
       },
       allowPositionals: false,
@@ -57,7 +63,9 @@ export async function runServe(argv: string[], io: CliIO): Promise<number> {
     return 2;
   }
 
-  const app = createServer({ dir });
+  const mcpProvider =
+    values.mcp === true ? createC4McpProvider(createFsSource(resolve(dir))) : undefined;
+  const app = createServer(mcpProvider !== undefined ? { dir, mcpProvider } : { dir });
 
   return new Promise<number>((resolvePromise) => {
     const server = app.listen(port, host, () => {
@@ -65,6 +73,9 @@ export async function runServe(argv: string[], io: CliIO): Promise<number> {
       const boundPort = address?.port ?? port;
       io.err(`C4 Studio · serving ${dir}\n`);
       io.err(`  → http://${host}:${boundPort}\n`);
+      if (mcpProvider !== undefined) {
+        io.err(`  → http://${host}:${boundPort}/mcp (MCP, stateless)\n`);
+      }
       io.err('  press Ctrl-C to stop\n');
     });
 

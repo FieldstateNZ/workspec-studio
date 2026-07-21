@@ -1,10 +1,8 @@
 import { buildCatalogJsonSchema, CatalogArtifact } from '@workspec/decision-schema';
 import type { McpToolDef } from '@workspec/mcp-core';
+import { readObjectArg, readRefArg, validateThenWrite } from '@workspec/mcp-core';
 import type { FsRepository } from '../fs-repository.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
-import { readObjectArg } from './read-object-arg.js';
-import { readRefArg } from './read-ref-arg.js';
-import { validateThenWrite } from './validate-then-write.js';
 
 /**
  * The generated JSON Schema for a `Catalog` artifact — reused verbatim from
@@ -48,7 +46,13 @@ export function buildWriteCatalogTool(repo: FsRepository): McpToolDef {
         ref = readRefArg(args, 'ref');
         const candidate = readObjectArg(args, 'catalog');
         const parsed = CatalogArtifact.safeParse(candidate);
-        return await validateThenWrite(parsed, ref, (r, data) => repo.writeCatalog(r, data), 'catalog');
+        return await validateThenWrite(
+          parsed,
+          ref,
+          (r, data) => repo.writeCatalog(r, data),
+          'catalog',
+          mapRepoErrorToResult,
+        );
       } catch (error) {
         return mapRepoErrorToResult(error, ref);
       }

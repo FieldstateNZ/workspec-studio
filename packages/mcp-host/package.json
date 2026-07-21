@@ -1,0 +1,62 @@
+{
+  "name": "@workspec/mcp-host",
+  "version": "0.1.0-alpha.1",
+  "description": "The aggregate WorkSpec Studio MCP server — assembles the decisions, cost, c4, and trace MCP providers over one shared directory into a single server, exposed via a stdio or --http entry point (workspec-mcp).",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "workspec"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/mcp-host#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/mcp-host"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "bin": {
+    "workspec-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@workspec/c4-studio": "workspace:*",
+    "@workspec/cost-studio": "workspace:*",
+    "@workspec/decision-studio": "workspace:*",
+    "@workspec/mcp-core": "workspace:*",
+    "@workspec/trace-studio": "workspace:*",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

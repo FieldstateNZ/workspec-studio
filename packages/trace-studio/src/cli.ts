@@ -1,8 +1,9 @@
-// The `workspec-trace` CLI — emit / ingest / verify / matrix over a working
-// tree of traceability artifacts (spec §6). `emit`/`ingest`/`verify` were the
-// T4 milestone (shippable value, zero frontend); `matrix` is T6's export half
-// (spec §5/§6) — the RTM as a generated, byte-deterministic compliance
-// artifact (md/csv/html).
+// The `workspec-trace` CLI — emit / ingest / verify / matrix / mcp over a
+// working tree of traceability artifacts (spec §6). `emit`/`ingest`/`verify`
+// were the T4 milestone (shippable value, zero frontend); `matrix` is T6's
+// export half (spec §5/§6) — the RTM as a generated, byte-deterministic
+// compliance artifact (md/csv/html); `mcp` (Step 4) exposes the same four
+// operations to an MCP client/agent over stdio.
 //
 // `run(argv, io, deps)` is the testable entry point: it returns a process exit
 // code and writes through an injectable `CliIO` (defaulting to the real
@@ -11,21 +12,30 @@
 // default `FsRepository`/wall-clock wiring, so ingest is deterministic under
 // test. `bin.ts` is the ONLY thing that touches `process`.
 //
+// Each command's actual domain logic (repo loads/writes, emitter dispatch,
+// the CI gate, the RTM projection) lives in its own `*-core.ts` module
+// (`emit-core.ts`/`ingest-core.ts`/`verify-core.ts`/`matrix-core.ts`),
+// shared with the `mcp` subcommand's tools (`mcp-tools/*.ts`) — this module
+// stays CLI-arg-parsing and human/`--json` rendering only, mirroring how
+// `@workspec/cost-studio` split its own commands in Step 2.
+//
 // Exit codes are the contract CI keys on: 0 = pass, 1 = gate failed (verify) or
-// a write/runtime error (matrix), 2 = usage error (unknown command/flag,
-// missing arg, bad value). This CLI NEVER invokes git — the human commits.
+// a write/runtime error (matrix/emit/ingest), 2 = usage error (unknown
+// command/flag, missing arg, bad value). This CLI NEVER invokes git — the
+// human commits.
 
-import { posix } from 'node:path';
 import { parseArgs } from 'node:util';
-import { TestRun as TestRunSchema } from '@workspec/req-schema';
-import { buildModel } from '@workspec/trace-model';
-import type { Finding, Meter, TraceModel } from '@workspec/trace-model';
-import { emitters, getEmitter, groupScenariosByRule } from '@workspec/trace-emitters';
+import { EMITTER_NAMES, runEmitCore } from './emit-core.js';
+import { formatLoadIssue } from './format-load-issue.js';
 import { DEFAULT_RUNS_DIR, FsRepository } from './fs-repository.js';
+import { runIngestCore, validateIngestArgs } from './ingest-core.js';
+import { runMatrixCore } from './matrix-core.js';
 import { resolveMatrixFormat } from './matrix-format.js';
-import { renderMatrix } from './matrix-render.js';
-import { buildMatrixRows } from './matrix-rows.js';
+import { runMcp } from './run-mcp.js';
 import type { LoadIssue, TraceRepositoryPort } from './repository.js';
+import { isValidThreshold, pct, runVerifyCore } from './verify-core.js';
+import type { VerifyResult } from './verify-core.js';
+import type { Finding, Meter } from '@workspec/trace-model';
 
 /** Injectable IO. Primary command output goes to `out`; diagnostics/usage errors to `err`. */
 export interface CliIO {
@@ -39,8 +49,8 @@ const defaultIO: CliIO = {
 };
 
 /**
- * Injectable dependencies, for tests. When omitted, each command builds its own
- * default: an `FsRepository` rooted at `--dir` (or cwd) and a real wall-clock
+ * Injectable dependencies, for tests. When omitted, each command builds its
+ * own default: an `FsRepository` rooted at `--dir` (or cwd) and a real wall-clock
  * `clock` returning an ISO-8601 timestamp.
  */
 export interface RunDeps {
@@ -56,8 +66,6 @@ function resolveClock(deps: RunDeps | undefined): () => string {
   return deps?.clock ?? (() => new Date().toISOString());
 }
 
-const EMITTER_NAMES = emitters.map((e) => e.name).join(', ');
-
 const HELP = `workspec-trace — WorkSpec Traceability Workbench CLI
 
 Usage:
@@ -69,6 +77,7 @@ Commands:
   verify    The CI gate: fail on validation errors, dangling refs, or a
             scenario-coverage / userReq-coverage / pass-rate floor.
   matrix    Export the RTM (requirements traceability matrix) as md/csv/html.
+  mcp       Run the trace MCP server over stdio.
 
 Run "workspec-trace <command> --help" for command options. This CLI never
 invokes git — you commit. Available emitters: ${EMITTER_NAMES}.
@@ -172,10 +181,6 @@ write failure, 2 usage error (bad/unknown format, missing arg).
 
 // ── shared rendering ─────────────────────────────────────────────────────────
 
-function pct(ratio: number): string {
-  return `${(ratio * 100).toFixed(1)}%`;
-}
-
 /** A meter as "N of M (P%)" — never collapsed to a single number (spec §5). */
 function meterText(m: Meter): string {
   return `${m.numerator} of ${m.denominator} (${pct(m.ratio)})`;
@@ -183,8 +188,7 @@ function meterText(m: Meter): string {
 
 function warnLoadIssues(prefix: string, issues: readonly LoadIssue[], io: CliIO): void {
   for (const issue of issues) {
-    const at = issue.line !== undefined ? `${issue.file}:${issue.line}` : issue.file;
-    io.err(`${prefix}: warning: ${at}: ${issue.message}\n`);
+    io.err(`${prefix}: warning: ${formatLoadIssue(issue)}\n`);
   }
 }
 
@@ -225,71 +229,49 @@ async function runEmit(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
     io.err('emit: --emitter is required\n');
     return 2;
   }
-  const emitter = getEmitter(values.emitter);
-  if (emitter === undefined) {
-    io.err(`emit: unknown emitter "${values.emitter}" (available: ${EMITTER_NAMES})\n`);
-    return 2;
-  }
 
   const dir = values.dir ?? process.cwd();
-  const out = values.out ?? 'features';
   const repository = resolveRepository(deps, dir);
 
-  const { tree, issues } = await repository.loadTree();
-  warnLoadIssues('emit', issues, io);
+  const outcome = await runEmitCore(
+    {
+      emitter: values.emitter,
+      ...(values.feature !== undefined ? { feature: values.feature } : {}),
+      ...(values.out !== undefined ? { out: values.out } : {}),
+    },
+    repository,
+  );
 
-  // A scenario whose parent Rule isn't in the tree can't be emitted (it lands
-  // under a group key nothing retrieves) — warn so the author isn't left with a
-  // silently incomplete suite. Checked against ALL rules, not the
-  // --feature-filtered set. `verify` also flags this as a dangling-ref.
-  const ruleSlugs = new Set(tree.systemRequirements.map((s) => s.slug));
-  for (const scenario of tree.scenarios) {
-    const parent = scenario.artifact.spec.systemRequirement;
-    if (!ruleSlugs.has(parent)) {
-      io.err(`emit: scenario "${scenario.slug}" references unknown rule "${parent}" — skipped\n`);
-    }
-  }
-
-  const systemRequirements =
-    values.feature !== undefined
-      ? tree.systemRequirements.filter((s) => s.artifact.spec.feature === values.feature)
-      : tree.systemRequirements;
-
-  const rules = groupScenariosByRule({ ...tree, systemRequirements });
-  const files = emitter.emit(rules);
-
-  const written: string[] = [];
-  for (const file of files) {
-    const ref = posix.join(out, file.path);
-    try {
-      await repository.writeFile(ref, file.content);
-    } catch (error) {
-      io.err(`emit: failed to write ${ref}: ${(error as Error).message}\n`);
+  switch (outcome.kind) {
+    case 'usage-error':
+      io.err(`emit: ${outcome.message}\n`);
+      return 2;
+    case 'write-error':
+      warnLoadIssues('emit', outcome.loadIssues, io);
+      for (const w of outcome.scenarioWarnings) io.err(`emit: ${w}\n`);
+      io.err(`emit: failed to write ${outcome.ref}: ${(outcome.error as Error).message}\n`);
       return 1;
+    case 'ok': {
+      warnLoadIssues('emit', outcome.loadIssues, io);
+      for (const w of outcome.scenarioWarnings) io.err(`emit: ${w}\n`);
+      if (values.json === true) {
+        io.out(
+          `${JSON.stringify(
+            { emitter: outcome.emitter, count: outcome.files.length, files: outcome.files },
+            null,
+            2,
+          )}\n`,
+        );
+      } else {
+        io.out(`emit: wrote ${outcome.files.length} file(s) with the ${outcome.emitter} emitter\n`);
+        for (const ref of outcome.files) io.out(`  ${ref}\n`);
+      }
+      return 0;
     }
-    written.push(ref);
   }
-
-  if (values.json === true) {
-    io.out(
-      `${JSON.stringify({ emitter: emitter.name, count: written.length, files: written }, null, 2)}\n`,
-    );
-  } else {
-    io.out(`emit: wrote ${written.length} file(s) with the ${emitter.name} emitter\n`);
-    for (const ref of written) io.out(`  ${ref}\n`);
-  }
-  return 0;
 }
 
 // ── ingest ───────────────────────────────────────────────────────────────────
-
-/** Filesystem-safe run id: no path separators, no leading dot. Matches the derived timestamp stem. */
-const RUN_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-
-/** Derive a filesystem-safe run id from an ISO timestamp (spec §4.5 style: `2026-07-09T02-14-07Z`). */
-function runIdFromTimestamp(ts: string): string {
-  return ts.replace(/\.\d+Z$/, 'Z').replace(/:/g, '-');
-}
 
 async function runIngest(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
   let values: {
@@ -342,23 +324,28 @@ async function runIngest(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     io.err('ingest: --emitter is required\n');
     return 2;
   }
-  const emitter = getEmitter(values.emitter);
-  if (emitter === undefined) {
-    io.err(`ingest: unknown emitter "${values.emitter}" (available: ${EMITTER_NAMES})\n`);
-    return 2;
-  }
-
-  const clock = resolveClock(deps);
-  const ts = values.ts ?? clock();
-  const id = values.id ?? runIdFromTimestamp(ts);
-  if (!RUN_ID_PATTERN.test(id)) {
-    io.err(`ingest: invalid --id "${id}" (must be a filename-safe id: no path separators)\n`);
-    return 2;
-  }
 
   const dir = values.dir ?? process.cwd();
   const runsDir = values['runs-dir'] ?? DEFAULT_RUNS_DIR;
   const repository = resolveRepository(deps, dir);
+  const clock = resolveClock(deps);
+
+  // Validate the emitter/derived id BEFORE reading the results file: a usage
+  // error (exit 2) must never be masked behind a read failure (exit 1) just
+  // because the read happens to run first — this is the same check
+  // `runIngestCore` runs internally, so the two can't drift.
+  const validated = validateIngestArgs(
+    {
+      emitter: values.emitter,
+      ...(values.id !== undefined ? { id: values.id } : {}),
+      ...(values.ts !== undefined ? { ts: values.ts } : {}),
+    },
+    clock,
+  );
+  if (!validated.ok) {
+    io.err(`ingest: ${validated.error.message}\n`);
+    return 2;
+  }
 
   let text: string;
   try {
@@ -368,47 +355,56 @@ async function runIngest(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     return 1;
   }
 
-  // Format-agnostic (spec §3/§6): the CLI reads the results file as TEXT and
-  // hands it straight to the emitter, which knows its OWN report format
-  // (Cucumber JSON, JUnit XML, ...) — the CLI must not assume or parse it. A
-  // report the emitter can't make sense of is the emitter's problem: it
-  // defensively yields an empty `TestRun`, never a thrown parse error here.
-  const run = emitter.ingest(text, {
-    id,
-    ts,
-    ...(values.sha !== undefined ? { sha: values.sha } : {}),
-    ...(values.ci !== undefined ? { ci: values.ci } : {}),
-  });
+  // Thread the ALREADY-derived `id`/`ts` through explicitly, rather than
+  // letting `runIngestCore` re-derive them from `values.id`/`values.ts` a
+  // second time: when both are omitted, re-deriving from a second
+  // `clock()` call could (in principle, with a real wall clock) land on a
+  // different id than the one just validated above.
+  const outcome = await runIngestCore(
+    {
+      text,
+      emitter: values.emitter,
+      id: validated.id,
+      ts: validated.ts,
+      ...(values.sha !== undefined ? { sha: values.sha } : {}),
+      ...(values.ci !== undefined ? { ci: values.ci } : {}),
+      runsDir,
+    },
+    { repository, clock },
+  );
 
-  // Defensive: a bad --ts/--id would yield an invalid run — reject before writing.
-  const validated = TestRunSchema.safeParse(run);
-  if (!validated.success) {
-    const first = validated.error.issues[0];
-    io.err(`ingest: produced an invalid run: ${first ? first.message : 'schema violation'}\n`);
-    return 2;
+  switch (outcome.kind) {
+    case 'usage-error':
+      io.err(`ingest: ${outcome.message}\n`);
+      return 2;
+    case 'write-error':
+      io.err(`ingest: failed to write ${outcome.ref}: ${(outcome.error as Error).message}\n`);
+      return 1;
+    case 'ok': {
+      if (values.json === true) {
+        io.out(
+          `${JSON.stringify(
+            {
+              ref: outcome.ref,
+              id: outcome.id,
+              total: outcome.total,
+              pass: outcome.pass,
+              fail: outcome.fail,
+              skip: outcome.skip,
+            },
+            null,
+            2,
+          )}\n`,
+        );
+      } else {
+        io.out(`ingest: wrote ${outcome.ref}\n`);
+        io.out(
+          `  ${outcome.total} result(s): ${outcome.pass} pass · ${outcome.fail} fail · ${outcome.skip} skip\n`,
+        );
+      }
+      return 0;
+    }
   }
-
-  const ref = posix.join(runsDir, `${id}.json`);
-  try {
-    await repository.writeFile(ref, `${JSON.stringify(run, null, 2)}\n`);
-  } catch (error) {
-    io.err(`ingest: failed to write ${ref}: ${(error as Error).message}\n`);
-    return 1;
-  }
-
-  const counts = { pass: 0, fail: 0, skip: 0 };
-  for (const verdict of Object.values(run.results)) counts[verdict] += 1;
-  const total = Object.keys(run.results).length;
-
-  if (values.json === true) {
-    io.out(`${JSON.stringify({ ref, id, total, ...counts }, null, 2)}\n`);
-  } else {
-    io.out(`ingest: wrote ${ref}\n`);
-    io.out(
-      `  ${total} result(s): ${counts.pass} pass · ${counts.fail} fail · ${counts.skip} skip\n`,
-    );
-  }
-  return 0;
 }
 
 // ── verify ───────────────────────────────────────────────────────────────────
@@ -417,44 +413,7 @@ async function runIngest(argv: string[], io: CliIO, deps: RunDeps | undefined): 
 function parseThreshold(raw: string | undefined): number | null {
   if (raw === undefined) return 0;
   const value = Number(raw);
-  if (!Number.isFinite(value) || value < 0 || value > 1) return null;
-  return value;
-}
-
-interface VerifyGate {
-  verdict: 'pass' | 'fail';
-  reasons: string[];
-}
-
-function evaluateGate(
-  model: TraceModel,
-  loadIssues: readonly LoadIssue[],
-  minScenarioCoverage: number,
-  minUserReqCoverage: number,
-  minPassRate: number,
-): VerifyGate {
-  const reasons: string[] = [];
-  if (loadIssues.length > 0) {
-    reasons.push(`${loadIssues.length} loader validation issue(s)`);
-  }
-  const errorFindings = model.findings.filter((f) => f.severity === 'error');
-  if (errorFindings.length > 0) {
-    reasons.push(`${errorFindings.length} error finding(s)`);
-  }
-  if (model.scenarioCoverage.ratio < minScenarioCoverage) {
-    reasons.push(
-      `scenario coverage ${pct(model.scenarioCoverage.ratio)} below floor ${pct(minScenarioCoverage)}`,
-    );
-  }
-  if (model.userReqCoverage.ratio < minUserReqCoverage) {
-    reasons.push(
-      `userReq coverage ${pct(model.userReqCoverage.ratio)} below floor ${pct(minUserReqCoverage)}`,
-    );
-  }
-  if (model.passRate.ratio < minPassRate) {
-    reasons.push(`pass-rate ${pct(model.passRate.ratio)} below floor ${pct(minPassRate)}`);
-  }
-  return { verdict: reasons.length > 0 ? 'fail' : 'pass', reasons };
+  return isValidThreshold(value) ? value : null;
 }
 
 function findingLine(f: Finding): string {
@@ -463,40 +422,34 @@ function findingLine(f: Finding): string {
 }
 
 function loadIssueFinding(issue: LoadIssue): string {
-  const at = issue.line !== undefined ? `${issue.file}:${issue.line}` : issue.file;
-  return `  [error] load-${issue.kind}: ${issue.message} (${at})`;
+  return `  [error] load-${issue.kind}: ${formatLoadIssue(issue)}`;
 }
 
-function renderVerifyHuman(
-  model: TraceModel,
-  loadIssues: readonly LoadIssue[],
-  gate: VerifyGate,
-  io: CliIO,
-): void {
+function renderVerifyHuman(result: VerifyResult, io: CliIO): void {
   io.out(
-    `Scenario coverage: ${meterText(model.scenarioCoverage)}    ` +
-      `UserReq coverage: ${meterText(model.userReqCoverage)}    ` +
-      `Pass rate: ${meterText(model.passRate)}\n`,
+    `Scenario coverage: ${meterText(result.scenarioCoverage)}    ` +
+      `UserReq coverage: ${meterText(result.userReqCoverage)}    ` +
+      `Pass rate: ${meterText(result.passRate)}\n`,
   );
   io.out(
-    model.latestRun !== null
-      ? `Latest run: ${model.latestRun.id} @ ${model.latestRun.ts}\n`
+    result.latestRun !== null
+      ? `Latest run: ${result.latestRun.id} @ ${result.latestRun.ts}\n`
       : 'Latest run: none (no evidence ingested yet)\n',
   );
 
-  const errors = model.findings.filter((f) => f.severity === 'error');
-  const warnings = model.findings.filter((f) => f.severity === 'warning');
-  if (loadIssues.length + errors.length + warnings.length > 0) {
+  const errors = result.findings.filter((f) => f.severity === 'error');
+  const warnings = result.findings.filter((f) => f.severity === 'warning');
+  if (result.loadIssues.length + errors.length + warnings.length > 0) {
     io.out('\nFindings:\n');
-    for (const issue of loadIssues) io.out(`${loadIssueFinding(issue)}\n`);
+    for (const issue of result.loadIssues) io.out(`${loadIssueFinding(issue)}\n`);
     for (const f of errors) io.out(`${findingLine(f)}\n`);
     for (const f of warnings) io.out(`${findingLine(f)}\n`);
   }
 
   io.out(
-    gate.verdict === 'pass'
+    result.verdict === 'pass'
       ? '\nverify: PASSED\n'
-      : `\nverify: FAILED — ${gate.reasons.join('; ')}\n`,
+      : `\nverify: FAILED — ${result.reasons.join('; ')}\n`,
   );
 }
 
@@ -559,42 +512,18 @@ async function runVerify(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   const runsDir = values['runs-dir'] ?? DEFAULT_RUNS_DIR;
   const repository = resolveRepository(deps, dir);
 
-  const loadedTree = await repository.loadTree();
-  const loadedRuns = await repository.loadRuns(runsDir);
-  const loadIssues: LoadIssue[] = [...loadedTree.issues, ...loadedRuns.issues];
-
-  const model = buildModel(loadedTree.tree, loadedRuns.runs);
-  const gate = evaluateGate(
-    model,
-    loadIssues,
-    minScenarioCoverage,
-    minUserReqCoverage,
-    minPassRate,
+  const result = await runVerifyCore(
+    { minScenarioCoverage, minUserReqCoverage, minPassRate, runsDir },
+    repository,
   );
 
   if (values.json === true) {
-    io.out(
-      `${JSON.stringify(
-        {
-          verdict: gate.verdict,
-          reasons: gate.reasons,
-          thresholds: { minScenarioCoverage, minUserReqCoverage, minPassRate },
-          scenarioCoverage: model.scenarioCoverage,
-          userReqCoverage: model.userReqCoverage,
-          passRate: model.passRate,
-          latestRun: model.latestRun,
-          findings: model.findings,
-          loadIssues,
-        },
-        null,
-        2,
-      )}\n`,
-    );
+    io.out(`${JSON.stringify(result, null, 2)}\n`);
   } else {
-    renderVerifyHuman(model, loadIssues, gate, io);
+    renderVerifyHuman(result, io);
   }
 
-  return gate.verdict === 'pass' ? 0 : 1;
+  return result.verdict === 'pass' ? 0 : 1;
 }
 
 // ── matrix ───────────────────────────────────────────────────────────────────
@@ -641,27 +570,21 @@ async function runMatrix(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   const runsDir = values['runs-dir'] ?? DEFAULT_RUNS_DIR;
   const repository = resolveRepository(deps, dir);
 
-  const { tree, issues } = await repository.loadTree();
-  warnLoadIssues('matrix', issues, io);
-  const { runs, issues: runIssues } = await repository.loadRuns(runsDir);
-  warnLoadIssues('matrix', runIssues, io);
-
-  const model = buildModel(tree, runs);
-  const rows = buildMatrixRows(model);
-  const content = renderMatrix(format, rows);
+  const result = await runMatrixCore({ format, runsDir }, repository);
+  warnLoadIssues('matrix', result.loadIssues, io);
 
   if (values.out === undefined) {
-    io.out(content);
+    io.out(result.content);
     return 0;
   }
 
   try {
-    await repository.writeFile(values.out, content);
+    await repository.writeFile(values.out, result.content);
   } catch (error) {
     io.err(`matrix: failed to write ${values.out}: ${(error as Error).message}\n`);
     return 1;
   }
-  io.out(`matrix: wrote ${values.out} (${format}, ${rows.length} row(s))\n`);
+  io.out(`matrix: wrote ${values.out} (${format}, ${result.rows.length} row(s))\n`);
   return 0;
 }
 
@@ -684,6 +607,8 @@ export async function run(argv: string[], io: CliIO = defaultIO, deps?: RunDeps)
       return runVerify(rest, io, deps);
     case 'matrix':
       return runMatrix(rest, io, deps);
+    case 'mcp':
+      return runMcp(rest, io);
     case undefined:
     case 'help':
     case '--help':

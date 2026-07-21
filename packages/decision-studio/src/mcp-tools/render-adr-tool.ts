@@ -1,8 +1,8 @@
 import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
 import type { McpToolDef } from '@workspec/mcp-core';
+import { readStringArg } from '@workspec/mcp-core';
 import type { FsRepository } from '../fs-repository.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
-import { readStringArg } from './read-string-arg.js';
 
 const INPUT_SCHEMA = {
   type: 'object',

@@ -26,6 +26,7 @@
   // config (rootDir "src", the published dist/ layout the package.json "types"
   // field advertises). trace-studio imports all four directly.
   "references": [
+    { "path": "../mcp-core/tsconfig.build.json" },
     { "path": "../schema-core/tsconfig.build.json" },
     { "path": "../req-schema/tsconfig.build.json" },
     { "path": "../trace-model/tsconfig.build.json" },
