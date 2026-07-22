@@ -30,6 +30,8 @@ aspire-hosting-core/           Aspire.Hosting.Workspec.Core — class library (g
 aspire-hosting-c4/             Aspire.Hosting.Workspec.C4 — class library
 aspire-hosting-cost/           Aspire.Hosting.Workspec.Cost — class library
 aspire-hosting-decisions/      Aspire.Hosting.Workspec.Decisions — class library
+aspire-hosting-mcp/            Aspire.Hosting.Workspec.Mcp — class library (aggregate MCP host
+                               resource, proxied through Aspire's built-in MCP server)
 aspire-hosting-tests/          Aspire.Hosting.Workspec.Tests — xunit test project
 aspire-hosting-e2e-fixture-apphost/
                                E2EFixtureAppHost — minimal real AppHost entry point
@@ -39,8 +41,9 @@ aspire-hosting-e2e-fixture-apphost/
 
 ## Packages
 
-All four are shipped in this repo (A6, [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)
-closed out packaging/release wiring for every module integration built in A1–A5):
+The first four were shipped together in this repo (A6, [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39)
+closed out packaging/release wiring for every module integration built in A1–A5); Mcp followed
+separately, wrapping `packages/mcp-host`'s aggregate MCP server:
 
 | Module    | Assembly                           | PackageId                          | Path                       | Docs                                                                                          | Tracking issue                                                    |
 | --------- | ------------------------------------ | ------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
@@ -48,6 +51,7 @@ closed out packaging/release wiring for every module integration built in A1–A
 | C4        | `Aspire.Hosting.Workspec.C4`        | `Workspec.Aspire.Hosting.C4`        | `aspire-hosting-c4`        | [`docs/aspire-hosting/c4-integration.md`](../docs/aspire-hosting/c4-integration.md)           | [#36](https://github.com/FieldstateNZ/workspec-studio/issues/36)  |
 | Decisions | `Aspire.Hosting.Workspec.Decisions` | `Workspec.Aspire.Hosting.Decisions` | `aspire-hosting-decisions` | [`docs/aspire-hosting/decisions-integration.md`](../docs/aspire-hosting/decisions-integration.md) | [#37](https://github.com/FieldstateNZ/workspec-studio/issues/37)  |
 | Cost      | `Aspire.Hosting.Workspec.Cost`      | `Workspec.Aspire.Hosting.Cost`      | `aspire-hosting-cost`      | [`docs/aspire-hosting/cost-integration.md`](../docs/aspire-hosting/cost-integration.md)       | [#38](https://github.com/FieldstateNZ/workspec-studio/issues/38)  |
+| Mcp       | `Aspire.Hosting.Workspec.Mcp`       | `Workspec.Aspire.Hosting.Mcp`       | `aspire-hosting-mcp`       | [`docs/aspire-hosting/mcp-integration.md`](../docs/aspire-hosting/mcp-integration.md)         | —                                                                  |
 
 [#35](https://github.com/FieldstateNZ/workspec-studio/issues/35) (A2) is a related TS-side
 enabler (`workspec-c4 import-aspire` et al.) in `packages/`, not a fifth `aspire-hosting-*`

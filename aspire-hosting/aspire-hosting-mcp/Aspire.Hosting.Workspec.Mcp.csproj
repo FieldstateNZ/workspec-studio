@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.Mcp</PackageId>
+    <Description>Wires the workspec-mcp CLI (the aggregate WorkSpec Studio MCP server over decisions/cost/c4/trace) into a .NET Aspire apphost: a dashboard resource running the server in --http mode, proxied through Aspire's built-in MCP server via WithMcpServer so its tools are reachable from `aspire mcp tools`/`aspire mcp call`.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

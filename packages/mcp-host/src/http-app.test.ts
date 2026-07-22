@@ -73,4 +73,13 @@ describe('buildHttpApp', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('serves an unauthenticated /health liveness probe reporting the served dir', async () => {
+    const app = buildHttpApp(fixture.dir);
+
+    const res = await request(app).get('/health');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, dir: fixture.dir });
+  });
 });

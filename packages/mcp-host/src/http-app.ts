@@ -24,6 +24,14 @@ export function buildHttpApp(dir: string): Express {
   const app = express();
   app.use(express.json({ limit: '4mb' }));
 
+  // Liveness probe for orchestrators (e.g. the Aspire `AddWorkspecMcp` resource
+  // health check). Deliberately unauthenticated and side-effect-free — it only
+  // reports that the aggregate host is up and which directory it serves; it does
+  // not touch the MCP transport. Mirrors every `*-studio` host's `/api/health`.
+  app.get('/health', (_req, res) => {
+    res.json({ ok: true, dir });
+  });
+
   const server = assembleMcpServer(buildAllProviders(dir), MCP_HOST_SERVER_INFO);
   mountMcpHttp(app, server);
 

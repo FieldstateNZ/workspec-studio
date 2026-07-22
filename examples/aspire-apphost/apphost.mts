@@ -1,6 +1,8 @@
 // Worked example: a TypeScript Aspire AppHost that adds the workspec-c4 studio resource via the
 // ATS-exported `AddWorkspecC4`/`WithGraphSync`/`WithModelDiagnosticsHealthCheck` extension methods
-// from aspire-hosting/aspire-hosting-c4 (see docs/aspire-hosting/c4-integration.md).
+// from aspire-hosting/aspire-hosting-c4 (see docs/aspire-hosting/c4-integration.md), plus the
+// aggregate workspec-mcp resource via `AddWorkspecMcp` from aspire-hosting/aspire-hosting-mcp (see
+// docs/aspire-hosting/mcp-integration.md).
 //
 // Requirements to actually run this (not exercised by CI in this slice — A6 hardens it):
 //   - Aspire CLI >= 13.4. Confirmed by hand: with CLI 13.3.0 (the version available while writing
@@ -43,5 +45,15 @@ await c4.withGraphSync();
 // check), this also reflects whether the .workspec/ model itself is valid, by polling the
 // studio's own GET /api/model and mapping its diagnostics counts to a health status.
 await c4.withModelDiagnosticsHealthCheck();
+
+// No single directory in this repo carries artifacts for all four MCP providers at once (decisions
+// live under examples/hosting-platform/.workspec, cost under examples/fieldstate-azure-costs/.workspec,
+// c4 under this repo's own root .workspec/) — the repo root is used here instead. This is fine: the
+// aggregate server's tool list is static regardless of which artifact kinds actually exist under
+// <dir> (decisions_*/cost_*/c4_*/trace_* — 34 tools total), so pointing it at a directory missing
+// some artifact kinds just means those tools operate against an empty tree until matching artifacts
+// appear underneath it. `withMcpServer` is already applied inside `addWorkspecMcp` itself (see
+// aspire-hosting-mcp/WorkspecMcpExtensions.cs), so no separate call is needed here.
+await builder.addWorkspecMcp('workspec-mcp', '../..');
 
 await builder.build().run();

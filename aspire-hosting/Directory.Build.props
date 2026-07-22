@@ -16,13 +16,13 @@
     <EnableAspireIntegrationAnalyzers>true</EnableAspireIntegrationAnalyzers>
   </PropertyGroup>
 
-  <!-- Shared NuGet pack metadata (A6, #39). IsPackable defaults to false here — only the four
-       shipping projects (Core/C4/Decisions/Cost) opt back in, in their own .csproj; everything else
-       (tests, the E2E fixture apphost) stays IsPackable=false, matching what those projects already
-       set explicitly. The "Aspire." PackageId prefix is reserved on nuget.org (owners: Microsoft,
-       aspire — verified empirically at A6 time; see aspire-hosting/README.md's "NuGet publishing"
-       section), so the four packable projects use a Workspec.Aspire.Hosting.* PackageId while their
-       assembly names stay Aspire.Hosting.Workspec.* (decided in #39). -->
+  <!-- Shared NuGet pack metadata (A6, #39). IsPackable defaults to false here — only the five
+       shipping projects (Core/C4/Decisions/Cost/Mcp) opt back in, in their own .csproj; everything
+       else (tests, the E2E fixture apphost) stays IsPackable=false, matching what those projects
+       already set explicitly. The "Aspire." PackageId prefix is reserved on nuget.org (owners:
+       Microsoft, aspire — verified empirically at A6 time; see aspire-hosting/README.md's "NuGet
+       publishing" section), so the five packable projects use a Workspec.Aspire.Hosting.* PackageId
+       while their assembly names stay Aspire.Hosting.Workspec.* (decided in #39). -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <Version>0.1.0-alpha.5</Version>
