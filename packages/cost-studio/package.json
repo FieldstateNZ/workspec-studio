@@ -44,12 +44,14 @@
     "e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@workspec/cost-engine": "workspace:^",
     "@workspec/cost-provider": "workspace:^",
     "@workspec/cost-provider-azure": "workspace:^",
     "@workspec/cost-schema": "workspace:^",
     "@workspec/cost-ui": "workspace:^",
     "@workspec/design": "0.1.0-alpha.1",
+    "@workspec/mcp-core": "workspace:*",
     "@workspec/schema-core": "workspace:^",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2"

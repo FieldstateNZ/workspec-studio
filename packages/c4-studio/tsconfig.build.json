@@ -11,7 +11,8 @@
     { "path": "../c4-schema/tsconfig.build.json" },
     { "path": "../c4-model/tsconfig.build.json" },
     { "path": "../c4-layout/tsconfig.build.json" },
-    { "path": "../c4-ui/tsconfig.build.json" }
+    { "path": "../c4-ui/tsconfig.build.json" },
+    { "path": "../mcp-core/tsconfig.build.json" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]

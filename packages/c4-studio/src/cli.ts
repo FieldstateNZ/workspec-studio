@@ -20,6 +20,7 @@ import { parseAspireGraph } from './aspire/graph-schema.js';
 import { checkAspireGraph } from './aspire/check.js';
 import { scaffoldAspireGraph } from './aspire/scaffold.js';
 import { renderDiagramToSvg } from './render-diagram.js';
+import { runMcp } from './run-mcp.js';
 import { runServe } from './serve.js';
 
 /** Injectable IO. `out` is reserved for artifacts (SVG, JSON diagnostics); `err` for human-readable diagnostics and notes. */
@@ -43,6 +44,7 @@ Commands:
   validate        Validate every element/diagram/layout under a directory (CI-friendly).
   render          Render one diagram to a standalone SVG.
   import-aspire   Project a .NET Aspire apphost resource graph into a .workspec/ tree.
+  mcp             Run the c4 MCP server over stdio.
 
 With no command, "serve" runs. Run "workspec-c4 <command> --help" for command options.
 `;
@@ -325,6 +327,8 @@ export async function run(argv: string[], io: CliIO = defaultIO): Promise<number
       return runRender(rest, io);
     case 'import-aspire':
       return runImportAspire(rest, io);
+    case 'mcp':
+      return runMcp(rest, io);
     case undefined:
       // No subcommand → start the host (the default command).
       return runServe(rest, io);

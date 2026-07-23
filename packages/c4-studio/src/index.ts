@@ -10,6 +10,9 @@ export { runServe, SERVE_HELP } from './serve.js';
 export { renderDiagramToSvg } from './render-diagram.js';
 export type { RenderDiagramOptions, RenderDiagramResult } from './render-diagram.js';
 
+// ── MCP provider (mount via @workspec/mcp-core's assembleMcpServer) ────────
+export { createC4McpProvider } from './mcp-provider.js';
+
 // ── CLI entry (also the executable's `run`) ─────────────────────────────────
 export { run } from './cli.js';
 export type { CliIO } from './cli.js';

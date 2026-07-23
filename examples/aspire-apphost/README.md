@@ -1,16 +1,19 @@
-# Example — Aspire AppHost (workspec-c4)
+# Example — Aspire AppHost (workspec-c4, workspec-mcp)
 
 A worked TypeScript Aspire AppHost demonstrating the `workspec-c4` hosting integration shipped in
-[`aspire-hosting/aspire-hosting-c4`](../../aspire-hosting/aspire-hosting-c4/). See
-[`docs/aspire-hosting/c4-integration.md`](../../docs/aspire-hosting/c4-integration.md) for the full
-walkthrough (quickstart, drift-gate flow, health-check semantics, command reference).
+[`aspire-hosting/aspire-hosting-c4`](../../aspire-hosting/aspire-hosting-c4/) and the aggregate
+`workspec-mcp` hosting integration shipped in
+[`aspire-hosting/aspire-hosting-mcp`](../../aspire-hosting/aspire-hosting-mcp/). See
+[`docs/aspire-hosting/c4-integration.md`](../../docs/aspire-hosting/c4-integration.md) and
+[`docs/aspire-hosting/mcp-integration.md`](../../docs/aspire-hosting/mcp-integration.md) for the
+full walkthroughs (quickstart, drift-gate flow, health-check semantics, command reference).
 
 ## Files
 
 | File                 | Purpose                                                                             |
 | -------------------- | ------------------------------------------------------------------------------------ |
-| [`apphost.mts`](./apphost.mts)         | The AppHost entry point — adds the C4 studio resource, graph sync, and health check |
-| [`aspire.config.json`](./aspire.config.json) | Points the AppHost at a local `.csproj` reference to `aspire-hosting-c4` (not a published NuGet version — see "Project references for local development" in Aspire's own docs) |
+| [`apphost.mts`](./apphost.mts)         | The AppHost entry point — adds the C4 studio resource (graph sync, health check) and the aggregate MCP resource |
+| [`aspire.config.json`](./aspire.config.json) | Points the AppHost at local `.csproj` references to `aspire-hosting-c4` and `aspire-hosting-mcp` (not published NuGet versions — see "Project references for local development" in Aspire's own docs) |
 
 ## Status: not wired into CI
 

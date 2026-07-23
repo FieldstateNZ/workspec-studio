@@ -15,6 +15,7 @@ export default defineConfig({
       '@workspec/decision-ui': fileURLToPath(
         new URL('../decision-ui/src/index.ts', import.meta.url),
       ),
+      '@workspec/mcp-core': fileURLToPath(new URL('../mcp-core/src/index.ts', import.meta.url)),
     },
   },
   test: {

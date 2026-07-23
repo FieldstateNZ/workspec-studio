@@ -43,6 +43,10 @@ export type {
 export { run } from './cli.js';
 export type { CliIO, RunDeps } from './cli.js';
 
+// ── The `trace` MCP provider (Step 4) — mount with @workspec/mcp-core's
+//    `assembleMcpServer`; the `mcp` CLI subcommand does exactly this. ─────────
+export { createTraceMcpProvider } from './mcp-provider.js';
+
 // ── The RTM (matrix) pure serializer layer — no IO, so an embedder (a future
 //    Matrix-view export button, spec §5) can reuse the same projection +
 //    renderers the CLI's `matrix` command wires up. ───────────────────────────

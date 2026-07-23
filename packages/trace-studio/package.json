@@ -42,6 +42,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@workspec/mcp-core": "workspace:*",
     "@workspec/req-schema": "workspace:*",
     "@workspec/schema-core": "workspace:*",
     "@workspec/trace-emitters": "workspace:*",

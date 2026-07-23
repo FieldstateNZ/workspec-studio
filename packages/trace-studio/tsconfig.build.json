@@ -11,6 +11,7 @@
   // Same project references as the typecheck config — the build must also map
   // sibling imports back to their source declarations on demand.
   "references": [
+    { "path": "../mcp-core/tsconfig.build.json" },
     { "path": "../schema-core/tsconfig.build.json" },
     { "path": "../req-schema/tsconfig.build.json" },
     { "path": "../trace-model/tsconfig.build.json" },

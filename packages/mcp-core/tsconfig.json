@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as packages/schema-core.
+    "rootDir": "src",
+    "outDir": ".typecheck",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}

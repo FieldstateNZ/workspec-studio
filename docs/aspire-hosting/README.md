@@ -14,6 +14,7 @@ PackageIds, and toolchain. This directory holds the normative specs each package
 | [`c4-integration.md`](./c4-integration.md)                  | `Aspire.Hosting.Workspec.C4` — the `workspec-c4` studio resource, the graph-sync drift gate (`WithGraphSync`), health checks, command reference. |
 | [`decisions-integration.md`](./decisions-integration.md)    | `Aspire.Hosting.Workspec.Decisions` — the `workspec-decisions` studio resource, `WithDecision` linking, command reference.    |
 | [`cost-integration.md`](./cost-integration.md)              | `Aspire.Hosting.Workspec.Cost` — Stocktake/Report/Validate commands, the publish-time Azure cost-estimate step, SKU-extraction caveats. |
+| [`mcp-integration.md`](./mcp-integration.md)                | `Aspire.Hosting.Workspec.Mcp` — the aggregate `workspec-mcp` resource, proxied through Aspire's built-in MCP server via `WithMcpServer`. |
 
 ## Reading order
 

@@ -24,6 +24,7 @@
     <ProjectReference Include="..\aspire-hosting-c4\Aspire.Hosting.Workspec.C4.csproj" />
     <ProjectReference Include="..\aspire-hosting-cost\Aspire.Hosting.Workspec.Cost.csproj" />
     <ProjectReference Include="..\aspire-hosting-decisions\Aspire.Hosting.Workspec.Decisions.csproj" />
+    <ProjectReference Include="..\aspire-hosting-mcp\Aspire.Hosting.Workspec.Mcp.csproj" />
     <!-- E2E smoke test only: DistributedApplicationTestingBuilder.CreateAsync<TEntryPoint>() invokes
          a real AppHost entry point (it does not work against an arbitrary calling assembly, such as
          this xunit test host — confirmed empirically), so a minimal fixture AppHost project is the

@@ -12,6 +12,8 @@ import express from 'express';
 import type { Express, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { CatalogArtifact, DecisionArtifact } from '@workspec/decision-schema';
+import { assembleMcpServer, isSafeRelativeRef, mountMcpHttp } from '@workspec/mcp-core';
+import type { McpToolProvider } from '@workspec/mcp-core';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 /** Options for {@link createServer}. */
@@ -24,6 +26,12 @@ export interface CreateServerOptions {
    * is still served and `/` returns a short hint.
    */
   clientDir?: string;
+  /**
+   * When present, mounts an MCP server (`@workspec/mcp-core`'s
+   * `mountMcpHttp`, stateless, at `/mcp`) alongside the JSON API. Absent by
+   * default — most callers (tests, the client dev server) don't need it.
+   */
+  mcpProvider?: McpToolProvider;
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -36,32 +44,18 @@ function defaultClientDir(): string | undefined {
   return undefined;
 }
 
-/** Matches a Windows drive-letter prefix (`C:\`, `C:/`, or bare `C:`). */
-const DRIVE_LETTER_PATTERN = /^[A-Za-z]:/;
-
 /**
  * Reject refs that are absolute or escape the served directory. This is the
- * first line of defence, checked against the raw ref shape; it deliberately
- * also rejects backslashes and drive-letter prefixes even though this
- * process may be running on POSIX right now — a ref is only ever a
- * repo-root-relative POSIX path by contract, so neither shape is ever
- * legitimate. It is not the authoritative check: `FsRepository.resolve()`
- * (via `resolveWithinRoot`) re-verifies containment regardless of what
- * reaches it here.
+ * first line of defence, checked against the raw ref shape via the shared
+ * {@link isSafeRelativeRef} predicate (the same one the MCP tools use, so the
+ * two paths can't drift). It is not the authoritative check:
+ * `FsRepository.resolve()` (via `resolveWithinRoot`) re-verifies containment
+ * regardless of what reaches it here.
  */
 function refFrom(req: Request): string | undefined {
   const raw = req.query.ref;
-  if (typeof raw !== 'string' || raw.length === 0) return undefined;
-  if (
-    raw.startsWith('/') ||
-    raw.includes('..') ||
-    raw.includes('\0') ||
-    raw.includes('\\') ||
-    DRIVE_LETTER_PATTERN.test(raw)
-  ) {
-    return undefined;
-  }
-  return raw;
+  if (typeof raw !== 'string') return undefined;
+  return isSafeRelativeRef(raw) ? raw : undefined;
 }
 
 /**
@@ -221,6 +215,13 @@ export function createServer(options: CreateServerOptions): Express {
         sendInternalError(res, error, ref);
       });
   });
+
+  // Mounted before the static/SPA fallback below — that fallback's catch-all
+  // GET (`/^(?!\/api\/).*/`) would otherwise swallow `/mcp` before this
+  // route ever saw the request.
+  if (options.mcpProvider !== undefined) {
+    mountMcpHttp(app, assembleMcpServer([options.mcpProvider]));
+  }
 
   // Static client + SPA fallback (only for non-API GETs).
   const clientDir = options.clientDir ?? defaultClientDir();

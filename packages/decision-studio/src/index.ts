@@ -24,6 +24,13 @@ export { runServe } from './serve.js';
 export { collectLeverRefWarnings } from './lever-refs.js';
 export type { LeverRefWarning } from './lever-refs.js';
 
+// ── Shared validate diagnostics core (CLI `validate` + the `validate` MCP tool) ─
+export { collectDiagnostics } from './collect-diagnostics.js';
+export type { ValidateDiagnostic } from './collect-diagnostics.js';
+
+// ── MCP provider (mount via @workspec/mcp-core's assembleMcpServer) ────────────
+export { createDecisionMcpProvider } from './mcp-provider.js';
+
 // ── CLI entry (also the executable's `run`) ───────────────────────────────────
 export { run } from './cli.js';
 export type { CliIO } from './cli.js';

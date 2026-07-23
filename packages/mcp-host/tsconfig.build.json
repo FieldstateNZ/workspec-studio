@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+    // `types: ["node"]` is inherited from tsconfig.json and KEPT (unlike a
+    // pure schema/model package, which would override it to `[]`): this is a
+    // Node CLI whose published output still references `process`/`node:*`.
+  },
+  // Same project references as the typecheck config — the build must also map
+  // sibling imports back to their source declarations on demand.
+  "references": [
+    { "path": "../mcp-core/tsconfig.build.json" },
+    { "path": "../decision-studio/tsconfig.build.json" },
+    { "path": "../cost-studio/tsconfig.build.json" },
+    { "path": "../c4-studio/tsconfig.build.json" },
+    { "path": "../trace-studio/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
