@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology-layout.schema.json
+#
+# Per-lens pinned node positions for the `web-app` topology, adapted from the
+# design prototype's `POS`/`POS_RG` layout tables (see this example's
+# README.md for the source). Every resource gets a `network` position; the
+# three resource-group container resources (rg-app/rg-network/rg-data) and
+# the resources they group get an `rg` position too, laid out as three
+# side-by-side columns.
+version: 1
+nodes:
+  client:
+    positions:
+      network: { x: 16, y: 300, width: 122, height: 56 }
+      rg: { x: 16, y: 300, width: 122, height: 56 }
+  front-door:
+    positions:
+      network: { x: 168, y: 300, width: 134, height: 56 }
+      rg: { x: 40, y: 60, width: 150, height: 56 }
+  app-service:
+    positions:
+      network: { x: 380, y: 150, width: 152, height: 58 }
+      rg: { x: 380, y: 60, width: 152, height: 58 }
+  write-fn:
+    positions:
+      network: { x: 380, y: 276, width: 152, height: 58 }
+      rg: { x: 380, y: 150, width: 152, height: 58 }
+  app-insights:
+    positions:
+      network: { x: 380, y: 402, width: 152, height: 58 }
+      rg: { x: 380, y: 240, width: 152, height: 58 }
+  redis-pe:
+    positions:
+      network: { x: 736, y: 150, width: 150, height: 40 }
+      rg: { x: 736, y: 60, width: 150, height: 40 }
+  sql-pe:
+    positions:
+      network: { x: 736, y: 232, width: 150, height: 40 }
+      rg: { x: 736, y: 132, width: 150, height: 40 }
+  cache:
+    positions:
+      network: { x: 736, y: 306, width: 150, height: 58 }
+      rg: { x: 736, y: 206, width: 150, height: 58 }
+  sql:
+    positions:
+      network: { x: 736, y: 398, width: 150, height: 58 }
+      rg: { x: 736, y: 296, width: 150, height: 58 }
+  search:
+    positions:
+      network: { x: 736, y: 488, width: 150, height: 58 }
+      rg: { x: 736, y: 386, width: 150, height: 58 }
+  core-vnet:
+    positions:
+      network: { x: 326, y: 40, width: 700, height: 592 }
+      rg: { x: 40, y: 150, width: 150, height: 56 }
+  snet-workload:
+    positions:
+      network: { x: 352, y: 96, width: 700, height: 480 }
+      rg: { x: 40, y: 240, width: 150, height: 56 }
+  rg-app:
+    positions:
+      rg: { x: 360, y: 20, width: 220, height: 300 }
+  rg-network:
+    positions:
+      rg: { x: 20, y: 20, width: 220, height: 300 }
+  rg-data:
+    positions:
+      rg: { x: 700, y: 20, width: 220, height: 460 }

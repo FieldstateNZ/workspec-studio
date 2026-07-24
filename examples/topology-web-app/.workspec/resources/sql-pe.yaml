@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT CONTEXT (miswired): the actual/derived tree still deploys this
+# private endpoint (it matches cleanly, no divergence of its own) but the
+# actual `app-service` connects straight to `sql`, bypassing this hop — see
+# topology-actual-demo/prod/app-service.yaml's connections note and this
+# example's README for the exact `reconcile --env prod` output.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: sql-pe
+spec:
+  name: 'SQL Private Endpoint'
+  kind: endpoint
+  type: 'Private Endpoint'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-data
+  config:
+    targets: sql
+    subresource: sqlServer
+  source:
+    kind: authored

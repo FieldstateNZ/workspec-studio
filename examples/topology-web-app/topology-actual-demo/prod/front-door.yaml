@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: front-door-01
+spec:
+  name: 'Front Door'
+  kind: edge
+  type: 'Azure Front Door'
+  provider: azure
+  cost:
+    sku: standard
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Cdn/profiles:front-door-01'

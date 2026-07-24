@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: write-fn-01
+spec:
+  name: 'Write-through function'
+  kind: function
+  type: 'Azure Functions'
+  provider: azure
+  config:
+    plan: EP1
+  cost:
+    sku: consumption
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Web/sites:write-fn-01'

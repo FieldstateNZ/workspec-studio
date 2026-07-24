@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: sql-pe-01
+spec:
+  name: 'SQL Private Endpoint'
+  kind: endpoint
+  type: 'Private Endpoint'
+  provider: azure
+  config:
+    targets: sql
+    subresource: sqlServer
+  source:
+    kind: derived
+    from: 'Microsoft.Network/privateEndpoints:sql-pe-01'

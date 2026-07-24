@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: app-insights-01
+spec:
+  name: 'Application Insights'
+  kind: monitor
+  type: 'Azure Application Insights'
+  provider: azure
+  source:
+    kind: derived
+    from: 'Microsoft.Insights/components:app-insights-01'

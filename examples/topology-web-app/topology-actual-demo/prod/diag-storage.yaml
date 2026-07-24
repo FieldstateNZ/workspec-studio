@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT: orphan. A StorageV2 account exists in the estate with no declaring
+# artifact anywhere under `.workspec/resources/` — created by diagnostics
+# tooling out of band, unbudgeted and unreviewed. `reconcile --env prod`
+# reports this slug as `orphan` (it never matches any authored resource, so
+# it falls out of `matchResources` as `unmatchedActual`).
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: diag-storage
+spec:
+  name: 'Diagnostics Storage'
+  kind: storage
+  type: 'Azure Storage Account'
+  provider: azure
+  config:
+    sku: StorageV2
+    redundancy: LRS
+  source:
+    kind: derived
+    from: 'Microsoft.Storage/storageAccounts:diagsa7f3'

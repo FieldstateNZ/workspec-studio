@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# Prod-only edge tier. `environments: [prod]` means `resolve()` auto-prunes
+# this resource — and, by extension, its two connections — in dev/test (see
+# `@workspec/topology-model`'s `pruneResources`/`pruneConnections`).
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: front-door
+spec:
+  name: 'Front Door'
+  kind: edge
+  type: 'Azure Front Door'
+  provider: azure
+  environments: [prod]
+  resourceGroup: rg-network
+  cost:
+    sku: standard
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: authored

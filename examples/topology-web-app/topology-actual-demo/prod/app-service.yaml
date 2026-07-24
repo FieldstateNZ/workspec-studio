@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT: divergent. Authored is P1v3 x2 (`.workspec/resources/app-service.yaml`
+# + `.workspec/environments/prod.yaml`'s `cost.qty` override); actual is
+# P0v3 x1 — someone downgraded the plan in the portal. `reconcile --env prod`
+# reports `config.tier` and `cost.sku`/`cost.qty` as the differing keys.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: app-service-01
+spec:
+  name: 'App Service'
+  kind: compute
+  type: 'Azure App Service'
+  provider: azure
+  config:
+    tier: P0v3
+  cost:
+    sku: p0v3
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Web/sites:app-service-01'

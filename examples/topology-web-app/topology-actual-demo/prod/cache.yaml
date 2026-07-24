@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT: divergent. Authored is Managed Redis Balanced B2, zone-redundant
+# (`.workspec/resources/cache.yaml`); actual is Basic C1, single zone — no
+# failover, and not what was decided. `reconcile --env prod` reports
+# `config.sku`/`config.tier`/`config.zoneRedundant` and `cost.sku` as the
+# differing keys.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: cache-01
+spec:
+  name: 'Distributed Cache'
+  kind: cache
+  type: 'Azure Cache for Redis'
+  provider: azure
+  config:
+    sku: Basic
+    tier: C1
+    zoneRedundant: false
+  cost:
+    sku: basic-c1
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Cache/redis:cache-01'

@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# The DEV actual tree is deliberately CLEAN (every resource matches its
+# authored, dev-resolved counterpart exactly) — its purpose in this demo is
+# to show that `front-door` (prod-only) auto-prunes out of the dev-resolved
+# topology cleanly, with no phantom/orphan noise from that pruning. See this
+# example's README.md.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: client-01
+spec:
+  name: 'Client'
+  kind: client
+  type: 'Browser'
+  provider: azure
+  source:
+    kind: derived
+    from: 'client-vm'

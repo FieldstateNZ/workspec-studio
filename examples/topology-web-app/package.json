@@ -1,0 +1,7 @@
+{
+  "name": "@workspec-examples/topology-web-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worked example: a web app's infrastructure topology (edge, compute, private-endpoint data tier) across dev/test/prod, seeded with a deliberately-drifted actual snapshot for the topology family's reconcile/cost/render CLI surface.",
+  "license": "Apache-2.0"
+}

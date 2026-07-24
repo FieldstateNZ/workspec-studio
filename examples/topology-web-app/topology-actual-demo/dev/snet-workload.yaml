@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: snet-workload-01
+spec:
+  name: 'Workload Subnet'
+  kind: subnet
+  type: 'Azure Subnet'
+  provider: azure
+  config:
+    addressPrefix: '10.20.1.0/24'
+  source:
+    kind: derived
+    from: 'Microsoft.Network/virtualNetworks/subnets:snet-workload-01'

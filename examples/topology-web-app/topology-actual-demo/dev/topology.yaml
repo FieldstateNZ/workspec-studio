@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+#
+# OBSERVED connectivity for the dev actual/derived tree — see
+# `topology-actual-demo/prod/topology.yaml`'s doc comment for what this file
+# is and why it lives here instead of `.workspec/topologies/`.
+#
+# Every edge here matches the dev-resolved AUTHORED wiring
+# (`.workspec/topologies/web-app.yaml` run through `resolve()` for `dev`)
+# EXACTLY — no reroutes, no drops. Combined with this directory's resource
+# files (which also match their dev-resolved authored counterparts exactly —
+# see `client.yaml`'s doc comment), `reconcile --env dev` reports ZERO
+# drift: the `front-door` auto-prune (a prod-only resource, absent here by
+# design) still shows up cleanly with no phantom/orphan noise, and this file
+# is what proves the wiring is clean too, not just unassessed.
+#
+# Slugs are the ACTUAL (derived) resource slugs from this directory's own
+# `Resource` files, re-slugged through the matcher to their authored
+# counterparts by `@workspec/topology-recon`'s `diffConnections` — same
+# convention as the prod observed topology.
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: observed
+spec:
+  title: 'Observed — dev'
+  provider: azure
+  environments: [dev]
+  defaultEnvironment: dev
+  connections:
+    # Public entry: dev has no front-door, so client goes straight to the app.
+    - from: client-01
+      to: app-service-01
+      class: primary
+
+    # App-tier fan-out, routed through the private endpoints exactly as authored.
+    - from: app-service-01
+      to: redis-pe-01
+      class: primary
+    - from: app-service-01
+      to: sql-pe-01
+      class: primary
+    - from: app-service-01
+      to: write-fn-01
+      class: primary
+    - from: write-fn-01
+      to: redis-pe-01
+      class: primary
+    - from: write-fn-01
+      to: sql-pe-01
+      class: primary
+
+    # Private-endpoint hops onto the data tier.
+    - from: redis-pe-01
+      to: cache-01
+      class: primary
+    - from: sql-pe-01
+      to: sql-01
+      class: primary
+
+    # Telemetry: both compute resources ship to the same Application Insights.
+    - from: app-service-01
+      to: app-insights-01
+      class: telemetry
+    - from: write-fn-01
+      to: app-insights-01
+      class: telemetry

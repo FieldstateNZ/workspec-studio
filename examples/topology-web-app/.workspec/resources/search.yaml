@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT TARGET (phantom, prod only): declared and budgeted here, and its
+# dev/test actual counterparts exist (topology-actual-demo/{dev,test}/search.yaml)
+# — but the prod actual/derived tree has no counterpart at all. Either never
+# provisioned in prod, or deleted out of band; `reconcile --env prod` reports
+# it as `phantom`.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: search
+spec:
+  name: 'Search Index'
+  kind: search
+  type: 'Azure AI Search'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-data
+  realizes: [search-index]
+  config:
+    tier: S1
+    replicas: 2
+  cost:
+    sku: aisearch-s1
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: authored

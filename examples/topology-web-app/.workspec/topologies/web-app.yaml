@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+#
+# Seeded DEMO topology for the topology family — a deliberately-drifted,
+# real, shippable example tree exercising validate/reconcile/cost/render
+# end-to-end via the `workspec-topology` CLI. See this example's README.md
+# for the exact verification commands and their expected output.
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: web-app
+spec:
+  title: 'Web App'
+  provider: azure
+  environments: [dev, test, prod]
+  defaultEnvironment: prod
+  catalog: azure-nz
+  connections:
+    # Public request path: prod fronts the app behind Front Door; dev/test
+    # rewire straight to the app service (no edge tier in lower environments —
+    # `front-door` itself is `environments: [prod]`, so this pair of
+    # connections auto-prunes for free in dev/test on top of this explicit
+    # per-connection scoping).
+    - from: client
+      to: front-door
+      class: primary
+      environments: [prod]
+    - from: front-door
+      to: app-service
+      class: primary
+      environments: [prod]
+    - from: client
+      to: app-service
+      class: primary
+      environments: [dev, test]
+
+    # App-tier fan-out: the web app and the write-path function both reach
+    # the data tier through private endpoints, never directly.
+    - from: app-service
+      to: redis-pe
+      class: primary
+    - from: app-service
+      to: sql-pe
+      class: primary
+    - from: app-service
+      to: write-fn
+      class: primary
+    - from: write-fn
+      to: redis-pe
+      class: primary
+    - from: write-fn
+      to: sql-pe
+      class: primary
+
+    # Private-endpoint hops onto the data tier.
+    - from: redis-pe
+      to: cache
+      class: primary
+    - from: sql-pe
+      to: sql
+      class: primary
+
+    # Telemetry: both compute resources ship to the same Application Insights.
+    - from: app-service
+      to: app-insights
+      class: telemetry
+    - from: write-fn
+      to: app-insights
+      class: telemetry

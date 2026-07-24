@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# Part of the DEMO's deliberately-drifted "actual" tree for `prod` — see this
+# example's README.md for what it's for and how to materialize it into
+# `.topology-actual/prod/` (the path `workspec-topology reconcile` reads, and
+# the repo's own `.gitignore` entry this example's tree intentionally sits
+# outside of). Matches its authored counterpart (`.workspec/resources/client.yaml`)
+# cleanly — same kind/type/name, `resourceGroup` omitted (adapter-observed
+# resource-group is never set, mirroring `@workspec/topology-adapters`'
+# documented bicep-adapter caveat) — so `reconcile` reports no drift for it.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: client-01
+spec:
+  name: 'Client'
+  kind: client
+  type: 'Browser'
+  provider: azure
+  source:
+    kind: derived
+    from: 'client-vm'
