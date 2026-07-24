@@ -1,0 +1,999 @@
+/* Bespoke component styles for @workspec/topology-ui. Every colour value
+   below is a @workspec/design token reference (var(--*)) — see
+   src/kind-meta.ts for the per-kind accent token mapping, the ONE place a
+   token choice is a judgment call rather than a direct design port (see
+   that file's comments). */
+
+.tp-root {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.tp-workbench {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.tp-header-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.tp-header {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  padding: 2px 4px var(--s-4);
+}
+
+.tp-header-viewnav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-2) 4px;
+  border-top: 1px solid var(--line);
+  margin-bottom: var(--s-2);
+}
+
+.tp-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.tp-header-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.tp-header-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--type-persona);
+}
+
+.tp-header-package {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.tp-header-slug {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-fade);
+}
+
+.tp-header-heading {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.tp-header-spacer {
+  flex: 1 1 auto;
+}
+
+.tp-header-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  align-items: flex-end;
+}
+
+.tp-header-switches {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-header-counts {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+/* ── Segmented control (env / lens switchers) ─────────────────────────────── */
+
+.tp-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-soft);
+  gap: 2px;
+}
+
+.tp-segment {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px var(--s-3);
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+.tp-segment-active {
+  font-weight: 600;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  box-shadow: var(--sh-2);
+}
+
+/* ── Body: canvas + side panel ─────────────────────────────────────────────── */
+
+.tp-body {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+  overflow: hidden;
+  box-shadow: var(--sh-2);
+}
+
+.tp-canvas-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+  background: var(--bg);
+}
+
+/* No `--grid` token exists in @workspec/design's real set (the source
+   design's own local demo defined one) — a faint `color-mix` tint of `--ink`
+   over `--bg` stands in, keeping this a pure token derivation rather than a
+   literal colour. */
+.tp-canvas {
+  position: relative;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--ink) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--ink) 3%, transparent) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* ── Boundary boxes ─────────────────────────────────────────────────────────── */
+
+.tp-boundary {
+  position: absolute;
+  border-width: 1px;
+  z-index: 0;
+}
+
+.tp-boundary-label {
+  position: absolute;
+  top: 9px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tp-boundary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.tp-boundary-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.tp-boundary-meta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-fade);
+  white-space: nowrap;
+}
+
+.tp-boundary-cost {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+
+/* ── Node cards ─────────────────────────────────────────────────────────────── */
+
+.tp-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 13px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-elevated);
+  box-shadow: var(--sh-2);
+  z-index: 3;
+  text-align: left;
+  transition:
+    box-shadow 0.18s,
+    border-color 0.18s;
+}
+
+.tp-node:hover {
+  border-color: var(--type-persona);
+}
+
+.tp-node:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    var(--sh-2);
+}
+
+.tp-node-selected,
+.tp-node-selected:hover {
+  border-color: var(--type-persona);
+  box-shadow:
+    0 0 0 2px var(--type-persona),
+    var(--sh-2);
+  z-index: 6;
+}
+
+.tp-node-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+}
+
+.tp-node-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tp-node-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-node-type {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-fade);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Drift badge / cost pill (P5/P6 extension-point seams) ──────────────────── */
+/* Colour-blind-safe: each of the four real recon drift classes (phantom,
+   orphan, divergent, miswired) is a distinct GLYPH SHAPE (see
+   `drift-glyph.tsx`), never a hue alone — the badge's `color` (set inline
+   per class via `driftColorVar`) only reinforces the shape + label. */
+
+.tp-drift-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1.5px solid currentColor;
+  z-index: 7;
+}
+
+/* Card-level drift treatment (in ADDITION to the badge) — matches the
+   design's per-class card border/fill: `phantom` dashed, `orphan` dotted,
+   `divergent` a diagonal split fill. `miswired` carries no per-node card
+   treatment (see `drift-canvas-data.ts`'s `buildDriftBySlug` comment) — it
+   reads entirely from the ghost reroute edge (`edge-layer.tsx`) plus its
+   drift-panel item. */
+
+.tp-node-drift-phantom {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--type-persona) 55%, transparent);
+  opacity: 0.85;
+}
+
+.tp-node-drift-orphan {
+  border-style: dotted;
+  border-width: 1.5px;
+  border-color: var(--warn);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--warn) 16%, transparent);
+}
+
+.tp-node-drift-divergent {
+  background: linear-gradient(
+    135deg,
+    var(--bg-elevated) 0 60%,
+    color-mix(in oklab, var(--agent) 14%, var(--bg-elevated)) 60%
+  );
+  border-color: color-mix(in oklab, var(--agent) 45%, var(--line-2));
+}
+
+.tp-cost-pill {
+  position: absolute;
+  bottom: -8px;
+  right: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+}
+
+/* ── Side panel ─────────────────────────────────────────────────────────────── */
+
+.tp-side-panel {
+  flex: 1 1 auto;
+  min-width: 320px;
+  max-width: 400px;
+  border-left: 1px solid var(--line);
+  background: var(--bg-soft);
+  overflow-y: auto;
+}
+
+.tp-panel-body {
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.tp-panel-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.tp-panel-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tp-panel-copy {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.tp-panel-spacer {
+  flex: 1 1 auto;
+}
+
+/* ── Resource list rows ─────────────────────────────────────────────────────── */
+
+.tp-resource-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tp-resource-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+
+.tp-resource-row:hover {
+  background: var(--bg-elevated);
+}
+
+.tp-resource-row-selected {
+  background: var(--bg-elevated);
+}
+
+.tp-resource-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
+.tp-resource-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
+.tp-resource-name {
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-resource-type {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-fade);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-resource-spacer {
+  flex: 1 1 auto;
+}
+
+.tp-resource-boundary {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+/* ── Boundary legend ─────────────────────────────────────────────────────────── */
+
+.tp-panel-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+
+.tp-legend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-legend-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--ink) 5%, transparent);
+  flex: 0 0 auto;
+}
+
+.tp-legend-label {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.tp-legend-spacer {
+  flex: 1 1 auto;
+}
+
+.tp-legend-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-fade);
+}
+
+/* ── Node detail ────────────────────────────────────────────────────────────── */
+
+.tp-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px var(--s-2);
+  border-radius: 7px;
+}
+
+.tp-back-button:hover {
+  color: var(--ink);
+}
+
+.tp-provider-pill {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  padding: 3px var(--s-2);
+  border-radius: 99px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-muted);
+}
+
+.tp-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.tp-detail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  flex: 0 0 auto;
+}
+
+.tp-detail-identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tp-detail-name {
+  font-size: 17px;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.tp-detail-type {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.tp-detail-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.tp-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.tp-detail-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.tp-detail-meta-key {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  width: 100px;
+  flex: 0 0 auto;
+}
+
+.tp-detail-meta-value {
+  font-size: 12.5px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/* ── Drift box (P5 node-detail extension) ────────────────────────────────────── */
+
+.tp-drift-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+
+.tp-drift-box-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-drift-box-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tp-drift-box-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ── Cost box (P6 node-detail extension) ─────────────────────────────────────── */
+
+.tp-cost-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+}
+
+.tp-cost-box-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-cost-box-mode {
+  display: inline-flex;
+  color: var(--ink-muted);
+}
+
+.tp-cost-box-mode-schedulable {
+  color: var(--warn);
+}
+
+.tp-cost-box-mode-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tp-cost-box-amount {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.tp-cost-box-unit {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+/* ── Realizes chips ─────────────────────────────────────────────────────────── */
+
+.tp-chip-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.tp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px var(--s-3);
+  border-radius: 7px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+.tp-chip-active {
+  border-color: color-mix(in oklab, var(--el-class) 45%, transparent);
+  background: color-mix(in oklab, var(--el-class) 12%, transparent);
+  color: color-mix(in oklab, var(--el-class) 85%, var(--ink));
+  cursor: pointer;
+}
+
+.tp-chip:disabled {
+  cursor: default;
+}
+
+/* ── Notices ────────────────────────────────────────────────────────────────── */
+
+.tp-notice {
+  padding: var(--s-2) var(--s-3);
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.tp-notice-error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-radius: var(--r-2);
+}
+
+/* ── Drift panel (P5 side-panel list) ─────────────────────────────────────────── */
+
+.tp-drift-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.tp-drift-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.tp-drift-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-drift-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid currentColor;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.tp-drift-group-meaning {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-fade);
+}
+
+.tp-drift-group-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tp-drift-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px 11px;
+  margin-left: 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  text-align: left;
+}
+
+.tp-drift-item:hover {
+  border-color: var(--line-2);
+}
+
+.tp-drift-item:disabled {
+  cursor: default;
+}
+
+.tp-drift-item-name {
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+.tp-drift-item-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.tp-drift-ci {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 11px 13px;
+  border: 1px solid var(--accent-mid);
+  border-radius: 10px;
+  background: var(--accent-wash);
+}
+
+.tp-drift-ci-command {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.tp-drift-ci-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+/* ── Cost panel (P6 side-panel list) ──────────────────────────────────────────── */
+
+.tp-cost-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tp-cost-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tp-cost-row:hover {
+  background: var(--bg-elevated);
+}
+
+.tp-cost-row-mode {
+  display: inline-flex;
+  color: var(--ink-muted);
+  flex: 0 0 auto;
+}
+
+.tp-cost-row-mode-schedulable {
+  color: var(--warn);
+}
+
+.tp-cost-row-name {
+  font-size: 12.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-cost-row-tag {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 99px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  white-space: nowrap;
+}
+
+.tp-cost-row-amount {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tp-cost-totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.tp-cost-total-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-cost-total-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.tp-cost-total-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.tp-cost-split {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.tp-cost-split-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+}
+
+.tp-cost-split-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+}
+
+.tp-cost-split-value {
+  font-size: 15px;
+  font-weight: 680;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.tp-cost-attribution {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+
+.tp-cost-attribution-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.tp-cost-attribution-name {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.tp-cost-attribution-value {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
