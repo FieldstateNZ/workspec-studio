@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
+    // `types: ["node"]` (from tsconfig.json) stays on for the build too,
+    // unlike `@workspec/topology-schema`'s build config: this package's
+    // `src/sources/fs-source.ts` (behind the `./fs` subpath) genuinely needs
+    // Node's ambient types to declare-emit. Root-entry browser safety is
+    // enforced by `scripts/assert-browser-safe.mjs` (post-build, checks the
+    // shipped `dist/index.js` for Node builtin imports) and
+    // `test/browser-safety.test.ts` (pre-build, statically walks
+    // `src/index.ts`'s import graph) instead of stripping node types from
+    // the whole build — same split as `packages/c4-model`.
+  },
+  "references": [
+    { "path": "../topology-schema/tsconfig.build.json" },
+    { "path": "../schema-core/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

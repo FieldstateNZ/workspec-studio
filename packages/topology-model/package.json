@@ -1,0 +1,60 @@
+{
+  "name": "@workspec/topology-model",
+  "version": "0.1.0-alpha.1",
+  "description": "Pure loader/resolver for a WorkSpec Topology working tree — discovers, parses, and resolves resources, environments, and connections from any file-source port into one typed, environment-scoped ResolvedTopology plus network/resource-group lens trees, with best-effort diagnostics. No IO assumptions, no DOM, no React.",
+  "keywords": [
+    "topology",
+    "infrastructure",
+    "architecture",
+    "loader",
+    "resolver"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/topology-model#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/topology-model"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./fs": {
+      "types": "./dist/fs.d.ts",
+      "import": "./dist/fs.js",
+      "default": "./dist/fs.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@workspec/schema-core": "workspace:*",
+    "@workspec/topology-schema": "workspace:*",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && node scripts/assert-browser-safe.mjs",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  }
+}
