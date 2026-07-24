@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "core-vnet",
+      "location": "australiaeast",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-09-01",
+      "name": "core-vnet/snet-workload",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "web-app",
+      "kind": "app,linux",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "write-fn",
+      "kind": "functionapp,linux",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2023-08-01",
+      "name": "cache",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "Standard", "family": "C", "capacity": 1 }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01-preview",
+      "name": "sql-server/sql-db",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "GP_Gen5_2" }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2023-09-01",
+      "name": "redis-pe",
+      "location": "australiaeast",
+      "properties": {
+        "subnet": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/virtualNetworks/core-vnet/subnets/snet-workload"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "redis-connection",
+            "properties": {
+              "privateLinkServiceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Cache/Redis/cache",
+              "groupIds": ["redisCache"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2023-05-01",
+      "name": "front-door",
+      "location": "global",
+      "sku": { "name": "Premium_AzureFrontDoor" },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "unmapped-vm",
+      "location": "australiaeast",
+      "properties": {}
+    }
+  ]
+}

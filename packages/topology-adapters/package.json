@@ -1,0 +1,57 @@
+{
+  "name": "@workspec/topology-adapters",
+  "version": "0.1.0-alpha.1",
+  "description": "Pure import adapters that turn infrastructure sources (Terraform, Bicep/ARM, Azure Resource Graph) into WorkSpec Topology Resource artifacts.",
+  "keywords": [
+    "terraform",
+    "bicep",
+    "arm",
+    "azure-resource-graph",
+    "topology",
+    "infrastructure",
+    "import"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/topology-adapters#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/topology-adapters"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/topology-schema": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
