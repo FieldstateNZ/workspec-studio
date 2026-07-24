@@ -1,0 +1,57 @@
+{
+  "name": "@workspec/topology-cost",
+  "version": "0.1.0-alpha.1",
+  "description": "Pure cost and attribution layer for a resolved WorkSpec Topology: per-resource pricing (via the decision-engine kernel), resource-group/network rollups, and cost attribution through `realizes` to c4 containers. No IO, no DOM, no React.",
+  "keywords": [
+    "topology",
+    "cost-modelling",
+    "attribution",
+    "infrastructure",
+    "pure-function"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/topology-cost#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/topology-cost"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@workspec/decision-engine": "workspace:*",
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/topology-model": "workspace:*",
+    "@workspec/topology-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

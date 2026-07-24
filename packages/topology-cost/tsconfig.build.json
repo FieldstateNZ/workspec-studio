@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo",
+    // This package is PURE (no IO/DOM/React) — the published surface must
+    // never reach for Node globals or `node:*` modules, so the `types: ["node"]`
+    // the typecheck config needs for tests is reset for the build. Same split
+    // as `packages/topology-schema`.
+    "types": []
+  },
+  "references": [
+    { "path": "../topology-model/tsconfig.build.json" },
+    { "path": "../topology-schema/tsconfig.build.json" },
+    { "path": "../decision-engine/tsconfig.build.json" },
+    { "path": "../decision-schema/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
