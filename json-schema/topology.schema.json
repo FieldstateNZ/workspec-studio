@@ -1,0 +1,128 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/topology.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A WorkSpec topology artifact.",
+  "properties": {
+    "apiVersion": {
+      "const": "workspec.io/v1alpha1",
+      "description": "Artifact API version discriminant.",
+      "type": "string"
+    },
+    "kind": {
+      "const": "Topology",
+      "description": "Artifact kind discriminant.",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Common artifact identity.",
+      "properties": {
+        "slug": {
+          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "spec": {
+      "description": "The topology body.",
+      "properties": {
+        "catalog": {
+          "description": "Bare-slug intra-tree ref → decisions/catalogs/*: the decision catalog resource costs in this topology price against.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "connections": {
+          "description": "The declared connection graph. May be empty for a topology with no edges yet.",
+          "items": {
+            "description": "A declared edge between two resources.",
+            "properties": {
+              "class": {
+                "default": "primary",
+                "description": "Edge class: \"primary\" for request-path connections, \"telemetry\" for observability edges (e.g. a resource shipping metrics to a monitor). Defaults to \"primary\".",
+                "enum": [
+                  "primary",
+                  "telemetry"
+                ],
+                "type": "string"
+              },
+              "environments": {
+                "description": "Subset of the topology environments this connection is active in. Omitted means active in all of the topology's environments.",
+                "items": {
+                  "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "from": {
+                "description": "Bare-slug intra-tree ref → resources/*: the edge source resource.",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              "to": {
+                "description": "Bare-slug intra-tree ref → resources/*: the edge target resource.",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "defaultEnvironment": {
+          "description": "The environment shown by default; must be one of `environments`.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "environments": {
+          "description": "Bare-slug intra-tree refs → environments/*: the environments this topology spans.",
+          "items": {
+            "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "provider": {
+          "description": "Cloud provider, e.g. \"azure\", \"aws\", \"gcp\".",
+          "minLength": 1,
+          "type": "string"
+        },
+        "title": {
+          "description": "Topology title.",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "provider",
+        "environments",
+        "defaultEnvironment",
+        "connections"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkSpec Topology (v1alpha1)",
+  "type": "object"
+}

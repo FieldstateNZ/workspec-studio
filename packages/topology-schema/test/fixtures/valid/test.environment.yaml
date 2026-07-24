@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/environment.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Environment
+metadata:
+  slug: test
+spec:
+  naming:
+    resourceGroupSuffix: '-test'
+  overrides:
+    app-service:
+      cost:
+        qty: 1
+    cache:
+      config:
+        sku: Basic

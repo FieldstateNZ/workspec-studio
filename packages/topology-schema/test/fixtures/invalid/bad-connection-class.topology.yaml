@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: bad-class
+spec:
+  title: 'Bad class'
+  provider: azure
+  environments: [dev, prod]
+  defaultEnvironment: prod
+  connections:
+    - from: a
+      to: b
+      class: secondary

@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/environment.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Environment
+metadata:
+  slug: prod
+spec:
+  naming:
+    resourceGroupSuffix: '-prod'
+  overrides:
+    app-service:
+      cost:
+        sku: p2v3
+        qty: 3
+    cache:
+      config:
+        sku: Standard

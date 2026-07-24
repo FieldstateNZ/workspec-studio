@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: rg-app
+spec:
+  name: 'App resource group'
+  kind: resource-group
+  type: 'Azure Resource Group'
+  provider: azure
