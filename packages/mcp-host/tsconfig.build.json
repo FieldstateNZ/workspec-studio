@@ -15,7 +15,8 @@
     { "path": "../decision-studio/tsconfig.build.json" },
     { "path": "../cost-studio/tsconfig.build.json" },
     { "path": "../c4-studio/tsconfig.build.json" },
-    { "path": "../trace-studio/tsconfig.build.json" }
+    { "path": "../trace-studio/tsconfig.build.json" },
+    { "path": "../topology-studio/tsconfig.build.json" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]

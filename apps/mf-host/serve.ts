@@ -1,10 +1,12 @@
 // A tiny static server for the smoke test. It serves the built host at `/`,
-// the decision-ui remote at `/remote/`, the c4-ui remote at `/remote-c4/`, and
-// the cost-ui remote at `/remote-cost/`, all from ONE origin — so the host's
+// the decision-ui remote at `/remote/`, the c4-ui remote at `/remote-c4/`,
+// the cost-ui remote at `/remote-cost/`, and the topology-ui remote at
+// `/remote-topology/`, all from ONE origin — so the host's
 // `/remote/remoteEntry.js` / `/remote-c4/remoteEntry.js` /
-// `/remote-cost/remoteEntry.js` references and each remote's
-// `publicPath: 'auto'` chunk loading all resolve without any cross-origin or
-// port coordination. Deliberately dependency-free (Node built-ins only).
+// `/remote-cost/remoteEntry.js` / `/remote-topology/remoteEntry.js`
+// references and each remote's `publicPath: 'auto'` chunk loading all
+// resolve without any cross-origin or port coordination. Deliberately
+// dependency-free (Node built-ins only).
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -16,6 +18,7 @@ const HOST_DIST = resolve(here, 'dist');
 const REMOTE_DIST = resolve(here, '../../packages/decision-ui/dist-mf');
 const C4_REMOTE_DIST = resolve(here, '../../packages/c4-ui/dist-mf');
 const COST_REMOTE_DIST = resolve(here, '../../packages/cost-ui/dist-mf');
+const TOPOLOGY_REMOTE_DIST = resolve(here, '../../packages/topology-ui/dist-mf');
 const PORT = Number(process.env.PORT ?? 4390);
 
 const MIME: Record<string, string> = {
@@ -46,9 +49,10 @@ const server = createServer((req, res) => {
     let pathname = decodeURIComponent(url.pathname);
 
     // Route `/remote/*` to the decision-ui remote, `/remote-c4/*` to the
-    // c4-ui remote, `/remote-cost/*` to the cost-ui remote; everything else
-    // to the host. `/remote-c4` and `/remote-cost` are checked first — they
-    // would otherwise also match the `/remote` prefix check.
+    // c4-ui remote, `/remote-cost/*` to the cost-ui remote, `/remote-topology/*`
+    // to the topology-ui remote; everything else to the host. The three
+    // longer, more specific prefixes are checked first — they would
+    // otherwise also match the plain `/remote` prefix check.
     let baseDir = HOST_DIST;
     if (pathname === '/remote-c4' || pathname.startsWith('/remote-c4/')) {
       baseDir = C4_REMOTE_DIST;
@@ -56,6 +60,9 @@ const server = createServer((req, res) => {
     } else if (pathname === '/remote-cost' || pathname.startsWith('/remote-cost/')) {
       baseDir = COST_REMOTE_DIST;
       pathname = pathname.slice('/remote-cost'.length) || '/';
+    } else if (pathname === '/remote-topology' || pathname.startsWith('/remote-topology/')) {
+      baseDir = TOPOLOGY_REMOTE_DIST;
+      pathname = pathname.slice('/remote-topology'.length) || '/';
     } else if (pathname === '/remote' || pathname.startsWith('/remote/')) {
       baseDir = REMOTE_DIST;
       pathname = pathname.slice('/remote'.length) || '/';

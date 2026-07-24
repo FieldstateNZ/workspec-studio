@@ -11,6 +11,9 @@
   <Folder Name="/aspire-hosting-decisions/">
     <Project Path="aspire-hosting-decisions/Aspire.Hosting.Workspec.Decisions.csproj" />
   </Folder>
+  <Folder Name="/aspire-hosting-topology/">
+    <Project Path="aspire-hosting-topology/Aspire.Hosting.Workspec.Topology.csproj" />
+  </Folder>
   <Folder Name="/aspire-hosting-mcp/">
     <Project Path="aspire-hosting-mcp/Aspire.Hosting.Workspec.Mcp.csproj" />
   </Folder>

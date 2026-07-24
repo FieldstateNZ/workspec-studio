@@ -1,15 +1,16 @@
-// Builds a merged fixture directory covering all four `*-studio` modules,
+// Builds a merged fixture directory covering all five `*-studio` modules,
 // for this package's own tests. No single `examples/*` directory in this
-// repo has content for decision + cost + c4 + trace together, so this
-// assembles one: it copies real example artifacts for decisions (from
+// repo has content for decision + cost + c4 + trace + topology together, so
+// this assembles one: it copies real example artifacts for decisions (from
 // `examples/hosting-platform`) and cost (from
-// `examples/fieldstate-azure-costs`), and constructs minimal-but-valid c4 and
-// trace artifacts inline (there is no example directory with content for
-// those two yet). c4/trace tools tolerate a wholly absent `.workspec/` tree
-// (an empty-but-valid model/tree, per `loadC4Model`'s and `FsRepository`'s
-// own doc comments) — the inline content here goes a step further, so the
-// aggregate smoke tests exercise a real (non-empty) result for every
-// namespace, not just "didn't throw".
+// `examples/fieldstate-azure-costs`), and constructs minimal-but-valid c4,
+// trace, and topology artifacts inline (there is no example directory with
+// content for those three yet). c4/trace/topology tools tolerate a wholly
+// absent `.workspec/` tree (an empty-but-valid model/tree, per
+// `loadC4Model`'s, `FsRepository`'s, and `loadTopologyModel`'s own doc
+// comments) — the inline content here goes a step further, so the aggregate
+// smoke tests exercise a real (non-empty) result for every namespace, not
+// just "didn't throw".
 
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -44,6 +45,61 @@ kind: Feature
 metadata: {}
 spec:
   name: fixture-feature
+`;
+
+// Hand-written rather than built via `@workspec/topology-schema`'s typed
+// artifact shapes + `yaml.stringify`, same rationale as the trace artifacts
+// above: mcp-host has no other reason to depend on `topology-schema`
+// directly, and this one topology + one environment is small and stable
+// enough that a literal beats a new dependency edge. `catalog` is omitted
+// (optional per the schema) so this fixture needs no matching
+// `.workspec/catalogs/*` entry.
+const TOPOLOGY_TOPOLOGY_YAML = `# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: fixture-topology
+spec:
+  title: 'Fixture Topology'
+  provider: azure
+  environments: [prod]
+  defaultEnvironment: prod
+  connections:
+    - from: client
+      to: app-service
+      class: primary
+`;
+
+const TOPOLOGY_CLIENT_RESOURCE_YAML = `# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: client
+spec:
+  name: 'Browser client'
+  kind: client
+  type: 'Web browser'
+  provider: azure
+`;
+
+const TOPOLOGY_APP_SERVICE_RESOURCE_YAML = `# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: app-service
+spec:
+  name: 'Web App Service'
+  kind: compute
+  type: 'Azure App Service'
+  provider: azure
+`;
+
+const TOPOLOGY_PROD_ENVIRONMENT_YAML = `# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/environment.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Environment
+metadata:
+  slug: prod
+spec: {}
 `;
 
 /** A merged fixture tree, plus the `cleanup` every test that builds one must call in `afterEach`/`afterAll`. */
@@ -98,6 +154,24 @@ export async function buildFixtureTree(): Promise<FixtureTree> {
   await mkdir(join(dir, '.workspec', 'features'), { recursive: true });
   await writeFile(join(dir, '.workspec', 'actors', 'dev-lead.yaml'), TRACE_ACTOR_YAML, 'utf8');
   await writeFile(join(dir, '.workspec', 'features', 'fixture-feature.yaml'), TRACE_FEATURE_YAML, 'utf8');
+
+  // ── topology: one inline topology + two resources + one environment
+  //    (no example dir has topology content yet) ──
+  await mkdir(join(dir, '.workspec', 'topologies'), { recursive: true });
+  await mkdir(join(dir, '.workspec', 'resources'), { recursive: true });
+  await mkdir(join(dir, '.workspec', 'environments'), { recursive: true });
+  await writeFile(
+    join(dir, '.workspec', 'topologies', 'fixture-topology.yaml'),
+    TOPOLOGY_TOPOLOGY_YAML,
+    'utf8',
+  );
+  await writeFile(join(dir, '.workspec', 'resources', 'client.yaml'), TOPOLOGY_CLIENT_RESOURCE_YAML, 'utf8');
+  await writeFile(
+    join(dir, '.workspec', 'resources', 'app-service.yaml'),
+    TOPOLOGY_APP_SERVICE_RESOURCE_YAML,
+    'utf8',
+  );
+  await writeFile(join(dir, '.workspec', 'environments', 'prod.yaml'), TOPOLOGY_PROD_ENVIRONMENT_YAML, 'utf8');
 
   return {
     dir,

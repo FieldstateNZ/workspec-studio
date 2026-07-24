@@ -3,8 +3,9 @@ namespace Aspire.Hosting.ApplicationModel;
 /// <summary>
 /// An executable resource that runs the aggregate <c>workspec-mcp</c> CLI
 /// (<c>packages/mcp-host</c>) in <c>--http</c> mode, serving every WorkSpec Studio MCP provider
-/// (decisions/cost/c4/trace, namespaced <c>decisions_*</c>/<c>cost_*</c>/<c>c4_*</c>/<c>trace_*</c>)
-/// as a single stateless MCP endpoint over one shared artifacts directory.
+/// (decisions/cost/c4/trace/topology, namespaced
+/// <c>decisions_*</c>/<c>cost_*</c>/<c>c4_*</c>/<c>trace_*</c>/<c>topology_*</c>) as a single
+/// stateless MCP endpoint over one shared artifacts directory.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -30,8 +31,8 @@ public sealed class WorkspecMcpResource(string name, string command, string work
 {
     /// <summary>
     /// The resolved, absolute directory shared by every MCP provider this resource aggregates.
-    /// Each of decisions/cost/c4/trace reads and writes its own artifact kinds under this one
-    /// tree — see <c>packages/mcp-host/src/cli.ts</c>.
+    /// Each of decisions/cost/c4/trace/topology reads and writes its own artifact kinds under this
+    /// one tree — see <c>packages/mcp-host/src/cli.ts</c>.
     /// </summary>
     public string McpDirectory { get; } = mcpDirectory;
 }

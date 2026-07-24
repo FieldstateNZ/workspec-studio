@@ -1,6 +1,6 @@
 // The `workspec-mcp` CLI — the aggregate MCP host over one shared directory.
 // Unlike each `*-studio` package's own CLI (which has several subcommands),
-// this one has exactly one job: serve all four MCP providers, either over
+// this one has exactly one job: serve all five MCP providers, either over
 // stdio (the default) or over HTTP (`--http`). `run(argv, io)` is the
 // testable entry point: it returns a process exit code and writes through an
 // injectable IO, so tests can drive it without spawning a process or
@@ -36,17 +36,17 @@ Usage:
 
 Options:
   --dir <path>   Directory shared by every MCP provider (default: current
-                 directory). Each of decisions/cost/c4/trace reads and
-                 writes its own artifact kinds under this one tree.
+                 directory). Each of decisions/cost/c4/trace/topology reads
+                 and writes its own artifact kinds under this one tree.
   --http         Serve over HTTP (stateless, mounted at /mcp) instead of
                  stdio. Without this flag, speaks MCP over stdin/stdout.
   --port <n>     Port to listen on with --http (default: ${DEFAULT_HTTP_PORT}).
   --host <addr>  Address to bind with --http (default: ${DEFAULT_HOST} — localhost only).
 
-Assembles the decisions, cost, c4, and trace MCP providers (each namespaced
-as decisions_*/cost_*/c4_*/trace_*) into a single server. With stdio (the
-default), stdout is the JSON-RPC protocol channel and carries nothing else —
-every diagnostic goes to stderr.
+Assembles the decisions, cost, c4, trace, and topology MCP providers (each
+namespaced as decisions_*/cost_*/c4_*/trace_*/topology_*) into a single
+server. With stdio (the default), stdout is the JSON-RPC protocol channel
+and carries nothing else — every diagnostic goes to stderr.
 `;
 
 /**

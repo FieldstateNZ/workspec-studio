@@ -8,10 +8,10 @@ public static class WorkspecMcpExtensions
 {
     /// <summary>
     /// Adds a <see cref="WorkspecMcpResource"/> that runs <c>workspec-mcp --http</c> against
-    /// <paramref name="dir"/>, proxying every WorkSpec Studio MCP provider (decisions/cost/c4/trace)
-    /// through Aspire's built-in MCP server. The CLI is resolved via <see cref="WorkspecCliLocator"/>
-    /// (explicit path override → <c>WORKSPEC_CLI_MCP</c> env var → local
-    /// <c>node_modules/.bin/workspec-mcp</c> → bare command on PATH).
+    /// <paramref name="dir"/>, proxying every WorkSpec Studio MCP provider
+    /// (decisions/cost/c4/trace/topology) through Aspire's built-in MCP server. The CLI is resolved
+    /// via <see cref="WorkspecCliLocator"/> (explicit path override → <c>WORKSPEC_CLI_MCP</c> env
+    /// var → local <c>node_modules/.bin/workspec-mcp</c> → bare command on PATH).
     /// </summary>
     /// <remarks>
     /// <para>
@@ -34,14 +34,15 @@ public static class WorkspecMcpExtensions
     /// <param name="builder">The distributed application builder.</param>
     /// <param name="name">The resource name.</param>
     /// <param name="dir">
-    /// Directory shared by every MCP provider the aggregate host assembles — decisions/cost/c4/trace
-    /// each read and write their own artifact kinds under this one tree (see
-    /// <c>packages/mcp-host/src/cli.ts</c>). A relative path is resolved eagerly (at registration
-    /// time) against <c>builder.AppHostDirectory</c>, not the process working directory — same
-    /// rationale as the other module integrations' own <c>Add*</c> methods. The tool list this
-    /// resource exposes is static regardless of which artifact kinds actually exist under
-    /// <paramref name="dir"/> — a directory with only decision records still exposes all 34 tools,
-    /// the cost/c4/trace ones simply operate against an empty tree until matching artifacts appear.
+    /// Directory shared by every MCP provider the aggregate host assembles — each of
+    /// decisions/cost/c4/trace/topology reads and writes its own artifact kinds under this one tree
+    /// (see <c>packages/mcp-host/src/cli.ts</c>). A relative path is resolved eagerly (at
+    /// registration time) against <c>builder.AppHostDirectory</c>, not the process working
+    /// directory — same rationale as the other module integrations' own <c>Add*</c> methods. The
+    /// tool list this resource exposes is static regardless of which artifact kinds actually exist
+    /// under <paramref name="dir"/> — a directory with only decision records still exposes all 48
+    /// tools, the cost/c4/trace/topology ones simply operate against an empty tree until matching
+    /// artifacts appear.
     /// </param>
     /// <returns>The resource builder, for further chaining.</returns>
     [AspireExport]

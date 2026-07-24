@@ -1,7 +1,7 @@
-// stdio entry point: build all four providers over `dir`, assemble one
+// stdio entry point: build all five providers over `dir`, assemble one
 // server, and speak MCP over stdin/stdout. Mirrors each individual
 // `*-studio` package's own `run-mcp.ts` shape (see e.g.
-// `packages/trace-studio/src/run-mcp.ts`), adapted to build four providers
+// `packages/trace-studio/src/run-mcp.ts`), adapted to build five providers
 // instead of one.
 //
 // stdio IS the MCP protocol channel here — anything written to stdout after
@@ -23,6 +23,6 @@ export async function runStdio(dir: string, io: CliIO): Promise<number> {
   const server = assembleMcpServer(buildAllProviders(dir), MCP_HOST_SERVER_INFO);
 
   await runMcpStdio(server);
-  io.err(`WorkSpec MCP Host · serving ${dir} over stdio (decisions, cost, c4, trace)\n`);
+  io.err(`WorkSpec MCP Host · serving ${dir} over stdio (decisions, cost, c4, trace, topology)\n`);
   return 0;
 }

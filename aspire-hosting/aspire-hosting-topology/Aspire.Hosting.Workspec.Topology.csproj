@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Workspec.Aspire.Hosting.Topology</PackageId>
+    <Description>Wires the workspec-topology CLI (Topology Studio) into a .NET Aspire apphost: a dashboard resource serving the topology/resource/environment explorer and a Validate dashboard command.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aspire-hosting-core\Aspire.Hosting.Workspec.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

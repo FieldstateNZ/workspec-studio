@@ -111,3 +111,30 @@ declare module 'costStudio/reactProbe' {
   const _default: typeof reactProbe;
   export default _default;
 }
+
+declare module 'topologyUi/provider' {
+  export { TopologyStudioProvider, createInertLinkResolver } from '@workspec/topology-ui';
+  export type {
+    TopologyStudioProviderProps,
+    TopologyStudioHost,
+    TopologyStudioCapabilities,
+    LinkResolver,
+    LinkResolution,
+    LinkTarget,
+    ThemeName,
+  } from '@workspec/topology-ui';
+}
+
+declare module 'topologyUi/TopologyWorkbench' {
+  import type { TopologyWorkbenchProps } from '@workspec/topology-ui';
+  import type { ReactElement } from 'react';
+  const TopologyWorkbench: (props: TopologyWorkbenchProps) => ReactElement;
+  export default TopologyWorkbench;
+}
+
+declare module 'topologyUi/reactProbe' {
+  /** Reports whether the remote's React is the host-stamped instance. */
+  export function reactProbe(): { sameInstance: boolean; version: string };
+  const _default: typeof reactProbe;
+  export default _default;
+}
