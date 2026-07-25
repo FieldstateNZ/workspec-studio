@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: core-vnet
+spec:
+  name: 'Core virtual network'
+  kind: vnet
+  type: 'Azure Virtual Network'
+  provider: azure
+  resourceGroup: rg-app

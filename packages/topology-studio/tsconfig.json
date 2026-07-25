@@ -1,0 +1,35 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Deliberately NOT "dist": this config covers `client/` alongside `src/`
+    // (rootDir infers to "."), so a `tsc -b` typecheck of it emits a
+    // `<outDir>/src` + `<outDir>/client` tree — not the flat dist/ layout the
+    // build config and package.json "types" expect — and includes test
+    // files. Routing the typecheck emit to a gitignored `.typecheck/` (never
+    // read by anything) keeps `tsc -b`'s self-bootstrap working without
+    // polluting `dist/` — same shadow-emit split as every other `*-studio`
+    // package.
+    "outDir": ".typecheck",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+  },
+  // TS Project References: let `tsc -b` type-check against the sibling
+  // packages' real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Points at the
+  // siblings' *build* configs — only those emit to the `dist/` layout their
+  // package.json "types" fields advertise, which is what lets tsc map the
+  // imports back to source.
+  "references": [
+    { "path": "../decision-schema/tsconfig.build.json" },
+    { "path": "../mcp-core/tsconfig.build.json" },
+    { "path": "../schema-core/tsconfig.build.json" },
+    { "path": "../topology-adapters/tsconfig.build.json" },
+    { "path": "../topology-cost/tsconfig.build.json" },
+    { "path": "../topology-model/tsconfig.build.json" },
+    { "path": "../topology-recon/tsconfig.build.json" },
+    { "path": "../topology-schema/tsconfig.build.json" },
+    { "path": "../topology-ui/tsconfig.build.json" }
+  ],
+  "include": ["src", "client"]
+}

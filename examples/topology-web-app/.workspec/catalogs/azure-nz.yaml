@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+#
+# A decision-schema Catalog artifact — `workspec-topology cost` reads it from
+# `.workspec/catalogs/<slug>.yaml` (the same type directory
+# `@workspec/decision-studio` reads its own catalogs from) to price this
+# example's `web-app` topology. Adapted from `@workspec/topology-cost`'s own
+# `test/fixtures/azure-nz.catalog.yaml` golden fixture, extended with the
+# extra SKUs this demo's fuller resource set (private endpoints, search,
+# front door) references. Prices are illustrative NZD figures, not live
+# Azure list prices.
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  slug: azure-nz
+spec:
+  name: 'Azure (NZ) hosting catalog'
+  currency: NZD
+  asOf: '2026-07-01'
+  pricingModes:
+    - id: payg
+      label: 'Pay as you go'
+      mult: 1
+      committed: false
+    - id: ri1y
+      label: '1yr Reserved'
+      short: '1Y RI'
+      mult: 0.65
+      committed: true
+      note: 'Illustrative 1-year reserved-instance discount.'
+  schedules:
+    - id: always
+      label: '24x7'
+      pct: 1
+  skus:
+    - id: standard
+      label: 'Front Door Standard'
+      family: 'Edge / CDN'
+      price: 45
+      unit: 'profile / month'
+    - id: p1v3
+      label: 'App Service P1v3'
+      family: 'App hosting'
+      price: 245
+      unit: 'instance / month'
+    # Not referenced by any authored resource in this tree — this is the
+    # tier the prod drift scenario's actual/derived app-service reports
+    # (topology-actual-demo/prod/app-service.yaml). Kept here purely so the
+    # sku id in that drift-comparison output resolves to a human label,
+    # mirroring the upstream fixture's convention of keeping a couple of
+    # unreferenced-by-authored SKUs around for exactly this reason.
+    - id: p0v3
+      label: 'App Service P0v3'
+      family: 'App hosting'
+      price: 55
+      unit: 'instance / month'
+    - id: consumption
+      label: 'Functions Consumption'
+      family: 'Serverless'
+      price: 15
+      unit: 'plan / month'
+    - id: balanced-b2
+      label: 'Cache for Redis Balanced B2 (zone-redundant)'
+      family: 'Cache'
+      price: 205
+      unit: 'instance / month'
+    - id: basic-c1
+      label: 'Cache for Redis Basic C1'
+      family: 'Cache'
+      price: 55
+      unit: 'instance / month'
+    - id: gp-gen5-2
+      label: 'SQL Database GP Gen5 2 vCore'
+      family: 'Database'
+      price: 365
+      unit: 'database / month'
+    - id: aisearch-s1
+      label: 'AI Search S1'
+      family: 'Search'
+      price: 250
+      unit: 'service / month'

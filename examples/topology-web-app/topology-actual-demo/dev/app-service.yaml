@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: app-service-01
+spec:
+  name: 'App Service'
+  kind: compute
+  type: 'Azure App Service'
+  provider: azure
+  config:
+    tier: P1v3
+  cost:
+    sku: p1v3
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Web/sites:app-service-01'

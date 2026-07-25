@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: sql-01
+spec:
+  name: 'SQL Database'
+  kind: database
+  type: 'Azure SQL Database'
+  provider: azure
+  cost:
+    sku: gp-gen5-2
+    mode: ri1y
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Sql/servers/databases:sql-01'

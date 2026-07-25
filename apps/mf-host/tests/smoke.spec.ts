@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-// S6/S5/C6 integration smoke: the host loads the decision-ui, c4-ui, AND
-// cost-ui remotes over module federation and mounts DecisionCard +
-// DecisionWorkspace + C4Diagram + C4Explorer + AttributionWorkbench +
-// CostReport + CostInventory + TagPlanView. Proven:
+// S6/S5/C6/topology integration smoke: the host loads the decision-ui,
+// c4-ui, cost-ui, AND topology-ui remotes over module federation and mounts
+// DecisionCard + DecisionWorkspace + C4Diagram + C4Explorer +
+// AttributionWorkbench + CostReport + CostInventory + TagPlanView +
+// TopologyWorkbench. Proven:
 //   1. DecisionCard renders the correct golden cost (the recommended AKS annual,
 //      $54,336.58) — the remote computes it with the bundled engine over the
 //      MemoryRepository the host seeded from the hosting-platform fixtures.
@@ -17,14 +18,16 @@ import { expect, test } from '@playwright/test';
 //      they only work with a single shared React — a read path AND a write
 //      path, both proven. CostInventory and TagPlanView render their own
 //      views (stock-take table, tag-plan review) over the same estate.
-//   4. There is exactly ONE React instance across ALL THREE remote boundaries —
+//   4. TopologyWorkbench renders its header/canvas over the in-memory
+//      topology tree (see ../src/topology-seed.ts).
+//   5. There is exactly ONE React instance across ALL FOUR remote boundaries —
 //      proven by each remote's own reactProbe canary (remote's React ===
 //      host's stamped React) AND by DecisionWorkspace's/C4Explorer's/
 //      AttributionWorkbench's hooks running without an "invalid hook call"
 //      (which a second React copy would throw).
 
-test.describe('MF smoke — host consumes the decision-ui, c4-ui, and cost-ui remotes', () => {
-  test('host mounts decision, c4 and cost remotes on one React instance (reads + a cost write)', async ({
+test.describe('MF smoke — host consumes the decision-ui, c4-ui, cost-ui, and topology-ui remotes', () => {
+  test('host mounts decision, c4, cost, and topology remotes on one React instance (reads + a cost write)', async ({
     page,
   }) => {
     const consoleErrors: string[] = [];
@@ -128,6 +131,20 @@ test.describe('MF smoke — host consumes the decision-ui, c4-ui, and cost-ui re
     // ── 4g. TagPlanView renders its plan header + action counts over the
     //        inline TagPlan seed (../src/cost-seed.ts). ───────────────────────
     await expect(page.locator('#cost-tagplan-mount .cost-plan-counts')).toBeVisible();
+
+    // ── 4h. TopologyWorkbench renders its header (topology title) and canvas
+    //        over the in-memory topology tree seeded by the host
+    //        (../src/topology-seed.ts). ─────────────────────────────────────
+    await expect(page.locator('#topology-workbench-mount .tp-header-heading')).toHaveText(
+      'MF Host Web App',
+    );
+    await expect(page.locator('#topology-workbench-mount .tp-canvas')).toBeVisible();
+
+    // ── 4i. topology-ui's own reactProbe: same single-instance proof, independently. ─
+    const topologyProbe = page.locator('#topology-react-probe');
+    await expect(topologyProbe).toHaveAttribute('data-same-instance', 'true');
+    const topologyRemoteVersion = await topologyProbe.getAttribute('data-remote-react-version');
+    expect(topologyRemoteVersion).toBe(hostVersion);
 
     // ── 5. No duplicate-React / invalid-hook errors leaked to the console. ─────
     const reactErrors = consoleErrors.filter((text) =>

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/environment.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Environment
+metadata:
+  slug: negative-override-qty
+spec:
+  overrides:
+    app-service:
+      cost:
+        qty: -1

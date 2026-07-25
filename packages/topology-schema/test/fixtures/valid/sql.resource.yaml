@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: sql
+spec:
+  name: 'Primary database'
+  kind: database
+  type: 'Azure SQL Database'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-app
+  realizes: [primary-db]
+  cost:
+    sku: gp-gen5-2
+    mode: payg
+    schedule: always
+    qty: 1

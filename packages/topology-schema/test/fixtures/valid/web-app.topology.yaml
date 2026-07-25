@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: web-app
+spec:
+  title: 'Web App'
+  provider: azure
+  environments: [dev, test, prod]
+  defaultEnvironment: prod
+  catalog: web-app-hosting
+  connections:
+    - from: client
+      to: front-door
+      class: primary
+      environments: [prod]
+    - from: front-door
+      to: app-service
+      class: primary
+      environments: [prod]
+    - from: client
+      to: app-service
+      class: primary
+      environments: [dev, test]
+    - from: app-service
+      to: cache
+      class: primary
+    - from: app-service
+      to: sql
+      class: primary
+    - from: write-fn
+      to: sql
+      class: primary
+    - from: write-fn
+      to: cache
+      class: primary
+    - from: app-service
+      to: app-insights
+      class: telemetry
+    - from: write-fn
+      to: app-insights
+      class: telemetry

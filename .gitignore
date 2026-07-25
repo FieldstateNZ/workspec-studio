@@ -17,6 +17,10 @@ playwright-report/
 # render-adr output (packages/decision-studio) is a generated artifact, never committed
 *.adr.md
 
+# derived/imported topology snapshots (packages/topology-studio's `import` command) are
+# tool-generated, per-environment, disposable — re-running `import` overwrites them
+.topology-actual/
+
 # .NET build output (aspire-hosting/) — scoped so it can't shadow anything the TS side uses
 aspire-hosting/**/bin/
 aspire-hosting/**/obj/

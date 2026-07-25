@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+#
+# A decision-schema Catalog artifact pricing every sku/mode/schedule the
+# web-app topology fixture (`@workspec/topology-schema`'s
+# `test/fixtures/valid/*.resource.yaml`) references, so `resolve()`'s output
+# for that fixture prices cleanly against this catalog in every environment.
+# Prices are illustrative NZD figures, not live Azure list prices. Doubles as
+# the seed catalog for the P9 demo.
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  slug: azure-nz
+spec:
+  name: 'Azure (NZ) hosting catalog'
+  currency: NZD
+  asOf: '2026-07-01'
+  pricingModes:
+    - id: payg
+      label: 'Pay as you go'
+      mult: 1
+      committed: false
+    # Unreferenced by the current web-app fixture (every resource there prices
+    # as `payg`) but kept so a demo/author can move a steady-state resource
+    # onto a committed mode without editing the catalog first.
+    - id: ri1y
+      label: '1yr Reserved'
+      short: '1Y RI'
+      mult: 0.65
+      committed: true
+      note: 'Illustrative 1-year reserved-instance discount.'
+  schedules:
+    - id: always
+      label: '24x7'
+      pct: 1
+    # Unreferenced by the current web-app fixture; kept for the same reason
+    # as `ri1y` — a demo/author scheduling a non-prod resource off-hours.
+    - id: business
+      label: 'Business hours'
+      pct: 0.3
+  skus:
+    - id: p1v3
+      label: 'App Service P1v3'
+      family: 'App hosting'
+      price: 245
+      unit: 'instance / month'
+    - id: p2v3
+      label: 'App Service P2v3'
+      family: 'App hosting'
+      price: 490
+      unit: 'instance / month'
+    - id: standard-c1
+      label: 'Cache for Redis C1 Standard'
+      family: 'Cache'
+      price: 130
+      unit: 'instance / month'
+    - id: standard
+      label: 'Front Door Standard'
+      family: 'Edge / CDN'
+      price: 45
+      unit: 'profile / month'
+    - id: gp-gen5-2
+      label: 'SQL Database GP Gen5 2 vCore'
+      family: 'Database'
+      price: 365
+      unit: 'database / month'
+    - id: consumption
+      label: 'Functions Consumption'
+      family: 'Serverless'
+      price: 15
+      unit: 'plan / month'

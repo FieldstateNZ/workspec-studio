@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+#
+# OBSERVED connectivity for the prod actual/derived tree — a topology
+# artifact living alongside the derived `Resource` files in this directory,
+# not under `.workspec/topologies/` (that directory is the AUTHORED source
+# of truth; this one is what `workspec-topology reconcile` treats as "what
+# was actually seen wired up" for `prod` — see `derived-topology.ts`'s
+# `loadDerivedTopology` doc comment: a `kind: Topology` file found under
+# `.topology-actual/<env>/` means connectivity WAS captured for this
+# environment, so `reconcile` assesses wiring precisely instead of skipping
+# it).
+#
+# Every edge here mirrors the prod-resolved AUTHORED wiring
+# (`.workspec/topologies/web-app.yaml` run through `resolve()` for `prod`)
+# with exactly one deliberate exception: `app-service` connects DIRECTLY to
+# `sql`, bypassing the `sql-pe` private endpoint the authored topology routes
+# through (see `.workspec/resources/sql-pe.yaml`'s own doc comment). `sql-pe`
+# is still deployed (it still matches cleanly as a resource) — it's just no
+# longer wired into the request path, exactly the kind of "declared via a
+# private endpoint, observed as a direct hop" drift `miswired` exists to
+# catch. `write-fn` still reaches `sql-pe` normally, so this is a narrow,
+# single-edge reroute, not a wholesale rewiring — `reconcile --env prod`
+# reports it as ONE `miswired` drift touching exactly `app-service`, `sql`,
+# and `sql-pe`, not a list of every declared connection.
+#
+# Slugs here are the ACTUAL (derived) resource slugs from this directory's
+# own `Resource` files (e.g. `app-service-01`, not `app-service`) —
+# `@workspec/topology-recon`'s `diffConnections` re-slugs them through the
+# matcher to their authored-canonical counterparts before comparing, the
+# same convention `@workspec/topology-recon`'s own golden fixture
+# (`test/golden/web-app-drift.fixtures.ts`) uses for its hand-built actual
+# topology.
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: observed
+spec:
+  title: 'Observed — prod'
+  provider: azure
+  environments: [prod]
+  defaultEnvironment: prod
+  connections:
+    # Edge tier: matches authored exactly.
+    - from: client-01
+      to: front-door-01
+      class: primary
+    - from: front-door-01
+      to: app-service-01
+      class: primary
+
+    # App-tier fan-out: matches authored, EXCEPT app-service's private-endpoint
+    # hop to sql-pe is gone (see the direct-to-sql bypass below).
+    - from: app-service-01
+      to: redis-pe-01
+      class: primary
+    - from: app-service-01
+      to: write-fn-01
+      class: primary
+    - from: write-fn-01
+      to: redis-pe-01
+      class: primary
+    - from: write-fn-01
+      to: sql-pe-01
+      class: primary
+
+    # Private-endpoint hop onto the cache still matches authored.
+    - from: redis-pe-01
+      to: cache-01
+      class: primary
+
+    # THE DELIBERATE DRIFT: app-service bypasses sql-pe and hits sql direct.
+    # (Authored: app-service -> sql-pe -> sql. Note there is no
+    # `sql-pe-01 -> sql-01` edge here at all — sql-pe is deployed but dangling.)
+    - from: app-service-01
+      to: sql-01
+      class: primary
+
+    # Telemetry: matches authored.
+    - from: app-service-01
+      to: app-insights-01
+      class: telemetry
+    - from: write-fn-01
+      to: app-insights-01
+      class: telemetry

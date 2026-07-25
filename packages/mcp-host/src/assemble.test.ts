@@ -36,7 +36,7 @@ describe('the aggregate WorkSpec MCP Host server', () => {
     await fixture.cleanup();
   });
 
-  it('lists tools from all four namespaces with no wire-name collision', async () => {
+  it('lists tools from all five namespaces with no wire-name collision', async () => {
     const client = await connectClient(fixture.dir);
 
     const { tools } = await client.listTools();
@@ -47,6 +47,7 @@ describe('the aggregate WorkSpec MCP Host server', () => {
     expect(names.some((n) => n.startsWith('cost_'))).toBe(true);
     expect(names.some((n) => n.startsWith('c4_'))).toBe(true);
     expect(names.some((n) => n.startsWith('trace_'))).toBe(true);
+    expect(names.some((n) => n.startsWith('topology_'))).toBe(true);
 
     // No duplicate wire name across the full list — a collision would mean
     // two providers picked the same namespace + tool-name pair.
@@ -89,5 +90,17 @@ describe('the aggregate WorkSpec MCP Host server', () => {
     const result = await client.callTool({ name: 'c4_get_model', arguments: {} });
 
     expect(result.isError).not.toBe(true);
+  });
+
+  it('calls topology_list_topologies end to end through the real assembled server', async () => {
+    const client = await connectClient(fixture.dir);
+
+    const result = await client.callTool({ name: 'topology_list_topologies', arguments: {} });
+
+    expect(result.isError).not.toBe(true);
+    const content = result.content as { type: string; text: string }[];
+    const body = JSON.parse(content[0]?.text ?? '[]') as unknown[];
+    expect(Array.isArray(body)).toBe(true);
+    expect(body.length).toBeGreaterThan(0);
   });
 });

@@ -20,7 +20,9 @@
     { "path": "../../packages/c4-layout/tsconfig.build.json" },
     { "path": "../../packages/c4-ui/tsconfig.build.json" },
     { "path": "../../packages/cost-schema/tsconfig.build.json" },
-    { "path": "../../packages/cost-ui/tsconfig.build.json" }
+    { "path": "../../packages/cost-ui/tsconfig.build.json" },
+    { "path": "../../packages/topology-model/tsconfig.build.json" },
+    { "path": "../../packages/topology-ui/tsconfig.build.json" }
   ],
   "include": ["src", "serve.ts", "vite.config.ts", "playwright.config.ts", "tests"]
 }

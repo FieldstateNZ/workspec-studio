@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo",
+    "types": []
+  },
+  "references": [
+    { "path": "../topology-model/tsconfig.build.json" },
+    { "path": "../topology-schema/tsconfig.build.json" },
+    { "path": "../topology-recon/tsconfig.build.json" },
+    { "path": "../topology-cost/tsconfig.build.json" },
+    { "path": "../decision-schema/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  // test-helpers is a test-only helper (imported exclusively by *.test.tsx):
+  // excluding it keeps its @testing-library/node fs-reading devDep type
+  // references out of the published dist/ tree, mirroring
+  // packages/decision-ui's test-utils.tsx exclusion.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-helpers/**"]
+}

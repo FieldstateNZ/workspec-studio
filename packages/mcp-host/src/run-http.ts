@@ -11,7 +11,7 @@ import type { CliIO } from './cli.js';
 
 /** Options for {@link runHttp}. */
 export interface RunHttpOptions {
-  /** Directory shared by all four MCP providers. */
+  /** Directory shared by all five MCP providers. */
   dir: string;
   /** Port to listen on. `0` binds an OS-assigned ephemeral port. */
   port: number;
@@ -34,7 +34,7 @@ export async function runHttp(options: RunHttpOptions, io: CliIO): Promise<numbe
       const address = server.address() as AddressInfo | null;
       const boundPort = address?.port ?? port;
       io.err(`WorkSpec MCP Host · serving ${dir}\n`);
-      io.err(`  → http://${host}:${boundPort}/mcp (decisions, cost, c4, trace)\n`);
+      io.err(`  → http://${host}:${boundPort}/mcp (decisions, cost, c4, trace, topology)\n`);
       io.err('  press Ctrl-C to stop\n');
     });
 

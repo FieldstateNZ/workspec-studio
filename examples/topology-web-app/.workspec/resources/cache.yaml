@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT TARGET (divergent): authored Balanced B2, zone-redundant in prod (the
+# base spec below — dev/test override down to Basic C1, single-zone, via
+# .workspec/environments/{dev,test}.yaml). The prod actual/derived tree
+# (topology-actual-demo/prod/cache.yaml) reports Basic C1, single-zone — no
+# failover, and not what was decided — so `reconcile --env prod` reports
+# this as `divergent` too.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: cache
+spec:
+  name: 'Distributed Cache'
+  kind: cache
+  type: 'Azure Cache for Redis'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-data
+  config:
+    sku: Balanced
+    tier: B2
+    zoneRedundant: true
+  cost:
+    sku: balanced-b2
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: authored

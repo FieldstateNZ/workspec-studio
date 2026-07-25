@@ -1,0 +1,132 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.0",
+  "values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "azurerm_resource_group.app",
+          "mode": "managed",
+          "type": "azurerm_resource_group",
+          "name": "app",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "rg-app",
+            "location": "australiaeast"
+          }
+        },
+        {
+          "address": "azurerm_linux_web_app.web",
+          "mode": "managed",
+          "type": "azurerm_linux_web_app",
+          "name": "web",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "web-app",
+            "resource_group_name": "rg-app",
+            "location": "australiaeast"
+          }
+        },
+        {
+          "address": "azurerm_redis_cache.cache",
+          "mode": "managed",
+          "type": "azurerm_redis_cache",
+          "name": "cache",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "cache",
+            "resource_group_name": "rg-app",
+            "sku_name": "Standard",
+            "family": "C",
+            "capacity": 1
+          }
+        },
+        {
+          "address": "azurerm_mssql_database.primary",
+          "mode": "managed",
+          "type": "azurerm_mssql_database",
+          "name": "primary",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "sql",
+            "resource_group_name": "rg-app",
+            "sku_name": "GP_Gen5_2"
+          }
+        },
+        {
+          "address": "azurerm_private_endpoint.redis_pe",
+          "mode": "managed",
+          "type": "azurerm_private_endpoint",
+          "name": "redis_pe",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "redis-pe",
+            "resource_group_name": "rg-app",
+            "subnet_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/virtualNetworks/core-vnet/subnets/snet-workload",
+            "private_service_connection": [
+              {
+                "name": "redis-connection",
+                "private_connection_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Cache/Redis/cache",
+                "subresource_names": ["redisCache"]
+              }
+            ]
+          }
+        },
+        {
+          "address": "azurerm_frontdoor.fd",
+          "mode": "managed",
+          "type": "azurerm_frontdoor",
+          "name": "fd",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "front-door",
+            "resource_group_name": "rg-app"
+          }
+        },
+        {
+          "address": "azurerm_public_ip.unmapped",
+          "mode": "managed",
+          "type": "azurerm_public_ip",
+          "name": "unmapped",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm",
+          "values": {
+            "name": "pip",
+            "resource_group_name": "rg-app"
+          }
+        }
+      ],
+      "child_modules": [
+        {
+          "address": "module.network",
+          "resources": [
+            {
+              "address": "module.network.azurerm_virtual_network.core",
+              "mode": "managed",
+              "type": "azurerm_virtual_network",
+              "name": "core",
+              "provider_name": "registry.terraform.io/hashicorp/azurerm",
+              "values": {
+                "name": "core-vnet",
+                "resource_group_name": "rg-app",
+                "address_space": ["10.0.0.0/16"]
+              }
+            },
+            {
+              "address": "module.network.azurerm_subnet.workload",
+              "mode": "managed",
+              "type": "azurerm_subnet",
+              "name": "workload",
+              "provider_name": "registry.terraform.io/hashicorp/azurerm",
+              "values": {
+                "name": "snet-workload",
+                "resource_group_name": "rg-app",
+                "virtual_network_name": "core-vnet",
+                "address_prefixes": ["10.0.1.0/24"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

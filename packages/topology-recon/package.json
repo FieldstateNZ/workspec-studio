@@ -1,0 +1,54 @@
+{
+  "name": "@workspec/topology-recon",
+  "version": "0.1.0-alpha.1",
+  "description": "Pure reconciliation of an authored WorkSpec Topology (resolved for one environment) against a derived view of the actual deployed state — classifies drift into phantom, orphan, divergent, and miswired.",
+  "keywords": [
+    "topology",
+    "infrastructure",
+    "reconciliation",
+    "drift",
+    "architecture"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/topology-recon#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/topology-recon"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@workspec/topology-model": "workspace:*",
+    "@workspec/topology-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  }
+}

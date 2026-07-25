@@ -1,0 +1,168 @@
+{
+  "$id": "https://schema.workspec.io/v1alpha1/topology-layout.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A topology layout file, pinning per-lens resource positions and optionally connection routing and camera state.",
+  "properties": {
+    "edges": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "description": "Routing hint for one topology connection.",
+        "properties": {
+          "waypoints": {
+            "description": "Ordered points the connection is routed through.",
+            "items": {
+              "additionalProperties": false,
+              "description": "A single waypoint along a routed connection.",
+              "properties": {
+                "x": {
+                  "description": "X coordinate, top-left page coords.",
+                  "type": "number"
+                },
+                "y": {
+                  "description": "Y coordinate, top-left page coords.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "waypoints"
+        ],
+        "type": "object"
+      },
+      "description": "Optional per-connection routing hints, keyed by \"<from>-><to>\".",
+      "propertyNames": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "nodes": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "description": "A pinned resource position, per lens.",
+        "properties": {
+          "positions": {
+            "additionalProperties": false,
+            "description": "Per-lens pinned positions; either lens key may be omitted independently.",
+            "properties": {
+              "network": {
+                "additionalProperties": false,
+                "description": "Pinned position in the network-lens view.",
+                "properties": {
+                  "height": {
+                    "description": "Optional pinned height. Omit to use the renderer default.",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "width": {
+                    "description": "Optional pinned width. Omit to use the renderer default.",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "x": {
+                    "description": "X coordinate, top-left page coords.",
+                    "type": "number"
+                  },
+                  "y": {
+                    "description": "Y coordinate, top-left page coords.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "type": "object"
+              },
+              "rg": {
+                "additionalProperties": false,
+                "description": "Pinned position in the resource-group-lens view.",
+                "properties": {
+                  "height": {
+                    "description": "Optional pinned height. Omit to use the renderer default.",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "width": {
+                    "description": "Optional pinned width. Omit to use the renderer default.",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "x": {
+                    "description": "X coordinate, top-left page coords.",
+                    "type": "number"
+                  },
+                  "y": {
+                    "description": "Y coordinate, top-left page coords.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "positions"
+        ],
+        "type": "object"
+      },
+      "description": "Pinned resource positions, keyed by resource slug. Absence of a key means auto-layout.",
+      "propertyNames": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "version": {
+      "const": 1,
+      "description": "Layout file format version; always 1.",
+      "type": "number"
+    },
+    "viewport": {
+      "additionalProperties": false,
+      "description": "Optional persisted camera state.",
+      "properties": {
+        "x": {
+          "description": "Camera X offset, page coords.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Camera Y offset, page coords.",
+          "type": "number"
+        },
+        "zoom": {
+          "description": "Camera zoom factor; must be greater than zero.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "zoom"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "nodes"
+  ],
+  "title": "WorkSpec Topology Layout (v1alpha1)",
+  "type": "object"
+}

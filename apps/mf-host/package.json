@@ -2,7 +2,7 @@
   "name": "@workspec/mf-host",
   "version": "0.0.0",
   "private": true,
-  "description": "S6 smoke host: a minimal Vite app that consumes @workspec/decision-ui, @workspec/c4-ui, and @workspec/cost-ui as module-federation remotes and mounts DecisionCard + DecisionWorkspace + C4Explorer + C4Diagram + AttributionWorkbench + CostReport over in-memory data. CI integration proof; never published.",
+  "description": "S6 smoke host: a minimal Vite app that consumes @workspec/decision-ui, @workspec/c4-ui, @workspec/cost-ui, and @workspec/topology-ui as module-federation remotes and mounts DecisionCard + DecisionWorkspace + C4Explorer + C4Diagram + AttributionWorkbench + CostReport + TopologyWorkbench over in-memory data. CI integration proof; never published.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -10,8 +10,9 @@
     "build:remote": "pnpm --filter @workspec/decision-ui build:mf",
     "build:remote:c4": "pnpm --filter @workspec/c4-ui build:mf",
     "build:remote:cost": "pnpm --filter @workspec/cost-ui build:mf",
+    "build:remote:topology": "pnpm --filter @workspec/topology-ui build:mf",
     "serve": "tsx serve.ts",
-    "smoke": "pnpm build:remote && pnpm build:remote:c4 && pnpm build:remote:cost && pnpm build && playwright test",
+    "smoke": "pnpm build:remote && pnpm build:remote:c4 && pnpm build:remote:cost && pnpm build:remote:topology && pnpm build && playwright test",
     "typecheck": "tsc -b"
   },
   "devDependencies": {
@@ -30,6 +31,8 @@
     "@workspec/cost-ui": "workspace:*",
     "@workspec/decision-schema": "workspace:*",
     "@workspec/decision-ui": "workspace:*",
+    "@workspec/topology-model": "workspace:*",
+    "@workspec/topology-ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tsx": "^4.19.0",

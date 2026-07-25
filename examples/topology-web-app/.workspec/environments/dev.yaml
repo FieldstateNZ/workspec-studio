@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/environment.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Environment
+metadata:
+  slug: dev
+spec:
+  naming:
+    resourceGroupSuffix: '-dev'
+  overrides:
+    # app-service instances: 1 in dev/test, 2 in prod (base cost.qty is 1, so
+    # dev needs no override at all — kept explicit here for symmetry with
+    # test.yaml/prod.yaml and to make the per-env instance count easy to spot).
+    app-service:
+      cost:
+        qty: 1
+    cache:
+      config:
+        sku: Basic
+        tier: C1
+        zoneRedundant: false
+      cost:
+        sku: basic-c1

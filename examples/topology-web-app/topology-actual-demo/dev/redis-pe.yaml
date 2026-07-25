@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: redis-pe-01
+spec:
+  name: 'Redis Private Endpoint'
+  kind: endpoint
+  type: 'Private Endpoint'
+  provider: azure
+  config:
+    targets: cache
+    subresource: redisCache
+  source:
+    kind: derived
+    from: 'Microsoft.Network/privateEndpoints:redis-pe-01'

@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    // Deliberately NOT "dist": this config includes the test files, so a
+    // `tsc -b` typecheck of it would emit *.test.d.ts into the published
+    // tree (`files: ["dist"]` ships everything under dist/ in the npm
+    // tarball). Routing the typecheck emit to a gitignored `.typecheck/`
+    // (never read by anything) keeps `tsc -b`'s self-bootstrap working
+    // without polluting `dist/` — same shadow-emit split as
+    // packages/topology-schema.
+    "outDir": ".typecheck",
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo",
+    // Explicit, rather than relying on TypeScript's automatic `@types/*`
+    // discovery: under this package's pinned `typescript@^6.0.3` +
+    // `@types/node@^24`, automatic discovery of the global `node:fs`-style
+    // ambient module declarations does not kick in (same as
+    // packages/topology-schema).
+    "types": ["node"]
+  },
+  // TS Project Reference: lets `tsc -b` type-check against topology-schema's
+  // real TypeScript source (building its declarations on demand), so
+  // `typecheck` never has to run after `build`. Points at topology-schema's
+  // *build* config (rootDir "src", matching the published layout), not its
+  // default `tsconfig.json` (rootDir "."). Same pattern as
+  // packages/topology-schema referencing schema-core.
+  "references": [{ "path": "../topology-schema/tsconfig.build.json" }],
+  "include": ["src"]
+}

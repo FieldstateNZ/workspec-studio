@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: sql
+spec:
+  name: 'SQL Database'
+  kind: database
+  type: 'Azure SQL Database'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-data
+  realizes: [primary-db]
+  cost:
+    # Committed 1yr reserved pricing — a steady-state resource, unlike the
+    # PAYG compute/edge lines, so `cost --env prod`'s committed/schedulable
+    # split has a non-zero committed line to show.
+    sku: gp-gen5-2
+    mode: ri1y
+    schedule: always
+    qty: 1
+  source:
+    kind: authored

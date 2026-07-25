@@ -1,12 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mapErrorToResult } from './map-error-to-result.js';
 import { InvalidRefError } from './read-ref-arg.js';
+import { InvalidSlugError } from './read-slug-arg.js';
 
 describe('mapErrorToResult', () => {
   it('maps InvalidRefError to a client-safe message, before any classify callback runs', () => {
     const classify = vi.fn();
     const result = mapErrorToResult(new InvalidRefError('ref'), { logPrefix: 'test mcp', classify });
     expect(result.isError).toBe(true);
+    expect(classify).not.toHaveBeenCalled();
+  });
+
+  it('maps InvalidSlugError to a client-safe message, before any classify callback runs', () => {
+    const classify = vi.fn();
+    const result = mapErrorToResult(new InvalidSlugError('env'), { logPrefix: 'test mcp', classify });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]).toEqual({ type: 'text', text: 'argument "env" is not a valid slug' });
     expect(classify).not.toHaveBeenCalled();
   });
 

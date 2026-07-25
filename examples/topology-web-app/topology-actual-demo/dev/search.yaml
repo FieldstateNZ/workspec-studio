@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# Present (and matching) in dev — unlike prod, where this resource's actual
+# counterpart is deliberately withheld to demonstrate the `phantom` drift
+# class (see topology-actual-demo/prod/README context in the top-level
+# README.md).
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: search-01
+spec:
+  name: 'Search Index'
+  kind: search
+  type: 'Azure AI Search'
+  provider: azure
+  config:
+    tier: S1
+    replicas: 2
+  cost:
+    sku: aisearch-s1
+    mode: payg
+    schedule: always
+    qty: 1
+  source:
+    kind: derived
+    from: 'Microsoft.Search/searchServices:search-01'

@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    // Deliberately NOT "dist": this config's rootDir is "." (it covers
+    // top-level `test/` alongside `src/`, unlike `tsconfig.build.json`), so a
+    // `tsc -b` build of it emits `<outDir>/src/*.d.ts` + `<outDir>/test/*.d.ts`
+    // (mirroring the "." root), not the flat `<outDir>/*.d.ts` layout
+    // `tsconfig.build.json` and package.json's "types" field expect. Routing
+    // that emit to a top-level gitignored `.typecheck/` (never read by
+    // anything) keeps `tsc -b`'s self-bootstrap working for typecheck without
+    // ever touching the published `dist/` tree — same split as
+    // `packages/c4-model`.
+    "outDir": ".typecheck",
+    "types": ["node"],
+    "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
+  },
+  // TS Project References: lets `tsc -b` type-check against topology-schema's
+  // and schema-core's real TypeScript source (building their declarations on
+  // demand), so `typecheck` never has to run after `build`. Points at each
+  // dependency's *build* config (rootDir "src", matching the published
+  // layout), not its default `tsconfig.json` (rootDir "."). Same pattern as
+  // `packages/c4-model` referencing `../c4-schema/tsconfig.build.json`.
+  "references": [
+    { "path": "../topology-schema/tsconfig.build.json" },
+    { "path": "../schema-core/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

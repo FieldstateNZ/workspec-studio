@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: share-out-of-range
+spec:
+  name: 'Over-attributed'
+  kind: compute
+  type: 'Azure App Service'
+  provider: azure
+  cost:
+    sku: p1v3
+    mode: payg
+    schedule: always
+    qty: 1
+    attribution:
+      - container: api-server
+        share: 1.5

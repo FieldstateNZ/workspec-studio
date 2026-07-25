@@ -1,7 +1,7 @@
 {
   "name": "@workspec/mcp-host",
   "version": "0.1.0-alpha.1",
-  "description": "The aggregate WorkSpec Studio MCP server — assembles the decisions, cost, c4, and trace MCP providers over one shared directory into a single server, exposed via a stdio or --http entry point (workspec-mcp).",
+  "description": "The aggregate WorkSpec Studio MCP server — assembles the decisions, cost, c4, trace, and topology MCP providers over one shared directory into a single server, exposed via a stdio or --http entry point (workspec-mcp).",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -47,6 +47,7 @@
     "@workspec/cost-studio": "workspace:*",
     "@workspec/decision-studio": "workspace:*",
     "@workspec/mcp-core": "workspace:*",
+    "@workspec/topology-studio": "workspace:*",
     "@workspec/trace-studio": "workspace:*",
     "express": "^4.21.2"
   },

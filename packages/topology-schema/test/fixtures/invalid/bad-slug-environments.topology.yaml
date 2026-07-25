@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/topology.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Topology
+metadata:
+  slug: bad-slug-environments
+spec:
+  title: 'Bad slug environments'
+  provider: azure
+  environments: [Dev, prod]
+  defaultEnvironment: prod
+  connections: []

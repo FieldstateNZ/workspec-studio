@@ -1,0 +1,137 @@
+{
+  "totalRecords": 13,
+  "count": 13,
+  "data": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app",
+      "name": "rg-app",
+      "type": "microsoft.resources/resourcegroups",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Web/sites/web-app",
+      "name": "web-app",
+      "type": "microsoft.web/sites",
+      "resourceGroup": "rg-app",
+      "kind": "app,linux",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Web/sites/write-fn",
+      "name": "write-fn",
+      "type": "microsoft.web/sites",
+      "resourceGroup": "rg-app",
+      "kind": "functionapp,linux",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Cache/Redis/cache",
+      "name": "cache",
+      "type": "microsoft.cache/redis",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "Standard", "family": "C", "capacity": 1 }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Sql/servers/sql-server/databases/sql-db",
+      "name": "sql-server/sql-db",
+      "type": "microsoft.sql/servers/databases",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "GP_Gen5_2" }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/virtualNetworks/core-vnet",
+      "name": "core-vnet",
+      "type": "microsoft.network/virtualnetworks",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/virtualNetworks/core-vnet/subnets/snet-workload",
+      "name": "core-vnet/snet-workload",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/privateEndpoints/redis-pe",
+      "name": "redis-pe",
+      "type": "microsoft.network/privateendpoints",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "subnet": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Network/virtualNetworks/core-vnet/subnets/snet-workload"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "redis-connection",
+            "properties": {
+              "privateLinkServiceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Cache/Redis/cache",
+              "groupIds": ["redisCache"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Storage/storageAccounts/stgapp",
+      "name": "stgapp",
+      "type": "microsoft.storage/storageaccounts",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "Standard_LRS" }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Search/searchServices/search-app",
+      "name": "search-app",
+      "type": "microsoft.search/searchservices",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {
+        "sku": { "name": "standard" }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-app",
+      "name": "id-app",
+      "type": "microsoft.managedidentity/userassignedidentities",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.RecoveryServices/vaults/vault-app",
+      "name": "vault-app",
+      "type": "microsoft.recoveryservices/vaults",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Compute/disks/unmapped-disk",
+      "name": "unmapped-disk",
+      "type": "microsoft.compute/disks",
+      "resourceGroup": "rg-app",
+      "location": "australiaeast",
+      "properties": {}
+    }
+  ]
+}

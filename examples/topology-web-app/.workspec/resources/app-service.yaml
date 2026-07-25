@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+#
+# DRIFT TARGET (divergent): authored P1v3, qty 1 in dev/test and qty 2 in
+# prod (see .workspec/environments/prod.yaml's `overrides.app-service.cost.qty`).
+# The prod actual/derived tree (topology-actual-demo/prod/app-service.yaml)
+# deliberately reports tier P0v3 x1 — someone downgraded the plan in the
+# portal — so `reconcile --env prod` reports this as `divergent`.
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: app-service
+spec:
+  name: 'App Service'
+  kind: compute
+  type: 'Azure App Service'
+  provider: azure
+  network: snet-workload
+  resourceGroup: rg-app
+  realizes: [api-server]
+  config:
+    tier: P1v3
+  cost:
+    sku: p1v3
+    mode: payg
+    schedule: always
+    qty: 1
+    attribution:
+      - container: api-server
+        share: 1
+  source:
+    kind: authored
