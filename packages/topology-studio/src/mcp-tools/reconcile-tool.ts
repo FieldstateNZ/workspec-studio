@@ -1,6 +1,7 @@
 import { reconcile, summarizeDrift } from '@workspec/topology-recon';
+import { MAX_SLUG_LENGTH, SLUG_PATTERN } from '@workspec/schema-core';
 import type { McpToolDef } from '@workspec/mcp-core';
-import { readStringArg } from '@workspec/mcp-core';
+import { readSlugArg } from '@workspec/mcp-core';
 import { loadDerivedTopology } from '../derived-topology.js';
 import { loadAuthoredModel } from '../load-authored-model.js';
 import { resolveModelForEnv } from '../resolve-model.js';
@@ -10,7 +11,12 @@ import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
 const INPUT_SCHEMA = {
   type: 'object',
   properties: {
-    env: { type: 'string', description: 'Environment slug to reconcile, e.g. "prod".' },
+    env: {
+      type: 'string',
+      description: 'Environment slug to reconcile, e.g. "prod".',
+      pattern: SLUG_PATTERN.source,
+      maxLength: MAX_SLUG_LENGTH,
+    },
   },
   required: ['env'],
   additionalProperties: false,
@@ -32,7 +38,7 @@ export function buildReconcileTool(repo: FsRepository): McpToolDef {
     inputSchema: INPUT_SCHEMA,
     handler: async (args) => {
       try {
-        const env = readStringArg(args, 'env');
+        const env = readSlugArg(args, 'env');
         const model = await loadAuthoredModel(repo);
         if (model.topology === null) {
           return {

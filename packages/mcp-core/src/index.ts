@@ -19,6 +19,7 @@ export { isSafeRelativeRef } from './ref-shape.js';
 export { readStringArg } from './read-string-arg.js';
 export { readObjectArg } from './read-object-arg.js';
 export { readRefArg, InvalidRefError } from './read-ref-arg.js';
+export { readSlugArg, InvalidSlugError } from './read-slug-arg.js';
 export { validateThenWrite } from './validate-then-write.js';
 export type { SafeParseOutcome } from './validate-then-write.js';
 export { mapErrorToResult } from './map-error-to-result.js';

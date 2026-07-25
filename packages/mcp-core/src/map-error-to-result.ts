@@ -1,5 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { InvalidRefError } from './read-ref-arg.js';
+import { InvalidSlugError } from './read-slug-arg.js';
 
 /**
  * A module's own error classifier: given a thrown error, return the
@@ -28,6 +29,8 @@ export interface MapErrorToResultOptions {
  *
  * - {@link InvalidRefError} (thrown by `readRefArg`) → a client-safe
  *   "not a valid repo-relative path" message.
+ * - {@link InvalidSlugError} (thrown by `readSlugArg`) → a client-safe
+ *   "not a valid slug" message.
  * - `opts.classify`, if supplied → the calling module's own error types.
  *   Returning `undefined` falls through to the cases below.
  * - `ENOENT` → "not found".
@@ -39,6 +42,9 @@ export interface MapErrorToResultOptions {
  */
 export function mapErrorToResult(error: unknown, opts: MapErrorToResultOptions): CallToolResult {
   if (error instanceof InvalidRefError) {
+    return { content: [{ type: 'text', text: error.message }], isError: true };
+  }
+  if (error instanceof InvalidSlugError) {
     return { content: [{ type: 'text', text: error.message }], isError: true };
   }
   const classified = opts.classify?.(error);

@@ -34,6 +34,7 @@ export {
   loadDerivedTopology,
   writeDerivedResources,
   TOPOLOGY_ACTUAL_DIR,
+  InvalidEnvSlugError,
 } from './derived-topology.js';
 export type { LoadDerivedTopologyOutcome } from './derived-topology.js';
 

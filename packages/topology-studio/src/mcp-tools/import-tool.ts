@@ -1,7 +1,8 @@
 import { ADAPTERS } from '@workspec/topology-adapters';
 import type { AdapterName } from '@workspec/topology-adapters';
+import { MAX_SLUG_LENGTH, SLUG_PATTERN } from '@workspec/schema-core';
 import type { McpToolDef } from '@workspec/mcp-core';
-import { readObjectArg, readStringArg } from '@workspec/mcp-core';
+import { readObjectArg, readSlugArg, readStringArg } from '@workspec/mcp-core';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
 
 const ADAPTER_NAMES = Object.keys(ADAPTERS) as AdapterName[];
@@ -14,6 +15,8 @@ const INPUT_SCHEMA = {
       type: 'string',
       description:
         'Environment slug this import is for. Not consulted by the adapter itself (adapters are environment-agnostic) — carried for symmetry with the CLI `import` command, which writes the result under `.topology-actual/<env>/`.',
+      pattern: SLUG_PATTERN.source,
+      maxLength: MAX_SLUG_LENGTH,
     },
     input: {
       type: 'object',
@@ -44,7 +47,7 @@ export function buildImportTool(): McpToolDef {
     handler: async (args) => {
       try {
         const adapterName = readStringArg(args, 'adapter');
-        readStringArg(args, 'env'); // validated for presence/shape; not consulted by the adapter itself.
+        readSlugArg(args, 'env'); // validated for presence/shape; not consulted by the adapter itself.
         const input = readObjectArg(args, 'input');
 
         if (!ADAPTER_NAMES.includes(adapterName as AdapterName)) {

@@ -208,6 +208,15 @@ describe('resolve', () => {
     const result = await tool(repo, 'resolve').handler({ env: 'prod' });
     expect(result.isError).toBe(true);
   });
+
+  it('rejects a path-shaped env up front, as an isError, not a throw', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+
+    const result = await tool(repo, 'resolve').handler({ env: '../../etc' });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('not a valid slug');
+  });
 });
 
 describe('reconcile', () => {
@@ -253,6 +262,15 @@ describe('reconcile', () => {
     expect(body.summary.countsByClass.divergent).toBe(0);
     expect(body.drifts.every((d) => d.class === 'miswired')).toBe(true);
   });
+
+  it('rejects a path-shaped env up front, as an isError, not a throw', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+
+    const result = await tool(repo, 'reconcile').handler({ env: '../../etc' });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('not a valid slug');
+  });
 });
 
 describe('cost', () => {
@@ -274,6 +292,16 @@ describe('cost', () => {
     const result = await tool(repo, 'cost').handler({ env: 'prod' });
     expect(result.isError).toBe(true);
     expect(textOf(result)).toContain('catalog not found');
+  });
+
+  it('rejects a path-shaped env up front, as an isError, not a throw', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+
+    const result = await tool(repo, 'cost').handler({ env: '../../etc' });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('not a valid slug');
   });
 });
 
@@ -308,5 +336,12 @@ describe('import', () => {
     const result = await tool(repo, 'import').handler({ adapter: 'nope', env: 'prod', input: {} });
     expect(result.isError).toBe(true);
     expect(textOf(result)).toContain('unknown adapter');
+  });
+
+  it('rejects a path-shaped env up front, as an isError, not a throw', async () => {
+    const repo = new FsRepository(dir);
+    const result = await tool(repo, 'import').handler({ adapter: 'terraform', env: '../../etc', input: {} });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('not a valid slug');
   });
 });

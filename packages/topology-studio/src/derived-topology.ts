@@ -42,8 +42,51 @@ import { ArtifactValidationError, type FsRepository } from './fs-repository.js';
 /** Directory derived (`.topology-actual/`) resources are written under, sibling to `.workspec/`. */
 export const TOPOLOGY_ACTUAL_DIR = '.topology-actual';
 
-/** The directory one environment's derived resources live under, e.g. `.topology-actual/prod`. */
+/**
+ * Thrown by {@link derivedDirFor} when `envSlug` isn't a valid slug. Every
+ * caller of `derivedDirFor` (this module's own `writeDerivedResources`/
+ * `loadDerivedTopology`, the CLI, the MCP tools) is reached only after its
+ * own boundary has already shape-checked `env` — the CLI via
+ * `Slug.safeParse` (`cli.ts`'s `checkEnvSlug`), the MCP tools via
+ * `@workspec/mcp-core`'s `readSlugArg`, the HTTP server via `server.ts`'s
+ * `envFrom` — so this should never actually fire in practice. It exists as
+ * the SECOND line of defence at the one choke point every path funnels
+ * through before a `posix.join`, mirroring `read-ref-arg.ts`'s "boundaries
+ * reject first" discipline one level deeper: even a future caller that
+ * forgets to pre-validate can't turn an ill-shaped `env` (e.g. `../../etc`)
+ * into a path that walks outside `.topology-actual/`.
+ * `FsRepository.resolve()`'s containment check still backstops this
+ * regardless, same as it backstops `readRefArg`.
+ *
+ * The message names only the argument, never the offending value — the same
+ * discipline `InvalidRefError`/`InvalidSlugError` (`@workspec/mcp-core`)
+ * follow. Here that discipline is mostly stylistic consistency rather than a
+ * live leak risk: this error, if it ever did fire, would only ever reach
+ * `console.error`/stderr — an MCP tool's `mapErrorToResult` scrubs any
+ * *unclassified* thrown error's `.message` before it reaches a client (it
+ * isn't classified here, so it would hit that generic "internal error"
+ * fallback, not a bespoke `isError` result), and the CLI's `bin.ts` only
+ * writes an uncaught throw's message to its own invoker's stderr. Kept
+ * value-free anyway so the convention can't silently drift if this error's
+ * handling ever changes.
+ */
+export class InvalidEnvSlugError extends Error {
+  constructor() {
+    super('argument "envSlug" is not a valid slug');
+    this.name = 'InvalidEnvSlugError';
+  }
+}
+
+/**
+ * The directory one environment's derived resources live under, e.g.
+ * `.topology-actual/prod`. Throws {@link InvalidEnvSlugError} for an
+ * ill-shaped `envSlug` — see that error's doc comment for why this is a
+ * defense-in-depth check, not the primary one.
+ */
 export function derivedDirFor(envSlug: string): string {
+  if (!Slug.safeParse(envSlug).success) {
+    throw new InvalidEnvSlugError();
+  }
   return posix.join(TOPOLOGY_ACTUAL_DIR, envSlug);
 }
 

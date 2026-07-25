@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -134,6 +134,22 @@ describe('import', () => {
     expect(code).toBe(2);
     expect(err()).toContain('not valid JSON');
   });
+
+  it('exits 2 when --env is not a valid slug (path traversal shape), writing nothing', async () => {
+    const inputFile = join(dir, 'terraform-show.json');
+    await writeFile(inputFile, JSON.stringify(TERRAFORM_INPUT), 'utf8');
+
+    const { io, err } = captureIO();
+    const code = await run(
+      ['import', 'terraform', '--env', '../../etc', '--input', inputFile, '--dir', dir],
+      io,
+    );
+    expect(code).toBe(2);
+    expect(err()).toContain('--env must be a valid slug');
+
+    // Nothing written: `.topology-actual/` is never created for a rejected env.
+    await expect(readdir(join(dir, '.topology-actual'))).rejects.toBeTruthy();
+  });
 });
 
 describe('reconcile — the CI gate', () => {
@@ -245,6 +261,13 @@ describe('reconcile — the CI gate', () => {
     expect(code).toBe(2);
     expect(err()).toContain('--env is required');
   });
+
+  it('exits 2 when --env is not a valid slug (path traversal shape)', async () => {
+    const { io, err } = captureIO();
+    const code = await run(['reconcile', '--env', '../../etc', '--dir', dir], io);
+    expect(code).toBe(2);
+    expect(err()).toContain('--env must be a valid slug');
+  });
 });
 
 describe('cost', () => {
@@ -267,6 +290,13 @@ describe('cost', () => {
     const code = await run(['cost', '--env', 'prod', '--dir', dir], io);
     expect(code).toBe(1);
     expect(err()).toContain('catalog not found');
+  });
+
+  it('exits 2 when --env is not a valid slug (path traversal shape)', async () => {
+    const { io, err } = captureIO();
+    const code = await run(['cost', '--env', '../../etc', '--dir', dir], io);
+    expect(code).toBe(2);
+    expect(err()).toContain('--env must be a valid slug');
   });
 });
 
@@ -297,5 +327,12 @@ describe('render', () => {
     const code = await run(['render', '--env', 'prod', '--lens', 'bogus', '--dir', dir], io);
     expect(code).toBe(2);
     expect(err()).toContain('--lens must be');
+  });
+
+  it('exits 2 when --env is not a valid slug (path traversal shape)', async () => {
+    const { io, err } = captureIO();
+    const code = await run(['render', '--env', '../../etc', '--lens', 'network', '--dir', dir], io);
+    expect(code).toBe(2);
+    expect(err()).toContain('--env must be a valid slug');
   });
 });

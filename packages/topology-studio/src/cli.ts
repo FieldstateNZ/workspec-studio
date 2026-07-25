@@ -14,6 +14,7 @@ import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { ADAPTERS } from '@workspec/topology-adapters';
 import type { AdapterName } from '@workspec/topology-adapters';
+import { Slug } from '@workspec/schema-core';
 import { computeTopologyCost } from '@workspec/topology-cost';
 import { reconcile, summarizeDrift } from '@workspec/topology-recon';
 import type { Drift } from '@workspec/topology-recon';
@@ -157,6 +158,25 @@ function printModelDiagnostics(model: { diagnostics: readonly TopologyDiagnostic
   for (const diagnostic of model.diagnostics) io.err(formatDiagnostic(diagnostic));
 }
 
+/**
+ * Shape-validates an already-present `--env` value against
+ * `@workspec/schema-core`'s `Slug` — the same rule `derivedDirFor` requires
+ * (see `derived-topology.ts`'s `InvalidEnvSlugError`). Called after each
+ * command's own presence check, so a value like `../../etc` is rejected here
+ * at the CLI boundary rather than reaching `posix.join('.topology-actual',
+ * envSlug)`. On failure, writes `<command>`'s error-convention line and
+ * returns `2` (this file's convention for a bad argument, matching
+ * `parseArgs`'s own catch blocks); on success, returns `undefined` so the
+ * caller can continue.
+ */
+function checkEnvSlug(command: string, env: string, io: CliIO): number | undefined {
+  if (Slug.safeParse(env).success) return undefined;
+  io.err(
+    `${command}: --env must be a valid slug: lowercase alphanumeric segments separated by single hyphens, no leading/trailing hyphen\n`,
+  );
+  return 2;
+}
+
 // ── validate ─────────────────────────────────────────────────────────────
 
 async function runValidate(argv: string[], io: CliIO, deps: RunDeps | undefined): Promise<number> {
@@ -240,6 +260,8 @@ async function runImport(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     io.err('import: --input <file> is required\n');
     return 2;
   }
+  const envError = checkEnvSlug('import', values.env, io);
+  if (envError !== undefined) return envError;
 
   let raw: string;
   try {
@@ -311,6 +333,8 @@ async function runReconcile(argv: string[], io: CliIO, deps: RunDeps | undefined
     io.err('reconcile: --env is required\n');
     return 2;
   }
+  const envError = checkEnvSlug('reconcile', values.env, io);
+  if (envError !== undefined) return envError;
 
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
@@ -372,6 +396,8 @@ async function runCost(argv: string[], io: CliIO, deps: RunDeps | undefined): Pr
     io.err('cost: --env is required\n');
     return 2;
   }
+  const envError = checkEnvSlug('cost', values.env, io);
+  if (envError !== undefined) return envError;
   const format = values.format ?? 'table';
   if (format !== 'table' && format !== 'json') {
     io.err(`cost: invalid --format "${values.format}" (expected table|json)\n`);
@@ -453,6 +479,8 @@ async function runRender(argv: string[], io: CliIO, deps: RunDeps | undefined): 
     io.err('render: --env is required\n');
     return 2;
   }
+  const envError = checkEnvSlug('render', values.env, io);
+  if (envError !== undefined) return envError;
   if (values.lens !== 'network' && values.lens !== 'rg') {
     io.err('render: --lens must be "network" or "rg"\n');
     return 2;
