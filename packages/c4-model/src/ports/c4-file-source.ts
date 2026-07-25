@@ -30,6 +30,15 @@ export interface C4FileSource {
    * drag-to-pin `.layout/` write path later without a breaking change.
    */
   writeFile(path: string, content: string): Promise<void>;
-  /** True if `path` names an existing file. */
+  /**
+   * True if `path` names an existing file. A predicate — implementations
+   * must never reject for a well-formed `path` string, including one that
+   * would resolve outside a filesystem-backed source's served root (e.g.
+   * `FsSource`'s `../escape.md`, reachable via a schema-valid but
+   * shape-unrestricted `~/`-rooted link target): report `false` for those,
+   * the same as for any other missing path, rather than throwing. This is
+   * what lets `checkDanglingLinks` treat every `~/` link target uniformly
+   * as a best-effort diagnostic instead of a fatal load error.
+   */
   exists(path: string): Promise<boolean>;
 }

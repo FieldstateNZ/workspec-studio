@@ -7,7 +7,8 @@ Aspire's own built-in MCP server.
 
 Unlike `aspire-hosting-decisions`/`aspire-hosting-c4`, `workspec-mcp` has no `serve` subcommand of
 its own and no dashboard commands — its only job is to run the aggregate MCP server
-(`decisions_*`/`cost_*`/`c4_*`/`trace_*`, 34 tools total) and let Aspire's tooling proxy it.
+(`decisions_*`/`cost_*`/`c4_*`/`trace_*`/`topology_*`, 48 tools total) and let Aspire's tooling
+proxy it.
 
 ## Quickstart
 
@@ -29,10 +30,10 @@ apphost is running, `aspire mcp tools` lists them and `aspire mcp call` invokes 
 they were tools on Aspire's own dashboard MCP server.
 
 The directory passed to `AddWorkspecMcp` is shared by every provider the aggregate host assembles —
-each of decisions/cost/c4/trace reads and writes its own artifact kinds under that one tree (see
-`packages/mcp-host/src/cli.ts`). The tool list is **static**: a directory containing only decision
-records still exposes all 34 tools; the cost/c4/trace ones simply operate against an empty tree
-until matching artifacts appear underneath it.
+each of decisions/cost/c4/trace/topology reads and writes its own artifact kinds under that one tree
+(see `packages/mcp-host/src/cli.ts`). The tool list is **static**: a directory containing only
+decision records still exposes all 48 tools; the cost/c4/trace/topology ones simply operate against
+an empty tree until matching artifacts appear underneath it.
 
 ## `WithMcpServer` is experimental
 

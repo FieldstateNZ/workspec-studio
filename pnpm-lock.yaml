@@ -199,6 +199,8 @@ importers:
 
   examples/postgres-managed-vs-self-hosted: {}
 
+  examples/topology-web-app: {}
+
   packages/c4-layout:
     dependencies:
       '@workspec/c4-model':
