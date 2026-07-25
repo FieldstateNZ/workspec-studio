@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/catalog.schema.json
+# Placeholder catalog: the aspire-publishing-strategy decision is architectural
+# and carries no costed lines; the Decision kind requires a catalog ref, so this
+# satisfies the schema honestly rather than dangling. Zero-priced single entry.
+apiVersion: workspec.io/v1alpha1
+kind: Catalog
+metadata:
+  slug: aspire-publishing
+spec:
+  name: 'Aspire publishing strategy — placeholder catalog (uncosted decision)'
+  currency: NZD
+  asOf: '2026-07-26'
+  pricingModes:
+    - id: payg
+      label: 'PAYG'
+      short: 'PAYG'
+      mult: 1.0
+      committed: false
+      note: 'Placeholder mode; no costed lines reference it.'
+  schedules:
+    - id: always
+      label: 'Always on'
+      pct: 1.0
+  skus:
+    - id: none
+      label: 'No costed items'
+      family: 'Placeholder'
+      price: 0
