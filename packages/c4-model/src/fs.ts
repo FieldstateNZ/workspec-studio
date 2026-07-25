@@ -5,4 +5,5 @@
  * `import { createFsSource } from '@workspec/c4-model/fs'`.
  */
 export { createFsSource } from './sources/fs-source.js';
+export { RefEscapesRootError } from './sources/path-containment.js';
 export type { C4FileSource } from './ports/c4-file-source.js';

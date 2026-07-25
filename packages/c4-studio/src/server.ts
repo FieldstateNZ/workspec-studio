@@ -26,7 +26,7 @@ import express from 'express';
 import type { Express, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { loadC4Model } from '@workspec/c4-model';
-import { createFsSource } from '@workspec/c4-model/fs';
+import { createFsSource, RefEscapesRootError } from '@workspec/c4-model/fs';
 import { isLayoutFile, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
 import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
 import type { McpToolProvider } from '@workspec/mcp-core';
@@ -78,14 +78,47 @@ function pathParam(req: Request, name: string): string | undefined {
 }
 
 /**
+ * Maps a rejected path (one that escaped the served root, per
+ * `createFsSource`'s internal `resolveRef` — see `RefEscapesRootError`'s doc
+ * comment) to a 400, mirroring `@workspec/decision-studio`'s
+ * `sendIfRefEscapes`. Returns whether it handled the error, so callers can
+ * fall through to their own mapping otherwise.
+ *
+ * Coverage differs by route. The four file-proxy routes (`/api/files`,
+ * `/api/file` GET/PUT, `/api/file-exists`) are pre-gated by `pathParam`'s
+ * `isWorkspecPath` check, so an escaping path is normally rejected with a
+ * 400 before `source` ever sees it — this mapping is a backstop there, not
+ * the primary defence. `/api/model` is NOT pre-gated the same way: it hands
+ * `source` straight to `loadC4Model`, which walks the whole `.workspec/`
+ * tree and, per element, calls `source.exists()` on content-derived `~/`
+ * link targets (`checkDanglingLinks`) that are schema-valid but not
+ * shape-restricted (e.g. `~/../escape.md`). That path is NOT a throw,
+ * though: `FsSource.exists` (see its own doc comment) reports an escaping
+ * path as `false` rather than throwing `RefEscapesRootError`, precisely so
+ * an authored link a client doesn't control can't 400 the whole model load.
+ * So in today's code, nothing reachable from `/api/model` actually throws
+ * `RefEscapesRootError` — this classification exists as a stable mapping
+ * for that error type wherever it's thrown, present and future, not because
+ * `/api/model` currently produces one.
+ */
+function sendIfRefEscapes(res: Response, error: unknown): boolean {
+  if (error instanceof RefEscapesRootError) {
+    res.status(400).json({ error: 'path escapes served root' });
+    return true;
+  }
+  return false;
+}
+
+/**
  * Logs the real error server-side and sends a generic, non-leaky 500 body.
  * This is the fallback for every error that isn't a typed case (here, the
- * 404 for not-found): an unclassified filesystem error's `.message` can
- * carry the served root's absolute path (e.g. `EISDIR` when a path of
- * `.workspec` resolves to that directory itself), so it must never reach the
- * client — only the server log.
+ * 404 for not-found and the 400 for an escaping path): an unclassified
+ * filesystem error's `.message` can carry the served root's absolute path
+ * (e.g. `EISDIR` when a path of `.workspec` resolves to that directory
+ * itself), so it must never reach the client — only the server log.
  */
 function sendInternalError(res: Response, error: unknown, ref?: string): void {
+  if (sendIfRefEscapes(res, error)) return;
   // `ref` is client-supplied, so it must not flow into console.error's
   // format-string argument (tainted format string / log injection); pass it
   // as a separate argument instead.
@@ -98,6 +131,7 @@ function sendInternalError(res: Response, error: unknown, ref?: string): void {
 }
 
 function sendIoError(res: Response, error: unknown, ref?: string): void {
+  if (sendIfRefEscapes(res, error)) return;
   const code = (error as NodeJS.ErrnoException).code;
   if (code === 'ENOENT') {
     res.status(404).json({ error: 'not found' });

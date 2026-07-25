@@ -22,11 +22,15 @@ import { isSafeRelativeRef } from '@workspec/mcp-core';
  *
  * This is still only a first-line check, same caveat as
  * `isSafeRelativeRef`'s own doc comment: it does not re-verify containment
- * after resolution. `@workspec/c4-model`'s `createFsSource` does no
- * containment check of its own (it trusts the path it's given), so this
- * pre-check IS the full defence for both `server.ts` and the `c4` MCP
- * tools — see their own doc comments for why that's an accepted trade-off
- * here (a single-user localhost host, not a multi-tenant service).
+ * after resolution. `@workspec/c4-model`'s `createFsSource` backstops it —
+ * its internal `resolveRef` runs every path through `resolveWithinRoot`
+ * (`@workspec/c4-model/fs`'s re-exported `RefEscapesRootError`) after
+ * resolution, so a ref that somehow slipped past this pre-check (or was
+ * confined-but-still-escaping in a way this shape check can't see) is still
+ * rejected. Two layers, matching the pattern every other `*-studio` package
+ * uses (a boundary shape-check here, a resolved-path containment check in
+ * the file source) — see `@workspec/c4-model`'s `path-containment.ts` for
+ * the containment half.
  */
 export function isWorkspecPath(raw: string): boolean {
   if (!isSafeRelativeRef(raw)) return false;
