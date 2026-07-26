@@ -87,6 +87,134 @@ describe('validate', () => {
     const diagnostics = JSON.parse(out()) as { severity: string }[];
     expect(diagnostics.length).toBeGreaterThan(0);
   });
+
+  it('exits 1 when a resource overrides an environment the topology does not declare (S1)', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+    // fixtureTopology() (seeded above) only declares `environments: ['prod']`.
+    await repo.writeResource(
+      '.workspec/resources/app-service.yaml',
+      fixtureAppServiceResource({ overrides: { staging: { cost: { qty: 5 } } } }),
+    );
+
+    const { io, out, err } = captureIO();
+    const code = await run(['validate', '--dir', dir, '--json'], io);
+    expect(code).toBe(1);
+    expect(err()).toContain('override targets environment "staging"');
+    const diagnostics = JSON.parse(out()) as { code: string; refSlug?: string }[];
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'dangling-override-environment-ref', refSlug: 'staging' }),
+    );
+  });
+
+  it('exits 1 when a resource overrides an environment it is not itself present in (S1)', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+    await repo.writeTopology(
+      '.workspec/topologies/web-app.yaml',
+      fixtureTopology({ environments: ['dev', 'prod'], defaultEnvironment: 'prod' }),
+    );
+    await repo.writeEnvironment('.workspec/environments/dev.yaml', fixtureEnvironment({}));
+    await repo.writeResource(
+      '.workspec/resources/app-service.yaml',
+      fixtureAppServiceResource({
+        environments: ['prod'],
+        overrides: { dev: { cost: { qty: 5 } } },
+      }),
+    );
+
+    const { io, out, err } = captureIO();
+    const code = await run(['validate', '--dir', dir, '--json'], io);
+    expect(code).toBe(1);
+    const diagnostics = JSON.parse(out()) as { code: string; refSlug?: string }[];
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'override-environment-not-present', refSlug: 'dev' }),
+    );
+    // Message steers toward removing the override, not adding "dev" to presence.
+    expect(err()).toContain('Remove this override key');
+  });
+
+  it('BLOCKING 1+2 REVERT-CHECK: exits 1 and names the field for a pre-S1 tree whose Environment file still has a legacy `spec.overrides` block', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+    // Simulate a tree written before S1 shipped: raw YAML text on disk with
+    // the legacy field, NOT written through the (now validating) repository
+    // — that's the whole point, this is what an existing checkout looks
+    // like the day this migration lands.
+    await writeFile(
+      join(dir, '.workspec/environments/prod.yaml'),
+      [
+        'apiVersion: workspec.io/v1alpha1',
+        'kind: Environment',
+        'metadata: {}',
+        'spec:',
+        "  naming: { resourceGroupSuffix: '-prod' }",
+        '  overrides:',
+        '    app-service:',
+        '      cost:',
+        '        qty: 2',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const { io, out, err } = captureIO();
+    const code = await run(['validate', '--dir', dir, '--json'], io);
+    expect(code).toBe(1);
+    expect(err().toLowerCase()).toContain('legacy');
+    expect(err()).toContain('Resource.spec.overrides');
+    const diagnostics = JSON.parse(out()) as { code: string; file: string }[];
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: 'legacy-environment-overrides',
+        file: '.workspec/environments/prod.yaml',
+      }),
+    );
+    // The environment file failing to parse ALSO trips the (pre-existing,
+    // unrelated-to-S1) dangling-environment-ref check — same as any other
+    // malformed environment file would. Not a new cascade this migration
+    // introduces; just documenting it so this test doesn't assert an exact
+    // diagnostics array and break the next time something else about this
+    // fixture changes.
+    expect(diagnostics.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('LEAD-ACCEPTED ADDITION REVERT-CHECK: exits 1 when an override resourceGroup value is dangling', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+    await repo.writeResource(
+      '.workspec/resources/app-service.yaml',
+      fixtureAppServiceResource({ overrides: { prod: { resourceGroup: 'rg-ghost' } } }),
+    );
+
+    const { io, out, err } = captureIO();
+    const code = await run(['validate', '--dir', dir, '--json'], io);
+    expect(code).toBe(1);
+    expect(err()).toContain('rg-ghost');
+    const diagnostics = JSON.parse(out()) as { code: string; refSlug?: string }[];
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'dangling-ref', refSlug: 'rg-ghost' }),
+    );
+  });
+
+  it('LEAD-ACCEPTED ADDITION: happy path — an override resourceGroup value that resolves to a real resource-group stays green', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    await seedFixtureCatalog(dir);
+    await repo.writeResource(
+      '.workspec/resources/sql.yaml',
+      fixtureSqlResource({ overrides: { prod: { resourceGroup: 'rg-app' } } }),
+    );
+
+    const { io, err } = captureIO();
+    const code = await run(['validate', '--dir', dir], io);
+    expect(code).toBe(0);
+    expect(err()).toContain('tree OK');
+  });
 });
 
 describe('import', () => {

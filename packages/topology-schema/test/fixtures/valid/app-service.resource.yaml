@@ -23,3 +23,16 @@ spec:
         share: 1
   source:
     kind: authored
+  overrides:
+    # instances: 1 in dev/test (base qty is 2, so both still need an
+    # explicit override); prod re-tiers to p2v3 x3.
+    dev:
+      cost:
+        qty: 1
+    test:
+      cost:
+        qty: 1
+    prod:
+      cost:
+        sku: p2v3
+        qty: 3

@@ -33,11 +33,15 @@ function toEnvironmentMap(model: TopologyModel): ReadonlyMap<string, Environment
  * - The explicit `client->app-service` rewire (`environments: [dev, test]`)
  *   appears only in dev/test, never in prod (step 2, explicit scoping,
  *   independent of auto-prune).
- * - `app-service`/`cache` overrides deep-merge per environment (step 3):
- *   `app-service.cost` patches `sku`/`qty` in prod, `qty` alone in dev/test,
- *   preserving `mode`/`schedule`/`attribution` from the base resource every
- *   time; `cache.config` gains a `sku` key that doesn't exist on the base
- *   resource at all.
+ * - `app-service`/`cache` carry their own `spec.overrides` (S1) merged in per
+ *   environment (step 3): `app-service.cost` patches `sku`/`qty` in prod,
+ *   `qty` alone in dev/test, preserving `mode`/`schedule`/`attribution` from
+ *   the base resource every time; `cache.config` gains a `sku` key that
+ *   doesn't exist on the base resource at all, AND (the shallow-merge proof)
+ *   dev/test's override replaces `config.sizing` WHOLESALE with a smaller
+ *   object — `capacityGB`/`replicas` from the base `sizing` do NOT survive,
+ *   which a deep/recursive merge would have kept; prod names no `sizing`
+ *   override at all and inherits the base object completely unchanged.
  * - `rg-app` (the only `resource-group` in this fixture) gets its naming
  *   suffix appended in every environment (step 4).
  */
@@ -98,7 +102,11 @@ describe('resolve(): web-app fixture, golden across all three environments', () 
     expect(appService?.config).toEqual({ tier: 'P1v3' });
 
     const cache = resolved.resources.find((r) => r.slug === 'cache');
-    expect(cache?.config).toEqual({ sku: 'Standard' });
+    // prod names no `sizing` override — the base object survives UNCHANGED.
+    expect(cache?.config).toEqual({
+      sku: 'Standard',
+      sizing: { tier: 'Standard', capacityGB: 6, replicas: 2 },
+    });
     expect(cache?.cost).toEqual({ sku: 'standard-c1', mode: 'payg', schedule: 'always', qty: 1 });
 
     expect(resolved.naming).toEqual({ resourceGroupSuffix: '-prod' });
@@ -123,7 +131,11 @@ describe('resolve(): web-app fixture, golden across all three environments', () 
     expect(resolved.connections).not.toContainEqual(
       expect.objectContaining({ from: 'front-door', to: 'app-service' }),
     );
-    expect(resolved.connections).toContainEqual({ from: 'client', to: 'app-service', class: 'primary' });
+    expect(resolved.connections).toContainEqual({
+      from: 'client',
+      to: 'app-service',
+      class: 'primary',
+    });
     expect(resolved.connections).toHaveLength(7);
 
     const appService = resolved.resources.find((r) => r.slug === 'app-service');
@@ -136,7 +148,11 @@ describe('resolve(): web-app fixture, golden across all three environments', () 
     });
 
     const cache = resolved.resources.find((r) => r.slug === 'cache');
-    expect(cache?.config).toEqual({ sku: 'Basic' });
+    // SHALLOW-MERGE PROOF: dev's override names `sizing: { tier: Basic }` —
+    // the merged result is EXACTLY that object, not `{ tier: Basic,
+    // capacityGB: 6, replicas: 2 }` (which is what a deep/recursive merge
+    // preserving the base's other `sizing` keys would have produced).
+    expect(cache?.config).toEqual({ sku: 'Basic', sizing: { tier: 'Basic' } });
 
     expect(resolved.naming).toEqual({ resourceGroupSuffix: '-dev' });
     expect(resolved.resourceGroupNames.get('rg-app')).toBe('rg-app-dev');
@@ -153,25 +169,16 @@ describe('resolve(): web-app fixture, golden across all three environments', () 
 
     expect(resolved.resources).toHaveLength(10);
     expect(resolved.connections).toHaveLength(7);
-    expect(resolved.connections).toContainEqual({ from: 'client', to: 'app-service', class: 'primary' });
+    expect(resolved.connections).toContainEqual({
+      from: 'client',
+      to: 'app-service',
+      class: 'primary',
+    });
 
     const appService = resolved.resources.find((r) => r.slug === 'app-service');
     expect(appService?.cost?.qty).toBe(1);
 
     expect(resolved.naming).toEqual({ resourceGroupSuffix: '-test' });
     expect(resolved.resourceGroupNames.get('rg-app')).toBe('rg-app-test');
-  });
-
-  it('a resource with an override for a resource pruned out of this environment is a no-op, never an error', async () => {
-    // front-door has no override entry in any environment fixture, but this
-    // asserts the *general* rule holds by re-resolving prod (where every
-    // override target survives) against dev (where front-door doesn't) and
-    // confirming dev resolves without throwing and without a front-door
-    // entry at all — the override-application step never has to "see" a
-    // pruned resource to skip it correctly.
-    const model = await loadWebAppModel();
-    expect(() =>
-      resolve(requireTopology(model).topology, toResourceMap(model), toEnvironmentMap(model), 'dev'),
-    ).not.toThrow();
   });
 });

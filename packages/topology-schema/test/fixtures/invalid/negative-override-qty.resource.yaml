@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
+apiVersion: workspec.io/v1alpha1
+kind: Resource
+metadata:
+  slug: negative-override-qty
+spec:
+  name: R
+  kind: compute
+  type: T
+  provider: azure
+  overrides:
+    prod:
+      cost:
+        qty: -1

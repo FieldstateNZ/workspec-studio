@@ -6,11 +6,3 @@ metadata:
 spec:
   naming:
     resourceGroupSuffix: '-prod'
-  overrides:
-    # app-service instances: 2 in prod (dev/test run 1). cache needs no
-    # override here — the resource's own base spec (Balanced B2,
-    # zone-redundant) already IS the prod value; dev/test override it down
-    # instead (see dev.yaml/test.yaml).
-    app-service:
-      cost:
-        qty: 2

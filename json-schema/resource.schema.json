@@ -149,6 +149,94 @@
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
           "type": "string"
         },
+        "overrides": {
+          "additionalProperties": {
+            "description": "A per-environment override patch for one resource: shallow-merged `config`, field-merged `cost`, and full-replace `resourceGroup`/`network`. See the field-level docs for exact per-field merge semantics — `@workspec/topology-model`'s `resolve()` is the only code that applies this patch. MERGE EDGES worth knowing: (1) `config`, being an open bag, CAN be nulled-out per key (the key stays, with a `null` value) but never REMOVED per key — there is no override syntax for \"this environment does not have this config key at all\". (2) `resourceGroup`/`network` are `Slug`-typed, never nullable, so an override can only REPLACE a placement with a different one — there is no way to override a resource OUT of its resourceGroup/network for one specific environment while the base resource has one; the base ref, if present, always applies unless a DIFFERENT ref replaces it.",
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "A SHALLOW, top-level patch over the resource's own `spec.config` bag for this environment: a key named here replaces the base value at that key wholesale (including when both are objects — this is NOT a deep/recursive merge); a key not named here inherits the base resource's value unchanged. Setting a key's value to `null` SETS the merged result to `null` — it does not remove the key, since a merge patch has no way to distinguish \"not mentioned\" from \"explicitly cleared\".",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "cost": {
+                "description": "A field-by-field patch over the resource's own `spec.cost` for this environment (sku/mode/schedule/qty/attribution) — see `ResourceCostOverride`.",
+                "properties": {
+                  "attribution": {
+                    "description": "Override the cost attribution split.",
+                    "items": {
+                      "description": "Attributes a share of a resource's cost to a c4 container.",
+                      "properties": {
+                        "container": {
+                          "description": "The c4 container slug this share is attributed to.",
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "share": {
+                          "description": "Fraction of the resource cost attributed to this container.",
+                          "maximum": 1,
+                          "minimum": 0,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "container",
+                        "share"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "mode": {
+                    "description": "Override the bound catalog pricing mode id.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "qty": {
+                    "description": "Override the unit count.",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "schedule": {
+                    "description": "Override the bound catalog schedule id.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "sku": {
+                    "description": "Override the bound catalog SKU id.",
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "network": {
+                "description": "Replaces the resource's own `spec.network` ref for this environment (e.g. a shared dev/test subnet vs. an isolated prod one).",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              "resourceGroup": {
+                "description": "Replaces the resource's own `spec.resourceGroup` ref for this environment (e.g. a pooled dev/test resource group vs. an isolated prod one).",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "description": "Per-environment override patches (S1), keyed by environment id. `@workspec/topology-model`'s `resolve()` merges the entry for the target environment onto this resource's own `config`/`cost`/`resourceGroup`/`network` — see `ResourceOverride` for the exact per-field merge rule. Two integrity rules apply to every key, BOTH enforced by `@workspec/topology-model` at verify-time, not here: it must be one of the owning Topology's declared `spec.environments` (a standalone Resource file has no visibility into which environments exist, so this can never be schema-level); and this resource must actually be PRESENT in it, per this same file's own (explicit) `spec.environments` — which WOULD be self-contained enough to check here, but deliberately is not (see `ResourceArtifact`'s doc comment for why).",
+          "propertyNames": {
+            "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "type": "object"
+        },
         "provider": {
           "description": "Cloud provider, e.g. \"azure\", \"aws\", \"gcp\".",
           "minLength": 1,

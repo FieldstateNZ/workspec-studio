@@ -51,6 +51,13 @@ a connection-only trick — so in `dev`/`test` it and both of its connections
 (scoped `environments: [dev, test]`) takes over as the public entry point
 instead.
 
+`app-service` and `cache` also carry per-environment `spec.overrides` (S1):
+`app-service` runs at `qty: 1` in dev/test and `qty: 2` in prod; `cache`
+authors its base spec as prod's Balanced B2 (zone-redundant) tier and
+overrides DOWN to a cheaper Basic C1 (single-zone) tier in dev/test. Both
+land as real cost differences below — compare `cost --env dev` against
+`cost --env prod`.
+
 ## The prod drift scenario
 
 `topology-actual-demo/prod/` is a hand-built "actual deployed state"

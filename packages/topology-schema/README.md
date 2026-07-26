@@ -18,8 +18,8 @@ needed when an author wants it visible without opening a directory listing.
 | Artifact    | Kind          | Type directory (under `.workspec/`) | What it holds                                     |
 | ----------- | ------------- | ------------------------------------ | -------------------------------------------------- |
 | Topology    | `Topology`    | `topologies`                         | Declared connection graph over resources/envs      |
-| Resource    | `Resource`    | `resources`                          | A single infrastructure node (or grouping node)    |
-| Environment | `Environment` | `environments`                       | Naming conventions + per-resource override patches |
+| Resource    | `Resource`    | `resources`                          | A single infrastructure node (or grouping node), plus its own per-environment override patches |
+| Environment | `Environment` | `environments`                       | Naming conventions for one deployment environment  |
 
 `TYPE_DIRECTORIES`/`typeDirectoryFor(kind)` give the `.workspec/<dir>` path for each kind.
 
@@ -44,6 +44,55 @@ lenses (network, resource-group), a pinned node carries a position **per lens** 
 `vnet`/`subnet`/`resource-group` are **ordinary resources** of these kinds — there is no separate
 "is this a container" flag. Whether a kind behaves as a grouping/container node or a leaf node is a
 presentation-layer decision made from `kind` alone, downstream of this schema.
+
+## Per-environment resource overrides (S1)
+
+A `Resource` may carry `spec.overrides`, keyed by environment id, patching that resource's own
+`config`/`cost`/`resourceGroup`/`network` for one environment — e.g. a cheaper SKU/tier in `dev`,
+a pricier one in `prod`. Identity fields (`name`/`kind`/`type`/`provider`) and the presence list
+(`environments`) can never be overridden; `realizes`/`links`/`source` aren't deployment-shaping,
+so they have no override counterpart either.
+
+```yaml
+spec:
+  config:
+    tier: P1v3
+  cost: { sku: p1v3, mode: payg, schedule: always, qty: 1 }
+  overrides:
+    prod:
+      # `tier` REPLACES the base value; `zoneRedundant` is new — it isn't on
+      # the base `config` at all. dev/test name no override here, so they
+      # stay at the base `config` (`{ tier: P1v3 }`, no `zoneRedundant` key).
+      config: { tier: P2v3, zoneRedundant: true }
+      # `sku`/`qty` change; `mode`/`schedule` are inherited from the base
+      # `cost` binding unchanged — this is a per-FIELD merge, not a replace.
+      cost: { sku: p2v3, qty: 3 }
+```
+
+Merge semantics (applied by `@workspec/topology-model`'s `resolve()`, never by this package):
+`config` is a **shallow, top-level** replace (a named key wins wholesale, even if both sides are
+objects — this is NOT a deep merge, and a `null` override value SETS the key to `null` rather than
+removing it — there is no way to make a key "disappear" from the merged result); `cost` merges
+field-by-field (`sku`/`mode`/`schedule`/`qty`/`attribution`); `resourceGroup`/`network` fully
+replace the base ref when present (both are `Slug`-typed, never nullable, so an override can only
+swap one placement for another — never clear a resource OUT of its resourceGroup/network for one
+environment while the base resource has one).
+
+Two integrity rules apply to every override key, BOTH enforced by `@workspec/topology-model`'s
+`checkOverrideEnvironmentRefs` at verify-time — schema validation here only checks field SHAPE, not
+whether a key makes sense:
+
+- The key must name one of the owning Topology's declared `spec.environments` — necessarily
+  verify-time, since a standalone Resource file has no visibility into which environments exist.
+- This resource must actually be PRESENT in that environment, per its own (explicit)
+  `spec.environments`. This one COULD be a schema-level check (it only needs this one file), but
+  isn't: a schema failure invalidates the whole artifact, which cascades into unrelated spurious
+  diagnostics everywhere else the resource is referenced — S1 shipped it as a `superRefine` and
+  moved it here after adversarial review found exactly that.
+
+This mechanism lived on `Environment.spec.overrides[resourceSlug]` in v0; S1 moved it onto the
+Resource so a resource's whole cross-env story lives in one file (see `resource.ts`'s
+`ResourceOverride` doc comment for the full rationale).
 
 ## Usage
 

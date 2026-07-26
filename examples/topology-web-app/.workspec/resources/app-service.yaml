@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
 #
 # DRIFT TARGET (divergent): authored P1v3, qty 1 in dev/test and qty 2 in
-# prod (see .workspec/environments/prod.yaml's `overrides.app-service.cost.qty`).
+# prod (see `spec.overrides.prod.cost.qty` below — S1 moved per-env resource
+# overrides from the Environment artifact onto the Resource itself).
 # The prod actual/derived tree (topology-actual-demo/prod/app-service.yaml)
 # deliberately reports tier P0v3 x1 — someone downgraded the plan in the
 # portal — so `reconcile --env prod` reports this as `divergent`.
@@ -29,3 +30,16 @@ spec:
         share: 1
   source:
     kind: authored
+  overrides:
+    # instances: 1 in dev/test (base cost.qty is already 1, so dev needs no
+    # override at all — kept explicit here for symmetry with test/prod and to
+    # make the per-env instance count easy to spot), 2 in prod.
+    dev:
+      cost:
+        qty: 1
+    test:
+      cost:
+        qty: 1
+    prod:
+      cost:
+        qty: 2

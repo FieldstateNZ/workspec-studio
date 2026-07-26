@@ -161,10 +161,41 @@ describe('list_environments / read_environment / write_environment', () => {
     const repo = new FsRepository(dir);
     const result = await tool(repo, 'write_environment').handler({
       ref: '.workspec/environments/bad.yaml',
-      environment: { apiVersion: 'workspec.io/v1alpha1', kind: 'Environment', metadata: {}, spec: { overrides: 'nope' } },
+      environment: {
+        apiVersion: 'workspec.io/v1alpha1',
+        kind: 'Environment',
+        metadata: {},
+        // `resourceGroupSuffix` requires min length 1 — empty string is invalid.
+        spec: { naming: { resourceGroupSuffix: '' } },
+      },
     });
     expect(result.isError).toBe(true);
     await expect(readFile(join(dir, '.workspec/environments/bad.yaml'), 'utf8')).rejects.toBeTruthy();
+  });
+
+  it('BLOCKING 1+2 REVERT-CHECK: write_environment refuses a legacy `spec.overrides` block instead of silently stripping it on write', async () => {
+    // This is the exact bug adversarial review found: `EnvironmentSpec`'s
+    // `z.object` strips unknown keys by default, so WITHOUT the legacy-field
+    // guard this call would have SUCCEEDED, silently writing the file with
+    // `overrides` deleted — permanently losing the author's per-env
+    // override data on the very first save through this tool. It must
+    // refuse instead, and name the field.
+    const repo = new FsRepository(dir);
+    const result = await tool(repo, 'write_environment').handler({
+      ref: '.workspec/environments/prod.yaml',
+      environment: {
+        apiVersion: 'workspec.io/v1alpha1',
+        kind: 'Environment',
+        metadata: {},
+        spec: {
+          naming: { resourceGroupSuffix: '-prod' },
+          overrides: { 'app-service': { cost: { qty: 2 } } },
+        },
+      },
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('Resource.spec.overrides');
+    await expect(readFile(join(dir, '.workspec/environments/prod.yaml'), 'utf8')).rejects.toBeTruthy();
   });
 });
 

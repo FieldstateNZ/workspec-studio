@@ -1,7 +1,7 @@
 {
   "$id": "https://schema.workspec.io/v1alpha1/environment.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "A WorkSpec environment artifact: naming conventions and per-resource overrides.",
+  "description": "A WorkSpec environment artifact: naming conventions for one deployment environment.",
   "properties": {
     "apiVersion": {
       "const": "workspec.io/v1alpha1",
@@ -26,7 +26,7 @@
       "type": "object"
     },
     "spec": {
-      "description": "The environment body: naming conventions and per-resource override patches.",
+      "description": "The environment body: naming conventions.",
       "properties": {
         "naming": {
           "description": "Naming conventions for this environment.",
@@ -38,82 +38,6 @@
             }
           },
           "type": "object"
-        },
-        "overrides": {
-          "additionalProperties": {
-            "description": "A deep-merge patch over one resource, scoped to this environment.",
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "Patch merged over the resource's own `spec.config` bag.",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              "cost": {
-                "description": "Patch merged over the resource's own `spec.cost` fields.",
-                "properties": {
-                  "attribution": {
-                    "description": "Override the cost attribution split.",
-                    "items": {
-                      "description": "Attributes a share of a resource's cost to a c4 container.",
-                      "properties": {
-                        "container": {
-                          "description": "The c4 container slug this share is attributed to.",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "share": {
-                          "description": "Fraction of the resource cost attributed to this container.",
-                          "maximum": 1,
-                          "minimum": 0,
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "container",
-                        "share"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "mode": {
-                    "description": "Override the bound catalog pricing mode id.",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "qty": {
-                    "description": "Override the unit count.",
-                    "maximum": 9007199254740991,
-                    "minimum": 0,
-                    "type": "integer"
-                  },
-                  "schedule": {
-                    "description": "Override the bound catalog schedule id.",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "sku": {
-                    "description": "Override the bound catalog SKU id.",
-                    "minLength": 1,
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "description": "Per-resource deep-merge patches, keyed by resource slug. A key for a resource not present in this environment is schema-valid; resolving it is a `verify`-time concern.",
-          "propertyNames": {
-            "description": "A WorkSpec slug: lowercase alphanumeric segments separated by single hyphens, at most 64 characters (the shape `slugify()` produces).",
-            "maxLength": 64,
-            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "type": "string"
-          },
-          "type": "object"
         }
       },
       "type": "object"
@@ -122,8 +46,7 @@
   "required": [
     "apiVersion",
     "kind",
-    "metadata",
-    "spec"
+    "metadata"
   ],
   "title": "WorkSpec Environment (v1alpha1)",
   "type": "object"

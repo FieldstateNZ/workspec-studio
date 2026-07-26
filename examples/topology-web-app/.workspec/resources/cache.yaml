@@ -2,10 +2,11 @@
 #
 # DRIFT TARGET (divergent): authored Balanced B2, zone-redundant in prod (the
 # base spec below — dev/test override down to Basic C1, single-zone, via
-# .workspec/environments/{dev,test}.yaml). The prod actual/derived tree
-# (topology-actual-demo/prod/cache.yaml) reports Basic C1, single-zone — no
-# failover, and not what was decided — so `reconcile --env prod` reports
-# this as `divergent` too.
+# `spec.overrides.{dev,test}` below — S1 moved per-env resource overrides
+# from the Environment artifact onto the Resource itself). The prod
+# actual/derived tree (topology-actual-demo/prod/cache.yaml) reports Basic
+# C1, single-zone — no failover, and not what was decided — so
+# `reconcile --env prod` reports this as `divergent` too.
 apiVersion: workspec.io/v1alpha1
 kind: Resource
 metadata:
@@ -28,3 +29,20 @@ spec:
     qty: 1
   source:
     kind: authored
+  overrides:
+    # prod needs no override — the base spec above already IS the prod
+    # value; dev/test override it down to a cheaper, non-redundant tier.
+    dev:
+      config:
+        sku: Basic
+        tier: C1
+        zoneRedundant: false
+      cost:
+        sku: basic-c1
+    test:
+      config:
+        sku: Basic
+        tier: C1
+        zoneRedundant: false
+      cost:
+        sku: basic-c1
