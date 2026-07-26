@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/resource.schema.json
 #
-# DRIFT: divergent. Authored is P1v3 x2 (`.workspec/resources/app-service.yaml`
-# + `.workspec/environments/prod.yaml`'s `cost.qty` override); actual is
+# DRIFT: divergent. Authored is P1v3 x2 (`.workspec/resources/app-service.yaml`'s
+# own `spec.overrides.prod.cost.qty` — S1 moved per-env resource overrides off
+# of the Environment artifact and onto the Resource itself); actual is
 # P0v3 x1 — someone downgraded the plan in the portal. `reconcile --env prod`
 # reports `config.tier` and `cost.sku`/`cost.qty` as the differing keys.
 apiVersion: workspec.io/v1alpha1

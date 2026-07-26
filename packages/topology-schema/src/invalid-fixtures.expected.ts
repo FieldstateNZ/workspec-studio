@@ -11,6 +11,8 @@ export interface InvalidCase {
   file: string;
   /** Which parser to run. */
   kind: 'topology' | 'resource' | 'environment';
+  /** Expected `code` on the matched issue, when the case is about a distinguished custom issue rather than an ordinary schema-shape failure. */
+  code?: string;
   /** What is wrong (documentation only). */
   reason: string;
   /** Expected dotted path of the (first) reported issue. */
@@ -70,10 +72,19 @@ export const invalidCases: readonly InvalidCase[] = [
     line: 18,
   },
   {
-    file: 'negative-override-qty.environment.yaml',
+    file: 'negative-override-qty.resource.yaml',
+    kind: 'resource',
+    reason: 'a resource override cost qty is negative (S1: overrides moved to Resource)',
+    path: 'spec.overrides.prod.cost.qty',
+    line: 14,
+  },
+  {
+    file: 'legacy-environment-overrides.environment.yaml',
     kind: 'environment',
-    reason: 'an environment override cost qty is negative',
-    path: 'spec.overrides.app-service.cost.qty',
+    reason:
+      'a legacy v0 spec.overrides block on Environment, which S1 removed in favour of Resource.spec.overrides — must be rejected, not silently stripped',
+    path: 'spec.overrides',
     line: 10,
+    code: 'legacy-environment-overrides',
   },
 ];

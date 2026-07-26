@@ -173,6 +173,27 @@ describe('host server — write round-trip through the port', () => {
     const after = await readFile(join(dir, ref), 'utf8');
     expect(after).toBe(before);
   });
+
+  it('BLOCKING 1+2 REVERT-CHECK: PUT /api/environment 422s a legacy `spec.overrides` block instead of writing it with the field silently stripped', async () => {
+    const app = createServer({ dir });
+    const ref = '.workspec/environments/prod.yaml';
+    const before = await readFile(join(dir, ref), 'utf8');
+
+    const res = await request(app)
+      .put(`/api/environment?ref=${encodeURIComponent(ref)}`)
+      .send({
+        ...fixtureEnvironment(),
+        spec: { ...fixtureEnvironment().spec, overrides: { 'app-service': { cost: { qty: 2 } } } },
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('invalid environment');
+    expect(res.body.issues.some((i: { message: string }) => i.message.includes('Resource.spec.overrides'))).toBe(
+      true,
+    );
+    const after = await readFile(join(dir, ref), 'utf8');
+    expect(after).toBe(before);
+  });
 });
 
 describe('host server — derived views (resolve / reconcile / cost)', () => {

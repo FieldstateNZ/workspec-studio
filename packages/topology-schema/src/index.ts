@@ -58,25 +58,26 @@ export {
   RESOURCE_KINDS,
   ResourceKind,
   ResourceSource,
+  ResourceOverride,
   ResourceSpec,
   ResourceArtifact,
 } from './resource.js';
 export type {
   ResourceKind as ResourceKindType,
   ResourceSource as ResourceSourceType,
+  ResourceOverride as ResourceOverrideType,
   ResourceSpec as ResourceSpecType,
   Resource,
 } from './resource.js';
 
 // ── Environment artifact: schemas + inferred types ───────────────────────────
 export {
-  ResourceOverride,
+  LEGACY_ENVIRONMENT_OVERRIDES_ISSUE_CODE,
   EnvironmentNaming,
   EnvironmentSpec,
   EnvironmentArtifact,
 } from './environment.js';
 export type {
-  ResourceOverride as ResourceOverrideType,
   EnvironmentNaming as EnvironmentNamingType,
   EnvironmentSpec as EnvironmentSpecType,
   Environment,

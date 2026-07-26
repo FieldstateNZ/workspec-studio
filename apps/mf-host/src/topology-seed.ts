@@ -1,7 +1,8 @@
 // A compact, self-contained topology tree for the smoke host: one Topology
 // (two environments, three declared connections), three Resources (a
 // client, an App Service, and a SQL database), and two Environments
-// (dev/prod, prod narrowing the App Service's SKU) — enough surface to
+// (dev/prod, naming conventions only — no per-env resource overrides in
+// this seed) — enough surface to
 // exercise TopologyWorkbench's env switcher, canvas, and side panel without
 // needing a real `.workspec/` tree on disk. Built directly against
 // `@workspec/topology-model`'s `createMemorySource` (the same host-agnostic,

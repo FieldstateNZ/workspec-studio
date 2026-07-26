@@ -16,7 +16,13 @@ code (`FsSource`, `node:fs/promises`) lives behind the `./fs` subpath export, so
 ## Usage
 
 ```ts
-import { loadTopologyModel, resolve, buildNetworkTree, buildResourceGroupTree, createMemorySource } from '@workspec/topology-model';
+import {
+  loadTopologyModel,
+  resolve,
+  buildNetworkTree,
+  buildResourceGroupTree,
+  createMemorySource,
+} from '@workspec/topology-model';
 import { createFsSource } from '@workspec/topology-model/fs';
 
 // Server-side / CLI: read a real working tree from disk.
@@ -42,12 +48,30 @@ Applied in order, for one target environment:
 2. **Prune connections** — drop a connection whose own `environments` excludes the target
    environment (explicit scoping, enabling per-environment rewiring), OR whose `from`/`to` was
    pruned in step 1 (auto-prune).
-3. **Deep-merge overrides** — the matching `Environment`'s per-resource `overrides` patch is
-   deep-merged onto each surviving resource's `config`/`cost` (objects merge recursively, arrays
-   replace, the override wins). An override keyed to a pruned/absent resource is a no-op.
+3. **Merge overrides (S1)** — each surviving resource's OWN `spec.overrides[envSlug]` patch is
+   merged onto its `config`/`cost`/`resourceGroup`/`network`. `resolve()` itself doesn't validate
+   the override key — an override for an environment this resource isn't present in, or that
+   doesn't exist at all, is caught upstream by this package's `checkOverrideEnvironmentRefs`
+   (verify-time; see its own doc comment for why BOTH of those rules live at the model layer, not
+   schema-level) — it just applies whatever the target `envSlug` names, per field:
+   - `config` — a SHALLOW, top-level merge: a key named in the override replaces the base value at
+     that key wholesale, even when both are objects — this is NOT a deep/recursive merge, and a
+     `null` override value SETS the merged key to `null` rather than removing it (there is no way
+     to make an override key "disappear" from the merged result).
+   - `cost` — field-by-field (`sku`/`mode`/`schedule`/`qty`/`attribution`); `attribution` is a
+     whole-array replace, never an element-wise splice.
+   - `resourceGroup`/`network` — full replace of the base ref when the override names one. Since
+     both fields are `Slug`-typed (never nullable), an override can only REPLACE a resource's
+     placement with a different one, never clear it to "no placement" for one specific
+     environment while the base resource has one.
+
+   (v0 sourced this patch from `Environment.spec.overrides[slug]` instead; S1 moved it onto the
+   Resource — see `@workspec/topology-schema`'s `resource.ts`.)
+
 4. **Apply naming** — a `resource-group`-kind resource's resolved display name becomes
-   `<rg-slug><suffix>` when the environment declares `naming.resourceGroupSuffix`; its own
-   authored `name` is untouched.
+   `<rg-slug><suffix>` when the matching `Environment` declares `naming.resourceGroupSuffix`; its
+   own authored `name` is untouched. Naming is the one thing `resolve()` still reads from the
+   `Environment` artifact.
 
 ## Lens trees (spec §3.2)
 

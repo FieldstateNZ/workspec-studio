@@ -10,8 +10,36 @@ spec:
   provider: azure
   network: snet-workload
   resourceGroup: rg-app
+  config:
+    sizing:
+      tier: Standard
+      capacityGB: 6
+      replicas: 2
   cost:
     sku: standard-c1
     mode: payg
     schedule: always
     qty: 1
+  overrides:
+    # dev/test add a `config.sku` key the base resource doesn't carry at
+    # all, AND replace `config.sizing` wholesale with a SMALLER object
+    # (missing `capacityGB`/`replicas`) — this is the S1 shallow-merge proof:
+    # a deep merge would keep `capacityGB: 6, replicas: 2` from the base
+    # `sizing`; the actual (shallow) merge drops them entirely, since
+    # `sizing` itself was named in the override.
+    dev:
+      config:
+        sku: Basic
+        sizing:
+          tier: Basic
+    test:
+      config:
+        sku: Basic
+        sizing:
+          tier: Basic
+    prod:
+      # No `sizing` override — prod inherits the base object UNCHANGED
+      # (proving the flip side: a key not named in the override at all is
+      # left alone, only a key that IS named replaces wholesale).
+      config:
+        sku: Standard

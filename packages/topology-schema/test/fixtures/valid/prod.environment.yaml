@@ -6,11 +6,3 @@ metadata:
 spec:
   naming:
     resourceGroupSuffix: '-prod'
-  overrides:
-    app-service:
-      cost:
-        sku: p2v3
-        qty: 3
-    cache:
-      config:
-        sku: Standard

@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
-// Shared Zod primitives used across the Resource and Environment artifacts:
-// the cost-attribution shape and the resource-level `cost` field, plus its
-// "all fields optional" patch variant used by an Environment's per-resource
-// `overrides`.
+// Shared Zod primitives used by the Resource artifact: the cost-attribution
+// shape, the resource-level `cost` field, and its "all fields optional"
+// patch variant used by a Resource's own per-environment `spec.overrides`
+// (S1 — `ResourceOverride`, in `resource.ts`). Lived on `Environment` in v0;
+// see `environment.ts`'s history comment for why it moved.
 
 /** A 0..1 fraction, e.g. a cost-attribution share. */
 export const Percentage = z
@@ -31,9 +32,12 @@ export const CostAttribution = z
  */
 export const ResourceCost = z
   .object({
-    sku: z.string().min(1).describe("Ref to a decision catalog `skus[].id` this resource prices as."),
-    mode: z.string().min(1).describe("Ref to a decision catalog `pricingModes[].id`."),
-    schedule: z.string().min(1).describe("Ref to a decision catalog `schedules[].id`."),
+    sku: z
+      .string()
+      .min(1)
+      .describe('Ref to a decision catalog `skus[].id` this resource prices as.'),
+    mode: z.string().min(1).describe('Ref to a decision catalog `pricingModes[].id`.'),
+    schedule: z.string().min(1).describe('Ref to a decision catalog `schedules[].id`.'),
     qty: z
       .number()
       .int()
@@ -48,9 +52,22 @@ export const ResourceCost = z
   .describe("A resource's cost binding: catalog SKU/mode/schedule, unit count, and attribution.");
 
 /**
- * The `cost` patch an Environment's `overrides` entry may carry: every
+ * The `cost` patch a Resource's own per-environment `spec.overrides[envId]`
+ * entry may carry (S1 — see `resource.ts`'s `ResourceOverride`): every
  * `ResourceCost` field made optional, since an override only needs to name
- * the fields it changes (a deep-merge patch, not a replacement).
+ * the fields it changes. Merged FIELD-BY-FIELD by
+ * `@workspec/topology-model`'s `mergeCost` — not a deep/recursive merge (this
+ * shape is already flat, so there's no nested-object case to worry about),
+ * and `attribution` is a whole-array replace, never an element-wise splice.
+ *
+ * **Author-facing gotcha:** a resource with NO base `spec.cost` at all
+ * cannot be given one purely through an override — `mergeCost` silently
+ * discards a partial patch (e.g. just `{ qty: 5 }`) when there's no base to
+ * merge it onto and the patch itself doesn't supply all three of
+ * `sku`/`mode`/`schedule`, resulting in `cost: null` for that environment,
+ * not a diagnostic. Author the base `spec.cost` with a real
+ * `sku`/`mode`/`schedule` first if this resource should be priced at all;
+ * the override then only needs to name what changes per environment.
  */
 export const ResourceCostOverride = z
   .object({
@@ -63,7 +80,11 @@ export const ResourceCostOverride = z
       .optional()
       .describe('Override the cost attribution split.'),
   })
-  .describe('A deep-merge patch over a resource\'s `cost` fields; every field is optional.');
+  .describe(
+    "A field-by-field patch over a resource's own `cost` fields for one environment; every " +
+      'field is optional. A resource with no base `cost` binding cannot get one purely from an ' +
+      "override missing sku/mode/schedule — see this const's own doc comment.",
+  );
 
 // Inferred TypeScript types (Zod is the single source of truth).
 export type Percentage = z.infer<typeof Percentage>;

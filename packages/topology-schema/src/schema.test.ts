@@ -127,9 +127,9 @@ describe('TopologyArtifact', () => {
     const res = TopologyArtifact.safeParse(doc);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(res.error.issues.some((i) => i.path.at(-1) === 0 && i.path.includes('environments'))).toBe(
-        true,
-      );
+      expect(
+        res.error.issues.some((i) => i.path.at(-1) === 0 && i.path.includes('environments')),
+      ).toBe(true);
     }
   });
 
@@ -192,13 +192,7 @@ describe('ResourceArtifact', () => {
     const res = ResourceArtifact.safeParse(doc);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(must(res.error.issues[0]).path).toEqual([
-        'spec',
-        'cost',
-        'attribution',
-        0,
-        'share',
-      ]);
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'cost', 'attribution', 0, 'share']);
     }
   });
 
@@ -214,35 +208,58 @@ describe('ResourceArtifact', () => {
   });
 });
 
+describe('ResourceArtifact.spec.overrides (S1)', () => {
+  it('accepts a per-environment override patch (config/cost/resourceGroup/network)', () => {
+    const doc = makeResource();
+    (doc.spec as Record<string, unknown>).overrides = {
+      prod: {
+        config: { tier: 'P2v3' },
+        cost: { qty: 3 },
+        resourceGroup: 'rg-prod',
+        network: 'snet-prod',
+      },
+    };
+    const res = ResourceArtifact.safeParse(doc);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.spec.overrides?.prod?.config?.tier).toBe('P2v3');
+      expect(res.data.spec.overrides?.prod?.cost?.qty).toBe(3);
+      expect(res.data.spec.overrides?.prod?.resourceGroup).toBe('rg-prod');
+      expect(res.data.spec.overrides?.prod?.network).toBe('snet-prod');
+    }
+  });
+
+  it('rejects a negative override cost qty', () => {
+    const doc = makeResource();
+    (doc.spec as Record<string, unknown>).overrides = { prod: { cost: { qty: -1 } } };
+    const res = ResourceArtifact.safeParse(doc);
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'overrides', 'prod', 'cost', 'qty']);
+    }
+  });
+
+  it('accepts any override key regardless of `environments` — key integrity is model-level, not schema-level (S1 adversarial review)', () => {
+    // Neither "is this env id real" nor "is this resource present there" is
+    // checked at the schema layer (moved to
+    // `@workspec/topology-model`'s `checkOverrideEnvironmentRefs` after
+    // review found the schema-level version cascades — see `resource.ts`'s
+    // `ResourceArtifact` doc comment). A key naming an environment excluded
+    // by an explicit `environments` list, or naming no real environment at
+    // all, is schema-VALID; only field SHAPE is enforced here.
+    const doc = makeResource();
+    (doc.spec as { environments?: string[] }).environments = ['prod'];
+    (doc.spec as Record<string, unknown>).overrides = {
+      dev: { config: { tier: 'P2v3' } },
+      'not-a-real-env': { config: { tier: 'P2v3' } },
+    };
+    expect(ResourceArtifact.safeParse(doc).success).toBe(true);
+  });
+});
+
 describe('EnvironmentArtifact', () => {
   it('parses an environment with no fields at all', () => {
     expect(EnvironmentArtifact.safeParse(makeEnvironment()).success).toBe(true);
-  });
-
-  it('accepts an override for a resource slug not otherwise known (schema-shape-only)', () => {
-    const doc = makeEnvironment();
-    (doc.spec as Record<string, unknown>).overrides = {
-      'nonexistent-resource': { config: { tier: 'P2v3' } },
-    };
-    expect(EnvironmentArtifact.safeParse(doc).success).toBe(true);
-  });
-
-  it('rejects a negative override qty', () => {
-    const doc = makeEnvironment();
-    (doc.spec as Record<string, unknown>).overrides = {
-      'app-service': { cost: { qty: -1 } },
-    };
-    const res = EnvironmentArtifact.safeParse(doc);
-    expect(res.success).toBe(false);
-    if (!res.success) {
-      expect(must(res.error.issues[0]).path).toEqual([
-        'spec',
-        'overrides',
-        'app-service',
-        'cost',
-        'qty',
-      ]);
-    }
   });
 
   it('rejects a bad-shaped resourceGroupSuffix key name typo gracefully (unknown keys stripped, not errored)', () => {
@@ -250,5 +267,28 @@ describe('EnvironmentArtifact', () => {
     (doc.spec as Record<string, unknown>).naming = { resourceGroupSufix: '-dev' };
     const res = EnvironmentArtifact.safeParse(doc);
     expect(res.success).toBe(true);
+  });
+
+  it('REVERT-CHECK: rejects a legacy v0 `spec.overrides` block instead of silently stripping it', () => {
+    // Before this check existed, `z.object`'s default "strip unknown keys"
+    // behaviour made this parse SUCCEED with `overrides` quietly discarded —
+    // exactly the S1 adversarial-review finding (pre-migration tree
+    // validates green with silently-wrong numbers; every write path
+    // silently deletes the block on round-trip). This must fail, and fail
+    // on that field by name.
+    const doc = makeEnvironment();
+    (doc.spec as Record<string, unknown>).overrides = { 'app-service': { cost: { qty: 2 } } };
+    const res = EnvironmentArtifact.safeParse(doc);
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(must(res.error.issues[0]).path).toEqual(['spec', 'overrides']);
+      expect(must(res.error.issues[0]).message).toContain('Resource.spec.overrides');
+    }
+  });
+
+  it('does not flag an environment with no `overrides` key at all', () => {
+    const doc = makeEnvironment();
+    (doc.spec as Record<string, unknown>).naming = { resourceGroupSuffix: '-prod' };
+    expect(EnvironmentArtifact.safeParse(doc).success).toBe(true);
   });
 });

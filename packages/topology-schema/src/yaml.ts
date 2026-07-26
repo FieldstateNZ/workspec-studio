@@ -25,6 +25,16 @@ export interface ParseIssue {
   line: number;
   /** 1-based column in the source YAML. */
   col: number;
+  /**
+   * Distinguishing code for the handful of custom (`z.ZodIssueCode.custom`)
+   * issues that stamp one via `ctx.addIssue({..., params: {code}})` — e.g.
+   * `environment.ts`'s `LEGACY_ENVIRONMENT_OVERRIDES_ISSUE_CODE` — so a
+   * consumer like `@workspec/topology-model`'s `parseIssuesToDiagnostics` can
+   * map that ONE issue onto a dedicated diagnostic code instead of the
+   * generic `parse-error` every other schema-validation issue gets. Absent
+   * for ordinary issues (wrong type, out of range, unknown enum value, …).
+   */
+  code?: string;
 }
 
 /** Result of parsing + validating an artifact. */
@@ -57,6 +67,13 @@ function locate(
   return { line: 1, col: 1 };
 }
 
+/** Extracts a stamped `params.code` off a custom Zod issue, if present (see `ParseIssue.code`). */
+function issueCode(issue: z.ZodIssue): string | undefined {
+  if (issue.code !== 'custom') return undefined;
+  const code = issue.params?.['code'];
+  return typeof code === 'string' ? code : undefined;
+}
+
 function parseArtifact<T>(text: string, schema: z.ZodType<T>): ParseResult<T> {
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter, prettyErrors: true });
@@ -83,11 +100,13 @@ function parseArtifact<T>(text: string, schema: z.ZodType<T>): ParseResult<T> {
     ok: false,
     errors: result.error.issues.map((issue) => {
       const pos = locate(doc, lineCounter, issue.path);
+      const code = issueCode(issue);
       return {
         path: issue.path.join('.'),
         message: issue.message,
         line: pos.line,
         col: pos.col,
+        ...(code !== undefined ? { code } : {}),
       };
     }),
   };

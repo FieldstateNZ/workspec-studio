@@ -85,19 +85,29 @@ describe('valid web-app reference fixtures', () => {
     }
   });
 
-  it('parses dev/test/prod environments with prod overriding app-service and cache', () => {
+  it('parses dev/test/prod environments, each carrying only naming (S1: overrides moved to Resource)', () => {
     const prod = parseEnvironmentYaml(read(validUrl('prod.environment.yaml')));
     expect(prod.ok).toBe(true);
-    if (prod.ok) {
-      expect(prod.data.spec.naming?.resourceGroupSuffix).toBe('-prod');
-      expect(prod.data.spec.overrides?.['app-service']?.cost?.qty).toBe(3);
-      expect(prod.data.spec.overrides?.cache?.config?.sku).toBe('Standard');
-    }
+    if (prod.ok) expect(prod.data.spec.naming?.resourceGroupSuffix).toBe('-prod');
 
     for (const slug of ['dev', 'test']) {
       const res = parseEnvironmentYaml(read(validUrl(`${slug}.environment.yaml`)));
       expect(res.ok, `${slug} should parse`).toBe(true);
     }
+  });
+
+  it('app-service/cache carry per-environment overrides on the Resource (S1)', () => {
+    const appService = parseResourceYaml(read(validUrl('app-service.resource.yaml')));
+    expect(appService.ok).toBe(true);
+    if (appService.ok) {
+      expect(appService.data.spec.overrides?.prod?.cost?.qty).toBe(3);
+      expect(appService.data.spec.overrides?.prod?.cost?.sku).toBe('p2v3');
+      expect(appService.data.spec.overrides?.dev?.cost?.qty).toBe(1);
+    }
+
+    const cache = parseResourceYaml(read(validUrl('cache.resource.yaml')));
+    expect(cache.ok).toBe(true);
+    if (cache.ok) expect(cache.data.spec.overrides?.prod?.config?.sku).toBe('Standard');
   });
 });
 
@@ -117,6 +127,7 @@ describe('invalid fixture battery', () => {
         const match = must(res.errors.find((e) => e.path === c.path));
         expect(match.line).toBe(c.line);
         expect(match.col).toBeGreaterThan(0);
+        if (c.code !== undefined) expect(match.code).toBe(c.code);
       }
     });
   }
