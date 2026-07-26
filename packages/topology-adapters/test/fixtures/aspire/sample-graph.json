@@ -1,0 +1,126 @@
+{
+  "version": "workspec-graph/v1",
+  "apphost": { "name": "Ledger AppHost" },
+  "resources": [
+    {
+      "name": "api-server",
+      "kind": "project",
+      "typeName": "ProjectResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": "/workspec-fixture/artifacts/api-server",
+      "endpoints": [
+        { "name": "http", "scheme": "http", "port": 6001, "targetPort": 6001, "external": true }
+      ],
+      "parent": null,
+      "references": [
+        { "target": "ledger-db", "via": "connection-string", "label": null },
+        { "target": "cache", "via": "wait", "label": null },
+        { "target": "invoice-archive", "via": "relationship", "label": "archives invoices in" },
+        { "target": "environment-name", "via": "environment", "label": null }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "worker",
+      "kind": "executable",
+      "typeName": "ExecutableResource",
+      "image": null,
+      "command": "pnpm",
+      "workingDirectory": "/workspec-fixture/artifacts/worker",
+      "endpoints": [],
+      "parent": null,
+      "references": [
+        { "target": "cache", "via": "endpoint", "label": null },
+        { "target": "postgres-enterprise", "via": "unknown", "label": null }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "postgres-enterprise",
+      "kind": "container",
+      "typeName": "PostgresServerResource",
+      "image": "docker.io/library/postgres:17",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "ledger-db",
+      "kind": "container",
+      "typeName": "PostgresDatabaseResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": "postgres-enterprise",
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "cache",
+      "kind": "container",
+      "typeName": "RedisResource",
+      "image": "docker.io/library/redis:7",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [
+        { "name": "tcp", "scheme": "tcp", "port": 6379, "targetPort": 6379, "external": false }
+      ],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "invoice-archive",
+      "kind": "azure",
+      "typeName": "AzureStorageResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "legacy-queue",
+      "kind": "container",
+      "typeName": "RabbitMQServerResource",
+      "image": "docker.io/library/rabbitmq:3",
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "environment-name",
+      "kind": "parameter",
+      "typeName": "ParameterResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    },
+    {
+      "name": "unlisted-widget",
+      "kind": "unknown",
+      "typeName": "CustomWidgetResource",
+      "image": null,
+      "command": null,
+      "workingDirectory": null,
+      "endpoints": [],
+      "parent": null,
+      "references": [],
+      "properties": {}
+    }
+  ]
+}

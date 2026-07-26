@@ -1,5 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { mapErrorToResult } from '@workspec/mcp-core';
+import { MultipleObservedTopologiesError } from '../derived-topology.js';
 import { ArtifactValidationError, RefEscapesRootError } from '../fs-repository.js';
 
 /**
@@ -13,6 +14,8 @@ import { ArtifactValidationError, RefEscapesRootError } from '../fs-repository.j
  *
  * - {@link RefEscapesRootError} → a ref-escapes-root message.
  * - {@link ArtifactValidationError} → the located parse/validation issues.
+ * - {@link MultipleObservedTopologiesError} → every offending ref, so the
+ *   caller knows exactly which files to reconcile down to one.
  */
 export function mapRepoErrorToResult(error: unknown, ref?: string): CallToolResult {
   return mapErrorToResult(error, {
@@ -30,6 +33,17 @@ export function mapRepoErrorToResult(error: unknown, ref?: string): CallToolResu
         return {
           content: [
             { type: 'text', text: JSON.stringify({ error: 'invalid artifact', ref: err.ref, issues }) },
+          ],
+          isError: true,
+        };
+      }
+      if (err instanceof MultipleObservedTopologiesError) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ error: 'multiple observed topology files', refs: err.refs }),
+            },
           ],
           isError: true,
         };

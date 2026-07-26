@@ -46,10 +46,29 @@ last `import`ed snapshot, `0` on a clean tree.
 
 `import` writes the `Resource` artifacts a `@workspec/topology-adapters` adapter
 derives from a vendor export (Terraform state, a compiled ARM template, an Azure
-Resource Graph query result) to `.topology-actual/<env>/`, keyed by the resource's
-own derived slug. This directory is **gitignored** — it is a disposable,
-per-environment snapshot that `reconcile`/`cost` read back, not authored source of
-truth. Re-running `import` overwrites it.
+Resource Graph query result, an Aspire apphost graph dump) to
+`.topology-actual/<env>/`, keyed by the resource's own derived slug. This
+directory is **gitignored** — it is a disposable, per-environment snapshot that
+`reconcile`/`cost` read back, not authored source of truth. Re-running `import`
+overwrites it.
+
+When an adapter also derives connections (currently: `aspire` — see
+`@workspec/topology-adapters`' README), `import` additionally writes them as a
+Topology artifact at the fixed slug `.topology-actual/<env>/derived-connections.yaml`,
+so `reconcile`'s miswired check has real connectivity to diff against instead of
+skipping entirely. Two related guards protect this:
+
+- **Single-topology-file policy**: `.topology-actual/<env>/` must contain AT MOST
+  one topology-shaped (`kind: Topology`) file, whether it's the auto-written
+  connections carrier or a hand-authored/hand-copied observed topology. If more
+  than one is ever present, `reconcile`/`resolve`/`cost` (CLI, HTTP, and MCP) all
+  fail loud with every offending filename named, rather than silently picking one
+  by alphabetical accident — see `derived-topology.ts`'s `MultipleObservedTopologiesError`.
+- **Reserved-slug guard**: a derived resource that happens to slugify to
+  `derived-connections` is excluded from what `import` writes (with an
+  `error`-severity diagnostic), instead of writing it and then silently
+  overwriting it the moment connections are also written — see
+  `checkReservedSlugCollisions`.
 
 ## The host shell
 

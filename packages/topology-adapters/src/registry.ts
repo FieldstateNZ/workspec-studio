@@ -1,3 +1,4 @@
+import { aspireAdapter } from './aspire/aspire-adapter.js';
 import { bicepAdapter } from './bicep/bicep-adapter.js';
 import { resourceGraphAdapter } from './azure-resource-graph/resource-graph-adapter.js';
 import { terraformAdapter } from './terraform/terraform-adapter.js';
@@ -12,6 +13,7 @@ export const ADAPTERS = {
   terraform: terraformAdapter,
   bicep: bicepAdapter,
   'azure-resource-graph': resourceGraphAdapter,
+  aspire: aspireAdapter,
 } as const satisfies Record<string, Adapter>;
 
 /** One of the adapter names `ADAPTERS` registers. */

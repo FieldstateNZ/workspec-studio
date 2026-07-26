@@ -1,4 +1,4 @@
-import type { Resource } from '@workspec/topology-schema';
+import type { ConnectionType, Resource } from '@workspec/topology-schema';
 
 /**
  * Severity of an adapter diagnostic. `warning` is the common case (an
@@ -27,15 +27,45 @@ export interface Diagnostic {
 }
 
 /**
+ * One connection an adapter can derive directly from edge data in its own
+ * source payload. Shaped like `@workspec/topology-schema`'s `Connection`,
+ * minus `environments`: a `.topology-actual/<env>/` snapshot (what a CLI/
+ * studio phase persists an adapter's output into) is already scoped to
+ * exactly one environment by construction, so a per-connection environment
+ * subset would be meaningless here — mirrors `@workspec/topology-studio`'s
+ * own `DerivedConnection` conversion, which drops the same field for the
+ * same reason. `class` reuses `ConnectionType['class']` (not a hand-copied
+ * literal union) so a future third connection class can't silently drift
+ * between the two packages.
+ */
+export interface AdapterConnection {
+  readonly from: string;
+  readonly to: string;
+  readonly class: ConnectionType['class'];
+}
+
+/**
  * The uniform output every adapter produces: the `Resource` artifacts it
  * managed to derive, plus diagnostics for anything it skipped or couldn't
  * interpret. Resources and diagnostics are independent — a partial import
  * (some resources produced, some types unmapped) is a normal, non-error
  * outcome, not a failure.
+ *
+ * `connections` is OPTIONAL and, as of this package's three original
+ * adapters (terraform/bicep/azure-resource-graph), always absent: none of
+ * those source payloads carry edge data at all, so there is nothing to
+ * derive — `undefined` means "connectivity not observed", the same
+ * "absence is meaningful" convention `@workspec/topology-recon`'s
+ * `DerivedTopology.connections` documents on the consuming side (an
+ * adapter that doesn't set this key must NOT be treated as having observed
+ * an empty graph). The `aspire` adapter is the first with real edge data
+ * (the graph's `references[]`) and populates this — see
+ * `aspire/derive-aspire-connections.ts`.
  */
 export interface AdapterOutput {
   readonly resources: readonly Resource[];
   readonly diagnostics: readonly Diagnostic[];
+  readonly connections?: readonly AdapterConnection[];
 }
 
 /**

@@ -2,6 +2,7 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { Topology } from '@workspec/topology-schema';
 import { run } from './cli.js';
 import type { CliIO } from './cli.js';
 import { FsRepository } from './fs-repository.js';
@@ -117,6 +118,93 @@ describe('import', () => {
     expect(written).toContain('kind: derived');
   });
 
+  it('does not write a derived-connections file for an adapter with no edge data (terraform)', async () => {
+    const inputFile = join(dir, 'terraform-show.json');
+    await writeFile(inputFile, JSON.stringify(TERRAFORM_INPUT), 'utf8');
+
+    const { io, err } = captureIO();
+    const code = await run(['import', 'terraform', '--env', 'prod', '--input', inputFile, '--dir', dir], io);
+    expect(code).toBe(0);
+    expect(err()).not.toContain('connection(s)');
+
+    const names = await readdir(join(dir, '.topology-actual', 'prod'));
+    expect(names).not.toContain('derived-connections.yaml');
+  });
+
+  describe('aspire', () => {
+    const ASPIRE_GRAPH_INPUT = {
+      version: 'workspec-graph/v1',
+      apphost: { name: 'Ledger AppHost' },
+      resources: [
+        {
+          name: 'api-server',
+          kind: 'project',
+          typeName: 'ProjectResource',
+          endpoints: [],
+          references: [
+            { target: 'ledger-db', via: 'connection-string' },
+            { target: 'cache', via: 'wait' },
+          ],
+        },
+        {
+          name: 'ledger-db',
+          kind: 'container',
+          typeName: 'PostgresServerResource',
+          endpoints: [],
+          references: [],
+        },
+        { name: 'cache', kind: 'container', typeName: 'RedisResource', endpoints: [], references: [] },
+        {
+          name: 'worker',
+          kind: 'executable',
+          typeName: 'ExecutableResource',
+          endpoints: [],
+          references: [{ target: 'cache', via: 'endpoint' }],
+        },
+      ],
+    };
+
+    it('writes both derived resources AND a derived-connections Topology artifact', async () => {
+      const inputFile = join(dir, 'aspire-graph.json');
+      await writeFile(inputFile, JSON.stringify(ASPIRE_GRAPH_INPUT), 'utf8');
+
+      const { io, err } = captureIO();
+      const code = await run(['import', 'aspire', '--env', 'prod', '--input', inputFile, '--dir', dir], io);
+      expect(code).toBe(0);
+      expect(err()).toContain('wrote 4 resource(s)');
+      expect(err()).toContain('wrote 2 connection(s)');
+
+      const repo = new FsRepository(dir);
+      const written = await repo.readTopology('.topology-actual/prod/derived-connections.yaml');
+      expect(written.spec.connections.slice().sort((a, b) => a.from.localeCompare(b.from))).toEqual([
+        { from: 'api-server', to: 'ledger-db', class: 'primary' },
+        { from: 'worker', to: 'cache', class: 'primary' },
+      ]);
+    });
+
+    it('removes a stale derived-connections file when a later import for the same env has no edge data', async () => {
+      const aspireInput = join(dir, 'aspire-graph.json');
+      await writeFile(aspireInput, JSON.stringify(ASPIRE_GRAPH_INPUT), 'utf8');
+      const { io: io1 } = captureIO();
+      await run(['import', 'aspire', '--env', 'prod', '--input', aspireInput, '--dir', dir], io1);
+      await expect(
+        readFile(join(dir, '.topology-actual', 'prod', 'derived-connections.yaml'), 'utf8'),
+      ).resolves.toBeTruthy();
+
+      const terraformInput = join(dir, 'terraform-show.json');
+      await writeFile(terraformInput, JSON.stringify(TERRAFORM_INPUT), 'utf8');
+      const { io: io2 } = captureIO();
+      const code = await run(
+        ['import', 'terraform', '--env', 'prod', '--input', terraformInput, '--dir', dir],
+        io2,
+      );
+      expect(code).toBe(0);
+
+      const names = await readdir(join(dir, '.topology-actual', 'prod'));
+      expect(names).not.toContain('derived-connections.yaml');
+    });
+  });
+
   it('exits 2 on an unknown adapter', async () => {
     const inputFile = join(dir, 'in.json');
     await writeFile(inputFile, '{}', 'utf8');
@@ -150,6 +238,42 @@ describe('import', () => {
     // Nothing written: `.topology-actual/` is never created for a rejected env.
     await expect(readdir(join(dir, '.topology-actual'))).rejects.toBeTruthy();
   });
+
+  it('excludes a resource whose slug collides with the reserved DERIVED_CONNECTIONS_SLUG, erroring instead of writing-then-clobbering it (accepted non-blocking #5)', async () => {
+    const collidingInput = {
+      values: {
+        root_module: {
+          resources: [
+            {
+              address: 'azurerm_resource_group.collide',
+              type: 'azurerm_resource_group',
+              name: 'collide',
+              // Terraform slug/name derivation prefers the Azure `name`
+              // attribute — this deliberately sanitizes to exactly
+              // DERIVED_CONNECTIONS_SLUG ("derived-connections").
+              values: { name: 'derived-connections' },
+            },
+          ],
+        },
+      },
+    };
+    const inputFile = join(dir, 'colliding.json');
+    await writeFile(inputFile, JSON.stringify(collidingInput), 'utf8');
+
+    const { io, err } = captureIO();
+    const code = await run(
+      ['import', 'terraform', '--env', 'prod', '--input', inputFile, '--dir', dir],
+      io,
+    );
+    expect(code).toBe(1);
+    expect(err()).toContain('error: resource "derived-connections" resolved to the reserved slug');
+    expect(err()).toContain('wrote 0 resource(s)');
+
+    // Never written at all — not written-then-overwritten, not written-then-orphaned.
+    await expect(
+      readFile(join(dir, '.topology-actual', 'prod', 'derived-connections.yaml'), 'utf8'),
+    ).rejects.toBeTruthy();
+  });
 });
 
 describe('reconcile — the CI gate', () => {
@@ -161,6 +285,36 @@ describe('reconcile — the CI gate', () => {
     const code = await run(['reconcile', '--env', 'prod', '--dir', dir], io);
     expect(code).toBe(1);
     expect(err()).toContain('drift(s)');
+  });
+
+  it('exits 1 with a clear message naming both files when .topology-actual/<env>/ has more than one observed topology file (BLOCKING review fix)', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    const observed: Topology = {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Topology',
+      metadata: { slug: 'observed-a' },
+      spec: {
+        title: 'Observed A',
+        provider: 'derived',
+        environments: ['prod'],
+        defaultEnvironment: 'prod',
+        connections: [],
+      },
+    };
+    await repo.writeTopology('.topology-actual/prod/observed-a.yaml', observed);
+    await repo.writeTopology('.topology-actual/prod/observed-b.yaml', {
+      ...observed,
+      metadata: { slug: 'observed-b' },
+    });
+
+    const { io, err } = captureIO();
+    const code = await run(['reconcile', '--env', 'prod', '--dir', dir], io);
+    expect(code).toBe(1);
+    expect(err()).toContain('multiple observed topology files');
+    expect(err()).toContain('observed-a.yaml');
+    expect(err()).toContain('observed-b.yaml');
+    expect(err()).toContain('keep exactly one');
   });
 
   it('exits 0 on a clean, connection-free tree once the derived state matches', async () => {
@@ -267,6 +421,146 @@ describe('reconcile — the CI gate', () => {
     const code = await run(['reconcile', '--env', '../../etc', '--dir', dir], io);
     expect(code).toBe(2);
     expect(err()).toContain('--env must be a valid slug');
+  });
+});
+
+describe('import aspire -> reconcile: derived connectivity flows through end to end', () => {
+  // A small apphost graph: api-server's real reference to ledger-db (via
+  // connection-string) should show up as a clean, drift-free match against
+  // an authored edge; api-server's WAIT on cache must NOT become a
+  // connection (ordering, not dataflow — see derive-aspire-connections.ts),
+  // which is what manufactures the authored-only half of the miswired case
+  // below; worker's reference to cache (via endpoint) produces a SECOND
+  // connection with no authored counterpart at all — the actual-only half.
+  const ASPIRE_GRAPH_INPUT = {
+    version: 'workspec-graph/v1',
+    apphost: { name: 'Ledger AppHost' },
+    resources: [
+      {
+        name: 'api-server',
+        kind: 'project',
+        typeName: 'ProjectResource',
+        endpoints: [],
+        references: [
+          { target: 'ledger-db', via: 'connection-string' },
+          { target: 'cache', via: 'wait' },
+        ],
+      },
+      {
+        name: 'ledger-db',
+        kind: 'container',
+        typeName: 'PostgresServerResource',
+        endpoints: [],
+        references: [],
+      },
+      { name: 'cache', kind: 'container', typeName: 'RedisResource', endpoints: [], references: [] },
+      {
+        name: 'worker',
+        kind: 'executable',
+        typeName: 'ExecutableResource',
+        endpoints: [],
+        references: [{ target: 'cache', via: 'endpoint' }],
+      },
+    ],
+  };
+
+  async function seedAspireShapedAuthoredTopology(repo: FsRepository): Promise<void> {
+    // Authored resources whose (kind, type, name) exactly match what the
+    // aspire adapter derives for the same graph — this is what lets
+    // matchResources' tuple rung pair every one of them up (provider is not
+    // part of the match tuple, so it doesn't need to line up).
+    await repo.writeResource('.workspec/resources/api-server.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Resource',
+      metadata: { slug: 'api-server' },
+      spec: { name: 'api-server', kind: 'compute', type: 'ProjectResource', provider: 'aspire' },
+    });
+    await repo.writeResource('.workspec/resources/ledger-db.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Resource',
+      metadata: { slug: 'ledger-db' },
+      spec: { name: 'ledger-db', kind: 'database', type: 'PostgreSQL', provider: 'aspire' },
+    });
+    await repo.writeResource('.workspec/resources/cache.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Resource',
+      metadata: { slug: 'cache' },
+      spec: { name: 'cache', kind: 'cache', type: 'Redis', provider: 'aspire' },
+    });
+    await repo.writeResource('.workspec/resources/worker.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Resource',
+      metadata: { slug: 'worker' },
+      spec: { name: 'worker', kind: 'compute', type: 'ExecutableResource', provider: 'aspire' },
+    });
+    await repo.writeTopology('.workspec/topologies/ledger.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Topology',
+      metadata: { slug: 'ledger' },
+      spec: {
+        title: 'Ledger',
+        provider: 'aspire',
+        environments: ['prod'],
+        defaultEnvironment: 'prod',
+        connections: [
+          // MATCHES the derived api-server->ledger-db connection-string edge: clean, no drift.
+          { from: 'api-server', to: 'ledger-db', class: 'primary' },
+          // Declared, but NEVER derived (api-server only WAITS on cache,
+          // which isn't dataflow) — the authored-only half of the miswired case.
+          { from: 'api-server', to: 'cache', class: 'primary' },
+        ],
+      },
+    });
+    await repo.writeEnvironment('.workspec/environments/prod.yaml', {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Environment',
+      metadata: { slug: 'prod' },
+      spec: {},
+    });
+  }
+
+  it('reconcile reports zero drift for the matched, correctly-wired pair once aspire connectivity is imported', async () => {
+    const repo = new FsRepository(dir);
+    await seedAspireShapedAuthoredTopology(repo);
+
+    const inputFile = join(dir, 'aspire-graph.json');
+    await writeFile(inputFile, JSON.stringify(ASPIRE_GRAPH_INPUT), 'utf8');
+    const { io: importIo } = captureIO();
+    const importCode = await run(
+      ['import', 'aspire', '--env', 'prod', '--input', inputFile, '--dir', dir],
+      importIo,
+    );
+    expect(importCode).toBe(0);
+
+    const { io, err } = captureIO();
+    const code = await run(['reconcile', '--env', 'prod', '--dir', dir], io);
+
+    // Exactly one miswired drift (the api-server/cache/worker cluster below)
+    // — nothing for api-server<->ledger-db: that pair is matched AND its
+    // connection is observed on both sides, so it contributes zero drift.
+    // Before this adapter derived connectivity, EVERY authored edge would
+    // have been silently un-assessed (miswired detection skips entirely
+    // when `actual.connections` is undefined) — this proves the opposite
+    // now holds: a correctly-wired edge is verified clean, not just ignored.
+    expect(code).toBe(1);
+    expect(err()).toContain('reconcile: 1 drift(s) — 0 phantom, 0 orphan, 0 divergent, 1 miswired');
+  });
+
+  it('reconcile detects the miswired edge aspire connectivity newly makes visible: declared api-server->cache never observed, observed worker->cache never declared', async () => {
+    const repo = new FsRepository(dir);
+    await seedAspireShapedAuthoredTopology(repo);
+
+    const inputFile = join(dir, 'aspire-graph.json');
+    await writeFile(inputFile, JSON.stringify(ASPIRE_GRAPH_INPUT), 'utf8');
+    const { io: importIo } = captureIO();
+    await run(['import', 'aspire', '--env', 'prod', '--input', inputFile, '--dir', dir], importIo);
+
+    const { io, err } = captureIO();
+    await run(['reconcile', '--env', 'prod', '--dir', dir], io);
+
+    expect(err()).toContain('miswired api-server, cache, worker');
+    expect(err()).toContain('declared but not observed: api-server->cache');
+    expect(err()).toContain('observed but not declared: worker->cache');
   });
 });
 

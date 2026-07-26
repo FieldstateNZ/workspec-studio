@@ -33,8 +33,12 @@ export {
   derivedDirFor,
   loadDerivedTopology,
   writeDerivedResources,
+  writeDerivedConnections,
+  checkReservedSlugCollisions,
   TOPOLOGY_ACTUAL_DIR,
+  DERIVED_CONNECTIONS_SLUG,
   InvalidEnvSlugError,
+  MultipleObservedTopologiesError,
 } from './derived-topology.js';
 export type { LoadDerivedTopologyOutcome } from './derived-topology.js';
 

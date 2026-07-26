@@ -19,7 +19,14 @@ import { computeTopologyCost } from '@workspec/topology-cost';
 import { reconcile, summarizeDrift } from '@workspec/topology-recon';
 import type { Drift } from '@workspec/topology-recon';
 import type { TopologyDiagnostic } from '@workspec/topology-model';
-import { derivedDirFor, loadDerivedTopology, writeDerivedResources } from './derived-topology.js';
+import {
+  checkReservedSlugCollisions,
+  DERIVED_CONNECTIONS_SLUG,
+  derivedDirFor,
+  loadDerivedTopology,
+  writeDerivedConnections,
+  writeDerivedResources,
+} from './derived-topology.js';
 import { formatDiagnostic } from './format-diagnostic.js';
 import { FsRepository } from './fs-repository.js';
 import { loadAuthoredModel } from './load-authored-model.js';
@@ -98,14 +105,19 @@ Arguments:
 Options:
   --env <env>    Environment slug this import is for (required).
   --input <file> Path to the already-exported vendor JSON (terraform show -json
-                 output, a compiled ARM template, or an Azure Resource Graph
-                 query result) — required.
+                 output, a compiled ARM template, an Azure Resource Graph query
+                 result, or a workspec-graph/v1 Aspire apphost graph dump) —
+                 required.
   --dir <path>   Directory to write into (default: current directory).
 
 Runs the named @workspec/topology-adapters adapter over --input and writes
 the derived Resource artifacts to ".topology-actual/<env>/" (gitignored,
 tool-generated — see that directory's own doc comment in derived-topology.ts).
-Prints one line per adapter diagnostic and exits 1 if any is error-severity.
+If the adapter also derived a connection graph (only "aspire" does, as of
+this writing), it's written alongside as an observed Topology artifact, so
+"reconcile"'s miswired check has real connectivity to diff against instead
+of skipping it. Prints one line per adapter diagnostic and exits 1 if any is
+error-severity.
 `;
 
 const RECONCILE_HELP = `workspec-topology reconcile — reconcile authored vs. derived state for one environment
@@ -281,15 +293,40 @@ async function runImport(argv: string[], io: CliIO, deps: RunDeps | undefined): 
   const dir = values.dir ?? process.cwd();
   const repository = resolveRepository(deps, dir);
   const adapter = ADAPTERS[adapterName as AdapterName];
-  const { resources, diagnostics } = adapter(json);
+  const { resources, diagnostics: adapterDiagnostics, connections } = adapter(json);
+
+  // Reserved-slug collision guard: a resource that slugifies to
+  // DERIVED_CONNECTIONS_SLUG would otherwise write cleanly here and then be
+  // silently clobbered by writeDerivedConnections below (this run or a
+  // later one for the same env) — see checkReservedSlugCollisions' doc
+  // comment. Colliding resources are excluded from what gets written, never
+  // written-then-overwritten.
+  const collisionDiagnostics = checkReservedSlugCollisions(resources);
+  const writableResources = resources.filter(
+    (resource) => resource.metadata.slug !== DERIVED_CONNECTIONS_SLUG,
+  );
+  const diagnostics = [...adapterDiagnostics, ...collisionDiagnostics];
 
   for (const diagnostic of diagnostics) {
     const source = diagnostic.source !== undefined ? ` (${diagnostic.source})` : '';
     io.err(`import: ${diagnostic.severity}: ${diagnostic.message}${source}\n`);
   }
 
-  const refs = await writeDerivedResources(repository, values.env, resources);
+  const refs = await writeDerivedResources(repository, values.env, writableResources);
   io.err(`import: wrote ${refs.length} resource(s) to ${derivedDirFor(values.env)}/\n`);
+
+  // Most adapters have no edge data at all (`connections` stays undefined —
+  // see `AdapterOutput`'s doc comment in `@workspec/topology-adapters`), in
+  // which case `writeDerivedConnections` only prunes a stale file from a
+  // previous import for this env and writes nothing new. `aspire` is the
+  // first adapter that DOES derive connections; when it does, they're
+  // persisted as an observed `Topology` artifact so `reconcile`'s miswired
+  // check (which otherwise skips entirely when connectivity was never
+  // captured) has something to diff against.
+  const connectionsRef = await writeDerivedConnections(repository, values.env, connections);
+  if (connectionsRef !== undefined) {
+    io.err(`import: wrote ${connections?.length ?? 0} connection(s) to ${connectionsRef}\n`);
+  }
 
   return diagnostics.some((d) => d.severity === 'error') ? 1 : 0;
 }

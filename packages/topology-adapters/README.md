@@ -2,9 +2,11 @@
 
 Pure import adapters that turn infrastructure sources into WorkSpec Topology `Resource` artifacts
 (`@workspec/topology-schema`'s `ResourceArtifact` shape). Each adapter is a **pure function** from
-already-parsed JSON to `{ resources, diagnostics }` — no filesystem or network IO happens inside
-this package. A later CLI/studio phase owns reading a file (or running `terraform show -json` /
-compiling a Bicep template / querying Azure Resource Graph) and passing the parsed result in.
+already-parsed JSON to `{ resources, diagnostics }` (the `aspire` adapter also returns
+`connections` — see its own section below) — no filesystem or network IO happens inside this
+package. A later CLI/studio phase owns reading a file (or running `terraform show -json` /
+compiling a Bicep template / querying Azure Resource Graph / dumping an Aspire apphost graph) and
+passing the parsed result in.
 
 ## The invariant this package upholds
 
@@ -18,8 +20,9 @@ fields `ResourceSpec` already defines — nothing is invented outside that schem
 | terraform            | the Terraform resource address, e.g. `azurerm_linux_web_app.web` |
 | bicep                | the ARM type + name, e.g. `Microsoft.Web/sites:web-app`          |
 | azure-resource-graph | the full ARM resource id                                         |
+| aspire               | the Aspire resource name (the graph's own unique key)            |
 
-## The three adapters
+## The four adapters
 
 ```ts
 import {
@@ -27,6 +30,7 @@ import {
   terraformAdapter,
   bicepAdapter,
   resourceGraphAdapter,
+  aspireAdapter,
 } from '@workspec/topology-adapters';
 
 const { resources, diagnostics } = terraformAdapter(JSON.parse(terraformShowJsonText));
@@ -41,6 +45,9 @@ const adapter = ADAPTERS['azure-resource-graph'];
   of `bicep build`/`az bicep build`).
 - **azure-resource-graph** — consumes an Azure Resource Graph query result (`data[]` rows with the
   standard `id`/`type`/`name`/`resourceGroup`/`kind`/`properties` columns).
+- **aspire** — consumes a `workspec-graph/v1` document (a .NET Aspire apphost's dumped resource
+  graph — see `docs/aspire-hosting/graph-contract.md`). See its own section below: unlike the other
+  three, it derives `connections` from the graph's own edge data.
 
 ## Shared vendor→kind mapping
 
@@ -136,6 +143,84 @@ App Service with no visible sign anything was guessed. See
   this package's only workspace dependency is `@workspec/topology-schema` (which doesn't re-export
   `slugify`), so a local copy avoids adding a dependency edge this package doesn't otherwise need.
 
+## The `aspire` adapter
+
+Consumes a `workspec-graph/v1` document — see
+[`docs/aspire-hosting/graph-contract.md`](../../docs/aspire-hosting/graph-contract.md) for the
+input contract, produced by `aspire-hosting-core`'s `WorkspecGraphDumper`. Unlike the other three
+adapters, it is the first with real edge data in its own source payload, so it populates
+`AdapterOutput.connections` (see `types.ts`'s doc comment) — the other three leave it `undefined`
+("connectivity not observed", the same convention `@workspec/topology-recon`'s
+`DerivedTopology.connections` documents on the consuming side). Full rationale lives in
+`aspire/aspire-adapter.ts`'s doc comment; summarized here:
+
+### `kind` / `type` / `provider` mapping
+
+| # | Aspire `kind` / `typeName`                                                          | Outcome                                                          |
+| - | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1 | `kind: "parameter"`                                                                 | **Skipped** — not infrastructure, silent (no diagnostic).        |
+| 2 | `kind: "azure"`, `typeName` in the curated Azure prefix table (`storage`/`search`/`sqlDatabase` — **database only, not the bare server**/`appInsights`/`logAnalytics`/`identity`/`redisCache`/`redisEnterprise`) | `kind`/`type` from the shared `VENDOR_KIND_CATALOG`, `provider: "azure"`. |
+| 3 | `kind: "azure"`, not in that table (includes the bare `AzureSqlServerResource`, and Azure's own Service Bus/Event Hubs) | **Unmapped** (warning diagnostic) — never guessed.                |
+| 4 | `typeName` starts with `postgres`/`mysql`/`sqlserver`/`mongo`/`oracle`              | `kind: "database"`, curated product name (e.g. `PostgreSQL`), `provider: "aspire"`. |
+| 5 | `typeName` starts with `redis`/`valkey`/`garnet`                                    | `kind: "cache"`, curated product name, `provider: "aspire"`.      |
+| 6 | `typeName` starts with `rabbitmq`/`kafka`/`nats` (NON-Azure only)                   | **Unmapped** (warning) — no `queue` `ResourceKind` exists yet; documented v0 gap. |
+| 7 | `kind: "container"`/`"executable"`/`"project"`/`"unknown"`, or anything else        | `kind: "compute"`, `type` = raw `typeName`, `provider: "aspire"`. |
+
+Row 7's `kind: "unknown"` case additionally emits an `info` diagnostic, since the graph producer
+itself couldn't classify the resource. `provider: "aspire"` (for everything except the curated
+Azure matches) is a deliberate departure from `ResourceSpec.provider`'s doc comment ("e.g.
+azure/aws/gcp") — most Aspire resources aren't cloud resources at all, and mislabelling a local
+Postgres container `"azure"` would be worse than introducing a non-cloud provider string. This has
+no effect on reconciliation: recon's match tuple is `(kind, type, name)` — `provider` is display
+metadata only.
+
+**Azure SQL is split, not collapsed (review fix)**: the real `Aspire.Hosting.Azure.Sql` package
+emits TWO resource types for `AddAzureSqlServer().AddDatabase()` — `AzureSqlServerResource` (the
+logical server, a connectivity shell) and `AzureSqlDatabaseResource` (the actual database). Only
+`AzureSqlDatabaseResource` maps to `sqlDatabase`; the bare server is unmapped, mirroring
+terraform/bicep's own precedent of never mapping a bare SQL *server* type — only `.../databases`.
+Conflating the two would mislabel the server "Azure SQL Database".
+
+**Azure Redis has three shapes**: `AzureRedisResource`/`AzureRedisCacheResource` →
+`redisCache` ("Azure Cache for Redis"); `AzureRedisEnterpriseResource`/`AzureManagedRedisResource`
+→ `redisEnterprise` ("Azure Managed Redis"). `classify-aspire-resource.ts`'s prefix matcher picks
+the LONGEST matching prefix (not first-declared) specifically so `"AzureRedisEnterpriseResource"` —
+which starts with both `azureredis` and the more specific `azureredisenterprise` — always resolves
+to the more specific entry regardless of table declaration order.
+
+**Known v0 gap**: message-queue/broker products (RabbitMQ, Kafka, NATS, Azure Service Bus, Azure
+Event Hubs) are unmapped because `@workspec/topology-schema`'s `RESOURCE_KINDS` has no `queue`
+member yet — adding one is a schema change, out of scope for the slice that added this adapter
+(topology v0.1 S2a, workspec-studio#105). RabbitMQ/Kafka/NATS reach `'unmapped'` via
+`classify-aspire-resource.ts`'s `ASPIRE_QUEUE_TYPE_NAME_PREFIXES`; Azure Service Bus/Event Hubs
+reach the same outcome via the azure-kind branch (absent from its curated table) — a future
+`queue`-kind slice needs to extend BOTH tables, not just one.
+
+### Connection derivation
+
+`references[].via` values `connection-string` / `endpoint` / `environment` / `unknown` (the env-
+and args-sourced signals — see the graph contract's `references` section) become `class: "primary"`
+connections. `wait` (ordering, not dataflow) and `relationship` (an arbitrary author-defined label
+whose semantics can't be reliably classified as dataflow vs. purely informational) are excluded —
+see `aspire/derive-aspire-connections.ts` for the full rationale. Connections are resolved through
+each resource's FINAL, post-collision-disambiguation slug, deduplicated on `(from, to)`, and sorted
+for deterministic output independent of the graph's own array order.
+
+**Parent/child relationships are not represented at all**: `@workspec/topology-schema`'s
+`ResourceSpec` has no containment/parent-ref field, and `Connection.class` has no "contains" value
+(unlike `workspec-c4 import-aspire`, which synthesizes a `contains` edge in its own diagram output —
+see `docs/aspire-hosting/import-mapping.md`). Extending either schema is out of scope for this
+slice. Both parent and child still import as independent `Resource`s; only the relationship between
+them is dropped — a documented limitation, not an oversight.
+
+### A note on `docs/aspire-hosting/import-mapping.md`
+
+That doc is the normative spec for `workspec-c4 import-aspire` (`packages/c4-studio`'s Aspire→C4
+projection) specifically, not a generic "any consumer of `workspec-graph/v1`" mapping doc — it does
+not cover this package. This adapter's mapping table lives here and in `aspire-adapter.ts`'s doc
+comment instead; `docs/aspire-hosting/graph-contract.md` (the shared input contract both consumers
+read) has been updated to name this adapter as a second consumer.
+
 ## Fixtures
 
 `test/fixtures/` has one representative, hand-written input per adapter (not a real vendor dump):
@@ -148,6 +233,13 @@ App Service with no visible sign anything was guessed. See
   (`Microsoft.Compute/virtualMachines`).
 - `resource-graph/sample-result.json` — the fuller catalog (adds storage, search, identity, and
   vault rows) since ARG rows are the cheapest to write by hand.
+- `aspire/sample-graph.json` — a project (with an endpoint) referencing a database via
+  connection-string, waiting on (not connecting to) a cache, and relating to an Azure Storage
+  resource via a custom relationship; an executable referencing the cache via endpoint and a
+  Postgres server via an args-sourced bare-resource reference (`via: "unknown"`); a Postgres
+  server/database parent-child pair; an unmapped RabbitMQ container; a skipped parameter; and a
+  `kind: "unknown"` resource. Covers every `references[].via` value and every `kind` the graph
+  contract defines.
 
 Every adapter's test suite asserts the produced resources against `ResourceArtifact.parse()` from
 `@workspec/topology-schema` — the thing that actually proves the tree-diff invariant holds.

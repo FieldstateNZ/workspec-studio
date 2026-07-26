@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { ADAPTERS } from './registry.js';
 
 describe('ADAPTERS registry', () => {
-  it('registers all three adapters by name', () => {
+  it('registers all four adapters by name', () => {
     expect(Object.keys(ADAPTERS).sort()).toEqual(
-      ['azure-resource-graph', 'bicep', 'terraform'].sort(),
+      ['aspire', 'azure-resource-graph', 'bicep', 'terraform'].sort(),
     );
   });
 

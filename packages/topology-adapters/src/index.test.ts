@@ -3,6 +3,7 @@ import {
   ADAPTERS,
   TOPOLOGY_ADAPTERS_PACKAGE,
   VENDOR_KIND_CATALOG,
+  aspireAdapter,
   bicepAdapter,
   resourceGraphAdapter,
   terraformAdapter,
@@ -13,10 +14,11 @@ describe('@workspec/topology-adapters', () => {
     expect(TOPOLOGY_ADAPTERS_PACKAGE).toBe('@workspec/topology-adapters');
   });
 
-  it('exports all three adapters directly and via the registry, referencing the same functions', () => {
+  it('exports all four adapters directly and via the registry, referencing the same functions', () => {
     expect(ADAPTERS.terraform).toBe(terraformAdapter);
     expect(ADAPTERS.bicep).toBe(bicepAdapter);
     expect(ADAPTERS['azure-resource-graph']).toBe(resourceGraphAdapter);
+    expect(ADAPTERS.aspire).toBe(aspireAdapter);
   });
 
   it('exports the shared vendor→kind catalog', () => {
