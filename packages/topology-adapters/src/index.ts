@@ -1,8 +1,10 @@
 // @workspec/topology-adapters — pure import adapters that turn
-// infrastructure sources (Terraform, Bicep/ARM, Azure Resource Graph) into
-// WorkSpec Topology `Resource` artifacts. Every adapter is a pure function
-// from already-parsed JSON to `{ resources, diagnostics }`; a later CLI/
-// studio phase owns reading files and invoking these. See README.md for the
+// infrastructure sources (Terraform, Bicep/ARM, Azure Resource Graph, a .NET
+// Aspire apphost graph dump) into WorkSpec Topology `Resource` artifacts.
+// Every adapter is a pure function from already-parsed JSON to
+// `{ resources, diagnostics }` (the `aspire` adapter also populates
+// `connections` — see `AdapterOutput`'s doc comment); a later CLI/studio
+// phase owns reading files and invoking these. See README.md for the
 // vendor→kind mapping tables and the tree-diff invariant every produced
 // resource upholds (`spec.source = { kind: 'derived', from }`, otherwise
 // shaped identically to an authored `Resource`).
@@ -15,16 +17,23 @@
 export const TOPOLOGY_ADAPTERS_PACKAGE = '@workspec/topology-adapters' as const;
 
 // ── Shared adapter contract ──────────────────────────────────────────────────
-export type { Adapter, AdapterOutput, Diagnostic, DiagnosticSeverity } from './types.js';
+export type {
+  Adapter,
+  AdapterConnection,
+  AdapterOutput,
+  Diagnostic,
+  DiagnosticSeverity,
+} from './types.js';
 
 // ── Shared vendor→kind mapping ───────────────────────────────────────────────
 export { VENDOR_KIND_CATALOG } from './vendor-kind-catalog.js';
 export type { VendorKindMapping, VendorKindKey } from './vendor-kind-catalog.js';
 
-// ── The three adapters ────────────────────────────────────────────────────────
+// ── The four adapters ────────────────────────────────────────────────────────
 export { terraformAdapter } from './terraform/terraform-adapter.js';
 export { bicepAdapter } from './bicep/bicep-adapter.js';
 export { resourceGraphAdapter } from './azure-resource-graph/resource-graph-adapter.js';
+export { aspireAdapter } from './aspire/aspire-adapter.js';
 
 // ── Adapter registry (select-by-name for a CLI/studio caller) ────────────────
 export { ADAPTERS } from './registry.js';

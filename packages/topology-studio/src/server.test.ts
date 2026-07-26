@@ -203,6 +203,36 @@ describe('host server — derived views (resolve / reconcile / cost)', () => {
     expect(res.body.summary.countsByClass.phantom).toBe(4);
   });
 
+  it('422s reconcile with every offending filename when more than one observed topology file exists (BLOCKING review fix)', async () => {
+    const repo = new FsRepository(dir);
+    const observed: Topology = {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Topology',
+      metadata: { slug: 'observed-a' },
+      spec: {
+        title: 'Observed A',
+        provider: 'derived',
+        environments: ['prod'],
+        defaultEnvironment: 'prod',
+        connections: [],
+      },
+    };
+    await repo.writeTopology('.topology-actual/prod/observed-a.yaml', observed);
+    await repo.writeTopology('.topology-actual/prod/observed-b.yaml', {
+      ...observed,
+      metadata: { slug: 'observed-b' },
+    });
+
+    const app = createServer({ dir });
+    const res = await request(app).get('/api/reconcile?env=prod');
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('multiple observed topology files');
+    expect(res.body.refs).toEqual([
+      '.topology-actual/prod/observed-a.yaml',
+      '.topology-actual/prod/observed-b.yaml',
+    ]);
+  });
+
   it('computes cost against the seeded catalog', async () => {
     await seedFixtureCatalog(dir);
     const app = createServer({ dir });

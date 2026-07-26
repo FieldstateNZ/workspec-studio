@@ -271,6 +271,34 @@ describe('reconcile', () => {
     expect(result.isError).toBe(true);
     expect(textOf(result)).toContain('not a valid slug');
   });
+
+  it('returns isError with every offending ref when more than one observed topology file exists (BLOCKING review fix)', async () => {
+    const repo = new FsRepository(dir);
+    await seedFixtureTree(repo);
+    const observed: Topology = {
+      apiVersion: 'workspec.io/v1alpha1',
+      kind: 'Topology',
+      metadata: { slug: 'observed-a' },
+      spec: {
+        title: 'Observed A',
+        provider: 'derived',
+        environments: ['prod'],
+        defaultEnvironment: 'prod',
+        connections: [],
+      },
+    };
+    await repo.writeTopology('.topology-actual/prod/observed-a.yaml', observed);
+    await repo.writeTopology('.topology-actual/prod/observed-b.yaml', {
+      ...observed,
+      metadata: { slug: 'observed-b' },
+    });
+
+    const result = await tool(repo, 'reconcile').handler({ env: 'prod' });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('multiple observed topology files');
+    expect(textOf(result)).toContain('observed-a.yaml');
+    expect(textOf(result)).toContain('observed-b.yaml');
+  });
 });
 
 describe('cost', () => {

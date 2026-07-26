@@ -1,11 +1,21 @@
 # workspec-graph/v1
 
 The contract between `Aspire.Hosting.Workspec.Core`'s graph-dump serializer (this repo,
-`aspire-hosting/aspire-hosting-core`) and `workspec-c4 import-aspire` (`packages/`, A2). An
-Aspire apphost dumps its `DistributedApplicationModel` to this JSON shape; the TypeScript side
-reads it to seed `.workspec/` artifacts from the real running topology instead of a
-hand-maintained tree. Both sides link here as the canonical reference — don't let either side's
-README quietly drift from what's written below.
+`aspire-hosting/aspire-hosting-core`) and its TypeScript-side consumers. An Aspire apphost dumps
+its `DistributedApplicationModel` to this JSON shape; the TypeScript side reads it to seed
+`.workspec/` artifacts from the real running topology instead of a hand-maintained tree. Every
+side links here as the canonical reference — don't let any consumer's README quietly drift from
+what's written below.
+
+Two independent consumers exist, each projecting the same graph into a different WorkSpec family:
+
+- `workspec-c4 import-aspire` (`packages/c4-studio`, A2) — projects into a `.workspec/` C4 tree.
+  Its full mapping rules are normatively specified in
+  [`import-mapping.md`](./import-mapping.md).
+- `@workspec/topology-adapters`' `aspire` import adapter (topology v0.1 S2a,
+  workspec-studio#105) — projects into Topology `Resource`/`Connection` artifacts. Its mapping
+  rules are documented in that package's own README and `aspire/aspire-adapter.ts` doc comment
+  (not `import-mapping.md`, which is C4-specific).
 
 ## Schema
 

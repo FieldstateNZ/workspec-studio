@@ -22,7 +22,7 @@ import { reconcile, summarizeDrift } from '@workspec/topology-recon';
 import { EnvironmentArtifact, ResourceArtifact, TopologyArtifact } from '@workspec/topology-schema';
 import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
 import type { McpToolProvider } from '@workspec/mcp-core';
-import { loadDerivedTopology } from './derived-topology.js';
+import { loadDerivedTopology, MultipleObservedTopologiesError } from './derived-topology.js';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 import { loadAuthoredModel } from './load-authored-model.js';
 import { loadCatalog } from './load-catalog.js';
@@ -127,6 +127,10 @@ function sendReadError(res: Response, error: unknown, ref?: string): void {
   if (sendIfRefEscapes(res, error)) return;
   if (error instanceof ArtifactValidationError) {
     res.status(422).json({ error: 'invalid artifact', ref: error.ref, issues: error.issues });
+    return;
+  }
+  if (error instanceof MultipleObservedTopologiesError) {
+    res.status(422).json({ error: 'multiple observed topology files', refs: error.refs });
     return;
   }
   const code = (error as NodeJS.ErrnoException).code;
