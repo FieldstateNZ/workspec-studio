@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo",
+    "types": []
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  // Test files are typechecked by tsconfig.json (the `tsc -b` typecheck
+  // config) but excluded here so their devDep type references never leak
+  // into the published dist/ tree — mirroring packages/topology-ui.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-helpers/**"]
+}

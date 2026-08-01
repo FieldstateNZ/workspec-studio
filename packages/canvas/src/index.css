@@ -1,0 +1,49 @@
+/* The package stylesheet build entry (compiled by @tailwindcss/cli into
+   dist/styles.css). Mirrors packages/topology-ui/src/index.css — see that
+   file's comments for the full rationale (no preflight, layer order,
+   @source scanning).
+
+   Deliberately NOT `@import 'tailwindcss'`: that would include preflight, a
+   GLOBAL reset, and this CSS is injected into pages the package does not
+   own. Theme + utilities layers only, plus a scoped preflight stand-in
+   below, so the canvas stays self-contained WITHOUT resetting the host
+   page.
+
+   S1 scope note (canvas-extraction sprint, #117): this is the entry
+   scaffold only — no bespoke component styles ship yet. The canvas token
+   vocabulary (`--canvas-bg`, `--canvas-grid-*`, `--sticky-*`, keyframes)
+   and the token-audit test arrive with the shape/chrome components in S2
+   (epic #116, decision E). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+
+/* Scoped stand-in for the preflight rules the canvas relies on:
+   box-sizing + zero-width solid borders. Scoped under .wsc-root (the class
+   the <Canvas> root carries) so the host page is never touched. */
+@layer base {
+  .wsc-root *,
+  .wsc-root *::before,
+  .wsc-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .wsc-root button {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+    cursor: pointer;
+  }
+}
+
+/* Tailwind v4's automatic content detection skips node_modules, which is
+   where @workspec/design's components.css lives — @source is the documented
+   mechanism for scanning it anyway (this package's own sources are scanned
+   explicitly too). */
+@source '../node_modules/@workspec/design/dist/components';
+@source './';
