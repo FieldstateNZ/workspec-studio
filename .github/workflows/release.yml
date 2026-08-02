@@ -1,6 +1,7 @@
 name: Release (publish to npm + NuGet)
 
-# Publishes the @workspec/decision-* and @workspec/c4-* packages to npm, and the
+# Publishes the @workspec/* package families (decision, c4, cost, canvas,
+# topology, plus the shared schema-core/mcp-core) to npm, and the
 # Workspec.Aspire.Hosting.* packages to NuGet, when a version tag is pushed (e.g.
 # `v0.1.0-alpha.1`). Any package whose current version is already on its registry
 # is skipped, so families can version independently and a re-run never collides.
@@ -71,6 +72,11 @@ jobs:
         run: pnpm -r build
 
       # Belt-and-braces gate before anything leaves the machine.
+      # NOTE: the C4 visual-parity suite (apps/parity, `pnpm run parity`) is
+      # deliberately NOT part of this gate or CI — its committed goldens are
+      # *-chromium-darwin.png, minted on macOS, and these runners are ubuntu
+      # (see apps/parity/README.md "Darwin-only goldens"). Run it locally on
+      # a Mac before tagging a release that touches canvas/c4 chrome.
       - name: Verify
         run: |
           pnpm typecheck
@@ -87,11 +93,27 @@ jobs:
       - name: Publish (pnpm pack → npm publish, OIDC)
         run: |
           set -euo pipefail
+          # The publishable set, walked IN DEPENDENCY ORDER (a package must be
+          # published after everything it depends on, so the registry is never
+          # left referencing an unpublished version):
+          #   - schema-core first (decision-schema + topology-schema/model dep on it);
+          #   - mcp-core before every *-studio (they all dep on it since #100);
+          #   - canvas before canvas-c4; canvas-c4 after c4-layout/model/schema
+          #     and before c4-ui (S5, #121 — the canvas extraction);
+          #   - topology-cost after decision-engine/schema; topology-studio last
+          #     in its family (deps on mcp-core + every topology sibling).
+          # A BRAND-NEW name cannot be created by this OIDC job — it needs the
+          # one-time manual bootstrap publish + trusted-publisher registration
+          # (docs/decisions/RELEASING.md "First publish of a new package")
+          # BEFORE the tag push, or this loop fails on it with E404.
           packages=(
             schema-core
+            mcp-core
             decision-schema decision-engine decision-ui decision-studio
-            c4-schema c4-model c4-layout c4-ui c4-studio
+            canvas
+            c4-schema c4-model c4-layout canvas-c4 c4-ui c4-studio
             cost-schema cost-provider cost-provider-azure cost-engine cost-ui cost-studio
+            topology-schema topology-model topology-adapters topology-recon topology-cost topology-ui topology-studio
           )
           out="$(mktemp -d)"
           published=0

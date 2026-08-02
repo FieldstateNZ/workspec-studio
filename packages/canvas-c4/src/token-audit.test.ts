@@ -27,6 +27,63 @@ const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/;
 const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(/;
 const TAILWIND_ARBITRARY_COLOR = /-\[(?:#|(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(|color:)/;
 
+// Named-colour keywords as complete style VALUES (S5, #121 — this package
+// never had packages/canvas's S4 named-colour scan; it lands here with the
+// extended, COMPLETE CSS <named-color> set so `steelblue` etc. cannot
+// evade the hex/function greps). `white` inside color-mix( is the ONE
+// sanctioned keyword (the `.c4-el` dark accent lift in index.css) —
+// color-mix arguments are stripped before the scan. Mirrors
+// packages/canvas/src/token-audit.test.ts.
+//
+// The full 148-keyword set from CSS Color Module Level 4 §6.1
+// (`transparent`/`currentcolor` are system keywords, not named colours,
+// and are token-discipline-neutral — deliberately excluded).
+// prettier-ignore
+const CSS_NAMED_COLORS = [
+  'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black',
+  'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
+  'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan',
+  'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
+  'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
+  'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink',
+  'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen',
+  'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow',
+  'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
+  'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+  'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
+  'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue',
+  'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine',
+  'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue',
+  'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+  'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange',
+  'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred',
+  'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple',
+  'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell',
+  'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen',
+  'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white',
+  'whitesmoke', 'yellow', 'yellowgreen',
+];
+// Longest-first so a prefix name (`green`) can never shadow a longer one
+// (`greenyellow`) regardless of regex-engine backtracking.
+const NAMED_COLOR_KEYWORDS = [...CSS_NAMED_COLORS].sort((a, b) => b.length - a.length).join('|');
+// TS style-object values (incl. the `background` shorthand). Bare `color:`
+// is deliberately NOT scanned in TS — same data-field rationale as the
+// canvas audit.
+const NAMED_COLOR_VALUE = new RegExp(
+  `(?:backgroundColor|background|borderColor|outlineColor|stroke|fill)\\s*:\\s*['"](?:${NAMED_COLOR_KEYWORDS})['"]`,
+  'i',
+);
+// CSS declarations get the full property set (no data-field ambiguity).
+const NAMED_COLOR_CSS = new RegExp(
+  `(?:color|background(?:-color)?|border(?:-color)?|stroke|fill|outline(?:-color)?)\\s*:\\s*(?:${NAMED_COLOR_KEYWORDS})\\s*[;!}]`,
+  'i',
+);
+
+/** Drop color-mix(...) argument lists so the sanctioned `white 22%` lift never trips the named-colour scan. */
+function stripColorMixArgs(text: string): string {
+  return text.replace(/color-mix\([^)]*\)/g, 'color-mix()');
+}
+
 function sourceFiles(): string[] {
   return readdirSync(SRC, { recursive: true, encoding: 'utf8' })
     .filter((rel) => /\.(ts|tsx|css)$/.test(rel))
@@ -138,10 +195,15 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     for (const rel of sourceFiles()) {
       if (VALUE_EXEMPT.has(rel)) continue;
       const text = stripComments(readFileSync(join(SRC, rel), 'utf8'), rel.endsWith('.css'));
+      const scanned = stripColorMixArgs(text);
+      const namedHit = rel.endsWith('.css')
+        ? NAMED_COLOR_CSS.test(scanned)
+        : NAMED_COLOR_VALUE.test(scanned);
       if (
-        HEX_COLOR.test(text) ||
-        COLOR_FUNCTION.test(text) ||
-        TAILWIND_ARBITRARY_COLOR.test(text)
+        HEX_COLOR.test(scanned) ||
+        COLOR_FUNCTION.test(scanned) ||
+        TAILWIND_ARBITRARY_COLOR.test(scanned) ||
+        namedHit
       ) {
         offenders.push(rel);
       }
@@ -156,5 +218,18 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(
       false,
     );
+    // Named-colour keyword values (S5, #121) — extended set + background
+    // shorthand caught; the `.c4-el` color-mix white lift is not.
+    expect(NAMED_COLOR_VALUE.test("background: 'steelblue'")).toBe(true);
+    expect(NAMED_COLOR_VALUE.test("stroke: 'rebeccapurple'")).toBe(true);
+    expect(NAMED_COLOR_CSS.test('  border-color: tomato;')).toBe(true);
+    expect(NAMED_COLOR_CSS.test('  background: greenyellow;')).toBe(true); // prefix never shadows
+    expect(CSS_NAMED_COLORS).toHaveLength(148); // the complete CSS Color 4 set
+    expect(NAMED_COLOR_CSS.test('  background: transparent;')).toBe(false);
+    expect(
+      NAMED_COLOR_CSS.test(
+        stripColorMixArgs('--c4-el-accent: color-mix(in oklab, var(--el-accent-raw), white 22%);'),
+      ),
+    ).toBe(false);
   });
 });

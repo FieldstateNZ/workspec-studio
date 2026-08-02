@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { STICKY_COLORS } from './shapes/sticky/sticky-shared.js';
 
 // The S2 token-audit (#118, decision E), two directions + the house grep:
 //
@@ -27,22 +28,58 @@ const VALUE_EXEMPT = new Set(['style/shape-defaults.ts', 'style/local-tokens.css
 const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/;
 const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(/;
 const TAILWIND_ARBITRARY_COLOR = /-\[(?:#|(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(|color:)/;
-// Named-colour keywords as complete style VALUES (S4 hardening, #120):
-// `backgroundColor: 'red'` etc. would sail through the function/hex greps.
-// Bare `color:` is deliberately NOT scanned in TS — it collides with the
-// StickyColor DATA field (`color: 'yellow'` names a paper colour, not a
-// CSS value); the unambiguous style properties below cover the real risk.
-// `white` inside color-mix( is the ONE sanctioned keyword (the canonical
-// enterprise dark-lift literal) — color-mix arguments are stripped before
-// the scan.
-const NAMED_COLOR_KEYWORDS =
-  'red|green|blue|white|black|orange|purple|yellow|pink|gray|grey|cyan|magenta|silver|maroon|navy|teal|olive|lime|aqua|fuchsia';
+// Named-colour keywords as complete style VALUES (S4 hardening, #120;
+// extended to the COMPLETE CSS <named-color> set in S5, #121 — the S4
+// list carried ~20 common names, so `steelblue`, `rebeccapurple`,
+// `tomato` etc. sailed through). `backgroundColor: 'red'` etc. would sail
+// through the function/hex greps. Bare `color:` is deliberately NOT
+// scanned in TS — it collides with the StickyColor DATA field
+// (`color: 'yellow'` names a paper colour, not a CSS value); the
+// unambiguous style properties below cover the real risk. `white` inside
+// color-mix( is the ONE sanctioned keyword (the canonical enterprise
+// dark-lift literal) — color-mix arguments are stripped before the scan.
+//
+// The full 148-keyword set from CSS Color Module Level 4 §6.1
+// (`transparent`/`currentcolor` are system keywords, not named colours,
+// and are token-discipline-neutral — deliberately excluded).
+// prettier-ignore
+const CSS_NAMED_COLORS = [
+  'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black',
+  'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
+  'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan',
+  'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
+  'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
+  'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink',
+  'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen',
+  'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow',
+  'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
+  'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+  'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
+  'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue',
+  'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine',
+  'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue',
+  'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+  'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange',
+  'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred',
+  'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple',
+  'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell',
+  'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen',
+  'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white',
+  'whitesmoke', 'yellow', 'yellowgreen',
+];
+// Longest-first so a prefix name (`green`) can never shadow a longer one
+// (`greenyellow`) regardless of regex-engine backtracking.
+const NAMED_COLOR_KEYWORDS = [...CSS_NAMED_COLORS].sort((a, b) => b.length - a.length).join('|');
+// TS style-object values. `background` (the shorthand) joined the property
+// set in S5 (#121): `background: 'steelblue'` previously evaded the scan.
 const NAMED_COLOR_VALUE = new RegExp(
-  `(?:backgroundColor|borderColor|outlineColor|stroke|fill)\\s*:\\s*'(?:${NAMED_COLOR_KEYWORDS})'`,
+  `(?:backgroundColor|background|borderColor|outlineColor|stroke|fill)\\s*:\\s*['"](?:${NAMED_COLOR_KEYWORDS})['"]`,
+  'i',
 );
 // CSS declarations get the full property set (no data-field ambiguity).
 const NAMED_COLOR_CSS = new RegExp(
   `(?:color|background(?:-color)?|border(?:-color)?|stroke|fill|outline(?:-color)?)\\s*:\\s*(?:${NAMED_COLOR_KEYWORDS})\\s*[;!}]`,
+  'i',
 );
 
 /** Drop color-mix(...) argument lists so the sanctioned `white 22%` lift never trips the named-colour scan. */
@@ -158,10 +195,19 @@ describe('token audit — var(--*) resolution', () => {
   it('interpolated sticky-token reads resolve for EVERY expansion (S4 hardening, #120)', () => {
     // The package's only template-interpolated var() family is
     // `var(--sticky-${color}-{bg|edge|ink})` over the StickyColor union —
-    // validate the full cross product, not just the prefix.
+    // validate the full cross product, not just the prefix. Both axes are
+    // DERIVED from `STICKY_COLORS` (S5, #121 — was a hard-coded 6-list):
+    // it is a `Record<StickyColor, {bg; ink; edge}>`, so its keys are
+    // exhaustive over the union BY TYPE (adding a StickyColor member
+    // without a STICKY_COLORS entry is a compile error in sticky-shared),
+    // and this test can never lag a new paper colour.
     const design = designTokens();
-    for (const color of ['yellow', 'pink', 'blue', 'green', 'orange', 'purple']) {
-      for (const part of ['bg', 'edge', 'ink']) {
+    const colors = Object.keys(STICKY_COLORS);
+    const parts = [...new Set(Object.values(STICKY_COLORS).flatMap((v) => Object.keys(v)))];
+    expect(colors.length).toBeGreaterThanOrEqual(6);
+    expect(parts.sort()).toEqual(['bg', 'edge', 'ink']);
+    for (const color of colors) {
+      for (const part of parts) {
         const token = `--sticky-${color}-${part}`;
         expect(design.has(token), `expansion ${token} missing from design`).toBe(true);
       }
@@ -215,8 +261,17 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     // color-mix white lift are not.
     expect(NAMED_COLOR_VALUE.test("stroke: 'red'")).toBe(true);
     expect(NAMED_COLOR_VALUE.test("backgroundColor: 'white'")).toBe(true);
+    // Extended named colours + the background shorthand (S5, #121):
+    expect(NAMED_COLOR_VALUE.test("background: 'steelblue'")).toBe(true);
+    expect(NAMED_COLOR_VALUE.test("fill: 'rebeccapurple'")).toBe(true);
+    expect(NAMED_COLOR_CSS.test('  border-color: tomato;')).toBe(true);
+    expect(NAMED_COLOR_CSS.test('  background: greenyellow;')).toBe(true); // prefix never shadows
+    expect(CSS_NAMED_COLORS).toHaveLength(148); // the complete CSS Color 4 set
     expect(NAMED_COLOR_VALUE.test("color: 'yellow'")).toBe(false);
     expect(NAMED_COLOR_CSS.test('  background: white;')).toBe(true);
+    // System keywords stay out of scope:
+    expect(NAMED_COLOR_CSS.test('  background: transparent;')).toBe(false);
+    expect(NAMED_COLOR_VALUE.test("fill: 'currentColor'")).toBe(false);
     expect(
       NAMED_COLOR_VALUE.test(stripColorMixArgs('color-mix(in oklab, var(--a), white 22%)')),
     ).toBe(false);

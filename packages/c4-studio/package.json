@@ -1,6 +1,6 @@
 {
   "name": "@workspec/c4-studio",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "WorkSpec C4 Studio — standalone CLI (validate, render, serve) and localhost host shell for browsing, validating, and rendering C4 architecture trees from a working directory's .workspec/ files.",
   "keywords": [
     "c4",

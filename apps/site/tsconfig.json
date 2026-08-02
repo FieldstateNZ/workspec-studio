@@ -5,15 +5,28 @@
     "jsx": "react-jsx",
     "types": ["vite/client"],
     // The site is a living test of the PUBLISHED packages: no `paths` override
-    // and no project `references` — every @workspec/* dependency (decision-*,
-    // c4-*, cost-*) resolves from its registry build (dist + shipped .d.ts) in
-    // node_modules, exactly like an outside consumer, never workspace source.
-    // The @workspec/cost-* packages spent one cycle as a workspace:*
-    // exception (with a references block here); it was retired when the cost
-    // family shipped at v0.1.0-alpha.5 — see docs/cost/drift-log.md entry 1
-    // (mirroring the earlier c4 retirement at v0.1.0-alpha.2, docs/c4/drift-log.md
-    // entry 17).
+    // here, unlike the workspace packages — @workspec/decision-*/cost-* resolve
+    // from their registry build (dist + shipped .d.ts) in node_modules, never
+    // workspace source. The @workspec/c4-* packages are (again) the documented,
+    // TEMPORARY workspace:* devDependency exception (S5, #121 — see
+    // package.json's `_LOUD_NOTICE_devDependencies_c4_packages` and
+    // docs/c4/drift-log.md entry 20): they resolve through pnpm's symlink to
+    // each package's own dist + .d.ts, which only exists after a build — so
+    // they alone need the project references below, letting `tsc -b` build
+    // their declarations on demand (CI runs typecheck before build; without
+    // references a clean tree fails TS2307). c4-ui's own build references pull
+    // @workspec/canvas + @workspec/canvas-c4 transitively. Registry deps need
+    // none: published .d.ts ship in node_modules. Drop this block again when
+    // the exception retires (mirroring the alpha.2 c4 retirement, drift-log
+    // entry 17, and the alpha.5 cost retirement, docs/cost/drift-log.md
+    // entry 1).
     "noEmit": true
   },
+  "references": [
+    { "path": "../../packages/c4-schema/tsconfig.build.json" },
+    { "path": "../../packages/c4-model/tsconfig.build.json" },
+    { "path": "../../packages/c4-layout/tsconfig.build.json" },
+    { "path": "../../packages/c4-ui/tsconfig.build.json" }
+  ],
   "include": ["src"]
 }

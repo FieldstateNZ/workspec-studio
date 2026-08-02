@@ -23,10 +23,14 @@ function spaFallback(): Plugin {
 // no workspace-source aliases, no `@workspec/source` condition. Vite's
 // default resolution picks each package's `import`/`browser` export (its
 // dist build), which is exactly what an outside consumer would get from
-// npm. (The @workspec/c4-* and @workspec/cost-* packages each spent one
-// release cycle as a workspace:* exception here — c4 retired at
-// v0.1.0-alpha.2, cost at v0.1.0-alpha.5; see docs/c4/drift-log.md entry 17
-// and docs/cost/drift-log.md entry 1.)
+// npm. EXCEPTION (temporary, S5 #121): the @workspec/c4-* packages are
+// workspace:* devDependencies again until the canvas-recomposition alpha
+// publishes — still consumed via each package's built dist through the pnpm
+// symlink (no source aliases), so the consumption SHAPE stays
+// registry-identical; only the tarball's origin differs. See package.json's
+// `_LOUD_NOTICE_devDependencies_c4_packages` + docs/c4/drift-log.md entry
+// 20. (Prior art: c4 retired the same exception at v0.1.0-alpha.2, cost at
+// v0.1.0-alpha.5 — drift-log entries 17 / cost entry 1.)
 export default defineConfig({
   base: '/',
   plugins: [tailwindcss(), react(), spaFallback()],

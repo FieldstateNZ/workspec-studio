@@ -83,10 +83,15 @@ The generic core of the enterprise C4 bridge; the full C4 extension ships with
 
 ```ts
 interface CanvasHost {
+  // Fallback-semantics methods (boolean return is the contract above):
   deleteShapes?: (ids: ShapeId[]) => boolean;
   renameShape?: (id: ShapeId, label: string) => boolean;
   moveToContainer?: (ids: ShapeId[], containerId: string | null) => boolean;
-  autoLayout?: () => void;
+  // Notify-style methods (no local fallback — the model is host-owned):
+  autoLayout?: () => void; // re-arrange + persist (host-defined algorithm)
+  createEdge?: (fromKey: string, toKey: string) => void; // connector-tool drag release; keys = ShapeUtil.connectorKey
+  renameEdge?: (fromKey: string, toKey: string, label: string) => void; // fired AFTER the local optimistic label update
+  placeNode?: (nodeType: string, point: Vec2) => void; // place tool drop (store.placementNodeType carries the palette pick)
 }
 ```
 
@@ -102,8 +107,14 @@ Install with `instance.host = {...}` (and reset to `{}` on unmount, as the enter
   container menu + auto-layout gate — was `'c4_boundary'`), `selfRendersSelection` (SelectionLayer
   opt-out — was connector/flowarrow/c4node/sticky/screen), `isConnectable`/`connectorKey` (the
   connector tool's endpoint set + host-model keys — legacy c4node/workflownode/diagram-node names
-  still work as a fallback), `isGroupContainer`/`containerTitle` (the context menu's move-to-group
-  targets — was groupframe/diagram-group).
+  still work as a fallback), `routedEdges` (connectors touching the shape route through the
+  ORTHOGONAL elbow router instead of a straight Discovery tie — was the router's hard-coded
+  routed-kind set) and `isRouteObstacle` (the router detours AROUND the shape — was
+  `type === 'c4node'`; containers/boundaries deliberately leave it unset so edges may cross
+  them), `isGroupContainer`/`containerTitle` (the context menu's move-to-group
+  targets — was groupframe/diagram-group). For `routedEdges`/`isRouteObstacle` the legacy
+  c4node/diagram-node/workflownode type names remain recognised when the capability is absent, so
+  enterprise re-adoption works with bare utils.
 - **`instance.tools`** — per-instance `Tool` registration, dispatched by `usePointerEvents` on
   `store.activeTool` (unregistered names fall back to the select tool, which every instance
   pre-registers). Keyboard tool keys (`v/h/s/t/d/l`) only fire for registered tools.
@@ -115,7 +126,16 @@ Install with `instance.host = {...}` (and reset to `{}` on unmount, as the enter
 ## Conventions the engine relies on
 
 - `data-canvas-ui` on any chrome element inside the canvas root makes pointer events pass it by.
+- `data-export-exclude` marks non-document chrome (background grid, toolbar, zoom controls,
+  minimap) for image-export filters: the engine stamps it on everything that is UI rather than
+  content, and a host's DOM/raster exporter (enterprise: html-to-image's `filter`) must skip any
+  element carrying it. The engine itself never reads it — the attribute IS the contract.
 - Shape z-order is the fractional `index` string (`utils/fractional-index`), sorted ascending.
+- `BaseShape.lensOffset` is the structured-lens glide delta: in `lens: 'structured'` a shape
+  renders (and hit-tests/marquees, via `utils/lens`'s `effectivePosition`/`effectiveBounds`) at
+  `x + lensOffset.dx / y + lensOffset.dy` WITHOUT touching the stored x/y, so the discovery-lens
+  document geometry survives the round trip. Draw strokes are ghosted and unhittable in
+  structured lens.
 - Keyboard scoping is a `<Canvas shortcutScope>` policy (#118): `'window'` (default — enterprise
   parity, shortcuts work without focusing the canvas; one canvas per page) / `'root'` (bindings on
   the focusable canvas root, fire only with focus inside it — REQUIRED for multi-canvas pages) /

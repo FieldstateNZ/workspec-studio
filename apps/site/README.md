@@ -38,17 +38,14 @@ That makes the site a **living integration test of the published artifacts**: if
 running `npm install`. The vendored `src/examples/*.yaml` are a verbatim copy of
 the repo's `examples/`, and validate against the published schema's `apiVersion`.
 
-The four `@workspec/c4-*` packages are registry pins in `dependencies`, exactly like
-`@workspec/decision-*`. (They spent one release cycle as a documented `workspace:*`
-devDependency exception while unpublished — retired at v0.1.0-alpha.2; the history lives in
-`docs/c4/drift-log.md` entry 17.)
-
-`@workspec/cost-schema`, `@workspec/cost-engine`, and `@workspec/cost-ui` are, for now, a
-**documented `workspace:*` devDependency exception** (see `package.json`'s own
-`_LOUD_NOTICE_devDependencies_cost_packages` and `docs/cost/drift-log.md` entry 1) — the cost
-family hasn't published to npm yet. They flip to registry pins in `dependencies`, the same shape
-`@workspec/c4-*` already has, the first time the cost family ships — see
-[`docs/cost/launch-checklist.md`](../../docs/cost/launch-checklist.md) item 3.
+The four `@workspec/c4-*` packages are, for now, a **documented `workspace:*` devDependency
+exception** (see `package.json`'s own `_LOUD_NOTICE_devDependencies_c4_packages` and
+`docs/c4/drift-log.md` entry 20): the S4 canvas recomposition (#120) rebuilt `c4-ui` on the
+not-yet-published `@workspec/canvas` + `@workspec/canvas-c4`, so a registry pin can't show the
+real `/c4/demo` until the family publishes at `0.1.0-alpha.6`. They flip back to registry pins in
+`dependencies` at that publish — the same retire-the-exception step the c4 family already did once
+at v0.1.0-alpha.2 (entry 17) and the cost family did at v0.1.0-alpha.5
+(`docs/cost/drift-log.md` entry 1; both are registry pins today).
 
 ## Develop
 

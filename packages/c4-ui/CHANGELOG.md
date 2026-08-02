@@ -1,6 +1,12 @@
 # @workspec/c4-ui changelog
 
-## Unreleased (S4, #120 — the canvas recomposition)
+## 0.1.0-alpha.6 (S4 #120 + S5 #121 — the canvas recomposition; staged, publishes on the next tag)
+
+S5 additions: the pre-S4 SVG renderer's dead `.c4-node*`/`.c4-canvas` chrome rules were pruned
+from `styles.css` (anything still selecting against them — CSS overrides, automation — must
+target the canvas-c4 `.c4-el` card chrome instead; the `.c4-node` tint-derivation block itself
+remains as the pinned encoding `element-tints.test.ts` verifies against `renderSvg`). READMEs
+now document the recomposition contracts. Everything below landed in S4:
 
 `C4Diagram` and `C4Explorer` are now facades over the shared canvas engine
 (`@workspec/canvas` + `@workspec/canvas-c4`) — the enterprise C4 look on the

@@ -58,7 +58,17 @@ Decisions' option-card. Colour-value exceptions (all documented in-file, enforce
 
 ## meta protocol
 
-`meta.ephemeral` + `meta.slug` are projection-set; `meta.inBoundary` tags contained nodes for
-host reflow; `meta.pending` drives the inline name editor + `commitNewNode`; `meta.dimmed` is the
-(currently host-only) spotlight flag; `meta.validationErrors` / `meta.artifactRefId` are
-enterprise-host artifact data driving the validity markers + element editor.
+Normative (`C4NodeMeta` in `src/c4-types.ts` is the typed contract):
+
+- **Projection-set** (never write these from a host): `meta.ephemeral` (every projected shape —
+  the engine's `exportSnapshot` filters them, see the `@workspec/canvas` README),
+  `meta.slug` (the node's model identity), `meta.elementSlug` (the resolved ELEMENT slug when it
+  differs from the nodeId — fat/aliased nodes), `meta.inBoundary` (tags contained nodes so a
+  host's live boundary reflow can recompute the panel from its contents), and the carried-through
+  Studio extras `meta.technology` / `meta.tags` / `meta.injected` / `meta.dangling`.
+- **Host-set**: `meta.pending` (a locally-created node not yet named/persisted — drives the
+  inline name editor + `commitNewNode`), `meta.dimmed` (the spotlight flag: the current
+  enterprise projection never sets it, but the card still renders it — grayscale + brightness
+  drop — so hosts can re-enable spotlighting by writing it), `meta.validationErrors` /
+  `meta.artifactRefId` (enterprise-host artifact data the studio `ResolvedDiagram` doesn't carry;
+  drives the validity markers + `openElementEditor`).

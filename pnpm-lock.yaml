@@ -150,18 +150,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.62.7
         version: 5.101.2(react@18.3.1)
-      '@workspec/c4-layout':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
-      '@workspec/c4-model':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
-      '@workspec/c4-schema':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
-      '@workspec/c4-ui':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       '@workspec/cost-engine':
         specifier: 0.1.0-alpha.5
         version: 0.1.0-alpha.5
@@ -214,6 +202,18 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.7.0(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@workspec/c4-layout':
+        specifier: workspace:*
+        version: link:../../packages/c4-layout
+      '@workspec/c4-model':
+        specifier: workspace:*
+        version: link:../../packages/c4-model
+      '@workspec/c4-schema':
+        specifier: workspace:*
+        version: link:../../packages/c4-schema
+      '@workspec/c4-ui':
+        specifier: workspace:*
+        version: link:../../packages/c4-ui
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
@@ -3684,21 +3684,6 @@ packages:
 
   '@vitest/utils@4.1.10':
     resolution: {integrity: sha512-fy9am/HWxbaGt/Sawrp90vt6Y6jQwf1RX77cz3uwoJwJVMli/e1IEwRPnMNJ7vKfPTwo0diXifkpPvwH9v7nGA==}
-
-  '@workspec/c4-layout@0.1.0-alpha.5':
-    resolution: {integrity: sha512-PDMciqxOnUwA74RdsNDxLk9xehl+8QZfdOszQTPiVDHSbvb4UDN+h9vwzUVSljG4G9jHP423XjjetaibsFxqEw==}
-
-  '@workspec/c4-model@0.1.0-alpha.5':
-    resolution: {integrity: sha512-LDh8jsmx/TtSMnGdfsnmA+JhFNq9lhDNbTeHj1IElnKkC75s1vWCse81WIlv4R49fl+ZvShgxpEON9DTaI6s4Q==}
-
-  '@workspec/c4-schema@0.1.0-alpha.5':
-    resolution: {integrity: sha512-oKWBT0Q481HgpW7IlsqKykH35mHOZMLJWUGxV1G42NmKBQTlkX04qonY7shVvULNO2IzkL5j8+pDC4hhF80WfQ==}
-
-  '@workspec/c4-ui@0.1.0-alpha.5':
-    resolution: {integrity: sha512-kalGPaHa7O7lz1bCdraPfDImjOg2sYV8DDNrWyIIATe/hX0IZNR5AyXlhAprKqAjdLUInTSioE2bRlnOiil6zA==}
-    peerDependencies:
-      react: ^18.3.0
-      react-dom: ^18.3.0
 
   '@workspec/cost-engine@0.1.0-alpha.5':
     resolution: {integrity: sha512-uq1xRMw+wy3eZf03ujjnD499s3GP0wgioiH7nDqDMyrMQijcOJ+x6x8PYc41wpBPKMlHYLJUO3DzxabOugF9pA==}
@@ -7887,35 +7872,6 @@ snapshots:
       '@vitest/pretty-format': 4.1.10
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
-
-  '@workspec/c4-layout@0.1.0-alpha.5':
-    dependencies:
-      '@workspec/c4-model': 0.1.0-alpha.5
-      '@workspec/c4-schema': 0.1.0-alpha.5
-      elkjs: 0.11.1
-
-  '@workspec/c4-model@0.1.0-alpha.5':
-    dependencies:
-      '@workspec/c4-schema': 0.1.0-alpha.5
-
-  '@workspec/c4-schema@0.1.0-alpha.5':
-    dependencies:
-      yaml: 2.9.0
-      zod: 4.4.3
-
-  '@workspec/c4-ui@0.1.0-alpha.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
-    dependencies:
-      '@workspec/c4-layout': 0.1.0-alpha.5
-      '@workspec/c4-model': 0.1.0-alpha.5
-      '@workspec/c4-schema': 0.1.0-alpha.5
-      '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
-      lucide-react: 0.545.0(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    transitivePeerDependencies:
-      - '@types/react'
-      - '@types/react-dom'
-      - tailwindcss
 
   '@workspec/cost-engine@0.1.0-alpha.5':
     dependencies:
