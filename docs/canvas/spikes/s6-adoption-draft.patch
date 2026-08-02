@@ -1,0 +1,1383 @@
+diff --git a/artifacts/workspec/package.json b/artifacts/workspec/package.json
+index 6a61d704..9bc65549 100644
+--- a/artifacts/workspec/package.json
++++ b/artifacts/workspec/package.json
+@@ -77,7 +77,9 @@
+     "zod": "catalog:"
+   },
+   "dependencies": {
+-    "zustand": "^4.5.7",
++    "@workspec/canvas": "^0.1.0-alpha.1",
++    "@workspec/canvas-c4": "^0.1.0-alpha.1",
++    "zustand": "^5.0.8",
+     "nanoid": "^3.3.11",
+     "fractional-indexing-jittered": "^1.0.0",
+     "@dnd-kit/core": "^6.3.1",
+diff --git a/artifacts/workspec/src/canvas/c4/resolvedAdapter.ts b/artifacts/workspec/src/canvas/c4/resolvedAdapter.ts
+new file mode 100644
+index 00000000..1307304b
+--- /dev/null
++++ b/artifacts/workspec/src/canvas/c4/resolvedAdapter.ts
+@@ -0,0 +1,93 @@
++// S6 SPIKE DRAFT (#122, task 3) — DiagramDetailIn → ResolvedDiagram
++// adapter, so the enterprise wire model feeds the package's
++// `buildC4Shapes` unchanged. Verified against @workspec/canvas-c4:
++// `buildC4Shapes` reads only `resolved.view` / `resolved.lensViews` /
++// `resolved.type`; `projectC4Diagram` additionally reads
++// `resolved.layout?.data` — the enterprise skips that entrypoint entirely
++// (it keeps its dagre/saved-layout position authority and passes
++// `options.positions`), so `raw`/`layout` are inert here.
++//
++// Enterprise-host fields the studio model deliberately lacks
++// (`validationErrors`, `artifactRefId`) ride via the documented
++// `C4NodeMeta` post-pass below — the S3 field split (#119).
++
++import type { ResolvedDiagram } from '@workspec/c4-model';
++import {
++  buildC4Shapes,
++  type BuildC4ShapesOptions,
++  type C4NodeShape,
++  type ProjectionResult,
++} from '@workspec/canvas-c4';
++import type { Shape, ShapeId } from '@/canvas/types';
++import type { DiagramDetailIn, DiagramNodeIn } from './projectModel';
++
++/** Maps the enterprise diagram wire detail to the package's resolved-diagram input. */
++export function toResolvedDiagram(detail: DiagramDetailIn): ResolvedDiagram {
++  const nodes = (detail.diagram.nodes ?? []).map((n) => ({
++    nodeId: n.id,
++    slug: n.id,
++    kind: n.type,
++    title: n.label,
++    description: n.description ?? null,
++    technology: null,
++    tags: [] as readonly string[],
++    position: null,
++    injected: false,
++    dangling: false,
++  }));
++  const edges = (detail.diagram.edges ?? []).map((e) => ({
++    from: e.from,
++    to: e.to,
++    label: e.label ?? null,
++    category: e.category ?? null,
++    lens: e.lens ?? null,
++    dangling: false,
++  }));
++  return {
++    slug: '',
++    path: '',
++    title: '',
++    type: detail.diagram.type,
++    description: null,
++    // `raw` is required by the type but never read by the projection —
++    // PACKAGE GAP #3 in the adoption report proposes a dedicated input
++    // type (or making these fields optional) so hosts don't synthesise.
++    raw: { title: '', type: detail.diagram.type, nodes: [], edges: [] } as ResolvedDiagram['raw'],
++    view: { nodes, edges },
++    lensViews: null,
++    layout: null,
++  };
++}
++
++/**
++ * The enterprise projection entry point: adapter → package projection →
++ * host-meta post-pass. Signature mirrors the retired local `buildShapes`
++ * so `useC4Diagram`'s call sites change mechanically.
++ */
++export function buildEnterpriseC4Shapes(
++  detail: DiagramDetailIn,
++  options: BuildC4ShapesOptions,
++): ProjectionResult {
++  const result = buildC4Shapes(toResolvedDiagram(detail), options);
++
++  // Post-pass: layer the enterprise artifact data onto `meta` (the
++  // documented C4NodeMeta protocol — validity markers + element editor).
++  const byId = new Map<string, DiagramNodeIn>();
++  for (const n of detail.diagram.nodes ?? []) byId.set(n.id, n);
++  const shapes: Record<ShapeId, Shape> = { ...result.shapes };
++  for (const [id, shape] of Object.entries(shapes)) {
++    if (shape.type !== 'c4node') continue;
++    const node = shape as C4NodeShape;
++    const src = byId.get(node.slug);
++    if (!src) continue;
++    shapes[id as ShapeId] = {
++      ...node,
++      meta: {
++        ...(node.meta ?? {}),
++        ...(src.validationErrors?.length ? { validationErrors: src.validationErrors } : {}),
++        artifactRefId: src.artifactRefId ?? null,
++      },
++    };
++  }
++  return { ...result, shapes };
++}
+diff --git a/artifacts/workspec/src/canvas/register-enterprise-shapes.ts b/artifacts/workspec/src/canvas/register-enterprise-shapes.ts
+new file mode 100644
+index 00000000..ff7213c2
+--- /dev/null
++++ b/artifacts/workspec/src/canvas/register-enterprise-shapes.ts
+@@ -0,0 +1,140 @@
++// S6 SPIKE DRAFT — enterprise shape/tool registration onto the package's
++// open registries (#122, task 2). Replaces the closed module-level
++// `shapes/registry.ts` record. The whiteboard base set + C4 modules come
++// from the packages; every enterprise-only family registers on top with
++// the SAME util objects it has today (the package `ShapeUtil` is a strict
++// structural superset of the enterprise interface — verified field by
++// field against `@workspec/canvas` shape-util.ts).
++//
++// Capability mapping (replacing the enterprise chrome's hard-coded
++// per-type lists):
++//   selfRendersSelection — was SelectionLayer's opt-out list
++//     (connector/flowarrow/c4node/sticky/screen). connector+sticky ship
++//     opted-in from the package, c4node from canvas-c4; flowarrow and
++//     screen opt in HERE on their own registrations.
++//   isConnectable/connectorKey — was ConnectorTool's kind set
++//     (c4node/workflownode/diagram-node). The package keeps the legacy
++//     names as a fallback, so bare re-registration already works; we wire
++//     the capability explicitly anyway (fallbacks are a deprecation path).
++//   routedEdges/isRouteObstacle — was the router's hard-coded c4-family
++//     checks; workflownode + diagram-node opt in here.
++//   isGroupContainer/containerTitle — was the context menu's
++//     groupframe/diagram-group checks.
++//   isContextMenuSurface — c4boundary only (ships from canvas-c4).
++
++import {
++  registerWhiteboard,
++  type CanvasStoreInstance,
++  type ShapeUtil,
++} from '@workspec/canvas';
++import { registerC4 } from '@workspec/canvas-c4';
++
++// Enterprise-only utils — unchanged files, only their `ShapeUtil` import
++// now resolves to the package type (see the per-file diffs).
++import { artifactCardShapeUtil } from './shapes/artifactcard/ArtifactCardShapeUtil';
++import { atlasSuggestionShapeUtil } from './shapes/atlassuggestion/AtlasSuggestionShapeUtil';
++import { entityCardShapeUtil } from './shapes/entitycard/EntityCardShapeUtil';
++import { journeyCardShapeUtil } from './shapes/journeycard/JourneyCardShapeUtil';
++import { boardCardShapeUtil } from './shapes/boardcard/BoardCardShapeUtil';
++import { workflowNodeShapeUtil } from './shapes/workflownode/WorkflowNodeShapeUtil';
++import { diagramNodeShapeUtil } from './shapes/diagramnode/DiagramNodeShapeUtil';
++import { diagramGroupShapeUtil } from './shapes/diagramgroup/DiagramGroupShapeUtil';
++import { groupFrameShapeUtil } from './shapes/groupframe/GroupFrameShapeUtil';
++import { screenShapeUtil } from './shapes/screen/ScreenShapeUtil';
++import { deviceShapeUtil } from './shapes/device/DeviceShapeUtil';
++import { wireframeShapeUtil } from './shapes/wireframe/WireframeShapeUtil';
++import { flowArrowShapeUtil } from './shapes/flowarrow/FlowArrowShapeUtil';
++import type {
++  AtlasSuggestionShape,
++  ArtifactCardShape,
++  DiagramNodeShape,
++  DiagramGroupShape,
++  FlowArrowShape,
++  GroupFrameShape,
++  ScreenShape,
++  WorkflowNodeShape,
++} from '@/canvas/types';
++
++/**
++ * Registers everything the unified project canvas renders. Called once at
++ * module init by `@/canvas/store` on the singleton instance.
++ */
++export function registerEnterpriseCanvas(instance: CanvasStoreInstance): void {
++  // Whiteboard base (sticky/text/draw/image/connector + their tools) and
++  // the C4 layer (c4node/c4boundary with enterprise card chrome).
++  registerWhiteboard(instance);
++  registerC4(instance);
++
++  // ── Representative enterprise-only modules (task 2 of the spike) ──────
++
++  // artifactcard: plain rect card, default AABB selection (it was never in
++  // the SelectionLayer opt-out list), not connectable, not routed. The
++  // bare util registers with ZERO capability additions — the base contract
++  // covers it entirely.
++  instance.shapeUtils.registerModule<ArtifactCardShape>({
++    type: 'artifactcard',
++    util: artifactCardShapeUtil,
++  });
++
++  // atlassuggestion: ephemeral ghost card minted by useAtlasCeremony via
++  // `createShape` + `markRecent`; accept/dismiss buttons inside the
++  // Component call `deleteShapes` (host returns false → local undoable
++  // delete — the fallback contract at work). Fixed footprint, no resize,
++  // no text edit. Also fully served by the base contract.
++  instance.shapeUtils.registerModule<AtlasSuggestionShape>({
++    type: 'atlassuggestion',
++    util: atlasSuggestionShapeUtil,
++  });
++
++  // ── The rest of the enterprise families, with explicit capabilities ───
++
++  instance.shapeUtils.register(entityCardShapeUtil);
++  instance.shapeUtils.register(journeyCardShapeUtil);
++  instance.shapeUtils.register(boardCardShapeUtil);
++
++  instance.shapeUtils.register({
++    ...workflowNodeShapeUtil,
++    // ConnectorTool endpoint (was the hard-coded kind set); host-model key
++    // is the workflow state key, mirroring c4node's slug.
++    isConnectable: () => true,
++    connectorKey: (s: WorkflowNodeShape) => s.stateKey,
++    routedEdges: () => true,
++    isRouteObstacle: () => true,
++  } satisfies ShapeUtil<WorkflowNodeShape>);
++
++  instance.shapeUtils.register({
++    ...diagramNodeShapeUtil,
++    isConnectable: () => true,
++    routedEdges: () => true,
++    isRouteObstacle: () => true,
++  } satisfies ShapeUtil<DiagramNodeShape>);
++
++  instance.shapeUtils.register({
++    ...diagramGroupShapeUtil,
++    isGroupContainer: () => true,
++    containerTitle: (s: DiagramGroupShape) => s.label,
++  } satisfies ShapeUtil<DiagramGroupShape>);
++
++  instance.shapeUtils.register({
++    ...groupFrameShapeUtil,
++    isGroupContainer: () => true,
++    containerTitle: (s: GroupFrameShape) => s.title ?? 'Group',
++  } satisfies ShapeUtil<GroupFrameShape>);
++
++  // Prototype/wireframe family (deferred from OSS v1 — stays enterprise).
++  // screen + flowarrow were on the SelectionLayer opt-out list.
++  instance.shapeUtils.register({
++    ...screenShapeUtil,
++    selfRendersSelection: () => true,
++  } satisfies ShapeUtil<ScreenShape>);
++  instance.shapeUtils.register(deviceShapeUtil);
++  instance.shapeUtils.register(wireframeShapeUtil);
++  instance.shapeUtils.register({
++    ...flowArrowShapeUtil,
++    selfRendersSelection: () => true,
++  } satisfies ShapeUtil<FlowArrowShape>);
++
++  // Enterprise-only tools (FlowTool for the prototype flow arrows) would
++  // register here via `instance.tools.register(...)`; the whiteboard/C4
++  // tool set is already installed by the two register calls above.
++}
+diff --git a/artifacts/workspec/src/canvas/screen-elements.ts b/artifacts/workspec/src/canvas/screen-elements.ts
+new file mode 100644
+index 00000000..445da066
+--- /dev/null
++++ b/artifacts/workspec/src/canvas/screen-elements.ts
+@@ -0,0 +1,116 @@
++// S6 SPIKE DRAFT (#122) — Prototype Builder screen-element sub-selection,
++// extracted from the retired enterprise store (its `selectedElement` state
++// + addScreenElement / moveScreenElementLive / commitScreenElementMove /
++// selectElement / alignScreenElements actions, #367). The package store
++// deliberately dropped these (screen family is deferred from OSS v1), so
++// they live enterprise-side over the PUBLIC store seams:
++//
++// - sub-selection: its own tiny zustand store (it was never document
++//   state — it's view state, like the retired useCanvasHover singleton);
++// - shape mutations: pure command builders executed via the store's
++//   documented `_executeCommand` (undoable) / `_setShapesRaw` (live-drag)
++//   escape hatches — the exact same write discipline the old actions used
++//   internally.
++//
++// Consumers (ScreenShapeComponent, usePaletteDrag, useScreenElementDrag,
++// PrototypeScreensPanel) swap `useCanvasStore((s) => s.selectedElement)`
++// for `useScreenSelection()` — the only external call-site change the
++// whole shim design requires, and it is confined to the prototype family.
++
++import { createStore } from 'zustand/vanilla';
++import { useStore } from 'zustand';
++import { canvasInstance } from '@/canvas/store';
++import { snapToGrid, alignScreenEls } from '@/canvas/shapes/screen/screen-defs';
++import type { Element, ScreenShape, SelectedElement, Shape, ShapeId } from '@/canvas/types';
++
++interface ScreenSelectionState {
++  selectedElement: SelectedElement | null;
++}
++
++const screenSelectionStore = createStore<ScreenSelectionState>(() => ({
++  selectedElement: null,
++}));
++
++/** Reactive read of the placed screen element under selection. */
++export function useScreenSelection(): SelectedElement | null {
++  return useStore(screenSelectionStore, (s) => s.selectedElement);
++}
++
++/** Select (or clear) the screen element under edit. */
++export function selectElement(selection: SelectedElement | null): void {
++  screenSelectionStore.setState({ selectedElement: selection });
++}
++
++function withScreenEls(
++  shapes: Record<ShapeId, Shape>,
++  screenId: ShapeId,
++  transform: (els: Element[]) => Element[],
++): Record<ShapeId, Shape> {
++  const screen = shapes[screenId];
++  if (!screen || screen.type !== 'screen') return shapes;
++  return { ...shapes, [screenId]: { ...(screen as ScreenShape), els: transform((screen as ScreenShape).els) } };
++}
++
++/** Append `element` to `screenId`'s els (undoable). */
++export function addScreenElement(screenId: ShapeId, element: Element): void {
++  const store = canvasInstance.getState();
++  const before = store.shapes;
++  store._executeCommand({
++    label: 'Add element',
++    do: () => {
++      const s = canvasInstance.getState();
++      s._setShapesRaw(withScreenEls(s.shapes, screenId, (els) => [...els, element]));
++    },
++    undo: () => {
++      canvasInstance.getState()._setShapesRaw(before);
++    },
++  });
++}
++
++/** Raw live-drag write — no history churn; commit once at gesture end. */
++export function moveScreenElementLive(
++  screenId: ShapeId,
++  elementId: string,
++  x: number,
++  y: number,
++): void {
++  const s = canvasInstance.getState();
++  s._setShapesRaw(
++    withScreenEls(s.shapes, screenId, (els) =>
++      els.map((el) => (el.id === elementId ? { ...el, x: snapToGrid(x), y: snapToGrid(y) } : el)),
++    ),
++  );
++}
++
++/** One undoable command for a finished element-move gesture. */
++export function commitScreenElementMove(
++  screenId: ShapeId,
++  elementId: string,
++  from: { x: number; y: number },
++  to: { x: number; y: number },
++): void {
++  const store = canvasInstance.getState();
++  store._executeCommand({
++    label: 'Move element',
++    do: () => moveScreenElementLive(screenId, elementId, to.x, to.y),
++    undo: () => moveScreenElementLive(screenId, elementId, from.x, from.y),
++  });
++}
++
++/** Clean up & align (#370): snap every element on `screenId` to the grid. */
++export function alignScreenElements(screenId: ShapeId): void {
++  const store = canvasInstance.getState();
++  const before = store.shapes;
++  const screen = before[screenId];
++  if (!screen || screen.type !== 'screen' || (screen as ScreenShape).els.length === 0) return;
++  store._executeCommand({
++    label: 'Align elements',
++    do: () => {
++      const s = canvasInstance.getState();
++      s._setShapesRaw(withScreenEls(s.shapes, screenId, (els) => alignScreenEls(els)));
++    },
++    undo: () => {
++      canvasInstance.getState()._setShapesRaw(before);
++    },
++  });
++}
+diff --git a/artifacts/workspec/src/canvas/shapes/artifactcard/ArtifactCardShapeUtil.ts b/artifacts/workspec/src/canvas/shapes/artifactcard/ArtifactCardShapeUtil.ts
+index 65d273ac..fd06140e 100644
+--- a/artifacts/workspec/src/canvas/shapes/artifactcard/ArtifactCardShapeUtil.ts
++++ b/artifacts/workspec/src/canvas/shapes/artifactcard/ArtifactCardShapeUtil.ts
+@@ -1,6 +1,9 @@
+-import type { ShapeUtil } from '@/canvas/shapes/registry';
++// S6 SPIKE DRAFT (#122): `ShapeUtil` + geometry now come from the package
++// (the closed `shapes/registry.ts` is deleted on adoption). The util body
++// is UNCHANGED — the package contract is a structural superset.
++import type { ShapeUtil } from '@workspec/canvas';
++import { hitTestPointInRect } from '@workspec/canvas';
+ import type { ArtifactCardShape, Vec2, Box } from '@/canvas/types';
+-import { hitTestPointInRect } from '@/canvas/utils/geometry';
+ import { ArtifactCardComponent } from './ArtifactCardComponent';
+ 
+ export const artifactCardShapeUtil: ShapeUtil<ArtifactCardShape> = {
+diff --git a/artifacts/workspec/src/canvas/shapes/atlassuggestion/AtlasSuggestionShapeUtil.ts b/artifacts/workspec/src/canvas/shapes/atlassuggestion/AtlasSuggestionShapeUtil.ts
+index 96624b69..7fcea8a9 100644
+--- a/artifacts/workspec/src/canvas/shapes/atlassuggestion/AtlasSuggestionShapeUtil.ts
++++ b/artifacts/workspec/src/canvas/shapes/atlassuggestion/AtlasSuggestionShapeUtil.ts
+@@ -1,6 +1,9 @@
+-import type { ShapeUtil } from '@/canvas/shapes/registry';
++// S6 SPIKE DRAFT (#122): `ShapeUtil` + geometry now come from the package
++// (the closed `shapes/registry.ts` is deleted on adoption). The util body
++// is UNCHANGED — the package contract is a structural superset.
++import type { ShapeUtil } from '@workspec/canvas';
++import { hitTestPointInRect } from '@workspec/canvas';
+ import type { AtlasSuggestionShape, Vec2, Box } from '@/canvas/types';
+-import { hitTestPointInRect } from '@/canvas/utils/geometry';
+ import { AtlasSuggestionComponent } from './AtlasSuggestionComponent';
+ 
+ // Fixed ghost-card footprint (#365): 248×158, sits above notes (z via index).
+diff --git a/artifacts/workspec/src/canvas/store.ts b/artifacts/workspec/src/canvas/store.ts
+index 103f4a38..217f82c5 100644
+--- a/artifacts/workspec/src/canvas/store.ts
++++ b/artifacts/workspec/src/canvas/store.ts
+@@ -1,704 +1,87 @@
+-import { create } from 'zustand';
+-import { z } from 'zod/v4';
+-import type {
+-  Camera,
+-  Shape,
+-  ShapeId,
+-  ToolName,
+-  HistoryStack,
+-  MarqueeState,
+-  Command,
+-  Element,
+-  ScreenShape,
+-  SelectedElement,
+-} from '@/canvas/types';
+-import { snapToGrid, SCREEN_SPECS, alignScreenEls } from '@/canvas/shapes/screen/screen-defs';
+-import { createHistory, executeCommand, undoCommand, redoCommand } from '@/canvas/utils/history';
+-import { generateKeyBetween } from '@/canvas/utils/fractional-index';
+-import { computeAlignDistribute } from '@/canvas/utils/alignDistribute';
+-import { getC4Bridge } from '@/canvas/tools/c4Bridge';
+-import { withDescendants } from '@/canvas/utils/containers';
+-
+-export type CanvasSnapshot = {
+-  version: 1;
+-  camera: Camera;
+-  shapes: Record<string, unknown>;
+-};
+-
+-const baseShapeSchema = z.object({
+-  id: z.string(),
+-  type: z.string(),
+-  x: z.number(),
+-  y: z.number(),
+-  width: z.number(),
+-  height: z.number(),
+-  index: z.string(),
+-  rotation: z.number().optional(),
+-  groupId: z.string().optional(),
+-  containerId: z.string().optional(),
+-});
+-
+-const snapshotSchema = z.object({
+-  version: z.literal(1),
+-  camera: z.object({
+-    x: z.number(),
+-    y: z.number(),
+-    zoom: z.number(),
+-  }),
+-  shapes: z.record(z.string(), baseShapeSchema.passthrough()),
++// S6 SPIKE DRAFT — @workspec/canvas re-adoption shim (#122).
++//
++// This file REPLACES the 704-line enterprise store with a compatibility
++// shim over the package's store factory. Design goal: the 18 external
++// import sites (`import { useCanvasStore } from '@/canvas/store'`) keep
++// working UNMODIFIED in all three access forms they use today:
++//
++//   1. `useCanvasStore(selector)` / `useCanvasStore()`   — reactive hook
++//   2. `useCanvasStore.getState()` / `.setState()`        — imperative
++//   3. `useCanvasStore.subscribe(listener)`               — subscription
++//
++// The trick: the enterprise app is a ONE-CANVAS-PER-PAGE app (the module
++// singleton was load-bearing, shared across ProjectGraphCanvas and every
++// standalone page). So the shim keeps a module-level singleton INSTANCE
++// and binds the hook to it directly with zustand's `useStore` — NOT the
++// package's context hook. `<CanvasProvider store={canvasInstance}>` is
++// still required around every `<Canvas>` mount (the package's own
++// components resolve the instance via context), but external panels that
++// only read the store need no provider — exactly today's semantics.
++//
++// Multi-canvas pages would break this shim by design; that is a
++// deliberate non-goal (the enterprise has none).
++
++import { useStore } from 'zustand';
++import {
++  createCanvasStore,
++  type CanvasStore as PackageCanvasStore,
++  type CanvasStoreInstance,
++  type CanvasSnapshot,
++} from '@workspec/canvas';
++import { registerEnterpriseCanvas } from '@/canvas/register-enterprise-shapes';
++import { kindOfShape } from '@/canvas/utils/containers';
++
++// ── The singleton instance ───────────────────────────────────────────────────
++// `persistenceKey` restores the enterprise's fixed localStorage cache key
++// (the package default is persistence OFF). useCanvasSync remains the
++// source of truth; localStorage stays the fast-first-paint cache.
++export const canvasInstance: CanvasStoreInstance = createCanvasStore({
++  persistenceKey: 'workspec-canvas-v1',
++  // `hiddenKinds` filtering + Minimap colouring keep the enterprise
++  // taxonomy (artifactcard → artifactType, entitycard → 'entity', …).
++  kindResolver: kindOfShape,
+ });
+ 
+-const STORAGE_KEY = 'workspec-canvas-v1';
+-
+-interface CanvasState {
+-  camera: Camera;
+-  shapes: Record<ShapeId, Shape>;
+-  selectedIds: Set<ShapeId>;
+-  /** Prototype Builder (#367): the placed screen element under selection. Lives
+-   *  alongside `selectedIds` because elements are inline ScreenShape data, not
+-   *  top-level shapes. Cleared whenever a shape selection happens. */
+-  selectedElement: SelectedElement | null;
+-  hoveredId: ShapeId | null;
+-  editingId: ShapeId | null;
+-  activeTool: ToolName;
+-  // The C4 node kind the 'place' tool drops on click. Only read while
+-  // activeTool === 'place'; set when the user picks a palette type.
+-  placementNodeType: string | null;
+-  history: HistoryStack;
+-  marquee: MarqueeState | null;
+-  isDragging: boolean;
+-  isResizing: boolean;
+-  // ── Host-driven overlay state (canvas parity plan) ──
+-  // Pages drive these via store actions (agent tool actions, ingestion
+-  // stream, view filters); the render layer reads them. None persist.
+-  /** Focus mode: non-members dim to 0.15 and the page shows "Back to map". */
+-  focusIds: Set<ShapeId> | null;
+-  /** Timed pulse rings (canvas-highlight agent action). */
+-  highlightIds: Set<ShapeId>;
+-  /** Entrance animation for shapes that arrived live (not baseline load). */
+-  recentIds: Set<ShapeId>;
+-  /** Per-type visibility filter, matched against kindOfShape(). */
+-  hiddenKinds: Set<string>;
+-  /** Last viewport intent: re-apply fit as the node set changes, leave a
+-   *  user-panned camera alone. Pages flip to 'custom' on user gestures. */
+-  viewportIntent: 'fit' | 'reset' | 'custom';
+-  // View-only state — NOT in the snapshot, NOT synced via WS.
+-  lens: 'freeform' | 'structured';
+-  // True for 280ms after a lens switch so Shape.tsx can gate the glide transition.
+-  isLensSwitching: boolean;
+-}
+-
+-interface CanvasActions {
+-  createShape: (shape: Shape) => void;
+-  updateShape: (id: ShapeId, patch: Partial<Shape>) => void;
+-  deleteShapes: (ids: ShapeId[]) => void;
+-  moveShapes: (ids: ShapeId[], dx: number, dy: number) => void;
+-  resizeShape: (id: ShapeId, newBounds: { x: number; y: number; width: number; height: number }) => void;
+-  alignDistribute: (ids: ShapeId[]) => void;
+-  setCamera: (camera: Camera) => void;
+-  setActiveTool: (tool: ToolName) => void;
+-  setPlacementNodeType: (nodeType: string | null) => void;
+-  select: (ids: ShapeId[], mode?: 'replace' | 'toggle' | 'add') => void;
+-  clearSelection: () => void;
+-  // ── Prototype Builder screen-element mutations (#367) ──
+-  // Elements live inline on a ScreenShape's `els`. These add/move/select them,
+-  // undoably (add + move are single history commands; select is view state).
+-  /** Append `element` to `screenId`'s els. Returns the element id (for auto-select). */
+-  addScreenElement: (screenId: ShapeId, element: Element) => void;
+-  /** Live, non-undoable element move — drives the drag. x/y are content-relative,
+-   *  snapped + clamped here. Commit the gesture once with commitScreenElementMove. */
+-  moveScreenElementLive: (screenId: ShapeId, elementId: string, x: number, y: number) => void;
+-  /** Records ONE undoable command from the drag's start position to its end. */
+-  commitScreenElementMove: (
+-    screenId: ShapeId,
+-    elementId: string,
+-    from: { x: number; y: number },
+-    to: { x: number; y: number },
+-  ) => void;
+-  selectElement: (selection: SelectedElement | null) => void;
+-  /** Clean up & align (#370): snap every element on `screenId` to the 8px grid
+-   *  and tidy the column (wide elements pin to the margin + stretch). One undoable
+-   *  command; no-op when the screen has no elements. */
+-  alignScreenElements: (screenId: ShapeId) => void;
+-  setHovered: (id: ShapeId | null) => void;
+-  setEditing: (id: ShapeId | null) => void;
+-  setMarquee: (marquee: MarqueeState | null) => void;
+-  setIsDragging: (v: boolean) => void;
+-  setIsResizing: (v: boolean) => void;
+-  setFocus: (ids: ShapeId[] | null) => void;
+-  /** Pulse-ring highlight; auto-clears after durationMs (default 5s). */
+-  highlight: (ids: ShapeId[], durationMs?: number) => void;
+-  /** Entrance animation for live arrivals; auto-clears after durationMs. */
+-  markRecent: (ids: ShapeId[], durationMs?: number) => void;
+-  setHiddenKinds: (kinds: Set<string>) => void;
+-  setViewportIntent: (intent: 'fit' | 'reset' | 'custom') => void;
+-  bringToFront: (ids: ShapeId[]) => void;
+-  sendToBack: (ids: ShapeId[]) => void;
+-  bringForward: (ids: ShapeId[]) => void;
+-  sendBackward: (ids: ShapeId[]) => void;
+-  groupShapes: (ids: ShapeId[]) => void;
+-  ungroupShapes: (ids: ShapeId[]) => void;
+-  undo: () => void;
+-  redo: () => void;
+-  _setShapesRaw: (shapes: Record<ShapeId, Shape>) => void;
+-  _executeCommand: (cmd: Command) => void;
+-  loadSnapshot: (snap: CanvasSnapshot) => void;
+-  exportSnapshot: () => CanvasSnapshot;
+-  setLens: (lens: 'freeform' | 'structured') => void;
++// Shape modules + tools (whiteboard base from the package, enterprise-only
++// families registered on top). Kept in a separate module so the register
++// list is reviewable in one place.
++registerEnterpriseCanvas(canvasInstance);
++
++// ── Screen-element sub-selection (Prototype Builder, #367) ──────────────────
++// The package store deliberately dropped `selectedElement` +
++// addScreenElement/moveScreenElementLive/commitScreenElementMove/
++// selectElement/alignScreenElements (they belong to the enterprise screen
++// shape family, deferred from OSS v1). Their only consumers are
++// ScreenShapeComponent + the prototype drag hooks, so they move to a
++// dedicated side module (`@/canvas/screen-elements`) implemented over the
++// public `_executeCommand` seam — see that file in this draft. Nothing
++// outside the screen family imported them from here (verified by grep:
++// consumers are store.ts + ScreenShapeComponent.tsx only).
++
++// ── The compat hook ─────────────────────────────────────────────────────────
++type CanvasStore = PackageCanvasStore;
++
++function useCanvasStoreImpl(): CanvasStore;
++function useCanvasStoreImpl<T>(selector: (state: CanvasStore) => T): T;
++function useCanvasStoreImpl<T>(selector?: (state: CanvasStore) => T): T | CanvasStore {
++  // One unconditional hook call; the identity fallback returns the state
++  // object itself (referentially stable for useSyncExternalStore).
++  return useStore(canvasInstance, selector ?? ((s: CanvasStore) => s as unknown as T)) as
++    | T
++    | CanvasStore;
+ }
+ 
+-type CanvasStore = CanvasState & CanvasActions;
+-
+-function loadFromStorage(): Partial<CanvasState> {
+-  try {
+-    const raw = localStorage.getItem(STORAGE_KEY);
+-    if (!raw) return {};
+-    const parsed: unknown = JSON.parse(raw);
+-    const result = snapshotSchema.safeParse(parsed);
+-    if (!result.success) return {};
+-    const snap = result.data;
+-    return {
+-      camera: snap.camera,
+-      shapes: snap.shapes as unknown as Record<ShapeId, Shape>,
+-    };
+-  } catch {
+-    return {};
+-  }
+-}
+-
+-/** Immutably replace one screen's els via a transform. Returns the same map
+- *  (no-op) when the id isn't a screen, so callers can stay branch-free. */
+-function withScreenEls(
+-  shapes: Record<ShapeId, Shape>,
+-  screenId: ShapeId,
+-  transform: (els: Element[]) => Element[],
+-): Record<ShapeId, Shape> {
+-  const screen = shapes[screenId];
+-  if (!screen || screen.type !== 'screen') return shapes;
+-  return { ...shapes, [screenId]: { ...screen, els: transform(screen.els) } };
+-}
+-
+-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+-let lensSwitchTimer: ReturnType<typeof setTimeout> | null = null;
+-
+-export const useCanvasStore = create<CanvasStore>()((set, get) => {
+-  const persisted = loadFromStorage();
+-
+-  return {
+-    camera: persisted.camera ?? { x: 0, y: 0, zoom: 1 },
+-    shapes: persisted.shapes ?? ({} as Record<ShapeId, Shape>),
+-    selectedIds: new Set<ShapeId>(),
+-    selectedElement: null,
+-    hoveredId: null,
+-    editingId: null,
+-    activeTool: 'select' as ToolName,
+-    placementNodeType: null,
+-    history: createHistory(),
+-    marquee: null,
+-    isDragging: false,
+-    isResizing: false,
+-    focusIds: null,
+-    highlightIds: new Set<ShapeId>(),
+-    recentIds: new Set<ShapeId>(),
+-    hiddenKinds: new Set<string>(),
+-    viewportIntent: 'reset' as const,
+-    lens: 'freeform' as const,
+-    isLensSwitching: false,
+-
+-    createShape: (shape) => {
+-      const cmd: Command = {
+-        label: 'Create shape',
+-        do: (shapes) => ({ ...shapes, [shape.id]: shape }),
+-        undo: (shapes) => {
+-          const next = { ...shapes };
+-          delete next[shape.id];
+-          return next;
+-        },
+-      };
+-      const { history, shapes } = get();
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    updateShape: (id, patch) => {
+-      const prev = get().shapes[id];
+-      if (!prev) return;
+-      const updated = { ...prev, ...patch } as Shape;
+-      const cmd: Command = {
+-        label: 'Update shape',
+-        do: (shapes) => ({ ...shapes, [id]: updated }),
+-        undo: (shapes) => ({ ...shapes, [id]: prev }),
+-      };
+-      const { history, shapes } = get();
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    deleteShapes: (ids) => {
+-      // C4 canvases persist deletions via the diagram API and gate on the
+-      // draft branch — the bridge owns it when installed (returns true once
+-      // handled, so we skip the default local removal below). Non-C4 canvases
+-      // have no bridge and fall through to the normal undoable delete.
+-      if (getC4Bridge().deleteShapes?.(ids)) return;
+-      const { shapes, history } = get();
+-      // Containment: deleting a frame takes its children with it.
+-      ids = withDescendants(shapes, ids);
+-      const deleted: Record<ShapeId, Shape> = {};
+-      for (const id of ids) {
+-        if (shapes[id]) deleted[id] = shapes[id];
+-      }
+-      const cmd: Command = {
+-        label: 'Delete shapes',
+-        do: (s) => {
+-          const next = { ...s };
+-          for (const id of ids) delete next[id];
+-          return next;
+-        },
+-        undo: (s) => ({ ...s, ...deleted }),
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({
+-        shapes: result.shapes,
+-        history: result.history,
+-        selectedIds: new Set<ShapeId>(),
+-        selectedElement: null,
+-        editingId: null,
+-      });
+-    },
+-
+-    moveShapes: (ids, dx, dy) => {
+-      const { shapes, history } = get();
+-      // Containment: a frame drags its children along.
+-      ids = withDescendants(shapes, ids);
+-      const prevPositions: Record<ShapeId, { x: number; y: number }> = {};
+-      for (const id of ids) {
+-        const s = shapes[id];
+-        if (s) prevPositions[id] = { x: s.x, y: s.y };
+-      }
+-      const cmd: Command = {
+-        label: 'Move shapes',
+-        do: (s) => {
+-          const next = { ...s };
+-          for (const id of ids) {
+-            const shape = next[id];
+-            if (shape) next[id] = { ...shape, x: shape.x + dx, y: shape.y + dy };
+-          }
+-          return next;
+-        },
+-        undo: (s) => {
+-          const next = { ...s };
+-          for (const id of ids) {
+-            const shape = next[id];
+-            const prev = prevPositions[id];
+-            if (shape && prev) next[id] = { ...shape, x: prev.x, y: prev.y };
+-          }
+-          return next;
+-        },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    resizeShape: (id, newBounds) => {
+-      const { shapes, history } = get();
+-      const prev = shapes[id];
+-      if (!prev) return;
+-      const updated = { ...prev, ...newBounds } as Shape;
+-      const cmd: Command = {
+-        label: 'Resize shape',
+-        do: (s) => ({ ...s, [id]: updated }),
+-        undo: (s) => ({ ...s, [id]: prev }),
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    alignDistribute: (ids) => {
+-      const { shapes, history } = get();
+-      const selected = ids.map((id) => shapes[id]).filter(Boolean) as Shape[];
+-      const targets = computeAlignDistribute(selected);
+-      if (targets.size === 0) return;
+-
+-      const prev: Record<ShapeId, { x: number; y: number }> = {};
+-      for (const id of targets.keys()) {
+-        const s = shapes[id];
+-        if (s) prev[id] = { x: s.x, y: s.y };
+-      }
+-      const cmd: Command = {
+-        label: 'Align & distribute',
+-        do: (s) => {
+-          const next = { ...s };
+-          for (const [id, pos] of targets) {
+-            if (next[id]) next[id] = { ...next[id], x: pos.x, y: pos.y };
+-          }
+-          return next;
+-        },
+-        undo: (s) => {
+-          const next = { ...s };
+-          for (const [id, pos] of Object.entries(prev)) {
+-            if (next[id as ShapeId]) next[id as ShapeId] = { ...next[id as ShapeId], x: pos.x, y: pos.y };
+-          }
+-          return next;
+-        },
+-      };
+-      // Bracket the command in a drag transition so position-save subscribers
+-      // (e.g. the architecture page's layout PATCH) persist the new layout —
+-      // align & distribute is a programmatic move gesture.
+-      set({ isDragging: true });
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-      set({ isDragging: false });
+-    },
+-
+-    bringToFront: (ids) => {
+-      const { shapes, history } = get();
+-      const selectedSet = new Set(ids);
+-      const sorted = Object.values(shapes).sort((a, b) => a.index.localeCompare(b.index));
+-      const nonSelected = sorted.filter((s) => !selectedSet.has(s.id));
+-      const selectedSorted = sorted.filter((s) => selectedSet.has(s.id));
+-      const prevIndices: Record<string, string> = {};
+-      for (const id of ids) { if (shapes[id]) prevIndices[id] = shapes[id].index; }
+-      const newIndices: Record<string, string> = {};
+-      let prev: string | null = nonSelected.at(-1)?.index ?? null;
+-      for (const shape of selectedSorted) {
+-        const key = generateKeyBetween(prev, null);
+-        newIndices[shape.id] = key;
+-        prev = key;
+-      }
+-      const cmd: Command = {
+-        label: 'Bring to front',
+-        do: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(newIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(prevIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    sendToBack: (ids) => {
+-      const { shapes, history } = get();
+-      const selectedSet = new Set(ids);
+-      const sorted = Object.values(shapes).sort((a, b) => a.index.localeCompare(b.index));
+-      const nonSelected = sorted.filter((s) => !selectedSet.has(s.id));
+-      const selectedSorted = sorted.filter((s) => selectedSet.has(s.id));
+-      const prevIndices: Record<string, string> = {};
+-      for (const id of ids) { if (shapes[id]) prevIndices[id] = shapes[id].index; }
+-      const newIndices: Record<string, string> = {};
+-      let next: string | null = nonSelected.at(0)?.index ?? null;
+-      for (const shape of [...selectedSorted].reverse()) {
+-        const key = generateKeyBetween(null, next);
+-        newIndices[shape.id] = key;
+-        next = key;
+-      }
+-      const cmd: Command = {
+-        label: 'Send to back',
+-        do: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(newIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(prevIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    bringForward: (ids) => {
+-      const { shapes, history } = get();
+-      const selectedSet = new Set(ids);
+-      const sorted = Object.values(shapes).sort((a, b) => a.index.localeCompare(b.index));
+-      // Find position of topmost selected shape
+-      let topPos = -1;
+-      for (let i = sorted.length - 1; i >= 0; i--) {
+-        if (selectedSet.has(sorted[i].id)) { topPos = i; break; }
+-      }
+-      if (topPos === -1) return;
+-      // Find first non-selected above it (blocker)
+-      let blockerPos = -1;
+-      for (let i = topPos + 1; i < sorted.length; i++) {
+-        if (!selectedSet.has(sorted[i].id)) { blockerPos = i; break; }
+-      }
+-      if (blockerPos === -1) return;
+-      // Find next non-selected above blocker (ceiling)
+-      let ceilingPos = -1;
+-      for (let i = blockerPos + 1; i < sorted.length; i++) {
+-        if (!selectedSet.has(sorted[i].id)) { ceilingPos = i; break; }
+-      }
+-      const blocker = sorted[blockerPos];
+-      const ceiling = ceilingPos !== -1 ? sorted[ceilingPos] : null;
+-      const selectedSorted = sorted.filter((s) => selectedSet.has(s.id));
+-      const prevIndices: Record<string, string> = {};
+-      for (const id of ids) { if (shapes[id]) prevIndices[id] = shapes[id].index; }
+-      const newIndices: Record<string, string> = {};
+-      let prev: string = blocker.index;
+-      for (const shape of selectedSorted) {
+-        const key = generateKeyBetween(prev, ceiling?.index ?? null);
+-        newIndices[shape.id] = key;
+-        prev = key;
+-      }
+-      const cmd: Command = {
+-        label: 'Bring forward',
+-        do: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(newIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(prevIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    sendBackward: (ids) => {
+-      const { shapes, history } = get();
+-      const selectedSet = new Set(ids);
+-      const sorted = Object.values(shapes).sort((a, b) => a.index.localeCompare(b.index));
+-      // Find position of bottommost selected shape
+-      let bottomPos = sorted.length;
+-      for (let i = 0; i < sorted.length; i++) {
+-        if (selectedSet.has(sorted[i].id)) { bottomPos = i; break; }
+-      }
+-      if (bottomPos === sorted.length) return;
+-      // Find first non-selected below it (blocker)
+-      let blockerPos = -1;
+-      for (let i = bottomPos - 1; i >= 0; i--) {
+-        if (!selectedSet.has(sorted[i].id)) { blockerPos = i; break; }
+-      }
+-      if (blockerPos === -1) return;
+-      // Find next non-selected below blocker (floor)
+-      let floorPos = -1;
+-      for (let i = blockerPos - 1; i >= 0; i--) {
+-        if (!selectedSet.has(sorted[i].id)) { floorPos = i; break; }
+-      }
+-      const blocker = sorted[blockerPos];
+-      const floor = floorPos !== -1 ? sorted[floorPos] : null;
+-      const selectedSorted = sorted.filter((s) => selectedSet.has(s.id));
+-      const prevIndices: Record<string, string> = {};
+-      for (const id of ids) { if (shapes[id]) prevIndices[id] = shapes[id].index; }
+-      const newIndices: Record<string, string> = {};
+-      let next: string = blocker.index;
+-      for (const shape of [...selectedSorted].reverse()) {
+-        const key = generateKeyBetween(floor?.index ?? null, next);
+-        newIndices[shape.id] = key;
+-        next = key;
+-      }
+-      const cmd: Command = {
+-        label: 'Send backward',
+-        do: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(newIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const [id, idx] of Object.entries(prevIndices)) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], index: idx }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    groupShapes: (ids) => {
+-      const { shapes, history } = get();
+-      const groupId = crypto.randomUUID();
+-      const prevGroupIds: Record<string, string | undefined> = {};
+-      for (const id of ids) { if (shapes[id]) prevGroupIds[id] = shapes[id].groupId; }
+-      const cmd: Command = {
+-        label: 'Group shapes',
+-        do: (s) => { const n = { ...s }; for (const id of ids) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], groupId }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const id of ids) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], groupId: prevGroupIds[id] }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    ungroupShapes: (ids) => {
+-      const { shapes, history } = get();
+-      const prevGroupIds: Record<string, string | undefined> = {};
+-      for (const id of ids) { if (shapes[id]) prevGroupIds[id] = shapes[id].groupId; }
+-      const cmd: Command = {
+-        label: 'Ungroup shapes',
+-        do: (s) => { const n = { ...s }; for (const id of ids) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], groupId: undefined }; } return n; },
+-        undo: (s) => { const n = { ...s }; for (const id of ids) { if (n[id as ShapeId]) n[id as ShapeId] = { ...n[id as ShapeId], groupId: prevGroupIds[id] }; } return n; },
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    setCamera: (camera) => set({ camera }),
+-    setActiveTool: (tool) => set({ activeTool: tool }),
+-    setPlacementNodeType: (nodeType) => set({ placementNodeType: nodeType }),
+-    setLens: (lens) => {
+-      if (lensSwitchTimer) clearTimeout(lensSwitchTimer);
+-      set({ lens, isLensSwitching: true });
+-      lensSwitchTimer = setTimeout(() => {
+-        set({ isLensSwitching: false });
+-        lensSwitchTimer = null;
+-      }, 280);
+-    },
+-
+-    select: (ids, mode = 'replace') => {
+-      const { selectedIds } = get();
+-      if (mode === 'replace') {
+-        set({ selectedIds: new Set(ids), selectedElement: null });
+-      } else if (mode === 'add') {
+-        set({ selectedIds: new Set([...selectedIds, ...ids]) });
+-      } else if (mode === 'toggle') {
+-        const next = new Set(selectedIds);
+-        for (const id of ids) {
+-          if (next.has(id)) next.delete(id);
+-          else next.add(id);
+-        }
+-        set({ selectedIds: next });
+-      }
+-    },
+-
+-    clearSelection: () => set({ selectedIds: new Set<ShapeId>(), selectedElement: null }),
+-
+-    addScreenElement: (screenId, element) => {
+-      const { history, shapes } = get();
+-      const cmd: Command = {
+-        label: 'Add element',
+-        do: (s) => withScreenEls(s, screenId, (els) => [...els, element]),
+-        undo: (s) => withScreenEls(s, screenId, (els) => els.filter((e) => e.id !== element.id)),
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    moveScreenElementLive: (screenId, elementId, x, y) => {
+-      const { shapes } = get();
+-      const screen = shapes[screenId];
+-      if (!screen || screen.type !== 'screen') return;
+-      const spec = SCREEN_SPECS[screen.device];
+-      set({
+-        shapes: withScreenEls(shapes, screenId, (els) =>
+-          els.map((e) => {
+-            if (e.id !== elementId) return e;
+-            const sx = snapToGrid(x);
+-            const sy = snapToGrid(y);
+-            return {
+-              ...e,
+-              x: Math.max(0, Math.min(sx, spec.cw - Math.min(e.w, spec.cw))),
+-              y: Math.max(0, Math.min(sy, spec.ch - Math.min(e.h, spec.ch))),
+-            };
+-          }),
+-        ),
+-      });
+-    },
+-
+-    commitScreenElementMove: (screenId, elementId, from, to) => {
+-      // Live drag already wrote `to` via _setShapesRaw-style set; record a single
+-      // command so the whole gesture is one undo step (from → to).
+-      const { history, shapes } = get();
+-      const cmd: Command = {
+-        label: 'Move element',
+-        do: (s) =>
+-          withScreenEls(s, screenId, (els) =>
+-            els.map((e) => (e.id === elementId ? { ...e, x: to.x, y: to.y } : e)),
+-          ),
+-        undo: (s) =>
+-          withScreenEls(s, screenId, (els) =>
+-            els.map((e) => (e.id === elementId ? { ...e, x: from.x, y: from.y } : e)),
+-          ),
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    alignScreenElements: (screenId) => {
+-      const { history, shapes } = get();
+-      const screen = shapes[screenId];
+-      if (!screen || screen.type !== 'screen' || screen.els.length === 0) return;
+-      const before = screen.els;
+-      const after = alignScreenEls(screen.device, before);
+-      const cmd: Command = {
+-        label: 'Align elements',
+-        do: (s) => withScreenEls(s, screenId, () => after),
+-        undo: (s) => withScreenEls(s, screenId, () => before),
+-      };
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    selectElement: (selection) =>
+-      set(
+-        selection
+-          ? { selectedElement: selection, selectedIds: new Set<ShapeId>(), editingId: null }
+-          : { selectedElement: null },
+-      ),
+-
+-    setHovered: (id) => set({ hoveredId: id }),
+-    setEditing: (id) => set({ editingId: id }),
+-    setMarquee: (marquee) => set({ marquee }),
+-    setIsDragging: (v) => set({ isDragging: v }),
+-    setIsResizing: (v) => set({ isResizing: v }),
+-
+-    setFocus: (ids) => set({ focusIds: ids ? new Set(ids) : null }),
+-
+-    highlight: (ids, durationMs = 5000) => {
+-      set({ highlightIds: new Set([...get().highlightIds, ...ids]) });
+-      setTimeout(() => {
+-        const next = new Set(get().highlightIds);
+-        for (const id of ids) next.delete(id);
+-        set({ highlightIds: next });
+-      }, durationMs);
+-    },
+-
+-    markRecent: (ids, durationMs = 1200) => {
+-      set({ recentIds: new Set([...get().recentIds, ...ids]) });
+-      setTimeout(() => {
+-        const next = new Set(get().recentIds);
+-        for (const id of ids) next.delete(id);
+-        set({ recentIds: next });
+-      }, durationMs);
+-    },
+-
+-    setHiddenKinds: (kinds) => set({ hiddenKinds: new Set(kinds) }),
+-
+-    setViewportIntent: (intent) => set({ viewportIntent: intent }),
+-
+-    undo: () => {
+-      const { history, shapes } = get();
+-      const result = undoCommand(history, shapes);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    redo: () => {
+-      const { history, shapes } = get();
+-      const result = redoCommand(history, shapes);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    _setShapesRaw: (shapes) => set({ shapes }),
+-
+-    _executeCommand: (cmd) => {
+-      const { history, shapes } = get();
+-      const result = executeCommand(history, shapes, cmd);
+-      set({ shapes: result.shapes, history: result.history });
+-    },
+-
+-    loadSnapshot: (snap) => {
+-      set({
+-        camera: snap.camera,
+-        shapes: snap.shapes as Record<ShapeId, Shape>,
+-        history: createHistory(),
+-        selectedIds: new Set<ShapeId>(),
+-        selectedElement: null,
+-        editingId: null,
+-        marquee: null,
+-      });
+-    },
+-
+-    exportSnapshot: (): CanvasSnapshot => {
+-      const { camera, shapes } = get();
+-      // Ephemeral shapes (e.g. the Architecture page's C4 projection) are pure
+-      // projections of a remote model — never persist them, or they'd leak into
+-      // the whiteboard snapshot and resurface on other layers after a reload.
+-      const persistable: Record<string, unknown> = {};
+-      for (const [id, shape] of Object.entries(shapes)) {
+-        if ((shape.meta as { ephemeral?: boolean } | undefined)?.ephemeral) continue;
+-        persistable[id] = shape;
+-      }
+-      return { version: 1, camera, shapes: persistable };
+-    },
+-  };
+-});
+-
+-useCanvasStore.subscribe((state) => {
+-  if (saveTimer) clearTimeout(saveTimer);
+-  saveTimer = setTimeout(() => {
+-    try {
+-      const snap = state.exportSnapshot();
+-      localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+-    } catch {
+-      // ignore storage errors
+-    }
+-  }, 800);
++/**
++ * Drop-in replacement for the retired module-level zustand hook. The
++ * callable is the reactive hook; the statics delegate to the singleton
++ * instance so `useCanvasStore.getState()` / `.setState()` / `.subscribe()`
++ * call sites (48 in-canvas + the external panels) keep compiling and
++ * behaving identically.
++ */
++export const useCanvasStore = Object.assign(useCanvasStoreImpl, {
++  getState: (): CanvasStore => canvasInstance.getState(),
++  setState: canvasInstance.setState.bind(canvasInstance) as typeof canvasInstance.setState,
++  subscribe: canvasInstance.subscribe.bind(canvasInstance) as typeof canvasInstance.subscribe,
+ });
+ 
+-export type { CanvasStore };
++export type { CanvasStore, CanvasSnapshot };
+diff --git a/artifacts/workspec/src/components/canvas-host/ArchitectureCanvasView.tsx b/artifacts/workspec/src/components/canvas-host/ArchitectureCanvasView.tsx
+index 53d186ad..9e0f49bd 100644
+--- a/artifacts/workspec/src/components/canvas-host/ArchitectureCanvasView.tsx
++++ b/artifacts/workspec/src/components/canvas-host/ArchitectureCanvasView.tsx
+@@ -13,10 +13,13 @@
+  */
+ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+ import { useLocation, useSearch } from 'wouter';
+-import { Canvas } from '@/canvas/Canvas';
+-import { CanvasSpecContext } from '@/canvas/CanvasSpecContext';
++// S6 SPIKE DRAFT (#122, task 1): Canvas, the spec context and the camera
++// helper come from the package. This view renders inside
++// ProjectGraphCanvas's <CanvasProvider>, so no second provider here. The
++// server-compiled project spec (useProjectSpec) feeds the package's
++// CanvasSpecContext unchanged — the types are structurally identical.
++import { Canvas, CanvasSpecContext, computeFitCamera } from '@workspec/canvas';
+ import { useCanvasStore } from '@/canvas/store';
+-import { computeFitCamera } from '@/canvas/hooks/useCamera';
+ import { useC4Diagram } from '@/hooks/useC4Diagram';
+ import { useProjectBranches } from '@/hooks/use-project-branches';
+ import { useProjectSpec } from '@/hooks/useProjectSpec';
+diff --git a/artifacts/workspec/src/components/canvas-host/ProjectGraphCanvas.tsx b/artifacts/workspec/src/components/canvas-host/ProjectGraphCanvas.tsx
+index 1a9dd5f4..bdd9f71f 100644
+--- a/artifacts/workspec/src/components/canvas-host/ProjectGraphCanvas.tsx
++++ b/artifacts/workspec/src/components/canvas-host/ProjectGraphCanvas.tsx
+@@ -38,10 +38,16 @@ import {
+   Sparkles,
+   Trash2,
+ } from "lucide-react";
+-import { Canvas } from "@/canvas/Canvas";
++// S6 SPIKE DRAFT (#122, task 1): Canvas/Toolbar come from the package;
++// the shared singleton instance is provided to the subtree so the
++// package's own components (layers, minimap, context menu) resolve it via
++// context. External panels keep reading the `useCanvasStore` shim with no
++// provider needed. Same one-line wrap applies to the 8 standalone pages
++// that mount <Canvas> (topology/prototype/feature-view/v2-discovery/
++// workflows-workspace/persona-view/domain-view + ArchitectureCanvasView).
++import { Canvas, CanvasProvider, Toolbar as WhiteboardToolbar } from "@workspec/canvas";
+ import { ArchitectureCanvasView } from "@/components/canvas-host/ArchitectureCanvasView";
+-import { Toolbar as WhiteboardToolbar } from "@/canvas/components/Toolbar";
+-import { useCanvasStore } from "@/canvas/store";
++import { canvasInstance, useCanvasStore } from "@/canvas/store";
+ import { useCanvasSync } from "@/canvas/hooks/useCanvasSync";
+ import { useImageInput } from "@/canvas/hooks/useImageInput";
+ import { kindOfShape } from "@/canvas/utils/containers";
+@@ -846,6 +852,7 @@ export function ProjectGraphCanvas({
+   );
+ 
+   return (
++    <CanvasProvider store={canvasInstance}>
+     <div className="w-full h-full flex flex-col">
+       {/* Data Dictionary lens bar — shown above the canvas when DD view is active */}
+       {isDataDictionary && projectId && (
+@@ -1569,5 +1576,6 @@ function GraphViewsPanel({
+         )}
+       </div>
+     </div>
++    </CanvasProvider>
+   );
+ }
+diff --git a/artifacts/workspec/src/hooks/useC4Diagram.ts b/artifacts/workspec/src/hooks/useC4Diagram.ts
+index 2fd022a9..1644d0ed 100644
+--- a/artifacts/workspec/src/hooks/useC4Diagram.ts
++++ b/artifacts/workspec/src/hooks/useC4Diagram.ts
+@@ -1,17 +1,24 @@
++// S6 SPIKE DRAFT (#122, task 3): the projection + C4 geometry constants +
++// id helpers now come from the packages; the module-level `setC4Bridge`
++// becomes `canvasInstance.host = {...}` (a `C4CanvasHost`). dagre stays
++// enterprise-local (Decision A: elk is studio-only; positions here remain
++// the host's authority, passed via `options.positions`).
+ import { useCallback, useEffect, useRef, useState } from 'react';
+-import { useCanvasStore } from '@/canvas/store';
++import { canvasInstance, useCanvasStore } from '@/canvas/store';
++import { createShapeId, generateKeyBetween } from '@workspec/canvas';
+ import {
+-  buildShapes,
+-  fitCamera,
++  C4_BOUNDARY_PAD,
++  C4_NODE_HEIGHT,
++  C4_NODE_WIDTH,
+   edgeShapeId,
+-  type DiagramDetailIn,
+-} from '@/canvas/c4/projectModel';
++  fitCamera,
++  type C4CanvasHost,
++} from '@workspec/canvas-c4';
++import {
++  buildEnterpriseC4Shapes as buildShapes,
++} from '@/canvas/c4/resolvedAdapter';
++import type { DiagramDetailIn } from '@/canvas/c4/projectModel';
+ import { dagreLayout } from '@/canvas/c4/autoLayout';
+-import { C4_NODE_WIDTH, C4_NODE_HEIGHT } from '@/canvas/shapes/c4node/C4NodeShapeUtil';
+-import { C4_BOUNDARY_PAD } from '@/canvas/shapes/c4boundary/C4BoundaryShapeUtil';
+-import { setC4Bridge } from '@/canvas/tools/c4Bridge';
+-import { createShapeId } from '@/canvas/utils/ids';
+-import { generateKeyBetween } from '@/canvas/utils/fractional-index';
+ import { useBranchChanges, artifactPathForNode } from '@/hooks/use-branch-changes';
+ import type { Shape, ShapeId, C4NodeShape, ConnectorShape } from '@/canvas/types';
+ 
+@@ -566,14 +573,14 @@ export function useC4Diagram(
+ 
+           setDetail(d);
+           detailRef.current = d;
+-          const { shapes, bounds } = buildShapes(
+-            d,
+-            lensRef.current,
++          const { shapes, bounds } = buildShapes(d, {
++            lens: lensRef.current,
++            positions: d.layout?.nodePositions ?? {},
+             drillableSlugs,
+-            boundaryOptsFor(lvl, d.title ?? ''),
+-            draftedSetFor(d),
+-            canvasObjectsRef.current,
+-          );
++            boundary: boundaryOptsFor(lvl, d.title ?? ''),
++            draftedSlugs: draftedSetFor(d),
++            reworkingMap: canvasObjectsRef.current,
++          });
+           const store = useCanvasStore.getState();
+           // resetCamera on navigation (fresh diagram → fit); on a post-edit
+           // refetch keep the current camera. loadSnapshot also drops the stale
+@@ -803,14 +810,14 @@ export function useC4Diagram(
+     // targets map (near-always empty), which previously dropped every
+     // magnifier on re-projection (e.g. the system node once it went drafted).
+     const drillableSlugs = drillableSlugsFor(d);
+-    const { shapes } = buildShapes(
+-      d,
++    const { shapes } = buildShapes(d, {
+       lens,
++      positions: d.layout?.nodePositions ?? {},
+       drillableSlugs,
+-      boundaryOptsFor(levelFromType(d.diagram.type ?? ''), d.title ?? ''),
+-      draftedSetFor(d),
+-      canvasObjectsRef.current,
+-    );
++      boundary: boundaryOptsFor(levelFromType(d.diagram.type ?? ''), d.title ?? ''),
++      draftedSlugs: draftedSetFor(d),
++      reworkingMap: canvasObjectsRef.current,
++    });
+     const store = useCanvasStore.getState();
+     store.loadSnapshot({ version: 1, camera: store.camera, shapes });
+   }, [lens, changedPaths, draftedSetFor, drillableSlugsFor]);
+@@ -857,7 +864,12 @@ export function useC4Diagram(
+       onNeedsBranch?.();
+       return false;
+     };
+-    setC4Bridge({
++    // The full enterprise bridge, installed on the instance's host seam.
++    // Method-for-method identical to the retired `setC4Bridge` surface —
++    // verified against @workspec/canvas-c4's C4CanvasHost: all 12 methods
++    // exist with the same signatures and the same false→local fallback
++    // semantics on deleteShapes/renameShape/moveToContainer.
++    const host: C4CanvasHost = {
+       createEdge: (from: string, to: string) => {
+         if (!ensureBranch()) return;
+         // Optimistic connector between the existing endpoint shapes.
+@@ -1036,8 +1048,20 @@ export function useC4Diagram(
+           })
+           .catch(() => {});
+       },
+-    });
+-    return () => setC4Bridge({});
++      // Replaces the `workspec:open-c4-element-editor` window CustomEvent
++      // (declared deviation in #119): the package's card calls this host
++      // callback on double-click of a named node; ArchitectureCanvasView
++      // passes the payload straight into its C4ElementEditor state.
++      openElementEditor: (payload) => {
++        window.dispatchEvent(
++          new CustomEvent('workspec:open-c4-element-editor', { detail: payload }),
++        );
++      },
++    };
++    canvasInstance.host = host;
++    return () => {
++      canvasInstance.host = {};
++    };
+   }, [projectId, activeId, editable, onNeedsBranch, refetch, drillTo, linked, drillFromNode, autoLayoutContainer, onEnterRoom]);
+ 
+   return {
