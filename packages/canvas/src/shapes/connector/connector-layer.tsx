@@ -12,7 +12,12 @@ import { pageToScreen } from '../../utils/transforms.js';
 import type { ConnectorShape } from '../../shape-types.js';
 import type { Vec2 } from '../../types.js';
 import { useCanvasSpec } from '../../canvas-spec-context.js';
-import { isDiscoveryConnector, resolveConnectorGeometry, routingOptsFromUtils } from './geometry.js';
+import {
+  isDiscoveryConnector,
+  resolveConnectorGeometry,
+  roundedConnectorPath,
+  routingOptsFromUtils,
+} from './geometry.js';
 
 // Ported from the enterprise ConnectorLayer.tsx (#118). Deviations, all
 // logged in the S2 report: store/hover access via provider hooks;
@@ -28,39 +33,6 @@ function dashFor(style: string | undefined): string | undefined {
   if (style === 'dashed') return '6 5';
   if (style === 'dotted') return '1.5 4';
   return undefined;
-}
-
-// Orthogonal path with rounded corners (quadratic through each bend), matching
-// the diagrams page's smoothstep borderRadius. `r` is in screen px.
-function roundedPath(points: Vec2[], r: number): string {
-  const first = points[0];
-  const second = points[1];
-  if (points.length < 2 || first === undefined || second === undefined) return '';
-  if (points.length === 2) {
-    return `M ${String(first.x)} ${String(first.y)} L ${String(second.x)} ${String(second.y)}`;
-  }
-  let d = `M ${String(first.x)} ${String(first.y)}`;
-  for (let i = 1; i < points.length - 1; i++) {
-    const prev = points[i - 1];
-    const cur = points[i];
-    const next = points[i + 1];
-    if (prev === undefined || cur === undefined || next === undefined) continue;
-    const len1 = Math.hypot(prev.x - cur.x, prev.y - cur.y) || 1;
-    const len2 = Math.hypot(next.x - cur.x, next.y - cur.y) || 1;
-    const rr = Math.min(r, len1 / 2, len2 / 2);
-    const p1 = {
-      x: cur.x + ((prev.x - cur.x) / len1) * rr,
-      y: cur.y + ((prev.y - cur.y) / len1) * rr,
-    };
-    const p2 = {
-      x: cur.x + ((next.x - cur.x) / len2) * rr,
-      y: cur.y + ((next.y - cur.y) / len2) * rr,
-    };
-    d += ` L ${String(p1.x)} ${String(p1.y)} Q ${String(cur.x)} ${String(cur.y)} ${String(p2.x)} ${String(p2.y)}`;
-  }
-  const last = points[points.length - 1];
-  if (last) d += ` L ${String(last.x)} ${String(last.y)}`;
-  return d;
 }
 
 const EdgeLabelEditor: FC<{
@@ -226,7 +198,7 @@ export const ConnectorLayer: FC = () => {
             );
           }
 
-          const d = roundedPath(screenPts, CORNER_RADIUS * camera.zoom);
+          const d = roundedConnectorPath(screenPts, CORNER_RADIUS * camera.zoom);
           const arrowScreen = pageToScreen({ x: geom.arrow.x, y: geom.arrow.y }, camera);
           const conn = c.category ? spec.connections[c.category] : undefined;
           // Style-spec v2: the connection accent feeds --conn-accent-raw on the

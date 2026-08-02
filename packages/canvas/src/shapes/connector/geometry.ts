@@ -313,6 +313,45 @@ function polylineMidpoint(pts: Vec2[]): Vec2 {
   return pts[0] ?? { x: 0, y: 0 };
 }
 
+
+/**
+ * Orthogonal polyline → SVG path with rounded corners (quadratic through
+ * each bend) — the enterprise smoothstep look. `r` is in the caller's
+ * coordinate space (the layer passes screen px, the standalone renderer
+ * page px). Shared by ConnectorLayer and @workspec/c4-ui's renderSvg so
+ * the two can never draw an elbow differently (#120).
+ */
+export function roundedConnectorPath(points: Vec2[], r: number): string {
+  const first = points[0];
+  const second = points[1];
+  if (points.length < 2 || first === undefined || second === undefined) return '';
+  if (points.length === 2) {
+    return `M ${String(first.x)} ${String(first.y)} L ${String(second.x)} ${String(second.y)}`;
+  }
+  let d = `M ${String(first.x)} ${String(first.y)}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1];
+    const cur = points[i];
+    const next = points[i + 1];
+    if (prev === undefined || cur === undefined || next === undefined) continue;
+    const len1 = Math.hypot(prev.x - cur.x, prev.y - cur.y) || 1;
+    const len2 = Math.hypot(next.x - cur.x, next.y - cur.y) || 1;
+    const rr = Math.min(r, len1 / 2, len2 / 2);
+    const p1 = {
+      x: cur.x + ((prev.x - cur.x) / len1) * rr,
+      y: cur.y + ((prev.y - cur.y) / len1) * rr,
+    };
+    const p2 = {
+      x: cur.x + ((next.x - cur.x) / len2) * rr,
+      y: cur.y + ((next.y - cur.y) / len2) * rr,
+    };
+    d += ` L ${String(p1.x)} ${String(p1.y)} Q ${String(cur.x)} ${String(cur.y)} ${String(p2.x)} ${String(p2.y)}`;
+  }
+  const last = points[points.length - 1];
+  if (last) d += ` L ${String(last.x)} ${String(last.y)}`;
+  return d;
+}
+
 export interface ConnectorGeometry {
   points: Vec2[];
   arrow: { x: number; y: number; angle: number };

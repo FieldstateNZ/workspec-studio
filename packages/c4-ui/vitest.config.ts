@@ -12,6 +12,8 @@ export default defineConfig({
       '@workspec/c4-schema': fileURLToPath(new URL('../c4-schema/src/index.ts', import.meta.url)),
       '@workspec/c4-model': fileURLToPath(new URL('../c4-model/src/index.ts', import.meta.url)),
       '@workspec/c4-layout': fileURLToPath(new URL('../c4-layout/src/index.ts', import.meta.url)),
+      '@workspec/canvas': fileURLToPath(new URL('../canvas/src/index.ts', import.meta.url)),
+      '@workspec/canvas-c4': fileURLToPath(new URL('../canvas-c4/src/index.ts', import.meta.url)),
     },
   },
   test: {

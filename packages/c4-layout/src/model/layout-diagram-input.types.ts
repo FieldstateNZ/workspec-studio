@@ -20,4 +20,14 @@ export interface LayoutDiagramInput {
 export interface LayoutDiagramOptions {
   /** Layout flow direction. Defaults to `'LR'` — see {@link LayoutDirection}. */
   readonly direction?: LayoutDirection;
+  /**
+   * Gap (px) between adjacent node layers — ELK's
+   * `elk.layered.spacing.nodeNodeBetweenLayers`. ADDITIVE option (S4 fix
+   * round, #120): omitted, the pinned default (80) applies and output is
+   * byte-identical to before this option existed — this package has no
+   * rendering context to measure labels against, so a caller wanting
+   * label-aware spacing (e.g. `@workspec/canvas-c4`'s midpoint label
+   * pills) computes the value itself and passes it here.
+   */
+  readonly layerSpacing?: number;
 }

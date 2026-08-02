@@ -53,17 +53,38 @@ function designTokens(): Set<string> {
   return tokens;
 }
 
-/** Strip comments before grepping (issue refs like `#119` are hex-shaped). */
+/**
+ * Strip comments before grepping (issue refs like `#119` are hex-shaped).
+ * Line-comment stripping is QUOTE-AWARE (S4 fix round): a naive
+ * `indexOf('//')` truncated at `//` inside string literals, letting a
+ * colour literal later on the same line escape the grep. Mirrors
+ * packages/c4-ui's zero-local-tokens stripper.
+ */
+function stripLineComment(line: string): string {
+  let quote: string | null = null;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quote !== null) {
+      if (ch === '\\') {
+        i++; // skip the escaped character
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '/' && line[i + 1] === '/') return line.slice(0, i);
+  }
+  return line;
+}
+
 function stripComments(text: string, isCss: boolean): string {
   const noBlock = text.replace(/\/\*[\s\S]*?\*\//g, '');
   if (isCss) return noBlock;
-  return noBlock
-    .split('\n')
-    .map((line) => {
-      const idx = line.indexOf('//');
-      return idx === -1 ? line : line.slice(0, idx);
-    })
-    .join('\n');
+  return noBlock.split('\n').map(stripLineComment).join('\n');
 }
 
 describe('token audit — var(--*) resolution', () => {

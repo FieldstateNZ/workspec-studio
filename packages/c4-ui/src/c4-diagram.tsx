@@ -1,40 +1,54 @@
-// The interactive C4 canvas: renders one positioned diagram view (elements
-// styled per kind, orthogonal category-coloured edges), and supports hover
-// tooltips, click/Enter drill-down, click-to-select (a persistent accent
-// ring plus `onSelect`, independent of drill-down — `C4Explorer`'s detail
-// rail is built on this), wheel/drag pan-zoom, and (when the host grants
-// `editLayout` and supplies a `source`) basic drag-to-pin. See the package
-// README for the full interaction contract.
+// The interactive C4 canvas — since S4 (#120) a FACADE over the shared
+// canvas engine: `@workspec/canvas` (store/camera/pointer pipeline +
+// orthogonal edge router) composed with `@workspec/canvas-c4` (the
+// ResolvedDiagram→shape projection and the enterprise node/boundary
+// chrome). Externally props-compatible with the previous SVG renderer:
+// same `C4DiagramProps`, same interaction contract (click activates =
+// onSelect + onNavigate; node drag-to-pin writes `.layout/` through the
+// host and never activates; background click clears the selection;
+// background drag pans; wheel zooms; arrows/+/-/Escape on the container),
+// same a11y surface (role="button" nodes with `${kind}: ${title}` labels,
+// Enter to activate). The rendering DOM changed (enterprise HTML cards +
+// screen-space edge SVG instead of one stretched viewBox) — and the old
+// `preserveAspectRatio='none'` stretch model is replaced by the enterprise
+// camera (no distortion, zoom clamped 0.1–4): see CHANGELOG.md.
 
-import type { CSSProperties, KeyboardEvent, PointerEvent, ReactElement, WheelEvent } from 'react';
+import type { CSSProperties, FC, KeyboardEvent, ReactElement } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
-import type {
-  LayoutDirection,
-  PositionedDiagram,
-  PositionedEdge,
-  PositionedNode,
-} from '@workspec/c4-layout';
+import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
 import { layoutPathFor, serializeLayout } from '@workspec/c4-schema';
 import type { Spec } from '@workspec/c4-schema';
+import {
+  Canvas,
+  CanvasProvider,
+  CanvasSpecContext,
+  ConnectorLayer,
+  ShapeLayer,
+  createCanvasStore,
+  pageToScreen,
+  useCanvasHover,
+  useCanvasStore,
+  useCanvasViewport,
+} from '@workspec/canvas';
+import type { CanvasStoreInstance, ShapeId } from '@workspec/canvas';
+import {
+  buildC4Shapes,
+  buildCanvasSpec,
+  fitCamera,
+  nodeShapeId,
+  registerC4,
+  type C4NodeShape,
+} from '@workspec/canvas-c4';
 import { serializeForWrite } from './drag/serialize-for-write.js';
-import { IDENTITY_CAMERA, panBy, zoomAt } from './geometry/camera.js';
-import type { Camera } from './geometry/camera.js';
 import { clampTooltipPercents } from './geometry/clamp-tooltip.js';
-import { contentBounds } from './geometry/content-bounds.js';
-import { orthogonalEdgePath, routeMidpoint } from './geometry/edge-path.js';
-import { recomputeElbowRoute } from './geometry/elbow-route.js';
-import type { Rect } from './geometry/node-shape.js';
-import { BOX_CORNER_RADIUS, nodeShapeGeometry } from './geometry/node-shape.js';
-import { truncateLabel } from './geometry/truncate-label.js';
 import { createInertLinkResolver } from './host.js';
-import type { C4StudioHost } from './host.js';
-import { iconFor } from './style/icons.js';
-import { markerIdFor, uniqueAccents } from './style/marker-id.js';
-import { resolveConnectionStyle, resolveElementStyle } from './style/spec-defaults.js';
+import type { C4StudioHost, LinkResolver } from './host.js';
 import { ThemedRoot } from './themed-root.js';
 import { tooltipContentFor, TooltipContent } from './tooltip.js';
 import type { ThemeName } from './themes.js';
+import { A11yBridgeContext, a11yC4NodeShapeUtil, type A11yBridge } from './c4-canvas/a11y-node.js';
+import { createFacadeTool } from './c4-canvas/facade-tool.js';
 
 export interface C4DiagramProps {
   /** The positioned view to render — one `layoutDiagram` result (one lens, or the sole view). */
@@ -45,28 +59,15 @@ export interface C4DiagramProps {
   spec?: Spec | undefined;
   /** The embedding host: layout write-back source, link resolution, capabilities. Omit for a fully read-only, host-less render. */
   host?: C4StudioHost | undefined;
-  /** Called when the user drills down on a node with a resolved slug (click, or Enter while focused). The caller decides whether that slug maps to another diagram. */
+  /** Called when the user drills down on a node with a resolved slug (click, or Enter while focused). */
   onNavigate?: ((diagramSlug: string) => void) | undefined;
-  /**
-   * The `nodeId` of the persistently-selected node, or `null`/omitted for
-   * none. Purely presentational here (renders the accent selection ring) —
-   * the caller (typically `C4Explorer`, driving its detail rail) owns the
-   * selection state; this component never selects on its own initiative.
-   */
+  /** The persistently-selected node's `nodeId` (accent ring), or null/omitted for none — the caller owns selection state. */
   selectedNodeId?: string | null | undefined;
-  /**
-   * Called when the user activates a node (click, or Enter while focused) —
-   * with that node — or clicks the canvas background (with `null`, to
-   * clear). Independent of `onNavigate`: a consumer that wants "click drills
-   * down immediately" keeps using `onNavigate` alone; a consumer that wants
-   * "click selects, something else (e.g. a detail rail's own button)
-   * decides whether/when to drill" uses `onSelect` instead, or both at once
-   * if it wants both effects from the same click.
-   */
+  /** Called when the user activates a node (click/Enter) with that node, or clicks the background (with null). */
   onSelect?: ((node: PositionedNode | null) => void) | undefined;
-  /** Elements keyed by `elementKey(kind, slug)`, for the hover tooltip's Links section. Omit to render tooltips without a Links row. */
+  /** Elements keyed by `elementKey(kind, slug)`, for the hover tooltip's Links section. */
   elementsByKindAndSlug?: ReadonlyMap<string, LoadedElement> | undefined;
-  /** Layout flow direction — must match whatever direction produced `diagram`, so a dragged node's recomputed edge routes agree with the rest. Defaults to `'LR'`. */
+  /** Layout flow direction the positions were produced with. Defaults to `'LR'`. (Advisory since S4 — edge routes are recomputed live by the shared router.) */
   direction?: LayoutDirection | undefined;
   theme?: ThemeName | undefined;
   className?: string | undefined;
@@ -74,11 +75,55 @@ export interface C4DiagramProps {
 
 const PAN_STEP = 40;
 const ZOOM_FACTOR = 1.2;
-const DRAG_THRESHOLD = 4;
+const MIN_ZOOM = 0.1;
+const MAX_ZOOM = 4;
 
-function rectOf(node: PositionedNode): Rect {
-  return { x: node.x, y: node.y, width: node.width, height: node.height };
+/** Zoom the camera about a canvas-relative screen point by `factor`, clamped 0.1–4. */
+function zoomCamera(
+  camera: { x: number; y: number; zoom: number },
+  screenX: number,
+  screenY: number,
+  factor: number,
+): { x: number; y: number; zoom: number } {
+  const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, camera.zoom * factor));
+  const pageX = screenX / camera.zoom + camera.x;
+  const pageY = screenY / camera.zoom + camera.y;
+  return { zoom, x: pageX - screenX / zoom, y: pageY - screenY / zoom };
 }
+
+/** The hover tooltip, anchored to the hovered node in screen space and clamped inside the canvas. */
+const TooltipOverlay: FC<{
+  nodesById: ReadonlyMap<string, PositionedNode>;
+  elementsByKindAndSlug: ReadonlyMap<string, LoadedElement> | undefined;
+  linkResolver: LinkResolver;
+}> = ({ nodesById, elementsByKindAndSlug, linkResolver }) => {
+  const camera = useCanvasStore((s) => s.camera);
+  const shapes = useCanvasStore((s) => s.shapes);
+  const hoveredId = useCanvasHover((s) => s.hoveredId);
+  const viewport = useCanvasViewport();
+
+  const shape = hoveredId !== null ? shapes[hoveredId] : undefined;
+  if (!shape || shape.type !== 'c4node') return null;
+  const node = nodesById.get((shape as C4NodeShape).slug);
+  if (!node) return null;
+
+  const screen = pageToScreen({ x: shape.x, y: shape.y }, camera);
+  const w = viewport && viewport.width > 0 ? viewport.width : 1;
+  const h = viewport && viewport.height > 0 ? viewport.height : 1;
+  const clamped = clampTooltipPercents((screen.x / w) * 100, (screen.y / h) * 100);
+  return (
+    <div
+      className="c4-tooltip"
+      data-canvas-ui
+      style={{ position: 'absolute', left: `${String(clamped.left)}%`, top: `${String(clamped.top)}%` }}
+    >
+      <TooltipContent
+        content={tooltipContentFor(node, elementsByKindAndSlug)}
+        linkResolver={linkResolver}
+      />
+    </div>
+  );
+};
 
 export function C4Diagram(props: C4DiagramProps): ReactElement {
   const {
@@ -94,263 +139,186 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     theme,
     className,
   } = props;
+  void direction; // positions are authoritative; the shared router recomputes edge look live
 
-  const [nodes, setNodes] = useState<readonly PositionedNode[]>(diagram.nodes);
-  const [edges, setEdges] = useState<readonly PositionedEdge[]>(diagram.edges);
-  const [camera, setCamera] = useState<Camera>(IDENTITY_CAMERA);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [writeError, setWriteError] = useState<string | null>(null);
-
-  // A new diagram prop (a fresh layout, or a lens/diagram switch) resets the
-  // live drag copy and the camera — never carry stale positions or a stale
-  // pan/zoom across an unrelated diagram.
-  useEffect(() => {
-    setNodes(diagram.nodes);
-    setEdges(diagram.edges);
-    setCamera(IDENTITY_CAMERA);
-  }, [diagram]);
-
-  const bounds = useMemo(() => contentBounds(diagram.nodes.map(rectOf)), [diagram]);
-  const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [writeError, setWriteError] = useState<string | null>(null);
 
   const editable = Boolean(host?.capabilities.editLayout && host.source);
 
-  const dragRef = useRef<{
-    nodeId: string;
-    startClientX: number;
-    startClientY: number;
-    originX: number;
-    originY: number;
-    moved: boolean;
-  } | null>(null);
-  const panRef = useRef<{
-    startClientX: number;
-    startClientY: number;
-    camera: Camera;
-    // Same drag-vs-click distinction as `dragRef.moved` below, for the
-    // background instead of a node: a pointerup with no meaningful movement
-    // since pointerdown is a click on empty canvas, which clears the
-    // selection instead of being (falsely) treated as a completed pan.
-    moved: boolean;
-  } | null>(null);
+  // Latest-props refs so the ONE registered tool/a11y bridge always sees
+  // current callbacks and data without re-registration.
+  const latest = useRef({ diagram, resolved, host, onNavigate, onSelect, editable });
+  latest.current = { diagram, resolved, host, onNavigate, onSelect, editable };
 
-  function pixelsToViewboxScale(): { sx: number; sy: number } {
-    const rect = svgRef.current?.getBoundingClientRect();
-    return {
-      sx: bounds.width / (rect?.width || bounds.width),
-      sy: bounds.height / (rect?.height || bounds.height),
+  const nodesById = useMemo(
+    () => new Map(diagram.nodes.map((n) => [n.nodeId, n] as const)),
+    [diagram],
+  );
+  const nodesByIdRef = useRef(nodesById);
+  nodesByIdRef.current = nodesById;
+
+  const [instance] = useState<CanvasStoreInstance>(() => {
+    const inst = createCanvasStore();
+    registerC4(inst);
+    // The facade's a11y wrapper replaces the raw card Component; the facade
+    // tool replaces the whiteboard select tool (see c4-canvas/facade-tool.ts
+    // for the contract it preserves).
+    inst.shapeUtils.register(a11yC4NodeShapeUtil);
+    inst.tools.register(
+      createFacadeTool(inst, {
+        isEditable: () => latest.current.editable,
+        onActivateNode: (shapeId) => {
+          activateRef.current(shapeId);
+        },
+        onBackgroundClick: () => {
+          latest.current.onSelect?.(null);
+        },
+        onDragCommit: () => {
+          writeLayoutRef.current();
+        },
+      }),
+    );
+    return inst;
+  });
+  useEffect(() => () => instance.dispose(), [instance]);
+
+  /** Click/Enter activation: onSelect always, onNavigate only for a resolved slug. */
+  const activateRef = useRef((shapeId: ShapeId) => {
+    void shapeId;
+  });
+  activateRef.current = (shapeId: ShapeId) => {
+    const shape = instance.getState().shapes[shapeId];
+    if (!shape || shape.type !== 'c4node') return;
+    const node = nodesByIdRef.current.get((shape as C4NodeShape).slug);
+    if (!node) return;
+    latest.current.onSelect?.(node);
+    if (node.slug !== null) latest.current.onNavigate?.(node.slug);
+  };
+
+  /** The drag-to-pin write path: current node positions merged into the shared `.layout/` file. */
+  const writeLayoutRef = useRef((): void => undefined);
+  writeLayoutRef.current = () => {
+    const { host: h, resolved: r, diagram: d } = latest.current;
+    if (!h?.source) return;
+    const shapes = instance.getState().shapes;
+    const positioned: PositionedDiagram = {
+      nodes: d.nodes.map((n) => {
+        const s = shapes[nodeShapeId(n.nodeId)];
+        return s ? { ...n, x: s.x, y: s.y } : n;
+      }),
+      edges: d.edges,
     };
-  }
-
-  /** The outer `viewBox`-space point under a client coordinate — the outer `viewBox` is fixed regardless of pan/zoom, so this needs no camera correction. */
-  function clientToViewboxPoint(clientX: number, clientY: number): { x: number; y: number } {
-    const rect = svgRef.current?.getBoundingClientRect();
-    const { sx, sy } = pixelsToViewboxScale();
-    return {
-      x: bounds.minX + (clientX - (rect?.left ?? 0)) * sx,
-      y: bounds.minY + (clientY - (rect?.top ?? 0)) * sy,
-    };
-  }
-
-  function activate(node: PositionedNode): void {
-    onSelect?.(node);
-    if (node.slug !== null) onNavigate?.(node.slug);
-  }
-
-  function handleNodeKeyDown(event: KeyboardEvent<SVGGElement>, node: PositionedNode): void {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      activate(node);
-    }
-  }
-
-  function writeLayout(
-    nextNodes: readonly PositionedNode[],
-    nextEdges: readonly PositionedEdge[],
-  ): void {
-    if (!host?.source) return;
-    const positioned: PositionedDiagram = { nodes: nextNodes, edges: nextEdges };
-    const merged = serializeForWrite(resolved.layout?.data ?? null, positioned);
-    const path = layoutPathFor(resolved.slug);
-    host.source
-      .writeFile(path, serializeLayout(merged))
+    const merged = serializeForWrite(r.layout?.data ?? null, positioned);
+    h.source
+      .writeFile(layoutPathFor(r.slug), serializeLayout(merged))
       .catch((error: unknown) =>
         setWriteError(error instanceof Error ? error.message : String(error)),
       );
-  }
+  };
 
-  function onNodePointerDown(event: PointerEvent<SVGGElement>, node: PositionedNode): void {
-    // Stop propagation unconditionally — a node's own pointerdown/up (below)
-    // must never fall through to the background pan/select-clear handlers,
-    // whether or not `editable` grants drag-to-pin. Previously this only
-    // stopped propagation on the editable path, so a read-only click would
-    // bubble to `onBackgroundPointerDown`/`onBackgroundPointerUp` — harmless
-    // before there was background behaviour to trigger, but exactly the kind
-    // of node-click-also-clears-selection bug `onSelect` would otherwise hit.
-    event.stopPropagation();
-    if (!editable) return;
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture isn't universally implemented (e.g. jsdom) — the
-      // drag still works via same-target events, just without capture
-      // outside the element's own bounds.
-    }
-    dragRef.current = {
-      nodeId: node.nodeId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      originX: node.x,
-      originY: node.y,
-      moved: false,
+  // Projection: a new diagram prop (fresh layout / lens / diagram switch)
+  // re-projects the POSITIONED view (the caller's layout + lens choice is
+  // authoritative — the synthetic single-view resolved guarantees the
+  // projection can never disagree with what the caller laid out), resets
+  // the camera, and frames the content with the enterprise fit (1× cap).
+  useEffect(() => {
+    const synthetic: ResolvedDiagram = {
+      ...resolved,
+      // The caller's PositionedDiagram is ALREADY the chosen lens view —
+      // the projection must not re-partition it, so a c4-container type is
+      // masked (buildC4Shapes's lens filter only bites on 'c4-container';
+      // the type string feeds nothing else in the projection).
+      type: resolved.type === 'c4-container' ? 'c4-container(positioned-view)' : resolved.type,
+      view: { nodes: diagram.nodes, edges: diagram.edges },
+      lensViews: null,
     };
-  }
-
-  function onNodePointerMove(event: PointerEvent<SVGGElement>): void {
-    const drag = dragRef.current;
-    if (!drag) return;
-    event.stopPropagation();
-    const { sx, sy } = pixelsToViewboxScale();
-    const dx = ((event.clientX - drag.startClientX) * sx) / camera.zoom;
-    const dy = ((event.clientY - drag.startClientY) * sy) / camera.zoom;
-    if (Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD) drag.moved = true;
-
-    const nextX = drag.originX + dx;
-    const nextY = drag.originY + dy;
-
-    // Rects for the edge-route recompute below: every node's CURRENT rect,
-    // with the dragged node's overridden to where it's moving to right now
-    // (not yet committed via `setNodes`, so edges stay in lockstep with the
-    // node instead of trailing it by one event).
-    const movedRects = new Map<string, Rect>(
-      nodes.map((n) => [
-        n.nodeId,
-        n.nodeId === drag.nodeId
-          ? { x: nextX, y: nextY, width: n.width, height: n.height }
-          : rectOf(n),
-      ]),
+    // Placements carry the laid-out width/height too, so a `.layout/`
+    // pinned-size node renders at its pin size AND its edges anchor to the
+    // real card faces (S4 fix round — sizes were previously discarded).
+    const positions = Object.fromEntries(
+      diagram.nodes.map(
+        (n) => [n.nodeId, { x: n.x, y: n.y, width: n.width, height: n.height }] as const,
+      ),
     );
+    const projection = buildC4Shapes(synthetic, { positions });
+    instance.getState()._setShapesRaw(projection.shapes);
 
-    setNodes((prev) =>
-      prev.map((n) => (n.nodeId === drag.nodeId ? { ...n, x: nextX, y: nextY } : n)),
-    );
-    setEdges((prevEdges) =>
-      prevEdges.map((edge) => {
-        if (edge.from !== drag.nodeId && edge.to !== drag.nodeId) return edge;
-        const from = movedRects.get(edge.from);
-        const to = movedRects.get(edge.to);
-        if (!from || !to) return edge;
-        return { ...edge, route: recomputeElbowRoute(from, to, direction) };
-      }),
-    );
-  }
-
-  function onNodePointerUp(event: PointerEvent<SVGGElement>, node: PositionedNode): void {
-    // See onNodePointerDown: stop propagation unconditionally, before the
-    // early return below, so a read-only (non-editable) click's pointerup
-    // never reaches the background handler either.
-    event.stopPropagation();
-    const drag = dragRef.current;
-    dragRef.current = null;
-    if (!drag) return;
-    if (!drag.moved) {
-      activate(node);
-      return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (rect && rect.width > 0 && rect.height > 0 && projection.bounds) {
+      instance.getState().setCamera(fitCamera(projection.bounds, rect.width, rect.height));
+    } else {
+      instance.getState().setCamera({ x: 0, y: 0, zoom: 1 });
     }
-    writeLayout(nodes, edges);
-  }
+  }, [diagram, resolved, instance]);
 
-  function onBackgroundPointerDown(event: PointerEvent<SVGSVGElement>): void {
-    if (dragRef.current) return;
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // See onNodePointerDown.
+  // Controlled selection: the caller owns it; the store halo follows.
+  useEffect(() => {
+    const store = instance.getState();
+    if (selectedNodeId !== null && nodesById.has(selectedNodeId)) {
+      store.select([nodeShapeId(selectedNodeId)], 'replace');
+    } else {
+      store.clearSelection();
     }
-    panRef.current = {
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      camera,
-      moved: false,
+  }, [selectedNodeId, nodesById, instance]);
+
+  // Wheel = zoom about the cursor (the shipped c4-ui contract; the
+  // whiteboard's wheel-pans/ctrl-zooms stays a whiteboard behaviour).
+  // Native capture listener so the engine's own wheel handler never runs.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: globalThis.WheelEvent): void => {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = el.getBoundingClientRect();
+      const factor = e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+      const store = instance.getState();
+      store.setCamera(
+        zoomCamera(store.camera, e.clientX - rect.left, e.clientY - rect.top, factor),
+      );
     };
-  }
-
-  function onBackgroundPointerMove(event: PointerEvent<SVGSVGElement>): void {
-    const pan = panRef.current;
-    if (!pan) return;
-    const { sx, sy } = pixelsToViewboxScale();
-    const dx = (event.clientX - pan.startClientX) * sx;
-    const dy = (event.clientY - pan.startClientY) * sy;
-    if (
-      Math.abs(event.clientX - pan.startClientX) + Math.abs(event.clientY - pan.startClientY) >
-      DRAG_THRESHOLD
-    ) {
-      pan.moved = true;
-    }
-    setCamera(panBy(pan.camera, dx, dy));
-  }
-
-  /** A background pointerup that never moved (a plain click on empty canvas) clears the selection; a completed pan leaves it alone. */
-  function onBackgroundPointerUp(): void {
-    const pan = panRef.current;
-    panRef.current = null;
-    if (pan && !pan.moved) onSelect?.(null);
-  }
-
-  function onWheel(event: WheelEvent<SVGSVGElement>): void {
-    event.preventDefault();
-    const cursor = clientToViewboxPoint(event.clientX, event.clientY);
-    const factor = event.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
-    setCamera((prev) => zoomAt(prev, cursor, factor));
-  }
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => {
+      el.removeEventListener('wheel', onWheel, { capture: true });
+    };
+  }, [instance]);
 
   function onContainerKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    const store = instance.getState();
+    const camera = store.camera;
+    const rect = containerRef.current?.getBoundingClientRect();
+    const cx = (rect?.width ?? 0) / 2;
+    const cy = (rect?.height ?? 0) / 2;
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault();
-        setCamera((prev) => panBy(prev, 0, PAN_STEP));
+        store.setCamera({ ...camera, y: camera.y - PAN_STEP / camera.zoom });
         break;
       case 'ArrowDown':
         event.preventDefault();
-        setCamera((prev) => panBy(prev, 0, -PAN_STEP));
+        store.setCamera({ ...camera, y: camera.y + PAN_STEP / camera.zoom });
         break;
       case 'ArrowLeft':
         event.preventDefault();
-        setCamera((prev) => panBy(prev, PAN_STEP, 0));
+        store.setCamera({ ...camera, x: camera.x - PAN_STEP / camera.zoom });
         break;
       case 'ArrowRight':
         event.preventDefault();
-        setCamera((prev) => panBy(prev, -PAN_STEP, 0));
+        store.setCamera({ ...camera, x: camera.x + PAN_STEP / camera.zoom });
         break;
       case '+':
       case '=':
         event.preventDefault();
-        setCamera((prev) =>
-          zoomAt(
-            prev,
-            { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 },
-            ZOOM_FACTOR,
-          ),
-        );
+        store.setCamera(zoomCamera(camera, cx, cy, ZOOM_FACTOR));
         break;
       case '-':
       case '_':
         event.preventDefault();
-        setCamera((prev) =>
-          zoomAt(
-            prev,
-            { x: bounds.minX + bounds.width / 2, y: bounds.minY + bounds.height / 2 },
-            1 / ZOOM_FACTOR,
-          ),
-        );
+        store.setCamera(zoomCamera(camera, cx, cy, 1 / ZOOM_FACTOR));
         break;
       case 'Escape':
-        // Clears the selection when focus is on the canvas itself. A
-        // consumer whose selected-node UI lives OUTSIDE this component (e.g.
-        // `C4Explorer`'s detail rail) still needs its own Escape handler for
-        // when focus is over there instead — this only covers the canvas.
+        store.clearSelection();
         onSelect?.(null);
         break;
       default:
@@ -358,15 +326,20 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     }
   }
 
-  const connectionAccents = useMemo(
-    () => uniqueAccents(edges.map((edge) => resolveConnectionStyle(edge.category, spec).accent)),
-    [edges, spec],
-  );
-
-  const hoveredNode = nodes.find((n) => n.nodeId === hoveredId) ?? null;
+  const canvasSpec = useMemo(() => buildCanvasSpec(spec), [spec]);
   const linkResolver = useMemo(
     () => host?.linkResolver ?? createInertLinkResolver(),
     [host?.linkResolver],
+  );
+  const bridge = useMemo<A11yBridge>(
+    () => ({
+      nodesById,
+      isInteractive: (node) => node.slug !== null || onSelect !== undefined,
+      onActivate: (shapeId) => {
+        activateRef.current(shapeId);
+      },
+    }),
+    [nodesById, onSelect],
   );
 
   return (
@@ -377,286 +350,33 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         tabIndex={0}
         onKeyDown={onContainerKeyDown}
         aria-label={`${resolved.title} diagram`}
+        style={{ position: 'relative' } as CSSProperties}
       >
         {writeError !== null && (
           <div className="c4-write-error" role="alert">
             {`Could not save layout: ${writeError}`}
           </div>
         )}
-        <svg
-          ref={svgRef}
-          className="c4-canvas"
-          viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
-          preserveAspectRatio="none"
-          role="group"
-          aria-label={resolved.title}
-          onPointerDown={onBackgroundPointerDown}
-          onPointerMove={onBackgroundPointerMove}
-          onPointerUp={onBackgroundPointerUp}
-          onWheel={onWheel}
-        >
-          <defs>
-            {connectionAccents.map((accent) => (
-              <marker
-                key={accent}
-                id={markerIdFor(accent)}
-                markerWidth={8}
-                markerHeight={8}
-                refX={7}
-                refY={4}
-                orient="auto"
-              >
-                <path d="M0,0 L8,4 L0,8 Z" style={{ fill: accent }} />
-              </marker>
-            ))}
-          </defs>
-          <rect
-            x={bounds.minX}
-            y={bounds.minY}
-            width={bounds.width}
-            height={bounds.height}
-            className="c4-canvas-bg"
-            style={{ fill: 'var(--canvas-bg)' }}
-          />
-          <g transform={`translate(${camera.x} ${camera.y}) scale(${camera.zoom})`}>
-            <g className="c4-edges">
-              {edges.map((edge) => {
-                const connStyle = resolveConnectionStyle(edge.category, spec);
-                const d = orthogonalEdgePath(edge.route);
-                const mid = routeMidpoint(edge.route);
-                return (
-                  <g
-                    key={`${edge.from}->${edge.to}:${edge.label ?? ''}`}
-                    role="img"
-                    aria-label={`${edge.from} to ${edge.to}${edge.label ? `: ${edge.label}` : ''}`}
-                  >
-                    <path
-                      d={d}
-                      className="c4-edge-path"
-                      markerEnd={`url(#${markerIdFor(connStyle.accent)})`}
-                      style={{
-                        fill: 'none',
-                        stroke: connStyle.accent,
-                        strokeWidth: 1.5,
-                        strokeDasharray: connStyle.style === 'dashed' ? '6 4' : undefined,
-                      }}
-                    />
-                    {edge.label !== null && (
-                      <text x={mid.x} y={mid.y - 4} textAnchor="middle" className="c4-edge-label">
-                        {truncateLabel(edge.label, 28)}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-            </g>
-            <g className="c4-nodes">
-              {nodes.map((node) => {
-                const style = resolveElementStyle(node.kind, spec);
-                const shape = nodeShapeGeometry(rectOf(node), style.shape);
-                const Icon = iconFor(style.icon);
-                const isHovered = hoveredId === node.nodeId;
-                const isFocused = focusedId === node.nodeId;
-                const isSelected = selectedNodeId !== null && selectedNodeId === node.nodeId;
-                // "Drillable" (an `onNavigate` target) vs "interactive" (worth a
-                // pointer cursor / non-disabled a11y state) diverge now that a
-                // node can also be SELECTED regardless of whether it resolves to
-                // another diagram: any node is interactive when the consumer
-                // wants selection (`onSelect`), even one `onNavigate` would never
-                // fire for.
-                const drillable = node.slug !== null;
-                const interactive = drillable || onSelect !== undefined;
-                const nodeClasses = ['c4-node'];
-                if (isHovered) nodeClasses.push('c4-node-hover');
-                if (isFocused) nodeClasses.push('c4-node-focus');
-                if (isSelected) nodeClasses.push('c4-node-selected');
-                const ringRadius = (shape.kind === 'rect' ? shape.rx : BOX_CORNER_RADIUS) + 3;
-                // The persistent selection ring sits further outside the node
-                // than the hover/focus ring (offset 5 vs 3) so a selected AND
-                // hovered node shows both, concentric, without overlapping.
-                const selectedRingRadius =
-                  (shape.kind === 'rect' ? shape.rx : BOX_CORNER_RADIUS) + 5;
-                return (
-                  <g
-                    key={node.nodeId}
-                    className={nodeClasses.join(' ')}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${node.kind ?? 'element'}: ${node.title}`}
-                    aria-disabled={!interactive}
-                    // The Enterprise `.c4-el` pattern: the resolved accent rides in
-                    // as a custom property; surface/border/eyebrow derive from it in
-                    // styles.css's `.c4-node` color-mix layer.
-                    style={{ '--c4-el-accent-raw': style.accent } as CSSProperties}
-                    onPointerEnter={() => setHoveredId(node.nodeId)}
-                    onPointerLeave={() => setHoveredId((id) => (id === node.nodeId ? null : id))}
-                    onFocus={() => {
-                      setHoveredId(node.nodeId);
-                      setFocusedId(node.nodeId);
-                    }}
-                    onBlur={() => {
-                      setHoveredId((id) => (id === node.nodeId ? null : id));
-                      setFocusedId((id) => (id === node.nodeId ? null : id));
-                    }}
-                    onKeyDown={(e) => handleNodeKeyDown(e, node)}
-                    onPointerDown={(e) => onNodePointerDown(e, node)}
-                    onPointerMove={onNodePointerMove}
-                    onPointerUp={(e) => onNodePointerUp(e, node)}
-                    // When `editable`, `onNodePointerUp` already decides drag-vs-click
-                    // (a real drag never calls `activate`); the native `click` event
-                    // that follows every `pointerup` would otherwise double-fire it,
-                    // so this only activates directly for the non-editable (no
-                    // pointer-drag handling at all) case.
-                    onClick={() => {
-                      if (!editable) activate(node);
-                    }}
-                  >
-                    {shape.kind === 'rect' ? (
-                      <rect
-                        x={node.x}
-                        y={node.y}
-                        width={node.width}
-                        height={node.height}
-                        rx={shape.rx}
-                        ry={shape.ry}
-                        style={{
-                          fill: 'var(--c4-el-surface)',
-                          stroke: 'var(--c4-el-border)',
-                          strokeWidth: 1,
-                        }}
-                      />
-                    ) : (
-                      <>
-                        <path
-                          d={shape.outline}
-                          style={{
-                            fill: 'var(--c4-el-surface)',
-                            stroke: 'var(--c4-el-border)',
-                            strokeWidth: 1,
-                          }}
-                        />
-                        {shape.decoration !== undefined && (
-                          <path
-                            d={shape.decoration}
-                            style={{ fill: 'none', stroke: 'var(--c4-el-border)', strokeWidth: 1 }}
-                          />
-                        )}
-                      </>
-                    )}
-                    {/* The 4px accent identity stripe — a line (not a filled rect) so the
-                        external variant can dash it, mirroring Enterprise's dashed
-                        borderLeft on `variant: external` nodes. */}
-                    <line
-                      x1={node.x + 2}
-                      y1={node.y}
-                      x2={node.x + 2}
-                      y2={node.y + node.height}
-                      style={{
-                        stroke: 'var(--c4-el-accent)',
-                        strokeWidth: 4,
-                        strokeDasharray: style.variant === 'external' ? '6 3' : undefined,
-                      }}
-                    />
-                    <Icon
-                      x={node.x + 14}
-                      y={node.y + 12}
-                      width={18}
-                      height={18}
-                      style={{ color: 'var(--c4-el-accent)' }}
-                    />
-                    <text x={node.x + 40} y={node.y + 26} className="c4-node-title">
-                      {truncateLabel(node.title, 26)}
-                    </text>
-                    {node.description !== null && node.description !== '' && (
-                      <text x={node.x + 14} y={node.y + 50} className="c4-node-desc">
-                        {truncateLabel(node.description, 34)}
-                      </text>
-                    )}
-                    {node.technology !== null && node.technology !== '' && (
-                      <text x={node.x + 14} y={node.y + node.height - 12} className="c4-node-tech">
-                        {truncateLabel(node.technology, 30)}
-                      </text>
-                    )}
-                    <text
-                      x={node.x + node.width - 10}
-                      y={node.y + node.height - 12}
-                      textAnchor="end"
-                      className="c4-node-kind"
-                    >
-                      {node.kind ?? ''}
-                    </text>
-                    {(isHovered || isFocused) && (
-                      <rect
-                        className="c4-node-ring"
-                        x={node.x - 3}
-                        y={node.y - 3}
-                        width={node.width + 6}
-                        height={node.height + 6}
-                        rx={ringRadius}
-                        ry={ringRadius}
-                      />
-                    )}
-                    {/* The persistent selection ring — stays on the node until it's
-                        deselected (background click / Escape / a diagram switch),
-                        unlike the hover/focus ring above which only shows while that
-                        transient state holds. Two concentric strokes approximate the
-                        design's CSS `border` + soft `box-shadow` halo with plain SVG
-                        strokes: an accent-solid inner ring and a wider, softer outer
-                        one, rather than reaching for absolutely-positioned divs. */}
-                    {isSelected && (
-                      <>
-                        <rect
-                          className="c4-node-ring-selected-outer"
-                          x={node.x - 8}
-                          y={node.y - 8}
-                          width={node.width + 16}
-                          height={node.height + 16}
-                          rx={selectedRingRadius + 3}
-                          ry={selectedRingRadius + 3}
-                        />
-                        <rect
-                          className="c4-node-ring-selected-inner"
-                          x={node.x - 5}
-                          y={node.y - 5}
-                          width={node.width + 10}
-                          height={node.height + 10}
-                          rx={selectedRingRadius}
-                          ry={selectedRingRadius}
-                        />
-                      </>
-                    )}
-                  </g>
-                );
-              })}
-            </g>
-          </g>
-        </svg>
-        {hoveredNode !== null &&
-          (() => {
-            // The node's rendered viewBox-space position after the camera
-            // transform (`translate(camera.x,camera.y) scale(camera.zoom)`
-            // applied to content-space coordinates), expressed as a
-            // percentage of the fixed viewBox — valid because the `<svg>`
-            // stretches to fill this container exactly
-            // (`preserveAspectRatio="none"`, and `pixelsToViewboxScale`
-            // assumes the same 1:1 stretch) — then clamped so a right/
-            // bottom-edge node's tooltip never overflows the canvas.
-            const clamped = clampTooltipPercents(
-              ((camera.x + hoveredNode.x * camera.zoom - bounds.minX) / bounds.width) * 100,
-              ((camera.y + hoveredNode.y * camera.zoom - bounds.minY) / bounds.height) * 100,
-            );
-            return (
-              <div
-                className="c4-tooltip"
-                style={{ position: 'absolute', left: `${clamped.left}%`, top: `${clamped.top}%` }}
-              >
-                <TooltipContent
-                  content={tooltipContentFor(hoveredNode, elementsByKindAndSlug)}
-                  linkResolver={linkResolver}
-                />
-              </div>
-            );
-          })()}
+        {/* Absolute inset so the canvas fills .c4-diagram however its height
+            arose (host-sized chain OR the min-height fallback) — percentage
+            heights don't resolve against min-height alone. */}
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <CanvasProvider store={instance}>
+            <CanvasSpecContext.Provider value={canvasSpec}>
+              <A11yBridgeContext.Provider value={bridge}>
+                <Canvas shortcutScope="none" renderContextMenu={() => null}>
+                  <ConnectorLayer />
+                  <ShapeLayer />
+                  <TooltipOverlay
+                    nodesById={nodesById}
+                    elementsByKindAndSlug={elementsByKindAndSlug}
+                    linkResolver={linkResolver}
+                  />
+                </Canvas>
+              </A11yBridgeContext.Provider>
+            </CanvasSpecContext.Provider>
+          </CanvasProvider>
+        </div>
       </div>
     </ThemedRoot>
   );

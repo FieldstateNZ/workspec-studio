@@ -27,7 +27,9 @@
   "references": [
     { "path": "../c4-schema/tsconfig.build.json" },
     { "path": "../c4-model/tsconfig.build.json" },
-    { "path": "../c4-layout/tsconfig.build.json" }
+    { "path": "../c4-layout/tsconfig.build.json" },
+    { "path": "../canvas/tsconfig.build.json" },
+    { "path": "../canvas-c4/tsconfig.build.json" }
   ],
   "include": ["src"]
 }

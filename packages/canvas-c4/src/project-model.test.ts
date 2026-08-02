@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import type { ResolvedDiagram, ResolvedDiagramNode } from '@workspec/c4-model';
 import type { Diagram } from '@workspec/c4-schema';
-import type { Shape, ShapeId } from '@workspec/canvas';
+import { resolveConnectorGeometry } from '@workspec/canvas';
+import type { ConnectorShape, Shape, ShapeId } from '@workspec/canvas';
 import {
   buildC4Shapes,
   edgeShapeId,
@@ -395,5 +396,63 @@ describe('buildC4Shapes — lane offsets and fan roles', () => {
     });
     expect(result.shapes[edgeShapeId('b', 'hub')]).toMatchObject({ laneOffset: 0 });
     expect(result.shapes[edgeShapeId('c', 'hub')]).toMatchObject({ laneOffset: 14 });
+  });
+});
+
+describe('buildC4Shapes — pinned per-node sizes (S4 fix round, #120)', () => {
+  // A `.layout/` pin may carry width/height (the representative fixture
+  // pins `architect` at 240×120). The projection must honour the pinned
+  // rect for the CARD and for the EDGE ANCHORS alike — discarding it
+  // routed edges against a phantom default-size rect, visibly detaching
+  // them from the drawn card face (the regenerated c4-studio snapshot
+  // baked in edge start x=380 vs card face x=320 before this fix).
+  const resolved = diagram(
+    'c4-context',
+    [node('pinned', 'actor', 'Pinned'), node('sys', 'system', 'System')],
+    [edge('pinned', 'sys', { label: 'uses', category: 'interaction' })],
+  );
+  const placements = {
+    pinned: { x: 80, y: 200, width: 240, height: 120 },
+    sys: { x: 400, y: 200 },
+  };
+
+  test('a placement with width/height sizes the node shape; omitted sizes keep the default dims', () => {
+    const result = buildC4Shapes(resolved, { positions: placements });
+    expect(result.shapes[nodeShapeId('pinned')]).toMatchObject({
+      x: 80,
+      y: 200,
+      width: 240,
+      height: 120,
+    });
+    expect(result.shapes[nodeShapeId('sys')]).toMatchObject({
+      width: C4_NODE_WIDTH,
+      height: C4_NODE_HEIGHT,
+    });
+  });
+
+  test('the shared router anchors the edge ON the pinned card face, not the default footprint', () => {
+    const result = buildC4Shapes(resolved, { positions: placements });
+    const connector = result.shapes[edgeShapeId('pinned', 'sys')] as ConnectorShape;
+    const geom = resolveConnectorGeometry(connector, result.shapes);
+    if (!geom) throw new Error('edge geometry missing');
+    const start = geom.points[0];
+    if (!start) throw new Error('edge start missing');
+    // The source sits left of the target, so the edge leaves the pinned
+    // card's RIGHT face: x must be the pinned 80+240=320 (a discarded pin
+    // size would anchor at the phantom 80+300=380), y within the pinned
+    // card's vertical extent.
+    expect(start.x).toBe(80 + 240);
+    expect(start.y).toBeGreaterThanOrEqual(200);
+    expect(start.y).toBeLessThanOrEqual(200 + 120);
+  });
+
+  test('projection bounds cover the pinned rect exactly (camera fit uses real sizes)', () => {
+    const result = buildC4Shapes(resolved, { positions: placements });
+    expect(result.bounds).toEqual({
+      x: 80,
+      y: 200,
+      width: 400 + C4_NODE_WIDTH - 80,
+      height: Math.max(120, C4_NODE_HEIGHT),
+    });
   });
 });

@@ -29,6 +29,46 @@ const VALUE_EXEMPT = 'style/spec-defaults.ts';
 const SYNTAX_EXEMPT = 'style/color-mix.ts';
 
 const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/;
+
+/**
+ * Strip comments before grepping (S4, #120): issue references in prose
+ * (`#119`, `#120`) are hex-shaped and would false-positive the colour
+ * grep — colour LITERALS only count in code. Mirrors the hardened
+ * packages/canvas + packages/canvas-c4 token audits.
+ *
+ * Line comments are stripped QUOTE-AWARE (S4 fix round): a naive
+ * `indexOf('//')` truncates at `//` inside string literals (`'https://…'`),
+ * so a colour literal later on the same line would silently escape the
+ * grep. This scans the line tracking quote state instead — still a
+ * heuristic (a template literal spanning lines resets per line), but
+ * strictly stronger than the suffix cut.
+ */
+function stripLineComment(line: string): string {
+  let quote: string | null = null;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quote !== null) {
+      if (ch === '\\') {
+        i++; // skip the escaped character
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '/' && line[i + 1] === '/') return line.slice(0, i);
+  }
+  return line;
+}
+
+function stripComments(text: string, isCss: boolean): string {
+  const noBlock = text.replace(/\/\*[\s\S]*?\*\//g, '');
+  if (isCss) return noBlock;
+  return noBlock.split('\n').map(stripLineComment).join('\n');
+}
 const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(/;
 const TAILWIND_ARBITRARY_COLOR = /-\[(?:#|(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(|color:)/;
 
@@ -39,7 +79,7 @@ describe('zero local design tokens (grep-clean except the documented exceptions)
     for await (const path of glob('**/*.{ts,tsx,css}', { cwd: here })) {
       if (path === VALUE_EXEMPT) continue;
       if (path.endsWith('.test.ts') || path.endsWith('.test.tsx')) continue;
-      const text = readFileSync(`${here}${path}`, 'utf8');
+      const text = stripComments(readFileSync(`${here}${path}`, 'utf8'), path.endsWith('.css'));
       const hasColorFunction = path === SYNTAX_EXEMPT ? false : COLOR_FUNCTION.test(text);
       if (HEX_COLOR.test(text) || hasColorFunction || TAILWIND_ARBITRARY_COLOR.test(text)) {
         offenders.push(path);
@@ -59,6 +99,15 @@ describe('zero local design tokens (grep-clean except the documented exceptions)
     expect(TAILWIND_ARBITRARY_COLOR.test('className="text-[#ff0000]"')).toBe(true);
     expect(TAILWIND_ARBITRARY_COLOR.test('className="border-[color:red]"')).toBe(true);
     expect(TAILWIND_ARBITRARY_COLOR.test('className="bg-[rgb(1,2,3)]"')).toBe(true);
+    // The comment stripper is quote-aware: a URL's `//` never truncates the
+    // rest of the line (a colour literal after it must still be seen), while
+    // real line comments (and only they) are stripped.
+    expect(
+      HEX_COLOR.test(stripComments("const u = 'https://x.test'; const c = '#4A90D9';", false)),
+    ).toBe(true);
+    expect(HEX_COLOR.test(stripComments("const u = 'ok'; // legacy hex #4A90D9", false))).toBe(
+      false,
+    );
     // The sanctioned patterns stay clean:
     expect(HEX_COLOR.test('const c = "var(--accent)";')).toBe(false);
     expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(

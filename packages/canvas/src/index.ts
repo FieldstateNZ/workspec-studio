@@ -97,6 +97,7 @@ export {
   connectorGeometry,
   isDiscoveryConnector,
   resolveConnectorGeometry,
+  roundedConnectorPath,
   routingOptsFromUtils,
   straightConnectorGeometry,
 } from './shapes/connector/geometry.js';

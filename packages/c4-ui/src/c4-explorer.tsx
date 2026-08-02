@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { C4Model, LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
+import { labelAwareLayerSpacing } from '@workspec/canvas-c4';
 import { LensToggle } from '@workspec/design/components';
 import { C4Diagram } from './c4-diagram.js';
 import { elementKey } from './element-key.js';
@@ -184,7 +185,10 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     setPositioned(null);
     layoutDiagram(
       { nodes: view.nodes, edges: view.edges, layout: selected.layout?.data ?? null },
-      { direction },
+      // Label-aware layer spacing (S4 fix round, #120): guarantee the
+      // midpoint label pills fit the inter-layer gap by construction, the
+      // way enterprise's dagre ranksep did.
+      { direction, layerSpacing: labelAwareLayerSpacing(view.edges) },
     ).then(
       (result) => {
         if (generationRef.current !== generation) return;

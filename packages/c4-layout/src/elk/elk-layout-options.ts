@@ -15,7 +15,10 @@ import type { LayoutDirection } from '../model/layout-direction.js';
  * deterministic choices (greedy layer-sweep, network-simplex) rather than a
  * strategy that consults a random seed.
  */
-export function elkLayoutOptionsFor(direction: LayoutDirection): Record<string, string> {
+export function elkLayoutOptionsFor(
+  direction: LayoutDirection,
+  layerSpacing?: number,
+): Record<string, string> {
   return {
     'elk.algorithm': 'layered',
     'elk.direction': direction === 'LR' ? 'RIGHT' : 'DOWN',
@@ -26,7 +29,10 @@ export function elkLayoutOptionsFor(direction: LayoutDirection): Record<string, 
     'elk.spacing.nodeNode': '40',
     'elk.spacing.edgeNode': '20',
     'elk.spacing.edgeEdge': '10',
-    'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+    // The DEFAULT stays the pinned 80 (frozen-model warning above). A caller
+    // may override JUST this gap via `LayoutDiagramOptions.layerSpacing` —
+    // the additive label-aware-spacing seam (S4 fix round, #120).
+    'elk.layered.spacing.nodeNodeBetweenLayers': String(layerSpacing ?? 80),
     'elk.layered.spacing.edgeNodeBetweenLayers': '20',
     'elk.layered.spacing.edgeEdgeBetweenLayers': '10',
   };

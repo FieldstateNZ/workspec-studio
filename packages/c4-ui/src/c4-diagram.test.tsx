@@ -1,7 +1,18 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+// The C4Diagram behavioural contract, S4 edition (#120): the same
+// props/interaction/a11y semantics the pre-recomposition suite pinned, now
+// exercised THROUGH the real canvas-engine pointer pipeline (events bubble
+// to the canvas root's native listeners; clicks are pointerdown+up pairs
+// at the node's page coordinates — jsdom rects are zero so page ==
+// client at the identity camera). DOM-structure expectations moved from
+// the retired SVG renderer (c4-node-* classes, viewBox transforms) to the
+// enterprise card chrome (.c4-el outline/box-shadow states) and the
+// engine camera (shape-wrapper transforms).
+
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
+import { Layout, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
 import type { C4Model, ResolvedDiagram } from '@workspec/c4-model';
 import { THEME_TOKENS } from '@workspec/design';
 import { C4Diagram } from './c4-diagram.js';
@@ -30,7 +41,34 @@ function readOnlyHost(): C4StudioHost {
   return { capabilities: { editLayout: false } };
 }
 
-/** A one-node diagram whose sole node never resolved to an element (`slug: null`, `dangling: true`) — shared by the "no resolved slug" onNavigate/onSelect tests below. */
+/** The node's page-centre — where a pointer gesture must land to hit it (identity camera, zero rects). */
+function centerOf(diagram: PositionedDiagram, nodeId: string): { clientX: number; clientY: number } {
+  const node = diagram.nodes.find((n) => n.nodeId === nodeId);
+  if (!node) throw new Error(`node ${nodeId} missing`);
+  return { clientX: node.x + node.width / 2, clientY: node.y + node.height / 2 };
+}
+
+/** The canvas engine root (pointer listeners live here; events from children bubble to it). */
+function canvasRoot(container: HTMLElement): Element {
+  const root = container.querySelector('[data-canvas-root]');
+  if (!root) throw new Error('canvas root missing');
+  return root;
+}
+
+/** A pointerdown+up pair with no movement — the pipeline's "click". */
+function clickAt(target: Element, at: { clientX: number; clientY: number }): void {
+  firePointer(target, 'pointerdown', at);
+  firePointer(target, 'pointerup', at);
+}
+
+/** The enterprise card element (.c4-el) inside a node's a11y wrapper. */
+function cardOf(node: HTMLElement): HTMLElement {
+  const card = node.querySelector('.c4-el');
+  if (!card) throw new Error('card missing');
+  return card as HTMLElement;
+}
+
+/** A one-node diagram whose sole node never resolved to an element (`slug: null`, `dangling: true`). */
 function unresolvedNodeFixture(): { diagram: PositionedDiagram; resolved: ResolvedDiagram } {
   const node: PositionedNode = {
     nodeId: 'x',
@@ -65,7 +103,7 @@ function unresolvedNodeFixture(): { diagram: PositionedDiagram; resolved: Resolv
 }
 
 describe('C4Diagram — representative fixture render', () => {
-  it('renders every node title and kind from the loaded model', async () => {
+  it('renders every node title and kind from the loaded model as role=button cards', async () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} host={readOnlyHost()} />);
 
@@ -92,75 +130,70 @@ describe('C4Diagram — representative fixture render', () => {
     expect(lightRoot.style.getPropertyValue('--bg')).toBe(THEME_TOKENS['console-light']['--bg']);
   });
 
-  it('renders orthogonal edges with their category label', async () => {
+  it('renders the shared-router edges with their category labels', async () => {
     const { resolved, diagram } = await loadContext();
-    render(<C4Diagram diagram={diagram} resolved={resolved} />);
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
     expect(screen.getByText('designs systems in')).toBeInTheDocument();
     expect(screen.getByText('settles invoices via')).toBeInTheDocument();
+    // The edges are the engine's .c4-conn groups (the enterprise treatment).
+    expect(container.querySelectorAll('g.c4-conn').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('carries each node’s resolved accent as the --c4-el-accent-raw custom property (the Enterprise .c4-el pattern)', async () => {
+  it('carries each node’s resolved accent as the --el-accent-raw custom property (the Enterprise .c4-el pattern)', async () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} />);
     const architect = screen.getByRole('button', { name: /actor: Architect/i });
-    // The actor default accent from style/spec-defaults.ts — a @workspec/design token
-    // reference now (Site Review UX pass, finding 01/02), not the raw Enterprise hex.
-    expect(architect.style.getPropertyValue('--c4-el-accent-raw')).toBe('var(--el-actor)');
+    expect(cardOf(architect).style.getPropertyValue('--el-accent-raw')).toBe('var(--el-actor)');
   });
 });
 
 describe('C4Diagram — hover/focus affordances', () => {
-  it('hover adds the c4-node-hover class and renders the affordance ring; leaving removes both', async () => {
+  it('pointer hover (through the engine pipeline) shows the dashed accent outline; leaving clears it', async () => {
     const { resolved, diagram } = await loadContext();
-    render(<C4Diagram diagram={diagram} resolved={resolved} />);
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
+    const root = canvasRoot(container);
     const node = screen.getByRole('button', { name: /actor: Architect/i });
 
-    expect(node.querySelector('.c4-node-ring')).toBeNull();
-    fireEvent.pointerEnter(node);
-    expect(node).toHaveClass('c4-node-hover');
-    expect(node.querySelector('.c4-node-ring')).not.toBeNull();
+    expect(cardOf(node).style.outline).toBe('');
+    firePointer(root, 'pointermove', centerOf(diagram, 'architect'));
+    expect(cardOf(node).style.outline).toContain('dashed');
 
-    fireEvent.pointerLeave(node);
-    expect(node).not.toHaveClass('c4-node-hover');
-    expect(node.querySelector('.c4-node-ring')).toBeNull();
+    // Move onto empty canvas far from every node.
+    firePointer(root, 'pointermove', { clientX: -5000, clientY: -5000 });
+    expect(cardOf(node).style.outline).toBe('');
   });
 
-  it('keyboard focus adds the c4-node-focus class and renders the ring on the node itself; blur removes them', async () => {
+  it('keyboard focus mirrors hover (the accent outline is the focus affordance); blur clears it', async () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} />);
     const node = screen.getByRole('button', { name: /system: Ledger/i });
 
-    // fireEvent.focus rather than node.focus(): jsdom's programmatic focus()
-    // on SVG elements doesn't reliably dispatch the focus event the
-    // component's onFocus listens for.
     fireEvent.focus(node);
-    expect(node).toHaveClass('c4-node-focus');
-    expect(node.querySelector('.c4-node-ring')).not.toBeNull();
+    expect(cardOf(node).style.outline).toContain('dashed');
 
     fireEvent.blur(node);
-    expect(node).not.toHaveClass('c4-node-focus');
-    expect(node.querySelector('.c4-node-ring')).toBeNull();
+    expect(cardOf(node).style.outline).toBe('');
   });
 });
 
 describe('C4Diagram — hover tooltip', () => {
-  it('shows title/kind/description/technology/tags on hover and hides them on leave', async () => {
+  it('shows the tooltip (kind/description/technology) on hover and hides it on leave', async () => {
+    // NOTE: the enterprise card renders the description ON the card too —
+    // tooltip assertions scope to the .c4-tooltip container.
     const { resolved, diagram } = await loadContext();
-    render(<C4Diagram diagram={diagram} resolved={resolved} />);
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
+    const root = canvasRoot(container);
 
-    const architectNode = screen.getByRole('button', { name: /actor: Architect/i });
-    expect(
-      screen.queryByText('Designs systems and reviews proposed changes.'),
-    ).not.toBeInTheDocument();
+    expect(container.querySelector('.c4-tooltip')).toBeNull();
 
-    fireEvent.pointerEnter(architectNode);
-    expect(screen.getByText('Designs systems and reviews proposed changes.')).toBeInTheDocument();
-    expect(screen.getByText('human')).toBeInTheDocument();
+    firePointer(root, 'pointermove', centerOf(diagram, 'architect'));
+    const tooltip = container.querySelector('.c4-tooltip') as HTMLElement;
+    expect(tooltip).not.toBeNull();
+    expect(tooltip.textContent).toContain('Designs systems and reviews proposed changes.');
+    expect(tooltip.textContent).toContain('human');
 
-    fireEvent.pointerLeave(architectNode);
-    expect(
-      screen.queryByText('Designs systems and reviews proposed changes.'),
-    ).not.toBeInTheDocument();
+    firePointer(root, 'pointermove', { clientX: -5000, clientY: -5000 });
+    expect(container.querySelector('.c4-tooltip')).toBeNull();
   });
 
   it('shows an inert Links label when no linkResolver is supplied, and an active one when the host resolves it', async () => {
@@ -172,14 +205,14 @@ describe('C4Diagram — hover tooltip', () => {
       ),
     );
 
-    const { rerender } = render(
+    const first = render(
       <C4Diagram
         diagram={diagram}
         resolved={resolved}
         elementsByKindAndSlug={elementsByKindAndSlug}
       />,
     );
-    fireEvent.pointerEnter(screen.getByRole('button', { name: /actor: Architect/i }));
+    firePointer(canvasRoot(first.container), 'pointermove', centerOf(diagram, 'architect'));
     const inertLabel = screen.getByText('README.md');
     expect(inertLabel.closest('a, button')).toBeNull();
 
@@ -187,7 +220,7 @@ describe('C4Diagram — hover tooltip', () => {
       capabilities: { editLayout: false },
       linkResolver: () => ({ resolved: true, href: 'https://example.com/readme' }),
     };
-    rerender(
+    first.rerender(
       <C4Diagram
         diagram={diagram}
         resolved={resolved}
@@ -195,17 +228,17 @@ describe('C4Diagram — hover tooltip', () => {
         elementsByKindAndSlug={elementsByKindAndSlug}
       />,
     );
-    fireEvent.pointerEnter(screen.getByRole('button', { name: /actor: Architect/i }));
+    firePointer(canvasRoot(first.container), 'pointermove', centerOf(diagram, 'architect'));
     const activeLink = screen.getByText('README.md').closest('a');
     expect(activeLink).toHaveAttribute('href', 'https://example.com/readme');
   });
 
-  it('clamps the tooltip position for a far-right/bottom-edge node so it cannot overflow the canvas', async () => {
+  it('clamps the tooltip position so it cannot overflow the canvas', async () => {
     const { resolved } = await loadContext();
-    const farNode = {
+    const farNode: PositionedNode = {
       nodeId: 'far',
       slug: 'far',
-      kind: 'container' as const,
+      kind: 'container',
       title: 'Far Edge',
       description: 'Sits at the extreme corner.',
       technology: null,
@@ -223,27 +256,27 @@ describe('C4Diagram — hover tooltip', () => {
     const diagram: PositionedDiagram = { nodes: [nearNode, farNode], edges: [] };
 
     const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
-    fireEvent.pointerEnter(screen.getByRole('button', { name: /Far Edge/i }));
+    firePointer(canvasRoot(container), 'pointermove', centerOf(diagram, 'far'));
 
     const tooltip = container.querySelector('.c4-tooltip') as HTMLElement;
     expect(tooltip).not.toBeNull();
     const left = Number.parseFloat(tooltip.style.left);
     const top = Number.parseFloat(tooltip.style.top);
-    expect(left).toBeLessThanOrEqual(78);
-    expect(top).toBeLessThanOrEqual(96);
-    // Sanity: the unclamped anchor for this node WOULD be past the ceiling
-    // (x=4000 of a ~4380-wide viewBox ≈ 92%) — the clamp is doing real work.
+    // jsdom's unmeasurable canvas makes the raw anchor astronomically far
+    // past the ceiling — the shared clamp must cap it at exactly 78/96.
     expect(left).toBe(78);
+    expect(top).toBe(96);
   });
 });
 
 describe('C4Diagram — drill-down', () => {
-  it('calls onNavigate with the resolved slug on click', async () => {
+  it('calls onNavigate with the resolved slug on click (through the pointer pipeline)', async () => {
     const { resolved, diagram } = await loadContext();
     const onNavigate = vi.fn();
-    render(<C4Diagram diagram={diagram} resolved={resolved} onNavigate={onNavigate} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onNavigate={onNavigate} />,
+    );
+    clickAt(canvasRoot(container), centerOf(diagram, 'ledger'));
     expect(onNavigate).toHaveBeenCalledWith('ledger');
   });
 
@@ -261,8 +294,10 @@ describe('C4Diagram — drill-down', () => {
   it('does not call onNavigate for a node with no resolved slug', () => {
     const onNavigate = vi.fn();
     const { diagram, resolved } = unresolvedNodeFixture();
-    render(<C4Diagram diagram={diagram} resolved={resolved} onNavigate={onNavigate} />);
-    fireEvent.click(screen.getByRole('button', { name: /Unresolved/i }));
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onNavigate={onNavigate} />,
+    );
+    clickAt(canvasRoot(container), centerOf(diagram, 'x'));
     expect(onNavigate).not.toHaveBeenCalled();
   });
 });
@@ -271,18 +306,19 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
   it('clicking a node calls onSelect with that node — onNavigate need not even be supplied', async () => {
     const { resolved, diagram } = await loadContext();
     const onSelect = vi.fn();
-    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
+    clickAt(canvasRoot(container), centerOf(diagram, 'ledger'));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'ledger', slug: 'ledger' });
   });
 
-  it('a click fires BOTH onSelect and onNavigate when both are supplied — two independent effects from one click', async () => {
+  it('a click fires BOTH onSelect and onNavigate when both are supplied', async () => {
     const { resolved, diagram } = await loadContext();
     const onSelect = vi.fn();
     const onNavigate = vi.fn();
-    render(
+    const { container } = render(
       <C4Diagram
         diagram={diagram}
         resolved={resolved}
@@ -290,8 +326,7 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
         onNavigate={onNavigate}
       />,
     );
-
-    fireEvent.click(screen.getByRole('button', { name: /system: Ledger/i }));
+    clickAt(canvasRoot(container), centerOf(diagram, 'ledger'));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onNavigate).toHaveBeenCalledWith('ledger');
   });
@@ -307,14 +342,16 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
     expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'gateway' });
   });
 
-  it('a node with no resolved slug is still selectable (interactive, not aria-disabled) when onSelect is supplied, even though onNavigate never fires for it', () => {
+  it('a node with no resolved slug is still selectable (interactive, not aria-disabled) when onSelect is supplied', () => {
     const onSelect = vi.fn();
     const { diagram, resolved } = unresolvedNodeFixture();
-    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
 
     const node = screen.getByRole('button', { name: /Unresolved/i });
     expect(node).toHaveAttribute('aria-disabled', 'false');
-    fireEvent.click(node);
+    clickAt(canvasRoot(container), centerOf(diagram, 'x'));
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
@@ -324,10 +361,7 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
     const { container } = render(
       <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
     );
-    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
-
-    firePointer(svg, 'pointerdown', { clientX: 50, clientY: 50 });
-    firePointer(svg, 'pointerup', { clientX: 50, clientY: 50 });
+    clickAt(canvasRoot(container), { clientX: -900, clientY: -900 });
     expect(onSelect).toHaveBeenCalledWith(null);
   });
 
@@ -337,35 +371,24 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
     const { container } = render(
       <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
     );
-    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
-
-    firePointer(svg, 'pointerdown', { clientX: 0, clientY: 0 });
-    firePointer(svg, 'pointermove', { clientX: 200, clientY: 200 });
-    firePointer(svg, 'pointerup', { clientX: 200, clientY: 200 });
+    const root = canvasRoot(container);
+    firePointer(root, 'pointerdown', { clientX: -900, clientY: -900 });
+    firePointer(root, 'pointermove', { clientX: -700, clientY: -700 });
+    firePointer(root, 'pointerup', { clientX: -700, clientY: -700 });
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('a node click never reaches the background handler (no stray onSelect(null) from the same click)', async () => {
-    // Regression guard for the propagation fix in onNodePointerDown/Up:
-    // clicking a node used to leave its pointerdown/up free to bubble to
-    // the SVG background in the non-editable path (nothing consumed it
-    // before there was background behaviour to trigger) — which would now
-    // sneak in a spurious onSelect(null) around the node's own onSelect(node).
+  it('a node click never produces a stray onSelect(null) from the same gesture', async () => {
     const { resolved, diagram } = await loadContext();
     const onSelect = vi.fn();
-    render(<C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />);
-
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
-    firePointer(node, 'pointerdown', { clientX: 10, clientY: 10 });
-    firePointer(node, 'pointerup', { clientX: 10, clientY: 10 });
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onSelect={onSelect} />,
+    );
+    clickAt(canvasRoot(container), centerOf(diagram, 'ledger'));
     expect(onSelect).not.toHaveBeenCalledWith(null);
   });
 
-  it('with an EDITABLE host (editLayout + source): a plain click selects, a real drag does not touch the selection', async () => {
-    // The editable path routes clicks through the pointer drag-vs-click
-    // detection (onNodePointerUp) instead of the plain onClick handler —
-    // selection must behave identically there: a no-movement click
-    // activates (selects), a real drag writes layout WITHOUT selecting.
+  it('with an EDITABLE host: a plain click selects, a real drag does not touch the selection', async () => {
     const { resolved, diagram } = await loadContext();
     const onSelect = vi.fn();
     const host: C4StudioHost = {
@@ -377,18 +400,21 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
         exists: async () => false,
       },
     };
-    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} onSelect={onSelect} />);
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} host={host} onSelect={onSelect} />,
+    );
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'ledger');
 
     // A real drag: no selection change at all.
-    firePointer(node, 'pointerdown', { clientX: 0, clientY: 0 });
-    firePointer(node, 'pointermove', { clientX: 200, clientY: 0 });
-    firePointer(node, 'pointerup', { clientX: 200, clientY: 0 });
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 200, clientY: at.clientY });
+    firePointer(root, 'pointerup', { clientX: at.clientX + 200, clientY: at.clientY });
     expect(onSelect).not.toHaveBeenCalled();
 
-    // A plain click (no meaningful movement): selects the node.
-    firePointer(node, 'pointerdown', { clientX: 10, clientY: 10 });
-    firePointer(node, 'pointerup', { clientX: 10, clientY: 10 });
+    // A plain click (no meaningful movement): selects the node — at its NEW position.
+    const moved = { clientX: at.clientX + 200, clientY: at.clientY };
+    clickAt(root, moved);
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ nodeId: 'ledger' });
   });
@@ -404,18 +430,15 @@ describe('C4Diagram — click-to-select (independent of drill-down)', () => {
     expect(onSelect).toHaveBeenCalledWith(null);
   });
 
-  it('selectedNodeId renders the persistent selection ring on the matching node, and nothing on others', async () => {
+  it('selectedNodeId renders the enterprise selection ring (accent box-shadow) on the matching card only', async () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} selectedNodeId="ledger" />);
 
-    const selectedNode = screen.getByRole('button', { name: /system: Ledger/i });
-    expect(selectedNode).toHaveClass('c4-node-selected');
-    expect(selectedNode.querySelector('.c4-node-ring-selected-inner')).not.toBeNull();
-    expect(selectedNode.querySelector('.c4-node-ring-selected-outer')).not.toBeNull();
+    const selectedCard = cardOf(screen.getByRole('button', { name: /system: Ledger/i }));
+    expect(selectedCard.style.boxShadow).toContain('0 0 0 2px var(--el-accent)');
 
-    const otherNode = screen.getByRole('button', { name: /actor: Architect/i });
-    expect(otherNode).not.toHaveClass('c4-node-selected');
-    expect(otherNode.querySelector('.c4-node-ring-selected-inner')).toBeNull();
+    const otherCard = cardOf(screen.getByRole('button', { name: /actor: Architect/i }));
+    expect(otherCard.style.boxShadow).not.toContain('0 0 0 2px var(--el-accent)');
   });
 });
 
@@ -437,41 +460,50 @@ describe('C4Diagram — editLayout gating', () => {
     const { resolved, diagram } = await loadContext();
     const onNavigate = vi.fn();
     const host: C4StudioHost = { capabilities: { editLayout: false }, source };
-    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />);
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />,
+    );
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'ledger');
 
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
-    firePointer(node, 'pointerdown', { clientX: 0, clientY: 0 });
-    firePointer(node, 'pointermove', { clientX: 100, clientY: 100 });
-    firePointer(node, 'pointerup', { clientX: 100, clientY: 100 });
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 100, clientY: at.clientY + 100 });
+    firePointer(root, 'pointerup', { clientX: at.clientX + 100, clientY: at.clientY + 100 });
     expect(writeFile).not.toHaveBeenCalled();
 
-    fireEvent.click(node);
+    // Read-only: the node did NOT move, so nearby original coords still hit
+    // it (nudged >5px so the engine doesn't synthesize a double-click from
+    // the two rapid gestures — which would also activate, but via the
+    // double-click path this test isn't about).
+    clickAt(root, { clientX: at.clientX + 8, clientY: at.clientY + 8 });
     expect(onNavigate).toHaveBeenCalledWith('ledger');
   });
 
   it('a drag does nothing when editLayout is true but no source is supplied', async () => {
     const { resolved, diagram } = await loadContext();
     const host: C4StudioHost = { capabilities: { editLayout: true } };
-    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} />);
-
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
-    firePointer(node, 'pointerdown', { clientX: 0, clientY: 0 });
-    firePointer(node, 'pointermove', { clientX: 100, clientY: 100 });
-    firePointer(node, 'pointerup', { clientX: 100, clientY: 100 });
-    // No source means nothing to assert a write against — this just proves
-    // dragging didn't throw with a half-granted capability.
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} host={host} />);
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'ledger');
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 100, clientY: at.clientY + 100 });
+    firePointer(root, 'pointerup', { clientX: at.clientX + 100, clientY: at.clientY + 100 });
+    // Half-granted capability must not throw or write.
   });
 
   it('a real drag moves the node and writes the serialized layout back through the source, and suppresses drill-down', async () => {
     const { resolved, diagram } = await loadContext();
     const onNavigate = vi.fn();
     const host: C4StudioHost = { capabilities: { editLayout: true }, source };
-    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />);
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />,
+    );
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'ledger');
 
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
-    firePointer(node, 'pointerdown', { clientX: 0, clientY: 0 });
-    firePointer(node, 'pointermove', { clientX: 200, clientY: 0 });
-    firePointer(node, 'pointerup', { clientX: 200, clientY: 0 });
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 200, clientY: at.clientY });
+    firePointer(root, 'pointerup', { clientX: at.clientX + 200, clientY: at.clientY });
 
     expect(writeFile).toHaveBeenCalledTimes(1);
     const [path, content] = writeFile.mock.calls[0] as [string, string];
@@ -480,51 +512,112 @@ describe('C4Diagram — editLayout gating', () => {
     expect(onNavigate).not.toHaveBeenCalled();
   });
 
+  it("a drag merges into the diagram's EXISTING .layout/ data — the other lens's pins survive byte-for-byte (S4 fix round)", async () => {
+    // The lens-merge contract serializeForWrite exists for (#120 bullet 2):
+    // a c4-container diagram's two lenses share ONE .layout/ file, so the
+    // drag-commit path must feed the diagram's CURRENT layout data into the
+    // merge. A facade that passes null instead silently clobbers the other
+    // lens's pins on every drag — this test renders a diagram whose
+    // resolved.layout carries pins for nodes the on-screen view never
+    // touches (other-lens keys) and requires them in the written payload.
+    const { resolved, diagram } = await loadContext();
+    const otherLensNode = { x: 1234, y: 567, width: 240, height: 120 };
+    const otherLensEdge = {
+      waypoints: [
+        { x: 10, y: 20 },
+        { x: 30, y: 20 },
+      ],
+    };
+    const existing = Layout.parse({
+      version: 1,
+      nodes: { 'deploy-only-node': otherLensNode },
+      edges: { 'deploy-only-node->elsewhere': otherLensEdge },
+      viewport: { x: 5, y: 6, zoom: 1.5 },
+    });
+    const withLayout: ResolvedDiagram = {
+      ...resolved,
+      layout: { path: '.workspec/diagrams/.layout/context.yaml', data: existing },
+    };
+    const host: C4StudioHost = { capabilities: { editLayout: true }, source };
+    const { container } = render(<C4Diagram diagram={diagram} resolved={withLayout} host={host} />);
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'ledger');
+
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 200, clientY: at.clientY });
+    firePointer(root, 'pointerup', { clientX: at.clientX + 200, clientY: at.clientY });
+
+    expect(writeFile).toHaveBeenCalledTimes(1);
+    const [, content] = writeFile.mock.calls[0] as [string, string];
+
+    // Semantic check: the parsed payload still carries the other-lens pins
+    // exactly, alongside the dragged view's own nodes.
+    const written = parseLayoutYaml(content);
+    if (!written.ok) throw new Error('written layout did not parse');
+    expect(written.data.nodes['deploy-only-node']).toEqual(otherLensNode);
+    expect(written.data.edges?.['deploy-only-node->elsewhere']).toEqual(otherLensEdge);
+    expect(written.data.viewport).toEqual({ x: 5, y: 6, zoom: 1.5 });
+    expect(written.data.nodes['ledger']).toBeDefined();
+
+    // Byte-for-byte check: the payload contains the exact YAML block the
+    // untouched pin serializes to (guards against lossy re-serialization,
+    // not just key survival).
+    const expectedBlock = serializeLayout(
+      Layout.parse({ version: 1, nodes: { 'deploy-only-node': otherLensNode } }),
+    )
+      .split('\n')
+      .filter((line) => line.startsWith('  ') || line.startsWith('    '))
+      .join('\n');
+    expect(content).toContain(expectedBlock);
+  });
+
   it('a click with no meaningful movement still drills down when editLayout is true', async () => {
     const { resolved, diagram } = await loadContext();
     const onNavigate = vi.fn();
     const host: C4StudioHost = { capabilities: { editLayout: true }, source };
-    render(<C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />);
-
-    const node = screen.getByRole('button', { name: /system: Ledger/i });
-    firePointer(node, 'pointerdown', { clientX: 10, clientY: 10 });
-    firePointer(node, 'pointerup', { clientX: 10, clientY: 10 });
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} host={host} onNavigate={onNavigate} />,
+    );
+    clickAt(canvasRoot(container), centerOf(diagram, 'ledger'));
     expect(onNavigate).toHaveBeenCalledWith('ledger');
     expect(writeFile).not.toHaveBeenCalled();
   });
 });
 
-describe('C4Diagram — pan/zoom/keyboard', () => {
-  function getTransform(container: HTMLElement): string {
-    const g = within(container).getByRole('group').querySelector('g[transform]');
-    return g?.getAttribute('transform') ?? '';
+describe('C4Diagram — pan/zoom/keyboard (the enterprise camera)', () => {
+  /** The first shape wrapper's camera transform (translate3d(...) scale(...)). */
+  function firstTransform(container: HTMLElement): string {
+    const inner = container.querySelector(
+      '[data-canvas-root] div[style*="translate3d"]',
+    ) as HTMLElement | null;
+    return inner?.style.transform ?? '';
   }
 
-  it('arrow keys pan the camera (the content transform changes)', async () => {
+  it('arrow keys pan the camera (the card transforms shift)', async () => {
     const { resolved, diagram } = await loadContext();
     const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
-    const before = getTransform(container);
+    const before = firstTransform(container);
     const outer = container.querySelector('.c4-diagram') as HTMLElement;
     fireEvent.keyDown(outer, { key: 'ArrowRight' });
-    expect(getTransform(container)).not.toBe(before);
-    expect(getTransform(container)).toContain('translate(-40 0)');
+    const after = firstTransform(container);
+    expect(after).not.toBe(before);
   });
 
-  it('+/- keys zoom the camera', async () => {
+  it('+/- keys zoom the camera (scale changes, clamped by the enterprise camera)', async () => {
     const { resolved, diagram } = await loadContext();
     const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
     const outer = container.querySelector('.c4-diagram') as HTMLElement;
     fireEvent.keyDown(outer, { key: '+' });
-    expect(getTransform(container)).toContain('scale(1.2)');
+    expect(firstTransform(container)).toContain('scale(1.2)');
     fireEvent.keyDown(outer, { key: '-' });
-    expect(getTransform(container)).toContain('scale(1)');
+    expect(firstTransform(container)).toContain('scale(1)');
   });
 
-  it('wheel zooms the canvas', async () => {
+  it('wheel zooms the canvas about the cursor (the shipped c4-ui wheel contract)', async () => {
     const { resolved, diagram } = await loadContext();
     const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
-    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
-    fireEvent.wheel(svg, { deltaY: -100, clientX: 100, clientY: 100 });
-    expect(getTransform(container)).toContain('scale(1.2)');
+    const outer = container.querySelector('.c4-diagram') as HTMLElement;
+    fireEvent.wheel(outer, { deltaY: -100, clientX: 100, clientY: 100 });
+    expect(firstTransform(container)).toContain('scale(1.2)');
   });
 });

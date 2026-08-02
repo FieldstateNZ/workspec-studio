@@ -17,6 +17,13 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import '@workspec/design/tailwind';
+/* S4 (#120): the recomposed C4Diagram mounts the shared canvas engine —
+   its scoped .wsc-root layer and the canvas-c4 .c4-el derivation ride
+   along in THIS package's compiled stylesheet so every existing consumer
+   (site pin, MF host, c4-studio client) keeps loading exactly one
+   `@workspec/c4-ui/styles.css`. */
+@import '@workspec/canvas/styles.css';
+@import '@workspec/canvas-c4/styles.css';
 @import './styles.css' layer(components);
 
 /* Scoped stand-in for the preflight rules the canvas relies on: box-sizing +

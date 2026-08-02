@@ -21,9 +21,10 @@ export type {
   BuildC4ShapesOptions,
   C4BoundaryLevel,
   C4Lens,
+  NodePlacement,
   ProjectionResult,
 } from './project-model.js';
-export { elkC4Layout, projectC4Diagram } from './layout.js';
+export { elkC4Layout, labelAwareLayerSpacing, projectC4Diagram } from './layout.js';
 export type { C4LayoutFn, ProjectC4DiagramOptions } from './layout.js';
 
 // ── Types + host contract ────────────────────────────────────────────────────

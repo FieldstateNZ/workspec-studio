@@ -3,7 +3,6 @@ import type {
   Camera,
   Shape,
   ShapeId,
-  Vec2,
 } from '@workspec/canvas';
 import { generateKeyBetween } from '@workspec/canvas';
 import type {
@@ -73,15 +72,32 @@ export interface ProjectionResult {
   bounds: Box | null;
 }
 
+/**
+ * One node's authoritative placement: top-left position plus (optionally)
+ * its pinned size. `.layout/` pins may carry per-node `width`/`height`
+ * (see `@workspec/c4-schema`'s `LayoutNode`); a placement omitting them
+ * renders at the default `C4_NODE_WIDTH`×`C4_NODE_HEIGHT` footprint. A
+ * plain `Vec2` is assignable, so position-only callers are unchanged.
+ */
+export interface NodePlacement {
+  readonly x: number;
+  readonly y: number;
+  readonly width?: number;
+  readonly height?: number;
+}
+
 export interface BuildC4ShapesOptions {
   /** Which container-level lens to project (also selects `lensViews` when present). Default 'logical'. */
   lens?: C4Lens;
   /**
-   * Authoritative node top-left positions keyed by nodeId — normally the
-   * output of layout.ts's elk layout (or a host's saved layout). A node
-   * missing here falls back to its inline authored `position`, then (0,0).
+   * Authoritative node placements keyed by nodeId — normally the output of
+   * layout.ts's elk layout (or a host's saved layout), including any pinned
+   * per-node size (S4 fix round: sizes are NOT discarded — a pinned-size
+   * node's card AND its edge anchors both use the pinned rect). A node
+   * missing here falls back to its inline authored `position` (default
+   * size), then (0,0).
    */
-  positions?: Record<string, Vec2>;
+  positions?: Record<string, NodePlacement>;
   /** Nodes with a deeper diagram (ROOM + drill buttons). */
   drillableSlugs?: Set<string>;
   /** Renders the derived boundary panel + outside/inside z-banding. */
@@ -143,13 +159,17 @@ export function buildC4Shapes(
         )
       : [...allNodes];
 
-  // Position resolution: caller positions → the node's inline authored
-  // pin → origin. (The enterprise dagre-fresh/seat-incremental fallbacks
-  // live in @workspec/c4-layout now — see the file header.)
-  const positions: Record<string, Vec2> = {};
+  // Placement resolution: caller placements (position + optional pinned
+  // size) → the node's inline authored pin → origin. (The enterprise
+  // dagre-fresh/seat-incremental fallbacks live in @workspec/c4-layout now
+  // — see the file header.) Size falls back to the shared default dims,
+  // which S3's alignment invariant keeps identical to @workspec/c4-layout's.
+  const positions: Record<string, NodePlacement> = {};
   for (const n of nodesIn) {
     positions[n.nodeId] = options.positions?.[n.nodeId] ?? n.position ?? { x: 0, y: 0 };
   }
+  const widthOf = (nodeId: string): number => positions[nodeId]?.width ?? C4_NODE_WIDTH;
+  const heightOf = (nodeId: string): number => positions[nodeId]?.height ?? C4_NODE_HEIGHT;
 
   const edges = filterEdgesByLens(view.edges, resolved.type, lens).filter((e) => !e.dangling);
 
@@ -240,8 +260,8 @@ export function buildC4Shapes(
       index: nodeIndex.get(n.nodeId) ?? generateKeyBetween(prevIdx, null),
       x: pos.x,
       y: pos.y,
-      width: C4_NODE_WIDTH,
-      height: C4_NODE_HEIGHT,
+      width: widthOf(n.nodeId),
+      height: heightOf(n.nodeId),
       slug: n.nodeId,
       nodeType: kindOf(n),
       label: n.title,
@@ -269,8 +289,8 @@ export function buildC4Shapes(
     slugToShapeId[n.nodeId] = id;
     minX = Math.min(minX, pos.x);
     minY = Math.min(minY, pos.y);
-    maxX = Math.max(maxX, pos.x + C4_NODE_WIDTH);
-    maxY = Math.max(maxY, pos.y + C4_NODE_HEIGHT);
+    maxX = Math.max(maxX, pos.x + node.width);
+    maxY = Math.max(maxY, pos.y + node.height);
   }
 
   // '__system__' DSL alias resolves to whichever node carries the system kind.
@@ -331,8 +351,8 @@ export function buildC4Shapes(
       if (s) s.meta = { ...(s.meta ?? {}), inBoundary: true };
       bMinX = Math.min(bMinX, p.x);
       bMinY = Math.min(bMinY, p.y);
-      bMaxX = Math.max(bMaxX, p.x + C4_NODE_WIDTH);
-      bMaxY = Math.max(bMaxY, p.y + C4_NODE_HEIGHT);
+      bMaxX = Math.max(bMaxX, p.x + widthOf(n.nodeId));
+      bMaxY = Math.max(bMaxY, p.y + heightOf(n.nodeId));
     }
 
     let bx: number;

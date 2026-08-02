@@ -94,6 +94,10 @@ describe('C4Explorer — clicking an element populates the detail rail', () => {
     expect(
       within(rail).getByText(/select an element on the canvas to inspect it/i),
     ).toBeInTheDocument();
+    // The a11y acceptance item #120 names: selecting a canvas node must be
+    // ANNOUNCED (a rail update, not a focus move) — dropping aria-live
+    // silences it for AT users, so pin the attribute explicitly.
+    expect(rail).toHaveAttribute('aria-live', 'polite');
   });
 
   it('clicking a node — WITHOUT drilling down — populates the rail with its kind/name/description', async () => {
@@ -155,9 +159,9 @@ describe('C4Explorer — clicking an element populates the detail rail', () => {
       'Architect',
     );
 
-    const svg = container.querySelector('svg.c4-canvas') as SVGSVGElement;
-    firePointer(svg, 'pointerdown', { clientX: 5, clientY: 5 });
-    firePointer(svg, 'pointerup', { clientX: 5, clientY: 5 });
+    const root = container.querySelector('[data-canvas-root]') as HTMLElement;
+    firePointer(root, 'pointerdown', { clientX: -900, clientY: -900 });
+    firePointer(root, 'pointerup', { clientX: -900, clientY: -900 });
 
     const rail = screen.getByRole('complementary', { name: 'Element details' });
     expect(within(rail).getByText('Element details')).toBeInTheDocument();

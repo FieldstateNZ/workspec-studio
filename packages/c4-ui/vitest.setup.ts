@@ -24,3 +24,24 @@ expect.extend(matchers);
 afterEach(() => {
   cleanup();
 });
+
+// The recomposed C4Diagram (S4, #120) mounts the @workspec/canvas engine,
+// whose root measures itself with ResizeObserver and captures pointers —
+// neither exists in jsdom.
+class ResizeObserverStub {
+  observe(): void {
+    /* noop */
+  }
+  unobserve(): void {
+    /* noop */
+  }
+  disconnect(): void {
+    /* noop */
+  }
+}
+(globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
+// Guard for the @vitest-environment node suites sharing this setup file.
+if (typeof HTMLElement !== 'undefined') {
+  HTMLElement.prototype.setPointerCapture = () => undefined;
+  HTMLElement.prototype.releasePointerCapture = () => undefined;
+}

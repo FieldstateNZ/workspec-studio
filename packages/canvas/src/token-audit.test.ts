@@ -27,6 +27,28 @@ const VALUE_EXEMPT = new Set(['style/shape-defaults.ts', 'style/local-tokens.css
 const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/;
 const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(/;
 const TAILWIND_ARBITRARY_COLOR = /-\[(?:#|(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(|color:)/;
+// Named-colour keywords as complete style VALUES (S4 hardening, #120):
+// `backgroundColor: 'red'` etc. would sail through the function/hex greps.
+// Bare `color:` is deliberately NOT scanned in TS — it collides with the
+// StickyColor DATA field (`color: 'yellow'` names a paper colour, not a
+// CSS value); the unambiguous style properties below cover the real risk.
+// `white` inside color-mix( is the ONE sanctioned keyword (the canonical
+// enterprise dark-lift literal) — color-mix arguments are stripped before
+// the scan.
+const NAMED_COLOR_KEYWORDS =
+  'red|green|blue|white|black|orange|purple|yellow|pink|gray|grey|cyan|magenta|silver|maroon|navy|teal|olive|lime|aqua|fuchsia';
+const NAMED_COLOR_VALUE = new RegExp(
+  `(?:backgroundColor|borderColor|outlineColor|stroke|fill)\\s*:\\s*'(?:${NAMED_COLOR_KEYWORDS})'`,
+);
+// CSS declarations get the full property set (no data-field ambiguity).
+const NAMED_COLOR_CSS = new RegExp(
+  `(?:color|background(?:-color)?|border(?:-color)?|stroke|fill|outline(?:-color)?)\\s*:\\s*(?:${NAMED_COLOR_KEYWORDS})\\s*[;!}]`,
+);
+
+/** Drop color-mix(...) argument lists so the sanctioned `white 22%` lift never trips the named-colour scan. */
+function stripColorMixArgs(text: string): string {
+  return text.replace(/color-mix\([^)]*\)/g, 'color-mix()');
+}
 
 function sourceFiles(): string[] {
   return readdirSync(SRC, { recursive: true, encoding: 'utf8' })
@@ -60,19 +82,37 @@ function designTokens(): Set<string> {
 /**
  * Strip comments before grepping: issue references in prose (`#117`,
  * `#363`) are hex-shaped and would false-positive the colour grep. Colour
- * LITERALS only count in code. (Line-comment stripping is suffix-based;
- * none of this package's string literals contain `//`.)
+ * LITERALS only count in code. Line-comment stripping is QUOTE-AWARE (S4
+ * fix round): a naive `indexOf('//')` truncated at `//` inside string
+ * literals (`'https://…'`), letting a colour literal later on the same
+ * line silently escape the grep. Mirrors packages/c4-ui's
+ * zero-local-tokens stripper.
  */
+function stripLineComment(line: string): string {
+  let quote: string | null = null;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quote !== null) {
+      if (ch === '\\') {
+        i++; // skip the escaped character
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '/' && line[i + 1] === '/') return line.slice(0, i);
+  }
+  return line;
+}
+
 function stripComments(text: string, isCss: boolean): string {
   const noBlock = text.replace(/\/\*[\s\S]*?\*\//g, '');
   if (isCss) return noBlock;
-  return noBlock
-    .split('\n')
-    .map((line) => {
-      const idx = line.indexOf('//');
-      return idx === -1 ? line : line.slice(0, idx);
-    })
-    .join('\n');
+  return noBlock.split('\n').map(stripLineComment).join('\n');
 }
 
 describe('token audit — var(--*) resolution', () => {
@@ -115,6 +155,19 @@ describe('token audit — var(--*) resolution', () => {
     }
   });
 
+  it('interpolated sticky-token reads resolve for EVERY expansion (S4 hardening, #120)', () => {
+    // The package's only template-interpolated var() family is
+    // `var(--sticky-${color}-{bg|edge|ink})` over the StickyColor union —
+    // validate the full cross product, not just the prefix.
+    const design = designTokens();
+    for (const color of ['yellow', 'pink', 'blue', 'green', 'orange', 'purple']) {
+      for (const part of ['bg', 'edge', 'ink']) {
+        const token = `--sticky-${color}-${part}`;
+        expect(design.has(token), `expansion ${token} missing from design`).toBe(true);
+      }
+    }
+  });
+
   it('sanity: the design package actually serves the canvas vocabulary', () => {
     const design = designTokens();
     for (const required of [
@@ -137,7 +190,16 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     for (const rel of sourceFiles()) {
       if (VALUE_EXEMPT.has(rel)) continue;
       const text = stripComments(readFileSync(join(SRC, rel), 'utf8'), rel.endsWith('.css'));
-      if (HEX_COLOR.test(text) || COLOR_FUNCTION.test(text) || TAILWIND_ARBITRARY_COLOR.test(text)) {
+      const scanned = stripColorMixArgs(text);
+      const namedHit = rel.endsWith('.css')
+        ? NAMED_COLOR_CSS.test(scanned)
+        : NAMED_COLOR_VALUE.test(scanned);
+      if (
+        HEX_COLOR.test(scanned) ||
+        COLOR_FUNCTION.test(scanned) ||
+        TAILWIND_ARBITRARY_COLOR.test(scanned) ||
+        namedHit
+      ) {
         offenders.push(rel);
       }
     }
@@ -149,6 +211,15 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     expect(COLOR_FUNCTION.test('const c = "hsl(214 88% 51%)";')).toBe(true);
     expect(COLOR_FUNCTION.test('const c = "rgba(0, 0, 0, 0.5)";')).toBe(true);
     expect(TAILWIND_ARBITRARY_COLOR.test('className="text-[#ff0000]"')).toBe(true);
+    // Named-colour keyword values are caught; sticky DATA fields and the
+    // color-mix white lift are not.
+    expect(NAMED_COLOR_VALUE.test("stroke: 'red'")).toBe(true);
+    expect(NAMED_COLOR_VALUE.test("backgroundColor: 'white'")).toBe(true);
+    expect(NAMED_COLOR_VALUE.test("color: 'yellow'")).toBe(false);
+    expect(NAMED_COLOR_CSS.test('  background: white;')).toBe(true);
+    expect(
+      NAMED_COLOR_VALUE.test(stripColorMixArgs('color-mix(in oklab, var(--a), white 22%)')),
+    ).toBe(false);
     // The sanctioned patterns stay clean:
     expect(HEX_COLOR.test('const c = "var(--accent)";')).toBe(false);
     expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(
