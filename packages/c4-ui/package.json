@@ -1,6 +1,6 @@
 {
   "name": "@workspec/c4-ui",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Host-agnostic React components for interactive WorkSpec C4 diagrams (standalone lib + module-federation remote).",
   "keywords": [
     "react",
@@ -44,13 +44,15 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
   },
   "dependencies": {
     "@workspec/c4-schema": "workspace:*",
     "@workspec/c4-model": "workspace:*",
     "@workspec/c4-layout": "workspace:*",
+    "@workspec/canvas": "workspace:*",
+    "@workspec/canvas-c4": "workspace:*",
     "@workspec/design": "0.1.0-alpha.1",
     "lucide-react": "^0.545.0"
   },

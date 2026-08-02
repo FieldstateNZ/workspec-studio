@@ -37,6 +37,11 @@ export type { C4ExplorerProps } from './c4-explorer.js';
 export { renderSvg } from './render-svg.js';
 export type { RenderSvgOptions } from './render-svg.js';
 
+// ── Layout composition helper (re-exported from @workspec/canvas-c4 so hosts
+// calling @workspec/c4-layout's `layoutDiagram` directly — c4-studio's render
+// paths — can pass the same label-aware spacing the components use) ──────────
+export { labelAwareLayerSpacing } from '@workspec/canvas-c4';
+
 // ── Style resolution (Enterprise defaults + spec.yaml overrides) ───────────────
 export {
   DEFAULT_ELEMENT_STYLES,

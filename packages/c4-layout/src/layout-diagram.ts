@@ -55,7 +55,13 @@ export async function layoutDiagram(
 
   const routableEdges = sortEdgesByKey(input.edges).filter((edge) => !edge.dangling);
 
-  const elkGraph = buildElkGraph(sortedNodes, routableEdges, sizeFor, direction);
+  const elkGraph = buildElkGraph(
+    sortedNodes,
+    routableEdges,
+    sizeFor,
+    direction,
+    options.layerSpacing,
+  );
   const autoPositions = await runAutoLayout(elkGraph);
 
   const rects = resolveNodeRects(nodeIds, autoPositions, pins, direction);

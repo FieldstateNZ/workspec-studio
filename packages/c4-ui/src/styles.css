@@ -9,6 +9,14 @@
   background: var(--bg);
 }
 
+/* S4 (#120): the camera model fills the HOST-sized container (the old
+   stretched-SVG intrinsic height is gone) — the themed root passes host
+   sizing through; unsized hosts fall back to .c4-diagram's min-height. */
+.c4-root {
+  width: 100%;
+  height: 100%;
+}
+
 .c4-diagram {
   position: relative;
   width: 100%;
@@ -23,34 +31,24 @@
   box-shadow: 0 0 0 2px var(--accent);
 }
 
-.c4-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
-  cursor: grab;
-}
-
-.c4-canvas:active {
-  cursor: grabbing;
-}
-
 /* ── C4 style-spec v2 token layer ──────────────────────────────────────────
-   The renderer sets `--c4-el-accent-raw` inline per node (the resolved
-   spec-defaults accent); everything else derives here from
-   @workspec/design's shared `--el-tint-*` tokens (the SAME derivation rule
-   Decisions' option-card uses — Site Review UX pass, finding 02), so surface/
-   border/eyebrow/ink-dim already resolve correctly per theme with no
-   [data-theme='dark'] override needed for them. The surface is a soft,
-   neutral-dominant tint of the accent over the design system's elevated card
-   token (text sits on the tint, never the accent), so contrast is guaranteed
-   for any hue in both themes. Dark mode still separately lifts the accent
-   itself toward white first (literal 22%, c4-ui's own mechanism — see
-   style/element-tints.ts — for adapting a single-value accent to the dark
-   canvas, unrelated to the shared tint tokens) so it reads on the dark
-   surface. */
+   S5 (#121) NOTE — the pre-S4 SVG renderer's `.c4-node*` chrome rules
+   (selection/hover rings, SVG text fills, `.c4-canvas` cursor, edge labels)
+   were pruned as dead: since the S4 recomposition (#120) the live card
+   chrome ships in `@workspec/canvas-c4`'s `.c4-el` derivation layer
+   (composed into this package's one stylesheet via src/index.css). This
+   `.c4-node` block is deliberately KEPT: it is the package's pinned
+   encoding of the tint derivation — the renderer-independent statement of
+   how surface/border/eyebrow/ink-dim derive from @workspec/design's shared
+   `--el-tint-*` tokens (the SAME derivation rule Decisions' option-card
+   uses — Site Review UX pass, finding 02), with the dark accent lift as the
+   one literal (22%, see style/element-tints.ts). `render-svg.ts` computes
+   the identical numbers in code (style/color-mix.ts) for its standalone
+   output, and style/element-tints.test.ts pins THIS block to those
+   constants so the two encodings cannot drift. The detail rail
+   (`.c4-rail-selected` below) also stages accents through the same
+   raw-custom-property + dark-lift pattern. */
 .c4-node {
-  cursor: pointer;
   --c4-el-accent: var(--c4-el-accent-raw);
   --c4-el-surface: color-mix(
     in oklab,
@@ -64,76 +62,6 @@
 
 .c4-root[data-theme='dark'] .c4-node {
   --c4-el-accent: color-mix(in oklab, var(--c4-el-accent-raw), white 22%);
-}
-
-.c4-node[aria-disabled='true'] {
-  cursor: default;
-}
-
-/* Hover/focus affordance ring — an offset rect the canvas renders while the
-   node is hovered or keyboard-focused. Hover: a dashed accent outline
-   (Enterprise's C4NodeComponent hover treatment — `outline: 2px dashed
-   var(--el-accent)`, offset 2px); focus: the design system's solid focus
-   ring (decision-ui's `.ds-root :focus-visible` pattern — 2px solid
-   var(--accent)), drawn as an SVG stroke because CSS `outline` doesn't
-   render on SVG content. */
-.c4-node-ring {
-  fill: none;
-  stroke-width: 2;
-}
-
-.c4-node-hover .c4-node-ring {
-  stroke: var(--c4-el-accent);
-  stroke-dasharray: 4 3;
-}
-
-.c4-node-focus .c4-node-ring {
-  stroke: var(--accent);
-  stroke-dasharray: none;
-}
-
-/* The persistent selection ring (`selectedNodeId` on `C4Diagram`) — unlike
-   the hover/focus ring above, this stays until the node is explicitly
-   deselected. Two concentric strokes stand in for the design's CSS
-   `border` + soft `box-shadow` halo (an outer, wider, translucent stroke
-   plus an inner, solid-accent one) since SVG has no spread-shadow
-   primitive — see the two `<rect>`s this pairs with in c4-diagram.tsx. */
-.c4-node-selected .c4-node-ring-selected-inner {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-
-.c4-node-selected .c4-node-ring-selected-outer {
-  fill: none;
-  stroke: var(--accent-soft);
-  stroke-width: 3;
-}
-
-.c4-node-title {
-  fill: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.c4-node-desc {
-  fill: var(--c4-el-ink-dim);
-  font-size: 11px;
-}
-
-.c4-node-tech {
-  fill: var(--c4-el-ink-dim);
-  font-size: 10px;
-}
-
-.c4-node-kind {
-  fill: var(--c4-el-eyebrow);
-  font-size: 10px;
-}
-
-.c4-edge-label {
-  fill: var(--ink-soft);
-  font-size: 11px;
 }
 
 .c4-write-error,

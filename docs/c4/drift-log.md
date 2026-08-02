@@ -287,3 +287,21 @@ zoom has no renderable meaning.
     (`parseLayoutYaml`) before it reaches the working tree — the same "validate before write,
     never trust the client" principle `decision-studio`'s `PUT /api/decision`/`PUT /api/catalog`
     already established.
+
+20. **`apps/site`'s `@workspec/c4-*` deps are workspace `devDependencies` again — the entry-17
+    exception, reinstated for the canvas recomposition (S5,
+    [#121](https://github.com/FieldstateNZ/workspec-studio/issues/121)).** The S4 facade swap
+    ([#120](https://github.com/FieldstateNZ/workspec-studio/pull/120)) rebuilt `c4-ui` on
+    `@workspec/canvas` + `@workspec/canvas-c4` — two brand-new, **not-yet-published** package
+    names — and left `c4-layout` (additive `layerSpacing` option, which the recomposed
+    `C4Explorer` passes on every layout) and `c4-model` (CodeQL containment fix, #102) ahead of
+    their registry `0.1.0-alpha.5` builds. The registry pins therefore can no longer render the
+    real `/c4/demo`: an alpha.5 `c4-ui` predates the whole recomposition, and a workspace `c4-ui`
+    over a registry `c4-layout` would silently drop the label-aware layer spacing. So all four
+    `@workspec/c4-*` entries ride as `workspace:*` devDependencies (the exact entry-17/cost-entry-1
+    shape: built dist through the pnpm symlink, no source aliases, `_LOUD_NOTICE` block, site
+    `tsconfig.json` references so a clean-tree typecheck can build the declarations). **To retire
+    (the #121 follow-up):** bootstrap-publish `@workspec/canvas` + `@workspec/canvas-c4`
+    (RELEASING.md "First publish of a new package"), tag the c4 family at `0.1.0-alpha.6`, then
+    flip the four entries back to `"0.1.0-alpha.6"` registry pins in `dependencies` and remove the
+    notice + references block, exactly as PR #27 and PR #65 retired the previous rounds.

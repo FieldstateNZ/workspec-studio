@@ -44,6 +44,16 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      # The C4 visual-parity suite (apps/parity) is deliberately absent here:
+      # its script is named `parity` (not `test`) so `pnpm -r test` skips it,
+      # because the committed goldens are *-chromium-darwin.png — minted and
+      # verified on macOS, while this runner is ubuntu (font/AA rendering
+      # differs per platform, so linux pixels can never match darwin goldens).
+      # It is a documented LOCAL-ONLY lane: `pnpm run parity` on a Mac before
+      # merging canvas/c4 chrome changes — see apps/parity/README.md. If CI
+      # coverage is ever wanted, mint a linux golden set in a container and
+      # add a macOS or containerized job — do not point this job at the
+      # darwin goldens.
       - name: Test
         run: pnpm run test
 

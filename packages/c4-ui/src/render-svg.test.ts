@@ -132,7 +132,61 @@ describe('renderSvg', () => {
     expect(svg).toContain('#123456');
   });
 
+  it("resolves UNCATEGORIZED edge strokes to literals — no 'var(' anywhere in the emitted SVG (S4 fix round)", () => {
+    // The container dogfood defect: an edge with no category resolves to
+    // UNKNOWN_CONNECTION_STYLE's `var(--ink-fade)` accent, which a
+    // standalone SVG cannot resolve — stroke falls back to `none` (edge
+    // invisible) and arrowhead fill to black. Edge accents must resolve
+    // through the theme token map at emission, like element fills do.
+    const withUncategorized: PositionedDiagram = {
+      nodes: DIAGRAM.nodes,
+      edges: [
+        ...DIAGRAM.edges,
+        edge({
+          from: 'db',
+          to: 'queue',
+          label: 'fans out',
+          route: [
+            { x: 950, y: 150 },
+            { x: 950, y: 260 },
+          ],
+        }),
+      ],
+    };
+    for (const theme of ['light', 'dark'] as const) {
+      const svg = renderSvg(withUncategorized, { theme });
+      expect(svg).not.toContain('var(');
+      // The uncategorized edge still draws — with a literal hex stroke.
+      expect(svg).toContain('aria-label="db to queue: fans out"');
+      expect(svg).toMatch(/stroke="#[0-9a-f]{6}"/);
+    }
+  });
+
   it('matches the committed golden snapshot', () => {
     expect(renderSvg(DIAGRAM, { title: 'Representative diagram' })).toMatchSnapshot();
+  });
+});
+
+describe('renderSvg — hostile-input hardening (CodeQL js/html-constructed-from-input #1–#3)', () => {
+  it('a hostile spec.yaml accent cannot break out of an SVG attribute', () => {
+    const hostile = Spec.parse({
+      elements: { actor: { accent: '"><script>alert(1)</script><x y="' } },
+      connections: { identity: { accent: '"><script>alert(2)</script>', style: 'solid' } },
+    });
+    const svg = renderSvg(DIAGRAM, { spec: hostile });
+    expect(svg).not.toContain('<script>');
+    expect(svg).toContain('&quot;&gt;&lt;script&gt;');
+  });
+
+  it('a hostile node title stays text, never markup', () => {
+    const poisoned: PositionedDiagram = {
+      nodes: DIAGRAM.nodes.map((n, i) =>
+        i === 0 ? { ...n, title: '<img src=x onerror=alert(1)>' } : n,
+      ),
+      edges: DIAGRAM.edges,
+    };
+    const svg = renderSvg(poisoned);
+    expect(svg).not.toContain('<img');
+    expect(svg).toContain('&lt;img src=x onerror=alert(1)&gt;');
   });
 });

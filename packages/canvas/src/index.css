@@ -1,0 +1,136 @@
+/* The package stylesheet build entry (compiled by @tailwindcss/cli into
+   dist/styles.css). Mirrors packages/topology-ui/src/index.css — see that
+   file's comments for the full rationale (no preflight, layer order,
+   @source scanning).
+
+   Deliberately NOT `@import 'tailwindcss'`: that would include preflight, a
+   GLOBAL reset, and this CSS is injected into pages the package does not
+   own. Theme + utilities layers only, plus a scoped preflight stand-in
+   below, so the canvas stays self-contained WITHOUT resetting the host
+   page.
+
+   S2 (#118): the canvas keyframes + the .c4-conn derivation layer ship
+   below; the one local token lives in style/local-tokens.css (decision E
+   exemption, see its header). All colour tokens resolve from
+   @workspec/design (token-audit.test.ts enforces).
+
+   Tailwind v4 gotcha note (enterprise console-dark.css): production builds
+   can mis-split rules near ~50 custom properties in one block — the canvas
+   layer stays far under that (one token + two derivation blocks), and the
+   .c4-el element layer lands in S3 mindful of the same cap. The dark-mode
+   +22% white lift below is a LITERAL percentage (not a var) to dodge the
+   var-as-percentage parsing edge case — matching enterprise and c4-ui's
+   element-tints.ts. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@import './style/local-tokens.css';
+
+/* Scoped stand-in for the preflight rules the canvas relies on:
+   box-sizing + zero-width solid borders. Scoped under .wsc-root (the class
+   the <Canvas> root carries) so the host page is never touched. */
+@layer base {
+  .wsc-root *,
+  .wsc-root *::before,
+  .wsc-root *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--line);
+  }
+
+  .wsc-root button {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+    opacity: 1;
+    cursor: pointer;
+  }
+}
+
+/* Tailwind v4's automatic content detection skips node_modules, which is
+   where @workspec/design's components.css lives — @source is the documented
+   mechanism for scanning it anyway (this package's own sources are scanned
+   explicitly too). */
+@source '../node_modules/@workspec/design/dist/components';
+@source './';
+
+/* ── C4 connection derivation (style-spec v2) ────────────────────────────────
+   ConnectorLayer sets --conn-accent-raw inline per edge (spec accent or the
+   --c4-conn-default local token); strokes read --conn-accent. Dark mode
+   nudges the accent 22% toward white so it reads on dark surfaces — the
+   literal matches enterprise index.css and element-tints.ts. The unset-raw
+   fallback is the enterprise slate literal via the documented local token
+   (style/local-tokens.css). */
+.wsc-root .c4-conn {
+  --conn-accent: var(--conn-accent-raw, var(--c4-conn-fallback));
+}
+[data-theme='dark'] .wsc-root .c4-conn,
+.dark .wsc-root .c4-conn,
+[data-theme='dark'].wsc-root .c4-conn,
+.dark.wsc-root .c4-conn {
+  --conn-accent: color-mix(in oklab, var(--conn-accent-raw, var(--c4-conn-fallback)), white 22%);
+}
+
+/* ── Canvas keyframes (enterprise index.css lines ~319–377) ─────────────────
+   Driven by inline `animation` styles in the canvas components. Keyframe
+   names are document-global; the wsc- rules referencing them are scoped. */
+
+/* Live-arrival entrance (Shape recentIds). */
+@keyframes canvas-shape-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Discovery sticky materialize — deeper scale-up than canvas-shape-enter
+   (0.88, not 0.92) per the Blueprint sticky spec. */
+@keyframes sticky-materialize {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Agent/host highlight pulse ring (Shape highlightIds). */
+@keyframes canvas-highlight-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0.15;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+/* Edge flow on hover — the dashed stroke advances source→target. The dash
+   cycle is 11 units (6 dash + 5 gap, matching the "6 5" pattern); a
+   negative offset over the same length slides one full period per
+   iteration. */
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -11;
+  }
+}
+
+/* ── Vendored tooltip reveal (components/tooltip.tsx) ───────────────────── */
+.wsc-root .wsc-tooltip-wrap:hover .wsc-tooltip,
+.wsc-root .wsc-tooltip-wrap:focus-within .wsc-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}

@@ -1,7 +1,10 @@
 # Releasing
 
-WorkSpec Studio publishes three npm families — `@workspec/decision-*`, `@workspec/c4-*`, and
-`@workspec/cost-*` — and (A6, [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39))
+WorkSpec Studio publishes its npm families — `@workspec/decision-*`, `@workspec/c4-*`,
+`@workspec/cost-*`, the canvas pair (`@workspec/canvas` + `@workspec/canvas-c4`, S5
+[#121](https://github.com/FieldstateNZ/workspec-studio/issues/121)), `@workspec/topology-*`, and
+the shared `@workspec/schema-core` / `@workspec/mcp-core` — and (A6,
+[#39](https://github.com/FieldstateNZ/workspec-studio/issues/39))
 the `Workspec.Aspire.Hosting.*` NuGet family, from one `release.yml` workflow triggered by a
 version tag. Each family versions and publishes independently — the workflow walks every
 publishable package/project and **skips any whose current version is already on its registry**, so
@@ -10,13 +13,27 @@ first, then NuGet (`## NuGet (.NET)` below).
 
 ## npm (`@workspec/*`)
 
-Fifteen public packages across three families:
+The publishable packages, by family (plus the two shared packages every family builds on):
 
-| Family     | Packages                                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| `decision` | `decision-schema`, `decision-engine`, `decision-ui`, `decision-studio` (bin: `workspec-decisions`)                    |
-| `c4`       | `c4-schema`, `c4-model`, `c4-layout`, `c4-ui`, `c4-studio` (bin: `workspec-c4`)                                       |
-| `cost`     | `cost-schema`, `cost-provider`, `cost-provider-azure`, `cost-engine`, `cost-ui`, `cost-studio` (bin: `workspec-cost`) |
+| Family     | Packages                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| shared     | `schema-core`, `mcp-core` (every `*-studio` deps on `mcp-core` since [#100](https://github.com/FieldstateNZ/workspec-studio/pull/100)) |
+| `decision` | `decision-schema`, `decision-engine`, `decision-ui`, `decision-studio` (bin: `workspec-decisions`)                                     |
+| canvas     | `canvas` (generic engine), `canvas-c4` (C4 layer — versions with `canvas`, sits between `c4-layout` and `c4-ui` in publish order)      |
+| `c4`       | `c4-schema`, `c4-model`, `c4-layout`, `c4-ui`, `c4-studio` (bin: `workspec-c4`)                                                        |
+| `cost`     | `cost-schema`, `cost-provider`, `cost-provider-azure`, `cost-engine`, `cost-ui`, `cost-studio` (bin: `workspec-cost`)                  |
+| `topology` | `topology-schema`, `topology-model`, `topology-adapters`, `topology-recon`, `topology-cost`, `topology-ui`, `topology-studio`          |
+
+> **Not yet bootstrapped (as of S5, #121):** `canvas`, `canvas-c4`, `mcp-core`, and all seven
+> `topology-*` packages are in `release.yml`'s array but have never been published — each needs
+> the one-time [first-publish bootstrap](#first-publish-of-a-new-package) + trusted-publisher
+> registration BEFORE the next tag push, or the OIDC publish loop fails on them with E404.
+> (`trace-*`, `req-schema`, and `mcp-host` are deliberately not in the array yet.)
+>
+> **Bootstrap and tag in one sitting:** the bootstrap tarballs for `canvas-c4` and
+> `topology-ui`/`-cost`/`-studio` embed exact deps on `alpha.6` siblings that only reach the
+> registry when the subsequent tag run publishes them — those names dangle uninstallable until
+> the `v0.1.0-alpha.6` tag lands, so do not leave a gap between bootstrapping and tagging.
 
 Each package sets `publishConfig: { access: "public", provenance: true }`, ships `dist` +
 `README.md` + `LICENSE`, and exposes types + ESM from the tarball. `examples/*` and `apps/*` are

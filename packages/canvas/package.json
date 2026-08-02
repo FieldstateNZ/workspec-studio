@@ -1,0 +1,79 @@
+{
+  "name": "@workspec/canvas",
+  "version": "0.1.0-alpha.1",
+  "description": "Host-agnostic infinite-canvas engine for WorkSpec surfaces: per-instance zustand store factory with undo/redo command history, camera/pointer/keyboard hooks, fractional-index z-order, an open shape-util/tool registry seam, and a CanvasHost persistence seam (standalone lib; ported from the WorkSpec enterprise canvas).",
+  "keywords": [
+    "react",
+    "canvas",
+    "whiteboard",
+    "diagram",
+    "zustand",
+    "infinite-canvas",
+    "ui"
+  ],
+  "homepage": "https://github.com/FieldstateNZ/workspec-studio/tree/main/packages/canvas#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FieldstateNZ/workspec-studio.git",
+    "directory": "packages/canvas"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && tailwindcss --input src/index.css --output dist/styles.css --minify",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@workspec/design": "0.1.0-alpha.1",
+    "fractional-indexing-jittered": "^1.0.0",
+    "lucide-react": "^0.545.0",
+    "nanoid": "^5.1.5",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.14",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/expect": "4.1.10",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.14",
+    "tsup": "^8.3.5",
+    "typescript": "^6.0.3",
+    "vite": "^7.0.0",
+    "vitest": "^4.1.10"
+  }
+}

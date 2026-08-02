@@ -17,9 +17,11 @@ import { fireEvent } from '@testing-library/react';
 export function firePointer(
   element: Element,
   type: 'pointerdown' | 'pointermove' | 'pointerup',
-  props: { clientX: number; clientY: number; pointerId?: number },
+  props: { clientX: number; clientY: number; pointerId?: number; button?: number },
 ): void {
   const event = new Event(type, { bubbles: true, cancelable: true });
-  Object.assign(event, { pointerId: 1, ...props });
+  // `button: 0` (left) by default — the canvas engine's pointer pipeline
+  // gates on it (right button pans, other buttons are ignored).
+  Object.assign(event, { pointerId: 1, button: 0, ...props });
   fireEvent(element, event);
 }

@@ -19,6 +19,8 @@
     "typecheck": "pnpm -r --workspace-concurrency=1 --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
     "build": "pnpm -r --if-present run build",
+    "parity": "pnpm --filter @workspec/parity run parity",
+    "parity:update": "pnpm --filter @workspec/parity run parity:update",
     "render:c4": "pnpm --filter @workspec/c4-studio run render:dogfood"
   },
   "devDependencies": {

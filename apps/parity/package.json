@@ -1,0 +1,32 @@
+{
+  "name": "@workspec/parity",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "C4 visual-parity harness (S4, #120): fixed fixtures rendered through the recomposed @workspec/c4-ui + canvas engine, screenshot-goldened per scenario in light and dark. Separate from apps/mf-host on purpose — the MF smoke's failure domain is federation/singleton-React, this one's is pixels; coupling them would make both slower and flakier.",
+  "scripts": {
+    "build": "vite build",
+    "build:deps": "pnpm --filter @workspec/parity^... run build",
+    "parity": "pnpm run build:deps && vite build && playwright test",
+    "parity:update": "pnpm run build:deps && vite build && playwright test --update-snapshots"
+  },
+  "dependencies": {
+    "@workspec/c4-layout": "workspace:*",
+    "@workspec/c4-model": "workspace:*",
+    "@workspec/c4-schema": "workspace:*",
+    "@workspec/c4-ui": "workspace:*",
+    "@workspec/canvas": "workspace:*",
+    "@workspec/canvas-c4": "workspace:*",
+    "@workspec/design": "0.1.0-alpha.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^6.0.3",
+    "vite": "^7.0.0"
+  }
+}

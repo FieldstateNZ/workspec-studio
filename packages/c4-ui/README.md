@@ -5,6 +5,15 @@ module-federation remote, built on [`@workspec/design`](https://github.com/Field
 tokens over [`@workspec/c4-schema`](../c4-schema) / [`@workspec/c4-model`](../c4-model) /
 [`@workspec/c4-layout`](../c4-layout).
 
+Since the S4 canvas recomposition (#120), `C4Diagram` and `C4Explorer` are **facades over the
+shared canvas engine**: [`@workspec/canvas`](../canvas) supplies the per-instance store, camera,
+pointer pipeline and orthogonal edge router; [`@workspec/canvas-c4`](../canvas-c4) supplies the
+`ResolvedDiagram` → shape projection, the enterprise C4 card chrome and the canonical
+spec-defaults style tables (this package's `style/spec-defaults.ts` is a re-export). The public
+props, interaction contract and a11y surface of both components are unchanged — consumers of the
+pre-S4 SVG renderer need no code changes; see `CHANGELOG.md` for the behavioural notes (camera
+replaces the stretch model, enterprise card/edge chrome, label-aware layer spacing).
+
 Components receive already-loaded data as props — there is no repository fetch, no global, no
 ambient theme. Load a model with `@workspec/c4-model`, lay it out with `@workspec/c4-layout`, and
 hand the results to `C4Diagram`/`C4Explorer`.
@@ -34,17 +43,27 @@ const positioned = await layoutDiagram({
 
 ## Components
 
-- **`C4Diagram`** — renders one positioned diagram view: elements styled per kind (accent, icon,
-  shape), orthogonal category-coloured edges with relationship labels. Interactive: hover tooltip
+- **`C4Diagram`** — renders one positioned diagram view: the enterprise card chrome per kind
+  (accent left bar, watermark icon, eyebrow/title/description, cylinder/pill silhouettes),
+  orthogonal category-coloured edges (rounded elbows, face-aligned arrowheads, lane fan-out,
+  obstacle detours, midpoint label chips). Interactive: hover tooltip
   (title, kind, description, technology, tags, and a Links section when `elementsByKindAndSlug` is
   supplied), click/Enter drill-down (`onNavigate(slug)` — called with the clicked node's own
   resolved slug; the caller decides whether that slug maps anywhere), click/Enter-to-select
   (`onSelect(node | null)` — called with the activated node, or with `null` on a plain background
-  click/Escape; renders a persistent accent ring via `selectedNodeId`), wheel/drag pan-zoom, keyboard
-  (arrow keys pan, `+`/`-` zoom, `Enter` drills down AND selects a focused node, `Escape` clears the
-  selection). `onNavigate` and `onSelect` are independent — a host can wire one, the other, or both
-  from the same click; `C4Explorer` (below) wires only `onSelect`, so its clicks never drill down on
-  their own. ARIA roles/labels on every node and edge.
+  click/Escape; renders a persistent accent ring via `selectedNodeId`), wheel-zoom about the
+  cursor + background-drag pan, keyboard (arrow keys pan, `+`/`-` zoom, `Enter` drills down AND
+  selects a focused node, `Escape` clears the selection). `onNavigate` and `onSelect` are
+  independent — a host can wire one, the other, or both from the same click; `C4Explorer` (below)
+  wires only `onSelect`, so its clicks never drill down on their own. ARIA roles/labels on every
+  node and edge.
+
+  **Camera model (S4):** the diagram fills its host-sized container through the enterprise
+  camera — no distortion (the old `preserveAspectRatio='none'` stretch is gone), zoom clamped
+  0.1–4, content auto-fitted (capped at 1×) on load and on every diagram/lens switch. **Size the
+  mounting element** — the old intrinsic aspect-ratio height no longer exists; unsized hosts fall
+  back to a 320px minimum.
+
 - **`C4Explorer`** — a workbench over every diagram in a `C4Model`: a header row of segmented C4-level
   tabs (`role="group"` + `aria-pressed`, a toggle button group, not an ARIA tablist) — one numbered
   tab per canonical level (`1 · Context` / `2 · Container` / `3 · Component`) when the model has
@@ -74,10 +93,14 @@ const positioned = await layoutDiagram({
 
 - **`renderSvg(diagram, options?)`** — a standalone, deterministic SVG string: no React runtime, no
   external stylesheet, every colour resolved to a literal theme-token value (or a `spec.yaml`/
-  Enterprise-default accent). Built from the SAME geometry/style modules `C4Diagram` uses
-  (`src/geometry/node-shape.ts`, `src/geometry/edge-path.ts`, `src/style/spec-defaults.ts`, …), so
-  the interactive canvas and the static export can never silently draw a diagram differently — see
-  `render-svg.shared-modules.test.ts`.
+  Enterprise-default accent) — the emitted document contains no `var(` anywhere. Built on the
+  SAME shared modules `C4Diagram` uses: `@workspec/canvas`'s orthogonal router
+  (`resolveConnectorGeometry` + `roundedConnectorPath`) and `@workspec/canvas-c4`'s projection +
+  canonical spec-defaults (`buildC4Shapes`, `style/spec-defaults.ts`), so the interactive canvas
+  and the static export can never silently draw a diagram differently — enforced by
+  `render-svg.shared-modules.test.ts`, which verifies both files actually CALL the shared
+  modules. Every interpolated string is escaped (CodeQL `js/html-constructed-from-input`
+  hardening, including hostile `spec.yaml` accents).
 
 ## Host contract
 
@@ -103,7 +126,8 @@ lenses share one file — see `src/drag/serialize-for-write.ts`).
 ## Zero local design tokens
 
 Every colour/spacing/font comes from `@workspec/design` tokens (`var(--*)`). The one documented
-exception for colour VALUES is `src/style/spec-defaults.ts`: a byte-for-byte mirror of WorkSpec
+exception for colour VALUES is `src/style/spec-defaults.ts` — since S4 a re-export of
+`@workspec/canvas-c4`'s canonical tables, the single source of truth mirroring WorkSpec
 Enterprise's `DEFAULT_ELEMENT_STYLES`/`DEFAULT_CONNECTION_STYLES` (which kind/category maps to
 which accent hue, shape, and variant) — Enterprise conformance DATA, not a design token, and a
 loaded `spec.yaml` can override any of it at runtime. `zero-local-tokens.test.ts` greps every
@@ -115,18 +139,24 @@ the colour-FUNCTION pattern only — it parses colour syntax but must stay hex-f
 Node surfaces/borders/kind-text are not flat tokens: they derive from each node's accent per
 Enterprise's `.c4-el` color-mix layer (surface = accent 9% over `--bg-elevated`, border = accent
 at 28% alpha, eyebrow = accent 70% into `--ink`; dark mode lifts the accent 22% toward white
-first, with 14%/34% surface/border mixes). The percentages live in `src/style/element-tints.ts`,
-declared as CSS `color-mix(in oklab, ...)` rules in `src/styles.css` for the canvas and computed
-in code by `src/style/color-mix.ts` for `renderSvg` — `element-tints.test.ts` pins the stylesheet
-to the constants so the two renderers cannot drift.
+first, with 14%/34% surface/border mixes), staged through `@workspec/design`'s shared
+`--el-tint-*` tokens. The LIVE card chrome ships in `@workspec/canvas-c4`'s `.c4-el` stylesheet
+layer (composed into this package's stylesheet — see Build below); `renderSvg` computes the
+identical numbers in code via `src/style/element-tints.ts` + `src/style/color-mix.ts`, and
+`element-tints.test.ts` pins `src/styles.css`'s retained `.c4-node` derivation block to those
+constants so the encodings cannot drift.
 
 ## Build
 
 - `pnpm build` — the standalone library (`tsc --emitDeclarationOnly` + `tsup` + a Tailwind CSS
-  compile into `dist/styles.css`), mirroring `packages/decision-ui`.
+  compile into `dist/styles.css`), mirroring `packages/decision-ui`. The compiled stylesheet is
+  still the ONE file consumers load: `src/index.css` composes `@workspec/canvas/styles.css` (the
+  scoped `.wsc-root` engine layer) and `@workspec/canvas-c4/styles.css` (the `.c4-el` card
+  derivation) into `@workspec/c4-ui/styles.css`, so existing consumers keep their single import.
 - `pnpm build:mf` — the module-federation remote (`vite.config.mf.ts`), exposing `./C4Diagram` and
-  `./C4Explorer` with React as a shared singleton and everything else (the c4-\* siblings,
-  `@workspec/design`) bundled in. `apps/mf-host` mounts both for the CI smoke proof.
+  `./C4Explorer` with React as a shared singleton (peer range `^18.3.0 || ^19.0.0`) and everything
+  else (the c4-\* siblings, `@workspec/canvas`, `@workspec/canvas-c4`, `@workspec/design`) bundled
+  in. `apps/mf-host` mounts both for the CI smoke proof.
 
 ## Testing
 

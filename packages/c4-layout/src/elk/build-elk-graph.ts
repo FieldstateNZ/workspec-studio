@@ -23,10 +23,11 @@ export function buildElkGraph(
   edges: readonly ResolvedDiagramEdge[],
   sizeFor: (nodeId: string) => { readonly width: number; readonly height: number },
   direction: LayoutDirection,
+  layerSpacing?: number,
 ): ElkNode {
   return {
     id: 'root',
-    layoutOptions: elkLayoutOptionsFor(direction),
+    layoutOptions: elkLayoutOptionsFor(direction, layerSpacing),
     children: nodes.map((node) => {
       const size = sizeFor(node.nodeId);
       return { id: node.nodeId, width: size.width, height: size.height };

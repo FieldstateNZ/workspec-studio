@@ -1,0 +1,26 @@
+/* Local canvas tokens — the Decision E exemption list (epic #116).
+   TWO tokens live here; everything else the package reads resolves from
+   @workspec/design themes (token-audit.test.ts enforces both directions).
+   This file (like style/shape-defaults.ts) is exempt from the raw-colour
+   grep; each entry documents why it can't come from the design package.
+
+   --c4-conn-default — the default C4 connection accent when an edge has no
+   spec category (`ConnectorLayer`'s `--conn-accent-raw` fallback). The
+   value is the enterprise conformance colour (fieldstate-c4-core
+   connection-category conventions, enterprise index.css `#707070`) — the
+   same class of conformance DATA c4-ui exempts in spec-defaults.ts. It is
+   theme-invariant at definition: the dark lift is applied by the .c4-conn
+   derivation (+22% white) in index.css, matching enterprise. Promote into
+   @workspec/design (with the rest of the connection-category palette) when
+   the design package next releases; tracked in the S2 report.
+
+   --c4-conn-fallback — the enterprise `.c4-conn` LAST-RESORT accent
+   (`var(--conn-accent-raw, #64748b)` in enterprise index.css line 263):
+   slate-500, only reachable if --conn-accent-raw is unset (ConnectorLayer
+   always sets it, so this is defence-in-depth). Kept as the exact
+   enterprise literal — no design token matches it (--ink-soft is
+   #4a4a52/#a4a4ac) and parity CSS must not drift. */
+.wsc-root {
+  --c4-conn-default: #707070;
+  --c4-conn-fallback: #64748b;
+}

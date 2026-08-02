@@ -1,168 +1,19 @@
-// The Enterprise-defaults data module — the SINGLE documented exception to
-// this package's zero-local-tokens rule (see `zero-local-tokens.test.ts`,
-// which greps `src/` for raw hex/`hsl(` literals and allow-lists exactly this
-// file). `DEFAULT_CONNECTION_STYLES` below is still a byte-for-byte mirror
-// of WorkSpec Enterprise's `DEFAULT_CONNECTION_STYLES`
-// (`lib/yaml-schemas/src/spec.ts`) — Enterprise conformance DATA (which hue
-// is "the" accent for a data edge vs. a governance one), not a design token.
-//
-// `DEFAULT_ELEMENT_STYLES`' accents are a deliberate, documented DEVIATION
-// from that mirror (Site Review UX pass, finding 01/02): each kind's hue now
-// references a `--el-*` (or, where a Decisions-side analog already exists,
-// `--type-*`) token in `@workspec/design` instead of the literal Enterprise
-// hex/hsl, so C4 and Decisions share one accent vocabulary instead of two.
-// The DARK-theme rendered result is unchanged (the tokens carry the exact
-// same values these literals did — see `@workspec/design`'s
-// `console-dark.ts` file header); only the source of truth moved. This was
-// an explicit, considered choice to accept — not silently reintroduce — a
-// gap from the Enterprise mirror; a future re-extraction that finds
-// Enterprise itself unifies these vocabularies should treat this file as the
-// one to reconcile, not revert.
-//
-// Every other colour in this package (surface, ink, border, shadow, spacing,
-// radius, font) comes from `@workspec/design` tokens via `var(--*)` — only
-// the per-category connection accent and the shape/variant/icon choice are
-// sourced here, and a loaded `spec.yaml` can override any of them at runtime
-// (`resolveElementStyle`/`resolveConnectionStyle` below apply those
-// overrides; the defaults here are only the fallback for an absent or
-// partial spec).
-
-import { STYLE_CONNECTION_STYLES, STYLE_SHAPES } from '@workspec/c4-schema';
-import type { Spec } from '@workspec/c4-schema';
-
-/** The shape values a resolved element style always narrows to. */
-export type ElementShape = (typeof STYLE_SHAPES)[number];
-
-/** The line-style values a resolved connection style always narrows to. */
-export type ConnectionLineStyle = (typeof STYLE_CONNECTION_STYLES)[number];
-
-/** One kind's fully resolved visual style: a concrete accent + icon + shape + optional variant. */
-export interface ResolvedElementStyle {
-  readonly accent: string;
-  readonly icon: string;
-  readonly shape: ElementShape;
-  readonly variant: 'external' | null;
-}
-
-/** One category's fully resolved visual style: a concrete accent + line style. */
-export interface ResolvedConnectionStyle {
-  readonly accent: string;
-  readonly style: ConnectionLineStyle;
-}
-
-/**
- * One entry per C4_REF_KINDS kind (the nine backed by a real element schema
- * in this tree, plus `class`/`interface`/`function`, kept for full
- * conformance even though those three have no element schema or directory
- * in `@workspec/c4-schema` today). Accents reference `@workspec/design`
- * tokens — see the file header for why that's a deviation from a pure
- * Enterprise mirror, and note the token values ARE the same hues this file
- * used to hardcode, so nothing renders differently.
- */
-export const DEFAULT_ELEMENT_STYLES: Readonly<Record<string, ResolvedElementStyle>> = {
-  actor: { accent: 'var(--el-actor)', icon: 'user', shape: 'box', variant: null },
-  system: { accent: 'var(--el-system)', icon: 'box', shape: 'box', variant: null },
-  'external-system': {
-    accent: 'var(--el-external-system)',
-    icon: 'external-link',
-    shape: 'box',
-    variant: 'external',
-  },
-  container: { accent: 'var(--el-container)', icon: 'server', shape: 'box', variant: null },
-  // A C4 component is a `feature` in WorkSpec — mirror feature's styling (and
-  // its token) so a (transient) component node reads as one.
-  component: { accent: 'var(--type-feature)', icon: 'package', shape: 'box', variant: null },
-  database: { accent: 'var(--el-database)', icon: 'database', shape: 'cylinder', variant: null },
-  queue: { accent: 'var(--el-queue)', icon: 'git-merge', shape: 'pill', variant: null },
-  domain: { accent: 'var(--el-domain)', icon: 'boxes', shape: 'box', variant: null },
-  feature: { accent: 'var(--type-feature)', icon: 'package', shape: 'box', variant: null },
-  class: { accent: 'var(--el-class)', icon: 'braces', shape: 'box', variant: null },
-  interface: { accent: 'var(--el-interface)', icon: 'brackets', shape: 'box', variant: null },
-  function: { accent: 'var(--el-function)', icon: 'parentheses', shape: 'box', variant: null },
-};
-
-/** Byte-for-byte mirror of Enterprise's `DEFAULT_CONNECTION_STYLES` (`lib/yaml-schemas/src/spec.ts`). */
-export const DEFAULT_CONNECTION_STYLES: Readonly<Record<string, ResolvedConnectionStyle>> = {
-  interaction: { accent: '#64748b', style: 'solid' },
-  data: { accent: '#4CAF50', style: 'solid' },
-  governance: { accent: '#9C27B0', style: 'dashed' },
-  identity: { accent: '#4A90D9', style: 'solid' },
-};
-
-/** The fallback style for a kind with no Enterprise default and no spec override — a design TOKEN, not a hardcoded hue. */
-const UNKNOWN_ELEMENT_STYLE: ResolvedElementStyle = {
-  accent: 'var(--ink-fade)',
-  icon: 'box',
-  shape: 'box',
-  variant: null,
-};
-
-/** The fallback style for a category with no Enterprise default and no spec override — a design TOKEN, not a hardcoded hue. */
-const UNKNOWN_CONNECTION_STYLE: ResolvedConnectionStyle = {
-  accent: 'var(--ink-fade)',
-  style: 'solid',
-};
-
-function isElementShape(value: string | undefined): value is ElementShape {
-  return value !== undefined && (STYLE_SHAPES as readonly string[]).includes(value);
-}
-
-function isConnectionLineStyle(value: string | undefined): value is ConnectionLineStyle {
-  return value !== undefined && (STYLE_CONNECTION_STYLES as readonly string[]).includes(value);
-}
-
-/**
- * Resolves one element kind's visual style: the loaded `spec.yaml`'s
- * `elements[kind]` overrides (accent/icon/shape/variant, each independently
- * optional) layered over the Enterprise default for that kind, itself
- * falling back to {@link UNKNOWN_ELEMENT_STYLE} for a kind Enterprise has no
- * entry for (e.g. a legacy fat-diagram node's free-string `type`). A
- * `shape`/`variant` override with an unrecognised value is ignored (falls
- * through to the default), matching Enterprise's "lenient input, normalising
- * compiler" contract — this package never hard-fails on an authored style.
- */
-export function resolveElementStyle(
-  kind: string | null,
-  spec: Spec | undefined,
-): ResolvedElementStyle {
-  const fallback =
-    (kind !== null ? DEFAULT_ELEMENT_STYLES[kind] : undefined) ?? UNKNOWN_ELEMENT_STYLE;
-  const override = kind !== null ? spec?.elements[kind] : undefined;
-  if (!override) return fallback;
-
-  return {
-    accent: override.accent ?? fallback.accent,
-    icon: override.icon ?? fallback.icon,
-    shape: isElementShape(override.shape) ? override.shape : fallback.shape,
-    variant:
-      override.variant === 'external'
-        ? 'external'
-        : override.variant == null
-          ? fallback.variant
-          : null,
-  };
-}
-
-/**
- * Resolves one connection category's visual style: the loaded `spec.yaml`'s
- * `connections[category]` overrides layered over the Enterprise default for
- * that category, falling back to {@link UNKNOWN_CONNECTION_STYLE} for a
- * category the spec never defines and Enterprise has no default for (an
- * edge with no `category` at all, or a category string outside the four
- * built-ins).
- */
-export function resolveConnectionStyle(
-  category: string | null,
-  spec: Spec | undefined,
-): ResolvedConnectionStyle {
-  const fallback =
-    (category !== null ? DEFAULT_CONNECTION_STYLES[category] : undefined) ??
-    UNKNOWN_CONNECTION_STYLE;
-  const override = category !== null ? spec?.connections[category] : undefined;
-  if (!override) return fallback;
-
-  return {
-    accent: override.accent ?? fallback.accent,
-    style: isConnectionLineStyle(override.style) ? override.style : fallback.style,
-  };
-}
+// RETIRED COPY (S4, #120): the canonical Enterprise-defaults data module
+// moved to `@workspec/canvas-c4/style/spec-defaults` in S3 (#119) — this
+// file is now a pure re-export so every in-package import keeps working
+// while there is exactly ONE source of truth for the C4 default styles.
+// The zero-local-tokens VALUE exemption this file used to carry moved with
+// the data (see packages/canvas-c4's token-audit exemptions); this file is
+// grep-clean.
+export {
+  DEFAULT_CONNECTION_STYLES,
+  DEFAULT_ELEMENT_STYLES,
+  resolveConnectionStyle,
+  resolveElementStyle,
+} from '@workspec/canvas-c4';
+export type {
+  ConnectionLineStyle,
+  ElementShape,
+  ResolvedConnectionStyle,
+  ResolvedElementStyle,
+} from '@workspec/canvas-c4';
