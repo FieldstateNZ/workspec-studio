@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type RefObject } from 'react';
 import { useCanvasInstance } from '../canvas-provider.js';
 import { useCamera } from './use-camera.js';
 import type { ShapeId, ToolName } from '../types.js';
@@ -7,7 +7,7 @@ import type { ShapeId, ToolName } from '../types.js';
 // enterprise map; a key only fires when its tool is actually registered on
 // the instance, so a canvas without (say) the draw tool ignores 'd' —
 // enterprise had the full static set, the package registers tools per
-// instance (S1 ships select; S2 the rest).
+// instance (S2 ships the whiteboard set via registerWhiteboard).
 const TOOL_KEYS: Record<string, ToolName> = {
   v: 'select',
   h: 'hand',
@@ -21,28 +21,53 @@ const TOOL_KEYS: Record<string, ToolName> = {
 };
 
 /**
- * Window-level keyboard shortcuts for the canvas: tool keys, undo/redo
- * (mod+Z / mod+shift+Z / mod+Y), select-all, zoom reset/fit (mod+0 /
- * mod+1), delete and Escape. Mount once inside `<Canvas>` — the
- * listeners are window-scoped (as in the enterprise source), so a page
- * mounting two canvases should mount only one and drive the other
- * imperatively (see the README note).
+ * Where canvas keyboard shortcuts bind (#118 scoping decision):
+ *
+ * - `'window'` (default) — enterprise parity: shortcuts work without
+ *   focusing the canvas first. The right call for the dominant
+ *   one-canvas-per-page case; two window-scoped canvases double-fire, so
+ *   multi-canvas pages must not use it.
+ * - `'root'` — bind to the canvas root element (which `<Canvas>` makes
+ *   focusable). Shortcuts fire only while focus is inside that canvas.
+ * - `'none'` — no bindings; the host drives the store imperatively.
  */
-export function useKeyboardShortcuts(): void {
+export type ShortcutScope = 'window' | 'root' | 'none';
+
+/** Options for {@link useKeyboardShortcuts}. */
+export interface KeyboardShortcutOptions {
+  scope?: ShortcutScope;
+  /** The canvas root element, required for `scope: 'root'`. */
+  rootRef?: RefObject<HTMLElement | null>;
+}
+
+/**
+ * Canvas keyboard shortcuts: tool keys, undo/redo (mod+Z / mod+shift+Z /
+ * mod+Y), select-all, zoom reset/fit (mod+0 / mod+1), delete and the
+ * Escape cascade (exit edit → exit place tool → clear selection). Mounted
+ * by `<Canvas>`; see {@link ShortcutScope} for the binding-target policy.
+ */
+export function useKeyboardShortcuts(options: KeyboardShortcutOptions = {}): void {
+  const { scope = 'window', rootRef } = options;
   const instance = useCanvasInstance();
   const { resetZoom, zoomToFit } = useCamera();
 
   useEffect(() => {
+    if (scope === 'none') return;
+    const target: EventTarget | null = scope === 'root' ? (rootRef?.current ?? null) : window;
+    if (!target) return;
+
     const handleKeyDown = (e: KeyboardEvent): void => {
-      const target = e.target as HTMLElement;
+      const targetEl = e.target as HTMLElement;
       const inEditable =
-        target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        targetEl.isContentEditable ||
+        targetEl.tagName === 'INPUT' ||
+        targetEl.tagName === 'TEXTAREA';
 
       const store = instance.getState();
 
       if (!inEditable) {
         const toolName = TOOL_KEYS[e.key.toLowerCase()];
-        if (toolName && instance.tools.get(toolName)) {
+        if (toolName !== undefined && instance.tools.get(toolName)) {
           store.setActiveTool(toolName);
           return;
         }
@@ -101,7 +126,9 @@ export function useKeyboardShortcuts(): void {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [instance, resetZoom, zoomToFit]);
+    target.addEventListener('keydown', handleKeyDown as EventListener);
+    return () => {
+      target.removeEventListener('keydown', handleKeyDown as EventListener);
+    };
+  }, [instance, resetZoom, zoomToFit, scope, rootRef]);
 }

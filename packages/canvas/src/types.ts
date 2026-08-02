@@ -78,9 +78,11 @@ export type BaseShape = {
    * this one, forming a nesting tree. Distinct from `groupId` (a flat
    * multi-select bond): containerId drives "drag the container, its
    * contents follow" and delete-cascade semantics (utils/containers.ts).
-   * Unset on canvases that never nest, so it's inert there.
+   * Unset on canvases that never nest, so it's inert there. Declared
+   * `| undefined` because "remove from group" (and its undo) restores the
+   * un-contained state by writing `undefined` back.
    */
-  containerId?: string;
+  containerId?: string | undefined;
   /**
    * Host/module side-channel. Two keys are load-bearing engine contract:
    * `meta.ephemeral` (true = projection of a remote model; excluded from

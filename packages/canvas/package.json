@@ -51,6 +51,7 @@
   "dependencies": {
     "@workspec/design": "0.1.0-alpha.1",
     "fractional-indexing-jittered": "^1.0.0",
+    "lucide-react": "^0.545.0",
     "nanoid": "^5.1.5",
     "zod": "^4.4.3",
     "zustand": "^5.0.8"

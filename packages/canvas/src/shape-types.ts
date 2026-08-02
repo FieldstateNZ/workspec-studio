@@ -64,12 +64,13 @@ export type StickyShape = BaseShape & {
   type: 'sticky';
   /** Body text. Pre-existing notes that only had `text` keep rendering as the body. */
   text: string;
-  /** Optional bold title above the body (omitted when empty). */
-  title?: string;
+  /** Optional bold title above the body (omitted when empty; commits clear it by writing undefined). */
+  title?: string | undefined;
   color: StickyColor;
-  /** CSS font-family; undefined = the host's `--sans`. */
-  fontFamily?: string;
-  noteType?: StickyNoteType;
+  /** CSS font-family; undefined = the host's `--sans` (pickers reset by writing undefined). */
+  fontFamily?: string | undefined;
+  /** Demoting a typed note back to loose writes undefined. */
+  noteType?: StickyNoteType | undefined;
   media?: StickyMedia;
   /** Framed image + caption when media='photo'. */
   image?: StickyImage;
@@ -89,10 +90,10 @@ export type TextShape = BaseShape & {
   text: string;
   fontSize: number;
   fontWeight: 400 | 500 | 600 | 700;
-  /** CSS color; undefined = the host's `var(--ink)`. */
-  color?: string;
-  /** CSS font-family; undefined = the host's `--sans`. */
-  fontFamily?: string;
+  /** CSS color; undefined = the host's `var(--ink)` (the Default swatch resets by writing undefined). */
+  color?: string | undefined;
+  /** CSS font-family; undefined = the host's `--sans` (pickers reset by writing undefined). */
+  fontFamily?: string | undefined;
   /** true = user-set width, don't auto-fit; undefined/false = auto (single-line, grows with text). */
   lockWidth?: boolean;
   /** true = user-set height, don't auto-fit; undefined/false = auto (wraps at current width). */

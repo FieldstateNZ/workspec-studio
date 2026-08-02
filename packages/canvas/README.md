@@ -1,29 +1,46 @@
 # @workspec/canvas
 
 Host-agnostic infinite-canvas engine for WorkSpec surfaces — a per-instance store factory with
-undo/redo command history, camera/pointer/keyboard hooks, fractional-index z-order, and open
-shape/tool/host extension seams. Ported from the WorkSpec enterprise canvas engine (epic #116);
-this is the **S1 engine-core surface**: shape components, the full toolset and chrome (layers,
-minimap, toolbar, context menu) arrive in S2, and C4 semantics layer on via `@workspec/canvas-c4`
-(S3).
+undo/redo command history, camera/pointer/keyboard hooks, fractional-index z-order, an open
+shape-module/tool/host extension surface, the whiteboard base shapes (sticky with media/typed
+variants, text, draw, image, connector with the orthogonal edge router) and the full chrome stack
+(shape/connector/selection layers, background grid, marquee, zoom controls, minimap, context menu,
+toolbar). Ported from the WorkSpec enterprise canvas engine (epic #116: S1 core #117, S2
+shapes/tools/chrome #118); C4 semantics layer on via `@workspec/canvas-c4` (S3).
 
 ## Usage
 
 ```tsx
-import { Canvas, CanvasProvider, createCanvasStore, useCanvasStore } from '@workspec/canvas';
+import {
+  Canvas,
+  CanvasProvider,
+  createCanvasStore,
+  registerWhiteboard,
+  Toolbar,
+} from '@workspec/canvas';
 import '@workspec/canvas/styles.css';
 
-function DiagramPanel() {
-  const [instance] = useState(() => createCanvasStore({ persistenceKey: 'my-canvas-v1' }));
+function WhiteboardPanel() {
+  const [instance] = useState(() => {
+    const inst = createCanvasStore({ persistenceKey: 'my-canvas-v1' });
+    registerWhiteboard(inst); // sticky/text/draw/image/connector + hand/draw/text/sticky/connector/place tools
+    return inst;
+  });
   useEffect(() => () => instance.dispose(), [instance]);
 
   return (
     <CanvasProvider store={instance}>
-      <Canvas>{/* S2 layer components compose here */}</Canvas>
+      <Canvas backgroundVariant="dots" showMinimap />
+      <Toolbar />
     </CanvasProvider>
   );
 }
 ```
+
+`<Canvas>` with no children renders the enterprise default layer stack (background when
+`backgroundVariant` is set, connector/shape/selection layers, marquee, zoom controls, minimap when
+`showMinimap`); pass children to compose a custom stack. `WhiteboardDemo` exports a full seeded
+fixture of every base shape.
 
 Two providers on one page are fully isolated — shapes, selection, history/undo, tools, hover and
 timers all live on the instance (contract-tested; the enterprise engine was a module singleton).
@@ -78,10 +95,15 @@ Install with `instance.host = {...}` (and reset to `{}` on unmount, as the enter
 
 ## Extension seams
 
-- **`instance.shapeUtils`** — per-type `ShapeUtil` registration (bounds, hit-test, capabilities,
-  Component). S1 defines the contract; concrete utils and the module-registration surface land in
-  S2. The `isContextMenuSurface` capability replaces the enterprise's hard-coded `'c4_boundary'`
-  right-click gate.
+- **`instance.shapeUtils`** — the open shape-module registry: `register(util)` or
+  `registerModule({ type, util, schema? })` (the zod schema is host-facing metadata for validating
+  imported documents; the engine itself loads snapshots loosely). Capabilities replace every
+  hard-coded per-type list the enterprise chrome carried: `isContextMenuSurface` (right-click
+  container menu + auto-layout gate — was `'c4_boundary'`), `selfRendersSelection` (SelectionLayer
+  opt-out — was connector/flowarrow/c4node/sticky/screen), `isConnectable`/`connectorKey` (the
+  connector tool's endpoint set + host-model keys — legacy c4node/workflownode/diagram-node names
+  still work as a fallback), `isGroupContainer`/`containerTitle` (the context menu's move-to-group
+  targets — was groupframe/diagram-group).
 - **`instance.tools`** — per-instance `Tool` registration, dispatched by `usePointerEvents` on
   `store.activeTool` (unregistered names fall back to the select tool, which every instance
   pre-registers). Keyboard tool keys (`v/h/s/t/d/l`) only fire for registered tools.
@@ -94,8 +116,18 @@ Install with `instance.host = {...}` (and reset to `{}` on unmount, as the enter
 
 - `data-canvas-ui` on any chrome element inside the canvas root makes pointer events pass it by.
 - Shape z-order is the fractional `index` string (`utils/fractional-index`), sorted ascending.
-- Keyboard shortcuts are window-scoped (enterprise behaviour): a page mounting two canvases
-  should render only one `<Canvas>`'s shortcuts as authoritative or scope focus itself.
+- Keyboard scoping is a `<Canvas shortcutScope>` policy (#118): `'window'` (default — enterprise
+  parity, shortcuts work without focusing the canvas; one canvas per page) / `'root'` (bindings on
+  the focusable canvas root, fire only with focus inside it — REQUIRED for multi-canvas pages) /
+  `'none'`. Space-to-pan follows the same scope and only engages when a `hand` tool is registered.
+- Sticky defaults (colour/font) and voice-memo playback position persist under fixed GLOBAL
+  localStorage keys (`workspec-sticky-defaults`, `workspec-voice-pos-<shapeId>`) by design: they
+  are per-viewer preferences/UI state, not document state, so they deliberately bypass the
+  per-instance `persistenceKey` seam and are shared across canvases.
+- Colour: every colour the package renders resolves from `@workspec/design` tokens; the two
+  documented exceptions are `src/style/shape-defaults.ts` (persisted-document colour DATA +
+  analog-paper constants) and `src/style/local-tokens.css` (`--c4-conn-default`), both enforced by
+  `token-audit.test.ts`.
 
 ## Build
 
@@ -108,5 +140,8 @@ Install with `instance.host = {...}` (and reset to `{}` on unmount, as the enter
 `pnpm test` (Vitest + jsdom + React Testing Library). The contract suites cover store-factory
 isolation (two providers sharing nothing, per-instance history/undo), the CanvasHost fallback
 semantics, `meta.ephemeral` snapshot filtering, persistence debounce, z-order/undo behaviour,
-camera math, select-tool gestures and the viewport seam (including a source scan asserting no
-window/document global reads).
+camera math, select-tool gestures (drag/marquee/resize/rotate/undo), the whiteboard tools, the
+committed orthogonal-router route snapshot, container-rect culling + `hiddenKinds` filtering, the
+open-registry proof (a dummy module registered beside the whiteboard set), the keyboard-scoping
+policy, the token audit and the viewport seam (a source scan asserting no window/document global
+reads).

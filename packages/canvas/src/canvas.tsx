@@ -10,11 +10,19 @@ import {
 } from 'react';
 import { useCanvasInstance, useCanvasStore } from './canvas-provider.js';
 import { usePointerEvents } from './hooks/use-pointer-events.js';
-import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts.js';
+import { useKeyboardShortcuts, type ShortcutScope } from './hooks/use-keyboard-shortcuts.js';
 import { useCamera } from './hooks/use-camera.js';
 import { CanvasViewportContext, type CanvasViewport } from './canvas-viewport.js';
 import { screenToPage } from './utils/transforms.js';
 import { hitTestTopmost } from './utils/hit-test.js';
+import { Background, type BackgroundVariant } from './components/background.js';
+import { ConnectorLayer } from './shapes/connector/connector-layer.js';
+import { ShapeLayer } from './components/shape-layer.js';
+import { SelectionLayer } from './components/selection-layer.js';
+import { MarqueeBox } from './components/marquee-box.js';
+import { CanvasZoomControls } from './components/canvas-zoom-controls.js';
+import { Minimap } from './components/minimap.js';
+import { ContextMenu } from './components/context-menu.js';
 import type { ShapeId } from './types.js';
 
 // Cursor per known tool (unregistered/custom tools fall back to their own
@@ -41,17 +49,32 @@ export interface CanvasContextMenuState {
 /** Props for {@link Canvas}. */
 export interface CanvasProps {
   /**
-   * The layer stack (shape/connector/selection layers, chrome). S1 ships
-   * the engine only — S2's layer components compose here as children,
-   * absolutely positioned over the root (which is `position: relative`).
+   * The layer stack. Omitted = the enterprise default stack (Background
+   * when `backgroundVariant` is set, ConnectorLayer, ShapeLayer,
+   * SelectionLayer, MarqueeBox, CanvasZoomControls, Minimap when
+   * `showMinimap`). Provide children to compose a custom stack instead —
+   * children REPLACE the default layers, absolutely positioned over the
+   * root (`position: relative`).
    */
   children?: ReactNode;
   /**
-   * Render the context-menu chrome for an open menu (S2 ships a default
-   * ContextMenu component; until then hosts supply their own). Omitted =
-   * right-click hit-testing still runs but nothing renders.
+   * Render custom context-menu chrome for an open menu. Omitted = the
+   * ported default ContextMenu component.
    */
   renderContextMenu?: (menu: CanvasContextMenuState & { onClose: () => void }) => ReactNode;
+  /** Grid style for the default Background layer; omitted = no background (enterprise default). */
+  backgroundVariant?: BackgroundVariant;
+  /** Render the default Minimap (bottom-right). */
+  showMinimap?: boolean;
+  /** kind → colour map for the default Minimap's shape dots. */
+  minimapKindColors?: Record<string, string>;
+  /**
+   * Keyboard-shortcut binding policy (#118): 'window' (default, enterprise
+   * parity — one canvas per page), 'root' (only while focus is inside this
+   * canvas — REQUIRED when a page mounts several), or 'none'. 'root' makes
+   * the canvas root focusable (tabIndex 0).
+   */
+  shortcutScope?: ShortcutScope;
 }
 
 /**
@@ -71,7 +94,14 @@ export interface CanvasProps {
  * silently lose the measured rect (zoom-to-fit no-ops, wheel zoom
  * anchoring on raw client coordinates).
  */
-export function Canvas({ children, renderContextMenu }: CanvasProps = {}): ReactNode {
+export function Canvas({
+  children,
+  renderContextMenu,
+  backgroundVariant,
+  showMinimap,
+  minimapKindColors,
+  shortcutScope = 'window',
+}: CanvasProps = {}): ReactNode {
   const rootRef = useRef<HTMLDivElement>(null);
   const instance = useCanvasInstance();
   const activeTool = useCanvasStore((s) => s.activeTool);
@@ -117,12 +147,29 @@ export function Canvas({ children, renderContextMenu }: CanvasProps = {}): React
       ? 'grabbing'
       : (TOOL_CURSORS[activeTool] ?? instance.tools.get(activeTool)?.cursor ?? 'default');
 
+  // The enterprise Canvas's own layer stack, used when the host doesn't
+  // compose one. MarqueeBox self-gates on store.marquee.
+  const defaultStack = (
+    <>
+      {backgroundVariant !== undefined && <Background variant={backgroundVariant} />}
+      <ConnectorLayer />
+      <ShapeLayer />
+      <SelectionLayer />
+      <MarqueeBox />
+      <CanvasZoomControls />
+      {showMinimap === true && (
+        <Minimap {...(minimapKindColors !== undefined ? { kindColors: minimapKindColors } : {})} />
+      )}
+    </>
+  );
+
   return (
     <CanvasViewportContext.Provider value={viewport}>
       <div
         ref={rootRef}
         className="wsc-root"
         data-canvas-root
+        {...(shortcutScope === 'root' ? { tabIndex: 0 } : {})}
         onContextMenu={(e) => e.preventDefault()}
         style={{
           position: 'relative',
@@ -131,11 +178,16 @@ export function Canvas({ children, renderContextMenu }: CanvasProps = {}): React
           overflow: 'hidden',
           backgroundColor: 'var(--canvas-bg)',
           userSelect: 'none',
+          outline: 'none',
           cursor,
         }}
       >
-        {children}
-        <CanvasWiring rootRef={rootRef} renderContextMenu={renderContextMenu} />
+        {children ?? defaultStack}
+        <CanvasWiring
+          rootRef={rootRef}
+          renderContextMenu={renderContextMenu}
+          shortcutScope={shortcutScope}
+        />
       </div>
     </CanvasViewportContext.Provider>
   );
@@ -151,9 +203,11 @@ export function Canvas({ children, renderContextMenu }: CanvasProps = {}): React
 function CanvasWiring({
   rootRef,
   renderContextMenu,
+  shortcutScope,
 }: {
   rootRef: RefObject<HTMLDivElement | null>;
   renderContextMenu?: ((menu: CanvasContextMenuState & { onClose: () => void }) => ReactNode) | undefined;
+  shortcutScope: ShortcutScope;
 }): ReactNode {
   const instance = useCanvasInstance();
   const { handleWheel } = useCamera();
@@ -213,8 +267,8 @@ function CanvasWiring({
     [instance, rootRef],
   );
 
-  usePointerEvents(rootRef, { onContextMenu: openContextMenuAt });
-  useKeyboardShortcuts();
+  usePointerEvents(rootRef, { onContextMenu: openContextMenuAt, keyboardScope: shortcutScope });
+  useKeyboardShortcuts({ scope: shortcutScope, rootRef });
 
   // Native (non-passive) wheel listener: React's synthetic wheel handler
   // is passive, and camera zoom must preventDefault browser page zoom.
@@ -229,7 +283,13 @@ function CanvasWiring({
     return () => el.removeEventListener('wheel', onWheel);
   }, [handleWheel, rootRef]);
 
-  return (
-    contextMenu && renderContextMenu?.({ ...contextMenu, onClose: () => setContextMenu(null) })
+  if (!contextMenu) return null;
+  const menu = { ...contextMenu, onClose: () => { setContextMenu(null); } };
+  // Default to the ported ContextMenu component (enterprise behaviour);
+  // hosts override via renderContextMenu.
+  return renderContextMenu ? (
+    renderContextMenu(menu)
+  ) : (
+    <ContextMenu x={menu.x} y={menu.y} ids={menu.ids} onClose={menu.onClose} />
   );
 }

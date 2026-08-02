@@ -174,6 +174,136 @@ describe('select tool — drag gesture', () => {
   });
 });
 
+describe('select tool — resize gesture (S1 debt, #118)', () => {
+  test('dragging the BR handle resizes and commits ONE undoable command', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = setup([shape]);
+    const tool = selectToolOf(instance);
+    instance.getState().select([shape.id]);
+
+    // BR corner handle sits at screen (100, 60) at identity camera.
+    tool.onPointerDown?.(pointerEventFactory(100, 60), instance.getState());
+    expect(instance.getState().isResizing).toBe(true);
+
+    tool.onPointerMove?.(pointerEventFactory(140, 90), instance.getState());
+    // Live raw write, no history yet.
+    expect(instance.getState().shapes[shape.id]).toMatchObject({ width: 140, height: 90 });
+    expect(instance.getState().history.stack).toHaveLength(0);
+
+    tool.onPointerUp?.(pointerEventFactory(140, 90), instance.getState());
+    expect(instance.getState().history.stack).toHaveLength(1);
+    expect(instance.getState().isResizing).toBe(false);
+
+    instance.getState().undo();
+    expect(instance.getState().shapes[shape.id]).toMatchObject({ width: 100, height: 60 });
+  });
+
+  test('TL handle moves the origin; dimensions clamp at the 20px minimum', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = setup([shape]);
+    const tool = selectToolOf(instance);
+    instance.getState().select([shape.id]);
+
+    tool.onPointerDown?.(pointerEventFactory(0, 0), instance.getState());
+    tool.onPointerMove?.(pointerEventFactory(30, 20), instance.getState());
+    expect(instance.getState().shapes[shape.id]).toMatchObject({
+      x: 30,
+      y: 20,
+      width: 70,
+      height: 40,
+    });
+
+    // Drag far past the opposite corner: clamps to 20x20.
+    tool.onPointerMove?.(pointerEventFactory(400, 400), instance.getState());
+    expect(instance.getState().shapes[shape.id]).toMatchObject({ width: 20, height: 20 });
+    tool.onPointerUp?.(pointerEventFactory(400, 400), instance.getState());
+    expect(instance.getState().history.stack).toHaveLength(1);
+  });
+
+  test('resizing a text shape locks the explicitly-resized dimensions', () => {
+    const text = shapeFactory({ type: 'text', x: 0, y: 0, width: 100, height: 60 });
+    const instance = createCanvasStore();
+    instance.shapeUtils.register(boxShapeUtilFactory({ type: 'text' }));
+    instance.getState()._setShapesRaw({ [text.id]: { ...text, text: 'hi', fontSize: 16 } });
+    instance.getState().select([text.id]);
+    const tool = selectToolOf(instance);
+
+    tool.onPointerDown?.(pointerEventFactory(100, 60), instance.getState());
+    tool.onPointerMove?.(pointerEventFactory(150, 60), instance.getState());
+    tool.onPointerUp?.(pointerEventFactory(150, 60), instance.getState());
+
+    const resized = instance.getState().shapes[text.id];
+    // Width changed → lockWidth; height unchanged → lockHeight untouched.
+    expect(resized?.lockWidth).toBe(true);
+    expect(resized?.lockHeight).toBeUndefined();
+  });
+
+  test('non-resizable utils expose no working handles', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = createCanvasStore();
+    instance.shapeUtils.register(boxShapeUtilFactory({ canResize: () => false }));
+    instance.getState()._setShapesRaw({ [shape.id]: shape });
+    instance.getState().select([shape.id]);
+    const tool = selectToolOf(instance);
+
+    // The BR-corner point now just hits the shape body (drag, not resize).
+    tool.onPointerDown?.(pointerEventFactory(100, 60), instance.getState());
+    expect(instance.getState().isResizing).toBe(false);
+  });
+});
+
+describe('select tool — rotation gesture (S1 debt, #118)', () => {
+  test('dragging the rotation handle rotates around the centre and commits one command', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = setup([shape]);
+    const tool = selectToolOf(instance);
+    instance.getState().select([shape.id]);
+
+    // Rotation handle: top-centre minus 30px → screen (50, -30).
+    tool.onPointerDown?.(pointerEventFactory(50, -30), instance.getState());
+    // Start angle is -90° (straight up from centre (50,30)); dragging to the
+    // right of the centre (angle 0°) yields rotation +90°.
+    tool.onPointerMove?.(pointerEventFactory(130, 30), instance.getState());
+    expect(instance.getState().shapes[shape.id]?.rotation).toBeCloseTo(90);
+    expect(instance.getState().history.stack).toHaveLength(0);
+
+    tool.onPointerUp?.(pointerEventFactory(130, 30), instance.getState());
+    expect(instance.getState().history.stack).toHaveLength(1);
+
+    instance.getState().undo();
+    expect(instance.getState().shapes[shape.id]?.rotation ?? 0).toBe(0);
+    instance.getState().redo();
+    expect(instance.getState().shapes[shape.id]?.rotation).toBeCloseTo(90);
+  });
+
+  test('shift snaps rotation to 15° increments', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = setup([shape]);
+    const tool = selectToolOf(instance);
+    instance.getState().select([shape.id]);
+
+    tool.onPointerDown?.(pointerEventFactory(50, -30), instance.getState());
+    // An off-axis drag lands between increments; shift must snap to ×15°.
+    tool.onPointerMove?.(pointerEventFactory(130, 18, { shiftKey: true }), instance.getState());
+    const rot = instance.getState().shapes[shape.id]?.rotation ?? 0;
+    expect(rot % 15).toBe(0);
+    expect(rot).not.toBe(0);
+    tool.onPointerUp?.(pointerEventFactory(130, 18, { shiftKey: true }), instance.getState());
+  });
+
+  test('a click on the handle without movement commits nothing', () => {
+    const shape = shapeFactory({ x: 0, y: 0, width: 100, height: 60 });
+    const instance = setup([shape]);
+    const tool = selectToolOf(instance);
+    instance.getState().select([shape.id]);
+
+    tool.onPointerDown?.(pointerEventFactory(50, -30), instance.getState());
+    tool.onPointerUp?.(pointerEventFactory(50, -30), instance.getState());
+    expect(instance.getState().history.stack).toHaveLength(0);
+    expect(instance.getState().shapes[shape.id]?.rotation).toBeUndefined();
+  });
+});
+
 describe('select tool — editing + deletion', () => {
   test('double-click enters editing when the util allows text editing', () => {
     const editable = shapeFactory({ x: 0, y: 0 });

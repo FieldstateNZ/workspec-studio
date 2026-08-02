@@ -72,6 +72,10 @@ export function useImageInput(
   const placeImage = useCallback(
     async (file: File, dropClientX?: number, dropClientY?: number) => {
       if (!file.type.startsWith('image/')) return;
+      // Placement seam guard FIRST (the enterprise window-size fallback is
+      // gone with the viewport seam): without a container there is nowhere
+      // to place the image, so bail before paying for the compress.
+      if (!containerRef.current) return;
       try {
         const { src, naturalWidth, naturalHeight } = await compressImageFile(file);
         const store = instance.getState();
@@ -82,9 +86,8 @@ export function useImageInput(
         const w = Math.round(naturalWidth * scale);
         const h = Math.round(naturalHeight * scale);
 
-        // Page position: center on drop point or container center. (The
-        // enterprise window-size fallback is gone with the viewport seam —
-        // without a container there is nowhere to place, so bail.)
+        // Re-check around the await — the canvas may have unmounted while
+        // the encode ran.
         const el = containerRef.current;
         if (!el) return;
         let pageX: number;

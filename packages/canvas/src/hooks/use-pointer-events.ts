@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, type RefObject } from 'react';
 import { useCanvasInstance } from '../canvas-provider.js';
 import type { CanvasPointerEvent, Tool } from '../tools/tool-base.js';
 import type { Camera, ToolName } from '../types.js';
+import type { ShortcutScope } from './use-keyboard-shortcuts.js';
 import { screenToPage } from '../utils/transforms.js';
 import { hitTestTopmost } from '../utils/hit-test.js';
 
@@ -32,6 +33,13 @@ export interface PointerEventOpts {
   /** Open the context menu at screen coords — fired on a right-click that did
    *  NOT turn into a pan drag. */
   onContextMenu?: (clientX: number, clientY: number) => void;
+  /**
+   * Where the space-hold-to-pan key listener binds; mirrors
+   * `useKeyboardShortcuts`'s {@link ShortcutScope} ('window' default —
+   * enterprise parity; 'root' = only while focus is inside the canvas;
+   * 'none' = off).
+   */
+  keyboardScope?: ShortcutScope;
 }
 
 const PAN_THRESHOLD = 4;
@@ -246,12 +254,27 @@ export function usePointerEvents(
     };
   }, [containerRef, getActiveTool, instance]);
 
+  const keyboardScope = opts.keyboardScope ?? 'window';
   useEffect(() => {
+    if (keyboardScope === 'none') return;
+    const target: EventTarget | null =
+      keyboardScope === 'root' ? containerRef.current : window;
+    if (!target) return;
+
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.code === 'Space' && !spaceHeldRef.current) {
-        const target = e.target as HTMLElement;
-        if (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+        const targetEl = e.target as HTMLElement;
+        if (
+          targetEl.isContentEditable ||
+          targetEl.tagName === 'INPUT' ||
+          targetEl.tagName === 'TEXTAREA'
+        )
           return;
+        // Space-pan only when a hand tool is actually registered — the same
+        // registration gate every other tool activation goes through (S1
+        // debt, #118). An unregistered 'hand' would grab the cursor with
+        // select-tool gestures underneath.
+        if (!instance.tools.get('hand')) return;
         spaceHeldRef.current = true;
         const store = instance.getState();
         prevToolRef.current = store.activeTool;
@@ -260,21 +283,36 @@ export function usePointerEvents(
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent): void => {
-      if (e.code === 'Space' && spaceHeldRef.current) {
-        spaceHeldRef.current = false;
-        if (prevToolRef.current) {
-          instance.getState().setActiveTool(prevToolRef.current);
-          prevToolRef.current = null;
-        }
+    const endSpacePan = (): void => {
+      if (!spaceHeldRef.current) return;
+      spaceHeldRef.current = false;
+      if (prevToolRef.current) {
+        instance.getState().setActiveTool(prevToolRef.current);
+        prevToolRef.current = null;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+    const handleKeyUp = (e: KeyboardEvent): void => {
+      if (e.code === 'Space') endSpacePan();
     };
-  }, [instance]);
+
+    // Root scope: keyup only delivers while focus is still inside the
+    // canvas — if focus leaves mid-hold the hand tool would stick. Clear
+    // the space-pan state whenever focus exits the root subtree.
+    const rootEl = keyboardScope === 'root' ? containerRef.current : null;
+    const handleFocusOut = (e: FocusEvent): void => {
+      const next = e.relatedTarget;
+      if (rootEl && next instanceof Node && rootEl.contains(next)) return;
+      endSpacePan();
+    };
+
+    target.addEventListener('keydown', handleKeyDown as EventListener);
+    target.addEventListener('keyup', handleKeyUp as EventListener);
+    rootEl?.addEventListener('focusout', handleFocusOut);
+    return () => {
+      target.removeEventListener('keydown', handleKeyDown as EventListener);
+      target.removeEventListener('keyup', handleKeyUp as EventListener);
+      rootEl?.removeEventListener('focusout', handleFocusOut);
+    };
+  }, [instance, keyboardScope, containerRef]);
 }

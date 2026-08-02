@@ -1,14 +1,17 @@
 import type { FC } from 'react';
+import type { ZodType } from 'zod';
 import type { Box, Shape, Vec2 } from './types.js';
 
 /**
  * The per-shape-type plugin contract — ported from the enterprise
- * `shapes/registry.ts` and kept deliberately minimal in S1 (#117): the
- * concrete shape utils and the full open `ShapeModule` registration
- * surface arrive in S2. The engine consults a shape's util for geometry
- * (`getBounds`), pointer routing (`hitTest`, in shape-LOCAL page-space
- * coordinates), interaction capabilities (`canResize`, `canEditText`) and
- * rendering (`Component`).
+ * `shapes/registry.ts` (#117) and opened up in S2 (#118): the engine
+ * consults a shape's util for geometry (`getBounds`), pointer routing
+ * (`hitTest`, in shape-LOCAL page-space coordinates), interaction
+ * capabilities and rendering (`Component`). The optional capability
+ * methods replace the enterprise chrome's hard-coded per-type knowledge
+ * (SelectionLayer opt-out list, ConnectorTool's connectable-kind set,
+ * ContextMenu's NON_MOVABLE/group-container type sets) so shapes
+ * registered by hosts get full chrome behaviour without engine edits.
  */
 export interface ShapeUtil<S extends Shape = Shape> {
   type: string;
@@ -27,33 +30,86 @@ export interface ShapeUtil<S extends Shape = Shape> {
    * (S3) opts in; everything else leaves it unset.
    */
   isContextMenuSurface?: (shape: S) => boolean;
+  /**
+   * Capability: this shape draws its own selection treatment (halo, twin
+   * box-shadow ring, edge highlight), so the SelectionLayer must NOT draw
+   * its AABB rect. Replaces the enterprise SelectionLayer's hard-coded
+   * opt-out list (connector, flowarrow, c4node, sticky, screen) — the
+   * package's connector + sticky utils opt in; enterprise/S3 utils opt in
+   * on their own registrations.
+   */
+  selfRendersSelection?: (shape: S) => boolean;
+  /**
+   * Capability: the connector tool can start/end an edge on this shape.
+   * Replaces the enterprise `isConnectable` type set (c4node /
+   * workflownode / diagram-node) — those legacy type names remain
+   * recognised as a fallback so enterprise re-adoption works with bare
+   * utils (see tools/connector-tool.ts).
+   */
+  isConnectable?: (shape: S) => boolean;
+  /**
+   * Capability: the stable host-model key the connector tool hands to
+   * `CanvasHost.createEdge` for this endpoint (enterprise: c4node → slug,
+   * workflownode → stateKey). Defaults to the shape id.
+   */
+  connectorKey?: (shape: S) => string;
+  /**
+   * Capability: this shape is a group container the context menu offers as
+   * a "Move to group" target. Replaces the enterprise groupframe /
+   * diagram-group type checks; containers also become non-movable
+   * themselves (they re-parent via their own containment rules).
+   */
+  isGroupContainer?: (shape: S) => boolean;
+  /** Display label for a group container in the "Move to group" submenu. */
+  containerTitle?: (shape: S) => string;
 }
 
 /**
- * Instance-scoped lookup of shape utils by type string. Replaces the
- * enterprise's module-level `shapeUtils` record so two canvases on one
- * page can register different shape sets. S2's module registration API
- * builds on top of this.
+ * One registerable shape module (#118): the util plus an optional zod
+ * schema for the shape's persisted document form. The engine itself never
+ * validates against the schema (snapshot loading is deliberately loose —
+ * see store/snapshot.ts); it is registry metadata hosts use to validate
+ * imported/synced documents shape-by-shape.
+ */
+export interface ShapeModule<S extends Shape = Shape> {
+  type: string;
+  util: ShapeUtil<S>;
+  schema?: ZodType;
+}
+
+/**
+ * Instance-scoped shape-module registry (one per canvas instance),
+ * replacing the enterprise's closed module-level `shapeUtils` record.
+ * `register` accepts a bare util (a module with no schema) for S1
+ * compatibility; `registerModule` is the full S2 surface.
  */
 export interface ShapeUtilRegistry {
-  /** Register (or replace) the util for its `type`. */
+  /** Register (or replace) the util for its `type` (module without schema). */
   register: <S extends Shape>(util: ShapeUtil<S>) => void;
+  /** Register (or replace) a full shape module. */
+  registerModule: <S extends Shape>(module: ShapeModule<S>) => void;
   get: (type: string) => ShapeUtil | undefined;
+  /** The registered module for `type` (bare-util registrations appear schema-less). */
+  getModule: (type: string) => ShapeModule | undefined;
   types: () => readonly string[];
 }
 
-/** A fresh, empty shape-util registry (one per canvas instance). */
+/** A fresh, empty shape-module registry (one per canvas instance). */
 export function createShapeUtilRegistry(): ShapeUtilRegistry {
-  const utils = new Map<string, ShapeUtil>();
+  const modules = new Map<string, ShapeModule>();
+  // The registry erases the concrete shape type: engine call sites always
+  // resolve a util via the shape's own `type`, so the util is only ever
+  // invoked with the shape it was registered for. Same erasure the
+  // enterprise registry performed with per-entry casts.
   return {
     register: (util) => {
-      // The registry erases the concrete shape type: engine call sites
-      // always resolve a util via the shape's own `type`, so the util is
-      // only ever invoked with the shape it was registered for. Same
-      // erasure the enterprise registry performed with per-entry casts.
-      utils.set(util.type, util as unknown as ShapeUtil);
+      modules.set(util.type, { type: util.type, util: util as unknown as ShapeUtil });
     },
-    get: (type) => utils.get(type),
-    types: () => [...utils.keys()],
+    registerModule: (module) => {
+      modules.set(module.type, module as unknown as ShapeModule);
+    },
+    get: (type) => modules.get(type)?.util,
+    getModule: (type) => modules.get(type),
+    types: () => [...modules.keys()],
   };
 }

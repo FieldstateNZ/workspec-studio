@@ -37,9 +37,9 @@ export interface CanvasState {
   /** Entrance animation for shapes that arrived live (not baseline load). */
   recentIds: Set<ShapeId>;
   /**
-   * Per-kind visibility filter. State-only in S1: nothing in this package
-   * consumes it yet — S2's ShapeLayer matches it against the instance's
-   * `kindResolver` to skip rendering/hit-testing hidden kinds.
+   * Per-kind visibility filter, matched against the instance's
+   * `kindResolver` by ShapeLayer / ConnectorLayer / Minimap (live since
+   * S2, #118) to skip rendering hidden kinds.
    */
   hiddenKinds: Set<string>;
   /** Last viewport intent: re-apply fit as the node set changes, leave a
@@ -124,9 +124,8 @@ export interface CanvasStoreOptions {
   /** Initial host callbacks; also settable later via `instance.host`. */
   host?: CanvasHost;
   /**
-   * Kind taxonomy used with `hiddenKinds`; defaults to shape `type`.
-   * Stored on the instance but not consumed by anything in S1 — S2's
-   * ShapeLayer is the consumer.
+   * Kind taxonomy used with `hiddenKinds` filtering and kind-coloured
+   * chrome (Minimap); defaults to shape `type`.
    */
   kindResolver?: KindResolver;
 }
@@ -144,7 +143,7 @@ export interface CanvasStoreInstance extends StoreApi<CanvasStore> {
   readonly hover: StoreApi<CanvasHoverState>;
   /** The host persistence seam — reassign to install/clear callbacks. */
   host: CanvasHost;
-  /** Kind taxonomy for `hiddenKinds`; consumed by S2's ShapeLayer (unused in S1). */
+  /** Kind taxonomy for `hiddenKinds` filtering + Minimap colouring (ShapeLayer/ConnectorLayer/Minimap). */
   readonly kindResolver: KindResolver;
   dispose: () => void;
 }
