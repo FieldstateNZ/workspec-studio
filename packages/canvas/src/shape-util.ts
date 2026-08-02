@@ -54,6 +54,22 @@ export interface ShapeUtil<S extends Shape = Shape> {
    */
   connectorKey?: (shape: S) => string;
   /**
+   * Capability: connectors touching this shape route ORTHOGONALLY (the C4
+   * elbow router) instead of drawing a straight Discovery tie. Replaces
+   * the router's hard-coded routed-kind name set (S2 debt, #119) — the
+   * legacy names (c4node / diagram-node / workflownode) remain recognised
+   * when the capability is absent.
+   */
+  routedEdges?: (shape: S) => boolean;
+  /**
+   * Capability: the orthogonal router must detour AROUND this shape.
+   * Replaces the router's hard-coded `type === 'c4node'` obstacle check;
+   * the legacy name remains recognised when the capability is absent.
+   * (Boundaries/containers deliberately leave this unset — edges cross
+   * them legitimately.)
+   */
+  isRouteObstacle?: (shape: S) => boolean;
+  /**
    * Capability: this shape is a group container the context menu offers as
    * a "Move to group" target. Replaces the enterprise groupframe /
    * diagram-group type checks; containers also become non-movable

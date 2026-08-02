@@ -12,7 +12,7 @@ import { pageToScreen } from '../../utils/transforms.js';
 import type { ConnectorShape } from '../../shape-types.js';
 import type { Vec2 } from '../../types.js';
 import { useCanvasSpec } from '../../canvas-spec-context.js';
-import { isDiscoveryConnector, resolveConnectorGeometry } from './geometry.js';
+import { isDiscoveryConnector, resolveConnectorGeometry, routingOptsFromUtils } from './geometry.js';
 
 // Ported from the enterprise ConnectorLayer.tsx (#118). Deviations, all
 // logged in the S2 report: store/hover access via provider hooks;
@@ -72,6 +72,12 @@ const EdgeLabelEditor: FC<{
   const setEditing = useCanvasStore((s) => s.setEditing);
   const ref = useRef<HTMLInputElement>(null);
   const [val, setVal] = useState(shape.label ?? '');
+  // Escape guard: `blur()` fires synchronously inside the keydown handler,
+  // BEFORE React applies the reverting setVal — so the blur-commit would see
+  // the edited value and commit it anyway. The enterprise EdgeLabelEditor
+  // carried that race; its own newer C4 LabelEditor pattern (cancelledRef)
+  // fixes it, applied here as a declared deviation (#119).
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     ref.current?.focus();
@@ -79,6 +85,11 @@ const EdgeLabelEditor: FC<{
   }, []);
 
   const commit = (): void => {
+    if (cancelledRef.current) {
+      cancelledRef.current = false;
+      setEditing(null);
+      return;
+    }
     const next = val.trim();
     if (next !== (shape.label ?? '')) {
       updateShape(shape.id, { label: next });
@@ -105,6 +116,7 @@ const EdgeLabelEditor: FC<{
           e.preventDefault();
           ref.current?.blur();
         } else if (e.key === 'Escape') {
+          cancelledRef.current = true;
           setVal(shape.label ?? '');
           ref.current?.blur();
         }
@@ -139,6 +151,7 @@ export const ConnectorLayer: FC = () => {
   const hoveredId = useCanvasHover((s) => s.hoveredId);
   const spec = useCanvasSpec();
   const kindOf = instance.kindResolver;
+  const routingOpts = routingOptsFromUtils((type) => instance.shapeUtils.get(type));
 
   // Mirror ShapeLayer's hiddenKinds filter (connector visuals render in this
   // SVG layer, not ShapeLayer); an edge also hides when either endpoint's
@@ -173,7 +186,7 @@ export const ConnectorLayer: FC = () => {
         }}
       >
         {connectors.map((c) => {
-          const geom = resolveConnectorGeometry(c, shapes);
+          const geom = resolveConnectorGeometry(c, shapes, routingOpts);
           if (!geom) return null;
           const selected = selectedIds.has(c.id);
           // Active when the edge itself OR one of its endpoint nodes is hovered
@@ -191,7 +204,7 @@ export const ConnectorLayer: FC = () => {
           // --ink-ghost, with the edge-flow dash march on hover. No
           // arrowhead/aura — Discovery edges read as soft ties, not directed
           // C4 dependencies.
-          if (isDiscoveryConnector(c, shapes)) {
+          if (isDiscoveryConnector(c, shapes, routingOpts)) {
             if (p0 === undefined || p1 === undefined) return null;
             const dStraight = `M ${String(p0.x)} ${String(p0.y)} L ${String(p1.x)} ${String(p1.y)}`;
             const stroke = selected ? 'var(--accent)' : 'var(--ink-ghost)';
@@ -272,7 +285,7 @@ export const ConnectorLayer: FC = () => {
       </svg>
 
       {connectors.map((c) => {
-        const geom = resolveConnectorGeometry(c, shapes);
+        const geom = resolveConnectorGeometry(c, shapes, routingOpts);
         if (!geom || !c.cardinality) return null;
         // ER multiplicity chips sit just inside each endpoint, nudged along
         // the first/last segment so they don't sit on the node border.
@@ -322,7 +335,7 @@ export const ConnectorLayer: FC = () => {
       })}
 
       {connectors.map((c) => {
-        const geom = resolveConnectorGeometry(c, shapes);
+        const geom = resolveConnectorGeometry(c, shapes, routingOpts);
         if (!geom) return null;
         const labelScreen = pageToScreen(geom.label, camera);
         if (editingId === c.id) {
@@ -331,7 +344,7 @@ export const ConnectorLayer: FC = () => {
         if (!c.label) return null;
         // Discovery Board connector label (#363): a mono midpoint chip whose
         // text colour matches the line's stroke.
-        if (isDiscoveryConnector(c, shapes)) {
+        if (isDiscoveryConnector(c, shapes, routingOpts)) {
           const labelColor = selectedIds.has(c.id) ? 'var(--accent)' : 'var(--ink-ghost)';
           return (
             <div

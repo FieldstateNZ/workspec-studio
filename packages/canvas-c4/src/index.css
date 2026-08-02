@@ -1,0 +1,101 @@
+/* @workspec/canvas-c4 stylesheet entry (compiled by @tailwindcss/cli into
+   dist/styles.css). Mirrors packages/canvas/src/index.css: theme+utilities
+   only, NO preflight (the canvas package's scoped .wsc-root stand-in
+   already covers the canvas subtree this package renders into).
+
+   The .c4-el layer below is the enterprise style-spec v2 derivation
+   (enterprise index.css lines 231–261) RECONCILED with the studio's shared
+   element grammar: the light/dark percentages come from @workspec/design's
+   `--el-tint-*` tokens (the SAME derivation rule c4-ui's .c4-node block and
+   Decisions' option-card use — single encoding, per #119), so only the
+   values with no token stay literal:
+   - the dark +22% white accent lift (literal, matching enterprise +
+     element-tints.ts ACCENT_LIFT_PCT — and literal deliberately, to dodge
+     the var-as-percentage parsing edge case);
+   - the watermark alphas (14% light / 18% dark — no design token);
+   - the data-scope="focus" deepening (15/42 light, 20/48 dark — ditto).
+
+   Rule-splitting cap note (documented in packages/canvas/src/index.css):
+   Tailwind v4 production builds can mis-split rules near ~50 custom
+   properties per block — the blocks below stay far under it (≤6 each). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@workspec/design/tailwind';
+@import './style/local-tokens.css';
+
+@source '../node_modules/@workspec/design/dist/components';
+@source './';
+
+/* ── C4 element derivation (style-spec v2) ─────────────────────────────────
+   The renderer sets `--el-accent-raw` inline per node (the compiled,
+   clamped accent); everything else derives here. The surface is a soft,
+   neutral-dominant tint of the accent (text stays on the tint, never the
+   accent), so contrast is guaranteed for any hue, both themes free. */
+.wsc-root .c4-el {
+  --el-accent: var(--el-accent-raw, var(--c4-el-fallback));
+  --el-surface: color-mix(in oklab, var(--el-accent) var(--el-tint-surface), var(--bg-elevated));
+  --el-watermark: color-mix(in oklab, var(--el-accent) 14%, transparent);
+  --el-ink: var(--ink);
+  --el-eyebrow: color-mix(in oklab, var(--el-accent) var(--el-tint-eyebrow), var(--ink));
+  --el-ink-dim: color-mix(in oklab, var(--ink) var(--el-tint-ink-dim), transparent);
+  --el-border: color-mix(in oklab, var(--el-accent) var(--el-tint-border), transparent);
+}
+
+/* In-scope element (the C4 view's subject) deepens its tint to anchor the
+   diagram. System-applied from the view via data-scope, never authored. */
+.wsc-root .c4-el[data-scope='focus'] {
+  --el-surface: color-mix(in oklab, var(--el-accent) 15%, var(--bg-elevated));
+  --el-border: color-mix(in oklab, var(--el-accent) 42%, transparent);
+}
+
+/* Dark lift: nudge the accent toward white so it reads on the dark surface.
+   Literal 22% (not a var) to dodge the var-as-percentage parsing edge case.
+   Surface/eyebrow/dim/border pick up their dark percentages automatically
+   through the theme-scoped --el-tint-* tokens. */
+[data-theme='dark'] .wsc-root .c4-el,
+.dark .wsc-root .c4-el,
+[data-theme='dark'].wsc-root .c4-el,
+.dark.wsc-root .c4-el {
+  --el-accent: color-mix(in oklab, var(--el-accent-raw, var(--c4-el-fallback)), white 22%);
+  --el-watermark: color-mix(in oklab, var(--el-accent) 18%, transparent);
+}
+[data-theme='dark'] .wsc-root .c4-el[data-scope='focus'],
+.dark .wsc-root .c4-el[data-scope='focus'],
+[data-theme='dark'].wsc-root .c4-el[data-scope='focus'],
+.dark.wsc-root .c4-el[data-scope='focus'] {
+  --el-surface: color-mix(in oklab, var(--el-accent) 20%, var(--bg-elevated));
+  --el-border: color-mix(in oklab, var(--el-accent) 48%, transparent);
+}
+
+/* ── Small chrome utilities the node card needs beyond inline styles ────── */
+
+/* Two-line description clamp (enterprise Tailwind line-clamp-2). */
+.wsc-root .wsc-c4-clamp2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Icon-button hover wash (enterprise hover:bg-foreground/5 over tokens;
+   Tailwind's default transition curve). */
+.wsc-root .wsc-c4-icon-btn {
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wsc-root .wsc-c4-icon-btn:hover {
+  background-color: color-mix(in oklab, var(--ink) 5%, transparent);
+}
+
+/* Danger icon-button hover wash (enterprise hover:bg-destructive/10). */
+.wsc-root .wsc-c4-icon-btn-danger:hover {
+  background-color: color-mix(in oklab, var(--danger) 10%, transparent);
+}
+
+/* Footer toggle hover (enterprise hover:opacity-70; Tailwind's default curve). */
+.wsc-root .wsc-c4-fade-btn {
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wsc-root .wsc-c4-fade-btn:hover {
+  opacity: 0.7;
+}

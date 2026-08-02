@@ -1,0 +1,13 @@
+/* Local C4 tokens — this package's decision-E exemption list (with
+   style/spec-defaults.ts and style/status-colors.ts; token-audit.test.ts
+   allow-lists exactly these files).
+
+   --c4-el-fallback — the enterprise `.c4-el` LAST-RESORT accent
+   (`var(--el-accent-raw, #64748b)` in enterprise index.css line 232):
+   slate-500, only reachable if --el-accent-raw is unset (C4NodeComponent
+   always sets it — defence-in-depth). Same posture as @workspec/canvas's
+   --c4-conn-fallback. Kept as the exact enterprise literal; no design
+   token matches it. */
+.wsc-root {
+  --c4-el-fallback: #64748b;
+}

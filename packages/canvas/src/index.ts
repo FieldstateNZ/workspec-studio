@@ -97,9 +97,10 @@ export {
   connectorGeometry,
   isDiscoveryConnector,
   resolveConnectorGeometry,
+  routingOptsFromUtils,
   straightConnectorGeometry,
 } from './shapes/connector/geometry.js';
-export type { ConnectorGeometry } from './shapes/connector/geometry.js';
+export type { ConnectorGeometry, ConnectorRoutingOpts } from './shapes/connector/geometry.js';
 
 // ── Hooks ────────────────────────────────────────────────────────────────────
 export { computeFitCamera, useCamera } from './hooks/use-camera.js';

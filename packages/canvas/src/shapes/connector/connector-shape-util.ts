@@ -3,7 +3,7 @@ import type { ConnectorShape } from '../../shape-types.js';
 import type { Box, Vec2 } from '../../types.js';
 import type { CanvasStoreInstance } from '../../store/store.types.js';
 import { hitTestPointToPolyline } from '../../utils/geometry.js';
-import { connectorAABB, resolveConnectorGeometry } from './geometry.js';
+import { connectorAABB, resolveConnectorGeometry, routingOptsFromUtils } from './geometry.js';
 
 const DEGENERATE: Box = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -21,6 +21,7 @@ const DEGENERATE: Box = { x: 0, y: 0, width: 0, height: 0 };
  * selectable, deletable shape.
  */
 export function createConnectorShapeUtil(instance: CanvasStoreInstance): ShapeUtil<ConnectorShape> {
+  const routingOpts = routingOptsFromUtils((type) => instance.shapeUtils.get(type));
   return {
     type: 'connector',
 
@@ -39,7 +40,7 @@ export function createConnectorShapeUtil(instance: CanvasStoreInstance): ShapeUt
     // Bounds recompute from live endpoints (used by marquee selection). The
     // stored x/y/width/height are a coarse cache only.
     getBounds: (shape: ConnectorShape): Box => {
-      const geom = resolveConnectorGeometry(shape, instance.getState().shapes);
+      const geom = resolveConnectorGeometry(shape, instance.getState().shapes, routingOpts);
       return geom ? connectorAABB(geom) : DEGENERATE;
     },
 
@@ -49,7 +50,7 @@ export function createConnectorShapeUtil(instance: CanvasStoreInstance): ShapeUt
     // tolerance.
     hitTest: (shape: ConnectorShape, localPoint: Vec2): boolean => {
       const { shapes, camera } = instance.getState();
-      const geom = resolveConnectorGeometry(shape, shapes);
+      const geom = resolveConnectorGeometry(shape, shapes, routingOpts);
       if (!geom || geom.points.length < 2) return false;
       const abs: Vec2 = { x: localPoint.x + shape.x, y: localPoint.y + shape.y };
       const tol = 8 / camera.zoom;

@@ -188,6 +188,72 @@ describe('orthogonal router — committed route snapshot', () => {
   });
 });
 
+describe('capability-driven routing membership (S2 debt, #119)', () => {
+  test('routedEdges capability upgrades NON-legacy types to the orthogonal router', () => {
+    // Two shapes under a type name the legacy set does not know.
+    const a = shapeFactory({ type: 'svc', x: 0, y: 0, width: 300, height: 110 });
+    const b = shapeFactory({ type: 'svc', x: 600, y: 400, width: 300, height: 110 });
+    const c = connector(a, b);
+    const shapes = record([a, b, c]);
+    const opts = {
+      isRoutedEndpoint: (s: Shape) => (s.type === 'svc' ? true : undefined),
+    };
+
+    // Without the capability: Discovery straight line.
+    expect(isDiscoveryConnector(c, shapes)).toBe(true);
+    // With it: routed, identical to what the same rects produce as c4nodes.
+    expect(isDiscoveryConnector(c, shapes, opts)).toBe(false);
+    const viaCapability = resolveConnectorGeometry(c, shapes, opts);
+    const asC4 = (() => {
+      const a2 = { ...a, type: 'c4node' };
+      const b2 = { ...b, type: 'c4node' };
+      const c2 = { ...c, sourceShapeId: a2.id, targetShapeId: b2.id };
+      return resolveConnectorGeometry(c2 as typeof c, record([a2, b2, c2]));
+    })();
+    expect(viaCapability?.points).toEqual(asC4?.points);
+  });
+
+  test('isRouteObstacle capability makes NON-legacy shapes detour targets', () => {
+    const a = shapeFactory({ type: 'c4node', x: 0, y: 0, width: 120, height: 80 });
+    const b = shapeFactory({ type: 'c4node', x: 600, y: 0, width: 120, height: 80 });
+    const blocker = shapeFactory({ type: 'appliance', x: 300, y: 10, width: 120, height: 60 });
+    const c = connector(a, b);
+    const shapes = record([a, b, blocker, c]);
+
+    // Legacy: 'appliance' is not an obstacle → straight route.
+    const withoutCap = connectorGeometry(c, shapes);
+    expect(withoutCap?.points).toHaveLength(4);
+    // Capability: it is → the detour engages (6-point route over the top).
+    const withCap = connectorGeometry(c, shapes, {
+      isRouteObstacle: (s: Shape) => (s.type === 'appliance' ? true : undefined),
+    });
+    expect(withCap?.points.length).toBeGreaterThan(4);
+  });
+
+  test('capability can also EXCLUDE a legacy kind (explicit false beats the name set)', () => {
+    const a = shapeFactory({ type: 'c4node', x: 0, y: 0, width: 300, height: 110 });
+    const b = shapeFactory({ type: 'c4node', x: 600, y: 400, width: 300, height: 110 });
+    const c = connector(a, b);
+    const shapes = record([a, b, c]);
+    const opts = { isRoutedEndpoint: () => false };
+    expect(isDiscoveryConnector(c, shapes, opts)).toBe(true);
+  });
+
+  test('explicit isRouteObstacle:false un-obstacles a LEGACY c4node blocker (#119 FIX 10)', () => {
+    const a = shapeFactory({ type: 'c4node', x: 0, y: 0, width: 120, height: 80 });
+    const b = shapeFactory({ type: 'c4node', x: 600, y: 0, width: 120, height: 80 });
+    const blocker = shapeFactory({ type: 'c4node', x: 300, y: 10, width: 120, height: 60 });
+    const c = connector(a, b);
+    const shapes = record([a, b, blocker, c]);
+
+    // Legacy behaviour: a c4node in the path forces the detour.
+    expect(connectorGeometry(c, shapes)?.points.length).toBeGreaterThan(4);
+    // Explicit false beats the legacy name set → straight route restored.
+    const unobstructed = connectorGeometry(c, shapes, { isRouteObstacle: () => false });
+    expect(unobstructed?.points).toHaveLength(4);
+  });
+});
+
 describe('discovery connectors (straight, centre-to-centre)', () => {
   test('non-routed endpoints draw straight with a midpoint label', () => {
     const a = shapeFactory({ type: 'sticky', x: 0, y: 0, width: 210, height: 150 });

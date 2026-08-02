@@ -1,4 +1,5 @@
 import type { ConnectorShape } from '../../shape-types.js';
+import type { ShapeUtil } from '../../shape-util.js';
 import type { Box, Shape, ShapeId, Vec2 } from '../../types.js';
 
 // The orthogonal connector router — ported VERBATIM from the enterprise
@@ -318,14 +319,42 @@ export interface ConnectorGeometry {
   label: Vec2;
 }
 
-// The shape kinds that form the orthogonally-routed graph (C4 / workflow /
-// custom-diagram). A connector between any other kinds — Discovery sticky
-// notes, cards — is a Discovery Board connector and draws straight
+/**
+ * Capability-driven routing membership (S2 debt, #119). Each callback may
+ * return `undefined` = "no opinion", which falls back to the LEGACY
+ * enterprise type-name sets below — so bare enterprise shape sets route
+ * identically without registration changes, while registered modules opt
+ * in explicitly via the `routedEdges` / `isRouteObstacle` ShapeUtil
+ * capabilities.
+ */
+export interface ConnectorRoutingOpts {
+  isRoutedEndpoint?: (shape: Shape) => boolean | undefined;
+  isRouteObstacle?: (shape: Shape) => boolean | undefined;
+}
+
+/** Routing opts wired to an instance's shape-util registry (the standard caller). */
+export function routingOptsFromUtils(
+  getUtil: (type: string) => ShapeUtil | undefined,
+): ConnectorRoutingOpts {
+  return {
+    isRoutedEndpoint: (s) => getUtil(s.type)?.routedEdges?.(s),
+    isRouteObstacle: (s) => getUtil(s.type)?.isRouteObstacle?.(s),
+  };
+}
+
+// The LEGACY shape kinds that form the orthogonally-routed graph (C4 /
+// workflow / custom-diagram). A connector between any other kinds — Discovery
+// sticky notes, cards — is a Discovery Board connector and draws straight
 // (enterprise #363). Enterprise type names preserved (see file header).
 const ROUTED_KINDS = new Set<string>(['c4node', 'diagram-node', 'workflownode']);
 
-function isRoutedEndpoint(shape: Shape | undefined): boolean {
-  return !!shape && ROUTED_KINDS.has(shape.type);
+function isRoutedEndpoint(shape: Shape | undefined, opts?: ConnectorRoutingOpts): boolean {
+  if (!shape) return false;
+  return opts?.isRoutedEndpoint?.(shape) ?? ROUTED_KINDS.has(shape.type);
+}
+
+function isObstacle(shape: Shape, opts?: ConnectorRoutingOpts): boolean {
+  return opts?.isRouteObstacle?.(shape) ?? shape.type === 'c4node';
 }
 
 // A connector is a Discovery (straight, centre-to-centre) connector unless at
@@ -334,10 +363,11 @@ function isRoutedEndpoint(shape: Shape | undefined): boolean {
 export function isDiscoveryConnector(
   shape: ConnectorShape,
   shapes: Record<ShapeId, Shape>,
+  opts?: ConnectorRoutingOpts,
 ): boolean {
   const src = shape.sourceShapeId ? shapes[shape.sourceShapeId] : undefined;
   const tgt = shape.targetShapeId ? shapes[shape.targetShapeId] : undefined;
-  return !isRoutedEndpoint(src) && !isRoutedEndpoint(tgt);
+  return !isRoutedEndpoint(src, opts) && !isRoutedEndpoint(tgt, opts);
 }
 
 // Single entry point used by the layer and the shape util so hit-testing,
@@ -345,10 +375,11 @@ export function isDiscoveryConnector(
 export function resolveConnectorGeometry(
   shape: ConnectorShape,
   shapes: Record<ShapeId, Shape>,
+  opts?: ConnectorRoutingOpts,
 ): ConnectorGeometry | null {
-  return isDiscoveryConnector(shape, shapes)
+  return isDiscoveryConnector(shape, shapes, opts)
     ? straightConnectorGeometry(shape, shapes)
-    : connectorGeometry(shape, shapes);
+    : connectorGeometry(shape, shapes, opts);
 }
 
 // Live geometry in PAGE coordinates, resolved from the current endpoint shapes.
@@ -356,6 +387,7 @@ export function resolveConnectorGeometry(
 export function connectorGeometry(
   shape: ConnectorShape,
   shapes: Record<ShapeId, Shape>,
+  opts?: ConnectorRoutingOpts,
 ): ConnectorGeometry | null {
   const src = shape.sourceShapeId ? shapes[shape.sourceShapeId] : undefined;
   const tgt = shape.targetShapeId ? shapes[shape.targetShapeId] : undefined;
@@ -368,11 +400,12 @@ export function connectorGeometry(
   // so it's already baked into the anchors — the midline must not re-apply it.
   const params = getEdgeParams(sRect, tRect, shape.fanRole ?? 'balanced', shape.laneOffset ?? 0);
 
-  // Other C4 nodes are obstacles the route must dodge. Boundaries/containers are
-  // not — edges legitimately cross those. The two endpoints are excluded.
+  // Obstacle shapes (capability-driven; legacy: C4 nodes) must be dodged.
+  // Boundaries/containers are not — edges legitimately cross those. The two
+  // endpoints are excluded.
   const obstacles: Rect[] = [];
   for (const o of Object.values(shapes)) {
-    if (o.type !== 'c4node') continue;
+    if (!isObstacle(o, opts)) continue;
     if (o.id === shape.sourceShapeId || o.id === shape.targetShapeId) continue;
     obstacles.push(rectOf(o));
   }
