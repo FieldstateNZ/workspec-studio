@@ -2,8 +2,8 @@ import type { ShapeId, Vec2 } from './types.js';
 
 /**
  * The host persistence seam — the generic core of the enterprise
- * `c4Bridge` (issue #117; the full C4 extension arrives with
- * `@workspec/canvas-c4` in S3). A host installs callbacks on
+ * `c4Bridge` (issue #117; the full C4 extension is `@workspec/c4-ui`'s
+ * `C4CanvasHost` — S3, folded into c4-ui by ADR i). A host installs callbacks on
  * `CanvasStoreInstance.host`; every callback is optional, and the
  * fallback semantics are LOAD-BEARING contract:
  *

@@ -117,7 +117,7 @@ export interface C4CanvasHost extends CanvasHost {
 /**
  * The instance's host, viewed through the C4 contract. `instance.host` is
  * typed as the generic CanvasHost; the C4 methods are structural extras
- * this package reads off the same object.
+ * this C4 layer reads off the same object.
  */
 export function getC4Host(instance: CanvasStoreInstance): C4CanvasHost {
   return instance.host as C4CanvasHost;

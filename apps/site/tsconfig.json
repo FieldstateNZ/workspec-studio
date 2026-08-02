@@ -15,7 +15,7 @@
     // they alone need the project references below, letting `tsc -b` build
     // their declarations on demand (CI runs typecheck before build; without
     // references a clean tree fails TS2307). c4-ui's own build references pull
-    // @workspec/canvas + @workspec/canvas-c4 transitively. Registry deps need
+    // @workspec/canvas transitively. Registry deps need
     // none: published .d.ts ship in node_modules. Drop this block again when
     // the exception retires (mirroring the alpha.2 c4 retirement, drift-log
     // entry 17, and the alpha.5 cost retirement, docs/cost/drift-log.md

@@ -107,7 +107,7 @@ describe('dark derivation source pins (#119 FIX 2)', () => {
   // jsdom cannot compute color-mix, so the dark-theme acceptance pins the
   // derivation LITERALS at the source level (token-audit style): mutating
   // or deleting the dark .c4-el block must fail here, not silently pass.
-  const css = readFileSync(join(process.cwd(), 'src', 'index.css'), 'utf8');
+  const css = readFileSync(join(process.cwd(), 'src', 'c4', 'index.css'), 'utf8');
 
   // The dark rules are grouped selector lists ("[data-theme='dark'] …,
   // .dark …, … {"); everything after the first dark group is the dark half

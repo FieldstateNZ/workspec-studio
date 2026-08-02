@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 // conformance data, `kind-meta.ts`'s per-kind accent map holds TOKEN NAMES
 // (`--type-persona`, `--el-class`, …), never colour literals, so this
 // package needs no documented value exception. Mirrors
-// packages/c4-ui/src/zero-local-tokens.test.ts.
+// packages/c4-ui/src/token-audit.test.ts (formerly zero-local-tokens.test.ts).
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 

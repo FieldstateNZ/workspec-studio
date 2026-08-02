@@ -20,8 +20,9 @@ import {
   labelAwareLayerSpacing,
   nodeShapeId,
   registerC4,
-} from '@workspec/canvas-c4';
-import { C4Diagram, THEMES } from '@workspec/c4-ui';
+  C4Diagram,
+  THEMES,
+} from '@workspec/c4-ui';
 import type { ThemeName } from '@workspec/c4-ui';
 import { layoutDiagram, type PositionedDiagram } from '@workspec/c4-layout';
 import type { ResolvedDiagram, ResolvedDiagramNode } from '@workspec/c4-model';

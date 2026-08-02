@@ -8,7 +8,7 @@
 // SVG primitive, so those return real path data.
 //
 // The corner radius / cap-height constants below are geometry, not colour —
-// the zero-local-tokens rule (`zero-local-tokens.test.ts`) is scoped to hex/
+// the zero-local-tokens rule (`token-audit.test.ts`) is scoped to hex/
 // hsl colour literals, the same way `@workspec/c4-layout`'s
 // `C4_NODE_WIDTH`/`C4_NODE_HEIGHT` are plain numeric constants rather than
 // design tokens.

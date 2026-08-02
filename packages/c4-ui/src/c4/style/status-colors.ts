@@ -1,7 +1,8 @@
 // Enterprise C4 STATUS colours — with `spec-defaults.ts` and
-// `local-tokens.css`, one of this package's three documented exceptions to
-// the zero-local-tokens rule (`token-audit.test.ts` allow-lists exactly
-// these files). All three values are enterprise conformance constants with
+// `local-tokens.css`, one of the C4 layer's three documented exceptions to
+// the zero-local-tokens rule (the package's `token-audit.test.ts`
+// allow-lists exactly these files). All three values are enterprise
+// conformance constants with
 // no design-token analog; parity CSS must not drift, so they stay literal:
 
 /**

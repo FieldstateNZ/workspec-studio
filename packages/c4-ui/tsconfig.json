@@ -13,7 +13,7 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     // Needed for the handful of test-only files that read the package's own
-    // source with `node:fs` (the zero-local-tokens grep and the shared-module
+    // source with `node:fs` (the token-audit greps and the shared-module
     // assertion) — mirrors packages/c4-layout's tsconfig.json.
     "types": ["node"],
     "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo"
@@ -28,8 +28,7 @@
     { "path": "../c4-schema/tsconfig.build.json" },
     { "path": "../c4-model/tsconfig.build.json" },
     { "path": "../c4-layout/tsconfig.build.json" },
-    { "path": "../canvas/tsconfig.build.json" },
-    { "path": "../canvas-c4/tsconfig.build.json" }
+    { "path": "../canvas/tsconfig.build.json" }
   ],
   "include": ["src"]
 }

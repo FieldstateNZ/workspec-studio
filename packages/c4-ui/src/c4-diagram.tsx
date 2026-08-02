@@ -1,8 +1,9 @@
 // The interactive C4 canvas — since S4 (#120) a FACADE over the shared
 // canvas engine: `@workspec/canvas` (store/camera/pointer pipeline +
-// orthogonal edge router) composed with `@workspec/canvas-c4` (the
-// ResolvedDiagram→shape projection and the enterprise node/boundary
-// chrome). Externally props-compatible with the previous SVG renderer:
+// orthogonal edge router) composed with the in-package C4 layer
+// (`./c4/` — the ResolvedDiagram→shape projection and the enterprise
+// node/boundary chrome, folded in from @workspec/canvas-c4 by ADR i).
+// Externally props-compatible with the previous SVG renderer:
 // same `C4DiagramProps`, same interaction contract (click activates =
 // onSelect + onNavigate; node drag-to-pin writes `.layout/` through the
 // host and never activates; background click clears the selection;
@@ -39,7 +40,7 @@ import {
   nodeShapeId,
   registerC4,
   type C4NodeShape,
-} from '@workspec/canvas-c4';
+} from './c4/index.js';
 import { serializeForWrite } from './drag/serialize-for-write.js';
 import { clampTooltipPercents } from './geometry/clamp-tooltip.js';
 import { createInertLinkResolver } from './host.js';

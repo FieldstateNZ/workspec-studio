@@ -1,15 +1,29 @@
 # @workspec/c4-ui changelog
 
-## 0.1.0-alpha.6 (S4 #120 + S5 #121 — the canvas recomposition; staged, publishes on the next tag)
+## 0.1.0-alpha.6 (S4 #120 + S5 #121 + the canvas-c4 fold; staged, publishes on the next tag)
+
+**The C4 layer is folded in (ADR i — post-S6 owner ruling).** The interim `@workspec/canvas-c4`
+package (never published) was folded into this package as `src/c4/` and deleted; `@workspec/canvas`
+stays the one shared engine dependency. The C4 API is now **exported from `@workspec/c4-ui`** so
+enterprise hosts consume the whole C4 surface from one package: `buildC4Shapes`,
+`projectC4Diagram`, `elkC4Layout`, `labelAwareLayerSpacing`, `registerC4`, `buildCanvasSpec`,
+`C4CanvasHost` (+ `getC4Host`, `C4NodeMeta`, `C4NodeShape`, `C4BoundaryShape`,
+`C4ValidationError`), the `c4node`/`c4boundary` shape modules and card components,
+`C4NodeStatusSlot`/`useC4NodeStatus`, the C4 icon/label maps, and the `C4Demo` fixture — plus the
+spec-defaults tables this package already re-exported. Zero behaviour change: the compiled
+`@workspec/c4-ui/styles.css` still carries the engine layer and the `.c4-el` card derivation
+(now compiled from in-package source instead of a canvas-c4 dist import), and every existing
+export/prop/contract is unchanged.
 
 S5 additions: the pre-S4 SVG renderer's dead `.c4-node*`/`.c4-canvas` chrome rules were pruned
 from `styles.css` (anything still selecting against them — CSS overrides, automation — must
-target the canvas-c4 `.c4-el` card chrome instead; the `.c4-node` tint-derivation block itself
+target the C4 layer's `.c4-el` card chrome instead; the `.c4-node` tint-derivation block itself
 remains as the pinned encoding `element-tints.test.ts` verifies against `renderSvg`). READMEs
-now document the recomposition contracts. Everything below landed in S4:
+now document the recomposition contracts. Everything below landed in S4 (written when the C4
+layer was the separate `@workspec/canvas-c4` package — it is now this package's `src/c4/`):
 
 `C4Diagram` and `C4Explorer` are now facades over the shared canvas engine
-(`@workspec/canvas` + `@workspec/canvas-c4`) — the enterprise C4 look on the
+(`@workspec/canvas` + the in-package C4 layer) — the enterprise C4 look on the
 studio model. Props and the interaction/a11y contract are unchanged;
 behavioural notes for consumers:
 

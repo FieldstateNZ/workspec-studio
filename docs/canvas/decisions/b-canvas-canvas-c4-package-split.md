@@ -1,6 +1,9 @@
 # B — Two packages: `@workspec/canvas` + `@workspec/canvas-c4`
 
-- **Status:** Accepted
+- **Status:** Superseded by [I — fold `canvas-c4` into `c4-ui`](./i-fold-canvas-c4-into-c4-ui.md)
+  (the `@workspec/canvas` half of this decision stands; the separate `@workspec/canvas-c4`
+  package does not — the C4 layer now lives inside `@workspec/c4-ui`, as a folder, and
+  `canvas-c4` was retired before it was ever published)
 - **Deciders:** Fieldstate Dev Lead
 - **Decided:** 2026-08-02
 - **Format note:** authored as a **markdown ADR**, not a `*.decision.yaml`, per the repo's

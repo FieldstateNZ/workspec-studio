@@ -98,8 +98,9 @@ jobs:
           # left referencing an unpublished version):
           #   - schema-core first (decision-schema + topology-schema/model dep on it);
           #   - mcp-core before every *-studio (they all dep on it since #100);
-          #   - canvas before canvas-c4; canvas-c4 after c4-layout/model/schema
-          #     and before c4-ui (S5, #121 — the canvas extraction);
+          #   - canvas before c4-ui (S5, #121 — the canvas extraction; the C4
+          #     layer folded into c4-ui itself, ADR i, so canvas is the only
+          #     canvas-family name);
           #   - topology-cost after decision-engine/schema; topology-studio last
           #     in its family (deps on mcp-core + every topology sibling).
           # A BRAND-NEW name cannot be created by this OIDC job — it needs the
@@ -111,7 +112,7 @@ jobs:
             mcp-core
             decision-schema decision-engine decision-ui decision-studio
             canvas
-            c4-schema c4-model c4-layout canvas-c4 c4-ui c4-studio
+            c4-schema c4-model c4-layout c4-ui c4-studio
             cost-schema cost-provider cost-provider-azure cost-engine cost-ui cost-studio
             topology-schema topology-model topology-adapters topology-recon topology-cost topology-ui topology-studio
           )

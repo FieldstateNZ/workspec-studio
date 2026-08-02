@@ -123,7 +123,7 @@ function designTokens(): Set<string> {
  * fix round): a naive `indexOf('//')` truncated at `//` inside string
  * literals (`'https://…'`), letting a colour literal later on the same
  * line silently escape the grep. Mirrors packages/c4-ui's
- * zero-local-tokens stripper.
+ * token-audit stripper.
  */
 function stripLineComment(line: string): string {
   let quote: string | null = null;

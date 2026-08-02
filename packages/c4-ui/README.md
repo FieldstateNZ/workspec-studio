@@ -7,12 +7,19 @@ tokens over [`@workspec/c4-schema`](../c4-schema) / [`@workspec/c4-model`](../c4
 
 Since the S4 canvas recomposition (#120), `C4Diagram` and `C4Explorer` are **facades over the
 shared canvas engine**: [`@workspec/canvas`](../canvas) supplies the per-instance store, camera,
-pointer pipeline and orthogonal edge router; [`@workspec/canvas-c4`](../canvas-c4) supplies the
+pointer pipeline and orthogonal edge router; the in-package **C4 layer** (`src/c4/` — folded in
+from the retired, never-published `@workspec/canvas-c4` package, ADR
+[i](../../docs/canvas/decisions/i-fold-canvas-c4-into-c4-ui.md)) supplies the
 `ResolvedDiagram` → shape projection, the enterprise C4 card chrome and the canonical
-spec-defaults style tables (this package's `style/spec-defaults.ts` is a re-export). The public
-props, interaction contract and a11y surface of both components are unchanged — consumers of the
-pre-S4 SVG renderer need no code changes; see `CHANGELOG.md` for the behavioural notes (camera
-replaces the stretch model, enterprise card/edge chrome, label-aware layer spacing).
+spec-defaults style tables (this package's `style/spec-defaults.ts` is a re-export). The C4
+layer's API — `buildC4Shapes`, `projectC4Diagram`, `elkC4Layout`, `labelAwareLayerSpacing`,
+`registerC4`, `buildCanvasSpec`, the `C4CanvasHost` bridge contract (+ `C4NodeMeta` and the
+shape types), the `c4node`/`c4boundary` modules and `C4NodeStatusSlot` — is exported from this
+package's index, so enterprise hosts consume the whole C4 surface from `@workspec/c4-ui` alone.
+The public props, interaction contract and a11y surface of both components are unchanged —
+consumers of the pre-S4 SVG renderer need no code changes; see `CHANGELOG.md` for the
+behavioural notes (camera replaces the stretch model, enterprise card/edge chrome, label-aware
+layer spacing).
 
 Components receive already-loaded data as props — there is no repository fetch, no global, no
 ambient theme. Load a model with `@workspec/c4-model`, lay it out with `@workspec/c4-layout`, and
@@ -95,8 +102,8 @@ const positioned = await layoutDiagram({
   external stylesheet, every colour resolved to a literal theme-token value (or a `spec.yaml`/
   Enterprise-default accent) — the emitted document contains no `var(` anywhere. Built on the
   SAME shared modules `C4Diagram` uses: `@workspec/canvas`'s orthogonal router
-  (`resolveConnectorGeometry` + `roundedConnectorPath`) and `@workspec/canvas-c4`'s projection +
-  canonical spec-defaults (`buildC4Shapes`, `style/spec-defaults.ts`), so the interactive canvas
+  (`resolveConnectorGeometry` + `roundedConnectorPath`) and the C4 layer's projection +
+  canonical spec-defaults (`src/c4/`'s `buildC4Shapes`, `style/spec-defaults.ts`), so the interactive canvas
   and the static export can never silently draw a diagram differently — enforced by
   `render-svg.shared-modules.test.ts`, which verifies both files actually CALL the shared
   modules. Every interpolated string is escaped (CodeQL `js/html-constructed-from-input`
@@ -125,23 +132,28 @@ lenses share one file — see `src/drag/serialize-for-write.ts`).
 
 ## Zero local design tokens
 
-Every colour/spacing/font comes from `@workspec/design` tokens (`var(--*)`). The one documented
-exception for colour VALUES is `src/style/spec-defaults.ts` — since S4 a re-export of
-`@workspec/canvas-c4`'s canonical tables, the single source of truth mirroring WorkSpec
-Enterprise's `DEFAULT_ELEMENT_STYLES`/`DEFAULT_CONNECTION_STYLES` (which kind/category maps to
-which accent hue, shape, and variant) — Enterprise conformance DATA, not a design token, and a
-loaded `spec.yaml` can override any of it at runtime. `zero-local-tokens.test.ts` greps every
-other source file (TS/TSX/CSS) for raw colour literals: hex, colour functions
-(`rgb`/`hsl`/`oklch`/`oklab`/`lab`/`lch`/`color`), and Tailwind arbitrary colour values
-(`src/style/color-mix.ts`, the in-code `color-mix` equivalent `renderSvg` needs, is exempt from
-the colour-FUNCTION pattern only — it parses colour syntax but must stay hex-free).
+Every colour/spacing/font comes from `@workspec/design` tokens (`var(--*)`). The documented
+exceptions for colour VALUES are the C4 layer's three conformance-data files —
+`src/c4/style/spec-defaults.ts` (the canonical table mirroring WorkSpec Enterprise's
+`DEFAULT_ELEMENT_STYLES`/`DEFAULT_CONNECTION_STYLES`: which kind/category maps to which accent
+hue, shape, and variant — Enterprise conformance DATA, not a design token, and a loaded
+`spec.yaml` can override any of it at runtime; `src/style/spec-defaults.ts` is a grep-clean
+re-export of it), `src/c4/style/status-colors.ts`, and `src/c4/style/local-tokens.css`.
+`token-audit.test.ts` (the fold-reconciled union of this package's zero-local-tokens grep and
+the canvas-c4 token audit) additionally verifies every `var(--*)` read resolves from
+`@workspec/design`, the package's own CSS, or the runtime-set accents, and greps every
+non-exempt source file (TS/TSX/CSS) for raw colour literals: hex, colour functions
+(`rgb`/`hsl`/`oklch`/`oklab`/`lab`/`lch`/`color`), Tailwind arbitrary colour values, and
+named-colour keywords (`src/style/color-mix.ts`, the in-code `color-mix` equivalent `renderSvg`
+needs, is exempt from the colour-FUNCTION pattern only — it parses colour syntax but must stay
+hex-free).
 
 Node surfaces/borders/kind-text are not flat tokens: they derive from each node's accent per
 Enterprise's `.c4-el` color-mix layer (surface = accent 9% over `--bg-elevated`, border = accent
 at 28% alpha, eyebrow = accent 70% into `--ink`; dark mode lifts the accent 22% toward white
 first, with 14%/34% surface/border mixes), staged through `@workspec/design`'s shared
-`--el-tint-*` tokens. The LIVE card chrome ships in `@workspec/canvas-c4`'s `.c4-el` stylesheet
-layer (composed into this package's stylesheet — see Build below); `renderSvg` computes the
+`--el-tint-*` tokens. The LIVE card chrome ships in the C4 layer's `.c4-el` stylesheet
+layer (`src/c4/index.css`, composed into this package's stylesheet — see Build below); `renderSvg` computes the
 identical numbers in code via `src/style/element-tints.ts` + `src/style/color-mix.ts`, and
 `element-tints.test.ts` pins `src/styles.css`'s retained `.c4-node` derivation block to those
 constants so the encodings cannot drift.
@@ -151,11 +163,11 @@ constants so the encodings cannot drift.
 - `pnpm build` — the standalone library (`tsc --emitDeclarationOnly` + `tsup` + a Tailwind CSS
   compile into `dist/styles.css`), mirroring `packages/decision-ui`. The compiled stylesheet is
   still the ONE file consumers load: `src/index.css` composes `@workspec/canvas/styles.css` (the
-  scoped `.wsc-root` engine layer) and `@workspec/canvas-c4/styles.css` (the `.c4-el` card
+  scoped `.wsc-root` engine layer) and the C4 layer's `src/c4/index.css` (the `.c4-el` card
   derivation) into `@workspec/c4-ui/styles.css`, so existing consumers keep their single import.
 - `pnpm build:mf` — the module-federation remote (`vite.config.mf.ts`), exposing `./C4Diagram` and
   `./C4Explorer` with React as a shared singleton (peer range `^18.3.0 || ^19.0.0`) and everything
-  else (the c4-\* siblings, `@workspec/canvas`, `@workspec/canvas-c4`, `@workspec/design`) bundled
+  else (the c4-\* siblings, `@workspec/canvas`, `@workspec/design`) bundled
   in. `apps/mf-host` mounts both for the CI smoke proof.
 
 ## Testing

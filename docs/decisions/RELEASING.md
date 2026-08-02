@@ -1,8 +1,11 @@
 # Releasing
 
 WorkSpec Studio publishes its npm families — `@workspec/decision-*`, `@workspec/c4-*`,
-`@workspec/cost-*`, the canvas pair (`@workspec/canvas` + `@workspec/canvas-c4`, S5
-[#121](https://github.com/FieldstateNZ/workspec-studio/issues/121)), `@workspec/topology-*`, and
+`@workspec/cost-*`, the shared canvas engine (`@workspec/canvas`, S5
+[#121](https://github.com/FieldstateNZ/workspec-studio/issues/121); the C4 layer that was briefly
+`@workspec/canvas-c4` is folded into `@workspec/c4-ui` — never published, see
+[`docs/canvas/decisions/i-fold-canvas-c4-into-c4-ui.md`](../canvas/decisions/i-fold-canvas-c4-into-c4-ui.md)),
+`@workspec/topology-*`, and
 the shared `@workspec/schema-core` / `@workspec/mcp-core` — and (A6,
 [#39](https://github.com/FieldstateNZ/workspec-studio/issues/39))
 the `Workspec.Aspire.Hosting.*` NuGet family, from one `release.yml` workflow triggered by a
@@ -19,21 +22,27 @@ The publishable packages, by family (plus the two shared packages every family b
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | shared     | `schema-core`, `mcp-core` (every `*-studio` deps on `mcp-core` since [#100](https://github.com/FieldstateNZ/workspec-studio/pull/100)) |
 | `decision` | `decision-schema`, `decision-engine`, `decision-ui`, `decision-studio` (bin: `workspec-decisions`)                                     |
-| canvas     | `canvas` (generic engine), `canvas-c4` (C4 layer — versions with `canvas`, sits between `c4-layout` and `c4-ui` in publish order)      |
-| `c4`       | `c4-schema`, `c4-model`, `c4-layout`, `c4-ui`, `c4-studio` (bin: `workspec-c4`)                                                        |
+| canvas     | `canvas` (generic engine; the C4 layer lives inside `c4-ui` — ADR i — so this family is one package)                                   |
+| `c4`       | `c4-schema`, `c4-model`, `c4-layout`, `c4-ui` (includes the C4 canvas layer), `c4-studio` (bin: `workspec-c4`)                         |
 | `cost`     | `cost-schema`, `cost-provider`, `cost-provider-azure`, `cost-engine`, `cost-ui`, `cost-studio` (bin: `workspec-cost`)                  |
 | `topology` | `topology-schema`, `topology-model`, `topology-adapters`, `topology-recon`, `topology-cost`, `topology-ui`, `topology-studio`          |
 
-> **Not yet bootstrapped (as of S5, #121):** `canvas`, `canvas-c4`, `mcp-core`, and all seven
-> `topology-*` packages are in `release.yml`'s array but have never been published — each needs
-> the one-time [first-publish bootstrap](#first-publish-of-a-new-package) + trusted-publisher
-> registration BEFORE the next tag push, or the OIDC publish loop fails on them with E404.
-> (`trace-*`, `req-schema`, and `mcp-host` are deliberately not in the array yet.)
+> **Not yet bootstrapped (as of the canvas-c4 fold, post-S5):** nine names — `canvas`,
+> `mcp-core`, and all seven `topology-*` packages — are in `release.yml`'s array but have never
+> been published; each needs the one-time [first-publish bootstrap](#first-publish-of-a-new-package)
+> and trusted-publisher registration BEFORE the next tag push, or the OIDC publish loop fails on
+> them with E404. (`canvas-c4` was retired unpublished — its C4 layer folded into `c4-ui`, ADR i.
+> `trace-*`, `req-schema`, and `mcp-host` are deliberately not in the array yet.)
 >
-> **Bootstrap and tag in one sitting:** the bootstrap tarballs for `canvas-c4` and
-> `topology-ui`/`-cost`/`-studio` embed exact deps on `alpha.6` siblings that only reach the
-> registry when the subsequent tag run publishes them — those names dangle uninstallable until
-> the `v0.1.0-alpha.6` tag lands, so do not leave a gap between bootstrapping and tagging.
+> **Bootstrap and tag in one sitting:** verified by `pnpm pack` after the fold — the bootstrap
+> tarballs for `topology-ui`/`-cost`/`-studio` embed exact deps on `@workspec/decision-schema@0.1.0-alpha.6`
+> (plus `decision-engine@0.1.0-alpha.6` for `-cost`), which only reaches the registry when the
+> subsequent tag run publishes the decision family — those three dangle uninstallable until the
+> `v0.1.0-alpha.6` tag lands, so do not leave a gap between bootstrapping and tagging.
+> (`topology-studio` also embeds `mcp-core@0.1.0-alpha.5` — satisfied within the same bootstrap
+> sitting, publish `mcp-core` first; its `schema-core@0.1.0-alpha.5` pin is already on the
+> registry.) `canvas`'s own tarball embeds only the published `@workspec/design@0.1.0-alpha.1`
+> and third-party deps — it does not dangle.
 
 Each package sets `publishConfig: { access: "public", provenance: true }`, ships `dist` +
 `README.md` + `LICENSE`, and exposes types + ESM from the tarball. `examples/*` and `apps/*` are
