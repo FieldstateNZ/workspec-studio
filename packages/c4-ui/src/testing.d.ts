@@ -34,5 +34,6 @@ declare module '@vitest/expect' {
     toBeInTheDocument(): T;
     toHaveAttribute(name: string, value?: string): T;
     toHaveClass(...classNames: string[]): T;
+    toHaveTextContent(text: string | RegExp): T;
   }
 }

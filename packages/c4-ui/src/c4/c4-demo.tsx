@@ -96,7 +96,8 @@ export interface C4DemoProps {
 /**
  * The C4 fixture story: full canvas + the demo projection under the given
  * theme. Mount full-bleed (position:relative parent) with
- * `@workspec/canvas/styles.css` + `@workspec/canvas-c4/styles.css` loaded.
+ * `@workspec/c4-ui/styles.css` loaded (it bundles the canvas engine layer
+ * and this C4 layer's `.c4-el` derivation).
  */
 export const C4Demo: FC<C4DemoProps> = ({ theme = 'light' }) => {
   const [instance] = useState(() => {

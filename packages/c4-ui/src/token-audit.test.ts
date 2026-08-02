@@ -2,37 +2,69 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// The canvas-c4 token audit — mirrors packages/canvas/src/token-audit.test.ts:
-// every `var(--x)` read must resolve from @workspec/design themes, this
-// package's own CSS, or the dynamic list; no raw colour literals outside
-// the three documented exemption files (each file's header carries the
-// rationale).
+// The ONE token audit for @workspec/c4-ui — the reconciliation (ADR i, the
+// canvas-c4 fold) of this package's original `zero-local-tokens.test.ts`
+// with the folded canvas-c4 package's `token-audit.test.ts`. The UNION of
+// both audits' enforcement, over the WHOLE src tree (facade + the src/c4/
+// layer), nothing dropped:
+//
+// - every `var(--x)` read must resolve from @workspec/design themes, this
+//   package's own CSS, or the dynamic list (canvas-c4's resolution audit,
+//   widened from the layer to the full package);
+// - no raw colour literal outside the documented exemption files: hex,
+//   colour-function calls (rgb/rgba/hsl/hsla/oklch/oklab/lab/lch/color),
+//   Tailwind arbitrary colour values, AND named-colour keywords used as
+//   complete style values (canvas-c4's S5 named-colour scan — `steelblue`
+//   etc. cannot evade the hex/function greps).
+//
+// Exemptions (each file's header carries the rationale):
+// - VALUE exemptions — the C4 layer's three conformance-data files
+//   (c4/style/spec-defaults.ts, c4/style/status-colors.ts,
+//   c4/style/local-tokens.css). `style/spec-defaults.ts` is deliberately
+//   NOT exempt any more: since S4 it is a pure re-export and must stay
+//   grep-clean (a tightening over the pre-fold audit, not a change in
+//   what's allowed).
+// - SYNTAX exemption — style/color-mix.ts PARSES colour syntax (the
+//   in-code color-mix equivalent render-svg.ts needs, since a standalone
+//   SVG can't use CSS color-mix), so colour-function name tokens appear in
+//   its parsing logic — but it must still be free of hex literals, named
+//   colours, and Tailwind arbitrary values (a hex in the parser would be a
+//   smuggled palette value).
+//
+// `color-mix(` deliberately does NOT match the `color(` pattern (the "-"
+// breaks the function-name match): the CSS `.c4-node`/`.c4-el` layers mix
+// TOKENS (`color-mix(in oklab, var(--c4-el-accent) 9%, var(--bg-elevated))`)
+// — a derivation over token values, not a new colour value, mirroring
+// Enterprise's own `.c4-el` CSS layer.
 
 const require = createRequire(import.meta.url);
-const SRC = join(process.cwd(), 'src');
+const SRC = fileURLToPath(new URL('.', import.meta.url));
 
-// Set at runtime via inline style: --el-accent-raw per node (C4NodeComponent
-// / ShapeFrame), read back by the .c4-el derivation in index.css.
-const DYNAMIC_TOKENS = new Set(['--el-accent-raw']);
+// Set at runtime via inline style, read back by CSS derivations:
+// --el-accent-raw per node (C4NodeComponent / ShapeFrame → c4/index.css's
+// .c4-el layer); --c4-el-accent-raw per detail-rail chip (C4Explorer →
+// styles.css's retained .c4-node derivation block).
+const DYNAMIC_TOKENS = new Set(['--el-accent-raw', '--c4-el-accent-raw']);
 
 const VALUE_EXEMPT = new Set([
-  'style/spec-defaults.ts',
-  'style/status-colors.ts',
-  'style/local-tokens.css',
+  'c4/style/spec-defaults.ts',
+  'c4/style/status-colors.ts',
+  'c4/style/local-tokens.css',
 ]);
+const SYNTAX_EXEMPT = 'style/color-mix.ts';
 
 const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/;
 const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(/;
 const TAILWIND_ARBITRARY_COLOR = /-\[(?:#|(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\(|color:)/;
 
-// Named-colour keywords as complete style VALUES (S5, #121 — this package
-// never had packages/canvas's S4 named-colour scan; it lands here with the
-// extended, COMPLETE CSS <named-color> set so `steelblue` etc. cannot
-// evade the hex/function greps). `white` inside color-mix( is the ONE
-// sanctioned keyword (the `.c4-el` dark accent lift in index.css) —
-// color-mix arguments are stripped before the scan. Mirrors
+// Named-colour keywords as complete style VALUES (S5, #121 — landed in the
+// canvas-c4 audit with the extended, COMPLETE CSS <named-color> set so
+// `steelblue` etc. cannot evade the hex/function greps). `white` inside
+// color-mix( is the ONE sanctioned keyword (the `.c4-el`/`.c4-node` dark
+// accent lift) — color-mix arguments are stripped before the scan. Mirrors
 // packages/canvas/src/token-audit.test.ts.
 //
 // The full 148-keyword set from CSS Color Module Level 4 §6.1
@@ -113,9 +145,11 @@ function designTokens(): Set<string> {
 /**
  * Strip comments before grepping (issue refs like `#119` are hex-shaped).
  * Line-comment stripping is QUOTE-AWARE (S4 fix round): a naive
- * `indexOf('//')` truncated at `//` inside string literals, letting a
- * colour literal later on the same line escape the grep. Mirrors
- * packages/c4-ui's zero-local-tokens stripper.
+ * `indexOf('//')` truncated at `//` inside string literals (`'https://…'`),
+ * letting a colour literal later on the same line escape the grep. This
+ * scans the line tracking quote state instead — still a heuristic (a
+ * template literal spanning lines resets per line), but strictly stronger
+ * than the suffix cut.
  */
 function stripLineComment(line: string): string {
   let quote: string | null = null;
@@ -196,12 +230,13 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
       if (VALUE_EXEMPT.has(rel)) continue;
       const text = stripComments(readFileSync(join(SRC, rel), 'utf8'), rel.endsWith('.css'));
       const scanned = stripColorMixArgs(text);
+      const hasColorFunction = rel === SYNTAX_EXEMPT ? false : COLOR_FUNCTION.test(scanned);
       const namedHit = rel.endsWith('.css')
         ? NAMED_COLOR_CSS.test(scanned)
         : NAMED_COLOR_VALUE.test(scanned);
       if (
         HEX_COLOR.test(scanned) ||
-        COLOR_FUNCTION.test(scanned) ||
+        hasColorFunction ||
         TAILWIND_ARBITRARY_COLOR.test(scanned) ||
         namedHit
       ) {
@@ -211,11 +246,23 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
     expect(offenders).toEqual([]);
   });
 
-  it('sanity check: the greps actually detect what they claim to', () => {
+  it('sanity check: the greps actually detect what they claim to (guards against silently broken patterns)', () => {
     expect(HEX_COLOR.test('const c = "#4A90D9";')).toBe(true);
     expect(COLOR_FUNCTION.test('const c = "hsl(214 88% 51%)";')).toBe(true);
-    expect(HEX_COLOR.test('const c = "var(--accent)";')).toBe(false);
-    expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(
+    expect(COLOR_FUNCTION.test('const c = "rgba(0, 0, 0, 0.5)";')).toBe(true);
+    expect(COLOR_FUNCTION.test('const c = "oklch(0.7 0.1 240)";')).toBe(true);
+    expect(COLOR_FUNCTION.test('const c = "lch(52% 58 240)";')).toBe(true);
+    expect(COLOR_FUNCTION.test('const c = "color(display-p3 1 0 0)";')).toBe(true);
+    expect(TAILWIND_ARBITRARY_COLOR.test('className="text-[#ff0000]"')).toBe(true);
+    expect(TAILWIND_ARBITRARY_COLOR.test('className="border-[color:red]"')).toBe(true);
+    expect(TAILWIND_ARBITRARY_COLOR.test('className="bg-[rgb(1,2,3)]"')).toBe(true);
+    // The comment stripper is quote-aware: a URL's `//` never truncates the
+    // rest of the line (a colour literal after it must still be seen), while
+    // real line comments (and only they) are stripped.
+    expect(
+      HEX_COLOR.test(stripComments("const u = 'https://x.test'; const c = '#4A90D9';", false)),
+    ).toBe(true);
+    expect(HEX_COLOR.test(stripComments("const u = 'ok'; // legacy hex #4A90D9", false))).toBe(
       false,
     );
     // Named-colour keyword values (S5, #121) — extended set + background
@@ -231,5 +278,11 @@ describe('zero local design tokens (grep-clean except the documented exemptions)
         stripColorMixArgs('--c4-el-accent: color-mix(in oklab, var(--el-accent-raw), white 22%);'),
       ),
     ).toBe(false);
+    // The sanctioned patterns stay clean:
+    expect(HEX_COLOR.test('const c = "var(--accent)";')).toBe(false);
+    expect(COLOR_FUNCTION.test('background: color-mix(in oklab, var(--a) 9%, var(--b));')).toBe(
+      false,
+    );
+    expect(TAILWIND_ARBITRARY_COLOR.test('className="w-[300px]"')).toBe(false);
   });
 });

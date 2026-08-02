@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 // harness — these are the interim tripwires.
 
 const component = readFileSync(
-  join(process.cwd(), 'src', 'shapes', 'c4-node-component.tsx'),
+  join(process.cwd(), 'src', 'c4', 'shapes', 'c4-node-component.tsx'),
   'utf8',
 );
 

@@ -1,7 +1,7 @@
 // @workspec/canvas — host-agnostic infinite-canvas engine, ported from
 // the WorkSpec enterprise canvas (epic #116: S1 engine core #117, S2
-// shapes/tools/chrome #118). C4 semantics layer on via @workspec/canvas-c4
-// (S3).
+// shapes/tools/chrome #118). C4 semantics layer on via @workspec/c4-ui's
+// C4 layer (src/c4/ — S3, folded in-package by ADR i).
 //
 // Styles ship compiled and separate: import `@workspec/canvas/styles.css`.
 

@@ -13,8 +13,8 @@ pnpm --filter @workspec/parity parity:update   # same, re-minting the goldens
 ```
 
 The `parity` script first builds the full workspace dependency closure
-(`pnpm --filter @workspec/parity^... run build` — canvas, canvas-c4, c4-ui
-and the c4-* model packages, topologically) and then the parity bundle
+(`pnpm --filter @workspec/parity^... run build` — canvas, c4-ui (which now
+carries the C4 layer) and the c4-* model packages, topologically) and then the parity bundle
 itself, so the goldens always compare against **fresh** pixels. Without
 that, `vite preview` serves whatever stale `dist/` output the workspace
 packages last built — a source-level chrome regression can silently pass

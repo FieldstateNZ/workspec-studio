@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 // Asserts the geometry/style sharing BY CONSTRUCTION (decision F, #120):
 // `render-svg.ts` (the standalone string renderer) and `c4-diagram.tsx`
-// (the interactive facade) must both build on the SHARED canvas packages —
-// the `@workspec/canvas` orthogonal router and the `@workspec/canvas-c4`
-// projection/style resolution — so the two can never silently draw a
+// (the interactive facade) must both build on the SHARED canvas modules —
+// the `@workspec/canvas` orthogonal router and the in-package C4 layer's
+// projection/style resolution (`./c4/`, folded from @workspec/canvas-c4 by
+// ADR i) — so the two can never silently draw a
 // diagram differently. A textual check rather than a runtime spy — it
 // fails the moment either file stops using the shared modules, which is
 // the point at which they COULD drift. Strengthened in S5 (#121) from
@@ -43,10 +44,10 @@ function executableBody(source: string): string {
 const renderSvgBody = executableBody(renderSvgSource);
 const canvasBody = executableBody(canvasSource);
 
-describe('render-svg.ts and c4-diagram.tsx share the canvas geometry/style packages', () => {
-  it.each(['@workspec/canvas', '@workspec/canvas-c4'])('both import %s', (pkg) => {
-    expect(renderSvgSource).toContain(`from '${pkg}'`);
-    expect(canvasSource).toContain(`from '${pkg}'`);
+describe('render-svg.ts and c4-diagram.tsx share the canvas geometry/style modules', () => {
+  it.each(["from '@workspec/canvas'", "from './c4/index.js'"])('both import %s', (spec) => {
+    expect(renderSvgSource).toContain(spec);
+    expect(canvasSource).toContain(spec);
   });
 
   it('render-svg CALLS the shared router + elbow path + projection', () => {

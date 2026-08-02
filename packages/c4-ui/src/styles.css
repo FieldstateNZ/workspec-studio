@@ -35,8 +35,8 @@
    S5 (#121) NOTE — the pre-S4 SVG renderer's `.c4-node*` chrome rules
    (selection/hover rings, SVG text fills, `.c4-canvas` cursor, edge labels)
    were pruned as dead: since the S4 recomposition (#120) the live card
-   chrome ships in `@workspec/canvas-c4`'s `.c4-el` derivation layer
-   (composed into this package's one stylesheet via src/index.css). This
+   chrome ships in the C4 layer's `.c4-el` derivation (src/c4/index.css,
+   composed into this package's one stylesheet via src/index.css). This
    `.c4-node` block is deliberately KEPT: it is the package's pinned
    encoding of the tint derivation — the renderer-independent statement of
    how surface/border/eyebrow/ink-dim derive from @workspec/design's shared

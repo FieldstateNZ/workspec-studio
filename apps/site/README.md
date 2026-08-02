@@ -41,7 +41,8 @@ the repo's `examples/`, and validate against the published schema's `apiVersion`
 The four `@workspec/c4-*` packages are, for now, a **documented `workspace:*` devDependency
 exception** (see `package.json`'s own `_LOUD_NOTICE_devDependencies_c4_packages` and
 `docs/c4/drift-log.md` entry 20): the S4 canvas recomposition (#120) rebuilt `c4-ui` on the
-not-yet-published `@workspec/canvas` + `@workspec/canvas-c4`, so a registry pin can't show the
+not-yet-published `@workspec/canvas` (the C4 layer that was briefly `@workspec/canvas-c4` is now
+folded into `c4-ui` itself — ADR i), so a registry pin can't show the
 real `/c4/demo` until the family publishes at `0.1.0-alpha.6`. They flip back to registry pins in
 `dependencies` at that publish — the same retire-the-exception step the c4 family already did once
 at v0.1.0-alpha.2 (entry 17) and the cost family did at v0.1.0-alpha.5

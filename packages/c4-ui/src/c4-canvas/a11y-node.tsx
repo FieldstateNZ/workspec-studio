@@ -1,17 +1,17 @@
-// The facade's accessibility layer over the canvas-c4 node card (#120):
+// The facade's accessibility layer over the C4 layer's node card (#120):
 // this package's shipped contract exposes every node as a focusable
 // role="button" with an `${kind}: ${title}` label, Enter-to-activate, and
 // a focus affordance — behaviours the raw enterprise card doesn't carry
 // (its buttons are inner chrome). Implemented as a c4node ShapeUtil
-// override whose Component wraps the real C4NodeComponent, so canvas-c4
-// stays untouched and the a11y surface lives with the consumer that
-// promises it.
+// override whose Component wraps the real C4NodeComponent, so the C4
+// layer (src/c4/) stays untouched and the a11y surface lives with the
+// facade that promises it.
 
 import { createContext, useContext, type FC, type KeyboardEvent, type MouseEvent } from 'react';
 import type { PositionedNode } from '@workspec/c4-layout';
 import type { ShapeUtil, ShapeId } from '@workspec/canvas';
 import { useCanvasHover, useCanvasInstance } from '@workspec/canvas';
-import { C4NodeComponent, c4NodeShapeUtil, type C4NodeShape } from '@workspec/canvas-c4';
+import { C4NodeComponent, c4NodeShapeUtil, type C4NodeShape } from '../c4/index.js';
 
 export interface A11yBridge {
   /** nodeId → the caller's PositionedNode (kind may be null — label falls back to 'element'). */

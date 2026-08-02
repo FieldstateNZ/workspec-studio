@@ -1,7 +1,12 @@
-/* @workspec/canvas-c4 stylesheet entry (compiled by @tailwindcss/cli into
-   dist/styles.css). Mirrors packages/canvas/src/index.css: theme+utilities
-   only, NO preflight (the canvas package's scoped .wsc-root stand-in
-   already covers the canvas subtree this package renders into).
+/* The C4 layer's `.c4-el` derivation stylesheet (folded from the retired
+   @workspec/canvas-c4 package, ADR i). NOT a standalone Tailwind entry:
+   the package entry (src/index.css) supplies the layer order, the Tailwind
+   theme/utilities imports, the @workspec/design preset, and the @source
+   scanning (its `@source './'` covers this folder) — this file carries
+   only the layer's own rules, imported un-layered at the same cascade
+   position the compiled canvas-c4 stylesheet used to occupy. NO preflight
+   (the canvas package's scoped .wsc-root stand-in already covers the
+   canvas subtree these rules render into).
 
    The .c4-el layer below is the enterprise style-spec v2 derivation
    (enterprise index.css lines 231–261) RECONCILED with the studio's shared
@@ -18,14 +23,7 @@
    Rule-splitting cap note (documented in packages/canvas/src/index.css):
    Tailwind v4 production builds can mis-split rules near ~50 custom
    properties per block — the blocks below stay far under it (≤6 each). */
-@layer theme, base, components, utilities;
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
-@import '@workspec/design/tailwind';
 @import './style/local-tokens.css';
-
-@source '../node_modules/@workspec/design/dist/components';
-@source './';
 
 /* ── C4 element derivation (style-spec v2) ─────────────────────────────────
    The renderer sets `--el-accent-raw` inline per node (the compiled,

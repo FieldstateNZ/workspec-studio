@@ -52,7 +52,6 @@
     "@workspec/c4-model": "workspace:*",
     "@workspec/c4-layout": "workspace:*",
     "@workspec/canvas": "workspace:*",
-    "@workspec/canvas-c4": "workspace:*",
     "@workspec/design": "0.1.0-alpha.1",
     "lucide-react": "^0.545.0"
   },

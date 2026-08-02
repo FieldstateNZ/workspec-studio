@@ -301,7 +301,10 @@ zoom has no renderable meaning.
     `@workspec/c4-*` entries ride as `workspace:*` devDependencies (the exact entry-17/cost-entry-1
     shape: built dist through the pnpm symlink, no source aliases, `_LOUD_NOTICE` block, site
     `tsconfig.json` references so a clean-tree typecheck can build the declarations). **To retire
-    (the #121 follow-up):** bootstrap-publish `@workspec/canvas` + `@workspec/canvas-c4`
-    (RELEASING.md "First publish of a new package"), tag the c4 family at `0.1.0-alpha.6`, then
-    flip the four entries back to `"0.1.0-alpha.6"` registry pins in `dependencies` and remove the
-    notice + references block, exactly as PR #27 and PR #65 retired the previous rounds.
+    (the #121 follow-up, amended by the canvas-c4 fold — ADR
+    [i](../canvas/decisions/i-fold-canvas-c4-into-c4-ui.md), which retired `@workspec/canvas-c4`
+    unpublished by folding the C4 layer into `c4-ui` itself):** bootstrap-publish
+    `@workspec/canvas` (RELEASING.md "First publish of a new package"), tag the c4 family at
+    `0.1.0-alpha.6`, then flip the four entries back to `"0.1.0-alpha.6"` registry pins in
+    `dependencies` and remove the notice + references block, exactly as PR #27 and PR #65
+    retired the previous rounds.

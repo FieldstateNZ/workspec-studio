@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 // criterion). This greps every source file (TS, TSX, CSS) for raw colour
 // literals: hex, colour-function calls (rgb/rgba/hsl/hsla/oklch/oklab/lab/
 // lch/color), and Tailwind arbitrary colour values. Mirrors
-// packages/c4-ui/src/zero-local-tokens.test.ts.
+// packages/c4-ui/src/token-audit.test.ts (formerly zero-local-tokens.test.ts).
 //
 // `color-mix(` deliberately does NOT match the `color(` pattern (the "-"
 // breaks the function-name match): styles.css's chip/pill/dot recipes mix

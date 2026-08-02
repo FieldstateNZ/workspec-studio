@@ -1,11 +1,16 @@
-// @workspec/canvas-c4 — C4 semantics as a layer on the @workspec/canvas
-// engine (epic #116, S3 #119): the ResolvedDiagram → shape projection,
-// the c4node/c4boundary shape modules with the enterprise card chrome, the
+// The C4 layer — C4 semantics on the @workspec/canvas engine (epic #116,
+// S3 #119; folded from the retired @workspec/canvas-c4 package into
+// @workspec/c4-ui, ADR i): the ResolvedDiagram → shape projection, the
+// c4node/c4boundary shape modules with the enterprise card chrome, the
 // C4CanvasHost bridge contract, and elk-position + orthogonal-router
 // composition.
 //
-// Styles ship compiled and separate: import `@workspec/canvas-c4/styles.css`
-// (alongside `@workspec/canvas/styles.css`).
+// This barrel is the layer's internal boundary — c4-ui code imports the C4
+// semantics from here, never from the layer's files directly, preserving
+// the engine ← C4 layer ← facade layering as folders instead of packages.
+// The package's public index re-exports this surface for enterprise hosts.
+// Styles: the layer's `.c4-el` derivation (`./index.css`) is composed into
+// the ONE compiled `@workspec/c4-ui/styles.css`.
 
 // ── Model + projection ───────────────────────────────────────────────────────
 export {

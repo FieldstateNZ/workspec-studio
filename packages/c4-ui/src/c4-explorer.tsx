@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { C4Model, LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
-import { labelAwareLayerSpacing } from '@workspec/canvas-c4';
+import { labelAwareLayerSpacing } from './c4/index.js';
 import { LensToggle } from '@workspec/design/components';
 import { C4Diagram } from './c4-diagram.js';
 import { elementKey } from './element-key.js';

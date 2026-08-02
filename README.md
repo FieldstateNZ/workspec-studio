@@ -37,7 +37,7 @@ CI runs the first four stages in order on every push and pull request. `pnpm run
 deliberate **local-only lane**: it screenshots the recomposed C4 canvas against committed
 `*-chromium-darwin.png` goldens, which only reproduce on macOS — CI's ubuntu runners never run
 it (see [`apps/parity/README.md`](apps/parity/README.md)). Run it on a Mac before merging
-changes to `packages/canvas`, `packages/canvas-c4`, or `packages/c4-ui` chrome.
+changes to `packages/canvas` or `packages/c4-ui` chrome (including its `src/c4/` layer).
 
 ## Decisions module
 
@@ -68,19 +68,18 @@ Browse, validate, and render C4 architecture trees — actors, systems, containe
 domains, features, and diagrams — straight from the `.workspec/` files already in your repo.
 Full docs, the `.layout/` contract, and CLI usage live under [`docs/c4/`](docs/c4).
 
-| Package               | Path                 | Role                                                                                                                            |
-| --------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `@workspec/c4-schema` | `packages/c4-schema` | Zod source of truth → TS types, runtime validation, generated JSON Schema                                                       |
-| `@workspec/c4-model`  | `packages/c4-model`  | Pure loader/resolver: `.workspec/` tree → one typed model, with diagnostics                                                     |
-| `@workspec/c4-layout` | `packages/c4-layout` | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping                                                   |
-| `@workspec/c4-ui`     | `packages/c4-ui`     | Host-agnostic React components (interactive canvas + deterministic SVG export)                                                  |
-| `@workspec/c4-studio` | `packages/c4-studio` | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`)                                           |
-| `@workspec/canvas`    | `packages/canvas`    | Generic infinite-canvas engine (store factory, tools, shape modules, chrome) — extracted from the enterprise canvas (epic #116) |
-| `@workspec/canvas-c4` | `packages/canvas-c4` | C4 semantics as a layer on `@workspec/canvas` — projection, card chrome, `C4CanvasHost`; `c4-ui` composes both                  |
+| Package               | Path                 | Role                                                                                                                                                              |
+| --------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@workspec/c4-schema` | `packages/c4-schema` | Zod source of truth → TS types, runtime validation, generated JSON Schema                                                                                         |
+| `@workspec/c4-model`  | `packages/c4-model`  | Pure loader/resolver: `.workspec/` tree → one typed model, with diagnostics                                                                                       |
+| `@workspec/c4-layout` | `packages/c4-layout` | Deterministic ELK-based auto-layout, with `.layout/` pinning + round-tripping                                                                                     |
+| `@workspec/c4-ui`     | `packages/c4-ui`     | Host-agnostic React components (interactive canvas + deterministic SVG export) + the C4 canvas layer (`src/c4/` — projection, card chrome, `C4CanvasHost`; ADR i) |
+| `@workspec/c4-studio` | `packages/c4-studio` | Standalone CLI (`workspec-c4`) + localhost host shell (`validate`, `render`, `serve`)                                                                             |
+| `@workspec/canvas`    | `packages/canvas`    | Generic infinite-canvas engine (store factory, tools, shape modules, chrome) — extracted from the enterprise canvas (epic #116)                                   |
 
 The five `@workspec/c4-*` packages are published to npm at `0.1.0-alpha.5`; the workspace sits at
 `0.1.0-alpha.6` (the S4 canvas recomposition, #120) pending the next tag, which also
-first-publishes `@workspec/canvas` + `@workspec/canvas-c4`. Until then `apps/site`'s `/c4` page
+first-publishes `@workspec/canvas`. Until then `apps/site`'s `/c4` page
 takes the c4 packages as `workspace:*` devDependencies as a documented, temporary exception —
 they flip back to registry pins at that publish — see
 [`docs/c4/drift-log.md`](docs/c4/drift-log.md) entry 20.

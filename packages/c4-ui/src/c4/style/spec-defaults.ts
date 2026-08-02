@@ -1,13 +1,13 @@
-// The Enterprise-defaults data module — a documented exception to this
+// The Enterprise-defaults data module — a documented exception to the
 // package's zero-local-tokens rule (see `token-audit.test.ts`, which
-// allow-lists exactly this file plus `style/status-colors.ts` and
-// `style/local-tokens.css`).
+// allow-lists exactly this file plus `c4/style/status-colors.ts` and
+// `c4/style/local-tokens.css`).
 //
 // CANONICAL COPY (S3, #119): this file is the reconciled single source of
 // truth for the C4 default element/connection styles, ported from
-// `packages/c4-ui/src/style/spec-defaults.ts` (whose copy retires in S4
-// when the c4-ui facade re-imports from here — tracked on the S4 ledger).
-// Its documented history carries over:
+// `packages/c4-ui/src/style/spec-defaults.ts` (whose file is now a pure
+// re-export of this one — S4's facade swap, kept through the canvas-c4
+// fold, ADR i). Its documented history carries over:
 //
 // - `DEFAULT_CONNECTION_STYLES` is a byte-for-byte mirror of WorkSpec
 //   Enterprise's `DEFAULT_CONNECTION_STYLES` (`lib/yaml-schemas/src/spec.ts`)
@@ -21,9 +21,9 @@
 //   tokens carry the exact values the literals did); only the source of
 //   truth moved.
 //
-// Every other colour in this package derives from the accent in CSS (the
-// `.c4-el` token layer in index.css) or comes from `@workspec/design`
-// tokens directly.
+// Every other colour in this C4 layer derives from the accent in CSS (the
+// `.c4-el` token layer in the layer's index.css) or comes from
+// `@workspec/design` tokens directly.
 
 import type { Spec } from '@workspec/c4-schema';
 import { STYLE_CONNECTION_STYLES, STYLE_SHAPES } from '@workspec/c4-schema';
@@ -106,7 +106,7 @@ function isConnectionLineStyle(value: string | undefined): value is ConnectionLi
  * `elements[kind]` overrides (accent/icon/shape/variant, each independently
  * optional) layered over the Enterprise default for that kind, itself
  * falling back to {@link UNKNOWN_ELEMENT_STYLE}. An unrecognised
- * `shape`/`variant` override is ignored — this package never hard-fails on
+ * `shape`/`variant` override is ignored — the resolver never hard-fails on
  * an authored style.
  */
 export function resolveElementStyle(

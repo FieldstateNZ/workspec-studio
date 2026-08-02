@@ -26,8 +26,9 @@ export interface LayoutDiagramOptions {
    * round, #120): omitted, the pinned default (80) applies and output is
    * byte-identical to before this option existed — this package has no
    * rendering context to measure labels against, so a caller wanting
-   * label-aware spacing (e.g. `@workspec/canvas-c4`'s midpoint label
-   * pills) computes the value itself and passes it here.
+   * label-aware spacing (e.g. `@workspec/c4-ui`'s midpoint label
+   * pills, via its exported `labelAwareLayerSpacing`) computes the value
+   * itself and passes it here.
    */
   readonly layerSpacing?: number;
 }

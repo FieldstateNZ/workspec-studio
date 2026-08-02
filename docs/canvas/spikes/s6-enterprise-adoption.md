@@ -1,5 +1,19 @@
 # S6 — Enterprise re-adoption spike report (#122)
 
+> **CORRECTION (post-spike, ADR
+> [I](../decisions/i-fold-canvas-c4-into-c4-ui.md)):** this spike evaluated enterprise adopting
+> the two raw layer packages (`@workspec/canvas` + `@workspec/canvas-c4`) directly. The owner
+> ruled the actual consumption model is enterprise mounting the **`@workspec/c4-ui` surface**
+> (`C4Diagram`/`C4Explorer` + the `C4CanvasHost` bridge + the meta protocol + the status slot),
+> and `@workspec/canvas-c4` was folded into `c4-ui` (as `src/c4/`, its API re-exported from the
+> package index) and deleted — it was never published. Read the report with that substitution:
+> every `@workspec/canvas-c4` import below is now an `@workspec/c4-ui` import. The **contract
+> verification stands** — the host bridge mapping (§3), the meta protocol, and the capability
+> wiring (§2) remain valid because `c4-ui` passes those contracts through (and exports them)
+> unchanged. The **store-shim path (§1) applies only to enterprise's non-C4 canvas surfaces**
+> (the standalone whiteboard/workflow/prototype pages that mount `@workspec/canvas` directly);
+> enterprise's C4 canvases mount the `c4-ui` surface instead of composing the layer by hand.
+
 **Verdict: YES — enterprise can adopt `@workspec/canvas` + `@workspec/canvas-c4` without forking either package.**
 Zero package-side changes are *required* for functional adoption. Three small package changes are *recommended* (numbered gap list below) — one visual-parity data addition (the node-kind spec-defaults, answering the ledger question), one type-level ergonomic fix, one nice-to-have projection option. Everything else is enterprise-side, mostly mechanical, and is demonstrated in the draft diff.
 

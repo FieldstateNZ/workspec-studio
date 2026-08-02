@@ -6,7 +6,8 @@ shape-module/tool/host extension surface, the whiteboard base shapes (sticky wit
 variants, text, draw, image, connector with the orthogonal edge router) and the full chrome stack
 (shape/connector/selection layers, background grid, marquee, zoom controls, minimap, context menu,
 toolbar). Ported from the WorkSpec enterprise canvas engine (epic #116: S1 core #117, S2
-shapes/tools/chrome #118); C4 semantics layer on via `@workspec/canvas-c4` (S3).
+shapes/tools/chrome #118); C4 semantics layer on via `@workspec/c4-ui`'s C4 layer (S3, folded
+in-package by ADR i).
 
 ## Usage
 
@@ -74,8 +75,8 @@ themselves. The enterprise's fixed `'workspec-canvas-v1'` key becomes this optio
 
 ## Host contract (`instance.host`)
 
-The generic core of the enterprise C4 bridge; the full C4 extension ships with
-`@workspec/canvas-c4`. Every callback is optional, and the fallback rule is contract:
+The generic core of the enterprise C4 bridge; the full C4 extension (`C4CanvasHost`) ships with
+`@workspec/c4-ui`. Every callback is optional, and the fallback rule is contract:
 
 > A missing callback, or one returning `false`/`undefined`, means the host did **not** handle the
 > mutation — the store falls through to its own local, undoable edit. Returning `true` means the

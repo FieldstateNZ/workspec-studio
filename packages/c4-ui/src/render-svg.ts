@@ -2,8 +2,8 @@
 // Since S4 (#120, decision F) the EDGES come from the same shared geometry
 // the interactive canvas renders with: `@workspec/canvas`'s orthogonal
 // router (`resolveConnectorGeometry`) + rounded elbow path
-// (`roundedConnectorPath`) over a `@workspec/canvas-c4` projection
-// (`buildC4Shapes` — lane offsets, fan roles, obstacle avoidance included),
+// (`roundedConnectorPath`) over the C4 layer's projection (`./c4/`'s
+// `buildC4Shapes` — lane offsets, fan roles, obstacle avoidance included),
 // so the CLI `render` output, docs SVGs and the `c4_render` MCP tool carry
 // the enterprise edge look by construction —
 // `render-svg.shared-modules.test.ts` asserts the sharing. Node cards stay
@@ -19,7 +19,7 @@ import {
   roundedConnectorPath,
 } from '@workspec/canvas';
 import type { ConnectorShape, Shape, ShapeId } from '@workspec/canvas';
-import { buildC4Shapes, edgeShapeId } from '@workspec/canvas-c4';
+import { buildC4Shapes, edgeShapeId } from './c4/index.js';
 import { contentBounds } from './geometry/content-bounds.js';
 import type { Rect } from './geometry/node-shape.js';
 import { nodeShapeGeometry } from './geometry/node-shape.js';
