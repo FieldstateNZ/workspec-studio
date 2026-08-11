@@ -47,6 +47,59 @@ describe('ConnectorLayer — label rendering', () => {
   });
 });
 
+describe('ConnectorLayer — low-zoom label LOD (#134)', () => {
+  // Below 0.45 the pill provably cannot fit its corridor (it is a fixed
+  // ~194x19 SCREEN-space chip in a PAGE-space gap that shrinks with the
+  // camera), so it is dropped rather than counter-scaled. The TEXT is not
+  // dropped — zoom is a viewport concern, not a content one.
+  function renderAtZoom(zoom: number): HTMLElement {
+    const { instance } = seeded();
+    act(() => {
+      instance.setState({ camera: { ...instance.getState().camera, zoom } });
+    });
+    const { container } = render(
+      <CanvasProvider store={instance}>
+        <ConnectorLayer />
+      </CanvasProvider>,
+    );
+    return container;
+  }
+
+  test('at/above 0.45 the visible pill renders', () => {
+    const container = renderAtZoom(0.45);
+    const pill = [...container.querySelectorAll('div')].find(
+      (d) => d.textContent === 'calls' && d.style.borderRadius !== '',
+    );
+    expect(pill).toBeDefined();
+  });
+
+  test('below 0.45 the pill is gone but the text remains for assistive tech', () => {
+    // Mutation guard: deleting the zoom gate makes the first expectation
+    // fail; swapping the visually-hidden span for `return null` makes the
+    // second fail. Both halves of the ruling are pinned.
+    const container = renderAtZoom(0.3);
+    const pill = [...container.querySelectorAll('div')].find(
+      (d) => d.textContent === 'calls' && d.style.borderRadius !== '',
+    );
+    expect(pill).toBeUndefined();
+    expect(screen.getByText('calls')).toBeDefined();
+  });
+
+  test('an actively-edited label keeps its editor at any zoom', () => {
+    const { instance, connectorId } = seeded();
+    act(() => {
+      instance.setState({ camera: { ...instance.getState().camera, zoom: 0.1 } });
+      instance.getState().setEditing(connectorId);
+    });
+    const { container } = render(
+      <CanvasProvider store={instance}>
+        <ConnectorLayer />
+      </CanvasProvider>,
+    );
+    expect(container.querySelector('input')).not.toBeNull();
+  });
+});
+
 describe('ConnectorLayer — label-edit commit path', () => {
   test('Enter commits: optimistic updateShape + host.renameEdge with the slug keys', () => {
     const { instance, connectorId } = seeded();

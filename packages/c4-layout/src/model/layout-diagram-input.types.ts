@@ -24,11 +24,15 @@ export interface LayoutDiagramOptions {
    * Gap (px) between adjacent node layers — ELK's
    * `elk.layered.spacing.nodeNodeBetweenLayers`. ADDITIVE option (S4 fix
    * round, #120): omitted, the pinned default (80) applies and output is
-   * byte-identical to before this option existed — this package has no
-   * rendering context to measure labels against, so a caller wanting
-   * label-aware spacing (e.g. `@workspec/c4-ui`'s midpoint label
-   * pills, via its exported `labelAwareLayerSpacing`) computes the value
-   * itself and passes it here.
+   * byte-identical to before this option existed.
+   *
+   * No shipped caller overrides it today. `@workspec/c4-ui` did (to widen
+   * the gap for its midpoint label pills) and that was reverted in #134 —
+   * widening the corridor cannot make a SCREEN-space pill fit a PAGE-space
+   * gap, and it cost 72% bbox width on the dogfood container diagram. The
+   * option stays because "let the caller, which has rendering context this
+   * package deliberately lacks, choose the gap" is still a legitimate seam
+   * — but reach for level-of-detail before reaching for spacing.
    */
   readonly layerSpacing?: number;
 }

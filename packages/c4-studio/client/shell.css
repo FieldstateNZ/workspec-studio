@@ -1,6 +1,14 @@
-/* Host-chrome styles for the standalone shell. Uses the WorkSpec design
-   tokens (available because `Shell` binds the palette inline on its own
-   root — see shell.tsx), so the chrome themes together with the explorer. */
+/* Host-chrome styles for the standalone shell (A1, #131 — owner-review
+   round: a slim top bar over a FULL-BLEED canvas, with the diagram
+   navigation floating ON the canvas). Uses the WorkSpec design tokens
+   (available because `Shell` binds the palette inline on its own root — see
+   shell.tsx), so the chrome themes together with the explorer.
+
+   The floating groups below reproduce enterprise HEAD's shared toolbar
+   chrome (`C4Toolbar.tsx:76-77` `GROUP_CHROME`: 36px tall, rounded,
+   bordered, 95%-opaque background + backdrop blur + shadow) in tokens —
+   the same recipe `@workspec/c4-ui`'s `.c4-lens-overlay` already uses, so
+   the selector and the lens pills read as one system. */
 
 html,
 body,
@@ -10,31 +18,50 @@ body,
 }
 
 .c4sh-shell {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
   color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;
 }
 
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
 .c4sh-topbar {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 0 20px;
   height: 52px;
+  flex: 0 0 auto;
   border-bottom: 1px solid var(--line);
   background: var(--bg-soft);
-  position: sticky;
-  top: 0;
   z-index: 30;
+  /* The overflow ESCAPE. The bar's trailing control (the theme toggle) must
+     stay reachable at any viewport: below ~450px the brand + nav + toggle
+     no longer fit, and with the default `overflow: visible` the toggle
+     simply rendered past the right edge with nothing to scroll — the page's
+     own scrollWidth stays at the viewport width, so it was unreachable, not
+     merely off-screen. The shrink rules below mean this almost never
+     engages; when it does, the bar scrolls instead of swallowing a control.
+     `overflow-y: hidden` keeps the implied `auto` from adding a phantom
+     vertical scrollbar inside a fixed-height bar. */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .c4sh-brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* Shrinkable, so the bar gives up the wordmark before it gives up a
+     control. `min-width: 0` is what actually lets a flex item shrink below
+     its content's intrinsic width. */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .c4sh-glyph {
+  flex: 0 0 auto;
   width: 22px;
   height: 22px;
   border-radius: 6px;
@@ -52,12 +79,20 @@ body,
   letter-spacing: -0.01em;
   color: var(--ink);
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .c4sh-wmk span {
   color: var(--ink-fade);
   font-weight: 500;
 }
+/* The working dir absorbs ALL the bar's overflow: it is the only
+   truncatable element up here, so it shrinks before the nav or the theme
+   toggle ever lose a pixel (a long path must not clip the nav). */
 .c4sh-dir {
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--ink-fade);
@@ -69,38 +104,64 @@ body,
   flex: 1;
 }
 
-.c4sh-iconbtn {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--r-3);
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--ink-soft);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
-.c4sh-iconbtn:hover {
-  color: var(--ink);
-  border-color: var(--line-2);
-  background: var(--bg-soft);
+/* Narrow viewports: reclaim the bar's own padding/gap and drop the working
+   directory, which is context rather than a control. This is what keeps the
+   escape above from ever engaging on a tablet — a desktop authoring tool
+   should degrade, not overflow. */
+@media (max-width: 560px) {
+  .c4sh-topbar {
+    gap: 10px;
+    padding: 0 12px;
+  }
+  .c4sh-dir {
+    display: none;
+  }
 }
 
+/* Theme toggle — the top bar's trailing slot (enterprise puts its own
+   theme control in the global app-shell sidebar footer, which the studio
+   has no equivalent of; this is the nearest unobtrusive analogue). */
+.c4sh-theme-toggle {
+  display: flex;
+  gap: var(--s-1);
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  padding: 2px;
+}
+.c4sh-theme-btn {
+  height: 24px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: none;
+  background: transparent;
+  color: var(--ink-fade);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.c4sh-theme-btn:hover {
+  color: var(--ink);
+}
+.c4sh-theme-btn[aria-pressed='true'] {
+  background: var(--bg-elevated);
+  color: var(--ink);
+}
+
+/* ── Main: the explorer fills every pixel below the top bar ──────────────── */
 .c4sh-main {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-}
-/* `<C4Explorer>` wraps itself in its own themed root (`.c4-root`) with no
-   explicit height of its own — stretch it (and the explorer inside it) to
-   fill this shell's main area. */
-.c4sh-main > .c4-root {
-  flex: 1;
-  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
+  position: relative;
 }
-.c4sh-main .c4-explorer {
-  flex: 1;
+/* `<C4Explorer>` wraps itself in its own themed root (`.c4-root`) — pin it
+   to the main area's full box so the explorer's percentage-height chain
+   always resolves (the pre-A1 flex chain collapsed to the 400px min-height,
+   leaving the canvas at thumbnail scale in a mostly-empty page). */
+.c4sh-main > .c4-root {
+  position: absolute;
+  inset: 0;
 }
 .c4sh-empty,
 .c4sh-error {
@@ -111,5 +172,154 @@ body,
   font-size: 13.5px;
 }
 .c4sh-error {
-  color: var(--danger, #d33);
+  color: var(--danger);
+}
+
+/* ── Top-bar diagram nav — the studio's analogue of enterprise's global
+   left nav, which owns view switching (ProjectGraphCanvas.tsx:908-911).
+   App chrome: it sits IN the bar, never over the canvas. ───────────────── */
+.c4sh-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  /* Shrink factor 0 — the working dir above gives up its space instead, so
+     a long path can never clip a nav entry. Scrolls internally only if the
+     diagram count ALONE would overflow the bar. */
+  flex: 0 0 auto;
+  max-width: 52vw;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+}
+.c4sh-nav::-webkit-scrollbar {
+  display: none;
+}
+.c4sh-nav-btn {
+  flex: 0 0 auto;
+  height: 24px;
+  max-width: 180px;
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--ink-fade);
+  font: inherit;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.c4sh-nav-btn:hover {
+  color: var(--ink);
+}
+.c4sh-nav-btn-current {
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── On-canvas breadcrumb — top-LEFT, a token reproduction of enterprise's
+   floating group (C4Toolbar.tsx:159) wrapping GROUP_CHROME (:76-77). ───── */
+.c4sh-crumb {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+/* GROUP_CHROME: h-9 px-1.5 rounded-lg border bg-background/95 backdrop-blur-sm shadow-lg */
+.c4sh-crumb-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  background: color-mix(in oklab, var(--bg) 95%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-3);
+}
+.c4sh-crumb-frame {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.c4sh-crumb-sep {
+  flex: 0 0 auto;
+  color: var(--ink-fade);
+}
+.c4sh-crumb-btn {
+  display: flex;
+  align-items: center;
+  max-width: 200px;
+  padding: 2px var(--s-2);
+  border: none;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--ink-fade);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+.c4sh-crumb-btn:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--bg-elevated);
+}
+/* The last frame — the diagram on screen. Disabled, foreground colour. */
+.c4sh-crumb-btn-current {
+  color: var(--ink);
+  cursor: default;
+}
+.c4sh-crumb-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Write-error banner — a failed server write (A2's `onWriteError`) ────── */
+.c4sh-write-error {
+  position: absolute;
+  bottom: var(--s-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  max-width: 560px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-4);
+  background: color-mix(in oklab, var(--bg-elevated) 96%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-3);
+  color: var(--danger);
+  font-size: 12.5px;
+}
+.c4sh-write-error-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--danger);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.c4sh-write-error-close:hover {
+  background: var(--bg-soft);
 }

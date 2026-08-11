@@ -11,13 +11,30 @@
 // Least privilege on BOTH directions of the file proxy. Reads (`/api/files`,
 // `/api/file`, `/api/file-exists`) are confined to `.workspec/**` — the
 // client only ever requests `.workspec/` paths, so serving anything else
-// (`.git/`, `.env`, source files) would be needless surface. Writes are
-// further restricted to `.layout/` files (drag-to-pin is the only write path
-// `@workspec/c4-ui`'s components ever exercise) and Zod-validated (reusing
-// `@workspec/c4-schema`'s `Layout` schema, via `parseLayoutYaml`) before
-// they reach the working tree — a malformed PUT is rejected, never written.
-// Paths are repo-root-relative POSIX paths; traversal outside the served
-// directory is refused.
+// (`.git/`, `.env`, source files) would be needless surface. Raw-file
+// writes (`PUT /api/file`) are further restricted to `.layout/` files
+// (drag-to-pin) and Zod-validated (reusing `@workspec/c4-schema`'s `Layout`
+// schema, via `parseLayoutYaml`) before they reach the working tree — a
+// malformed PUT is rejected, never written. Element/diagram mutations go
+// through the dedicated write API instead (`mutations/mutation-router.ts`,
+// issue #132): zod-gated JSON routes that accept slugs and kind enums only
+// (never paths) and validate every result against its artifact schema
+// before writing. Paths are repo-root-relative POSIX paths; traversal
+// outside the served directory is refused.
+//
+// Two cross-cutting protections are wired HERE rather than per route,
+// because both are properties of the served TREE, not of any one router:
+//
+//   • `createHostHeaderGuard` on the whole `/api` surface — the
+//     DNS-rebinding backstop. It covers reads as well as writes: a
+//     rebinding page reading `GET /api/file` exfiltrates a developer's
+//     `.workspec/` tree, and `PUT /api/file` is a write route that an
+//     earlier mutation-router-only mounting left wide open (a hostile Host
+//     got a confirmed 204 layout clobber).
+//   • `createMutationQueue` — ONE FIFO per served tree, shared by the
+//     mutation router AND `PUT /api/file`. Both write `.layout/` files
+//     (`scrubLayoutRefs`/`upsertLayoutPin` vs drag-to-pin), so a queue that
+//     covered only one of them still lost updates on the other.
 
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -31,6 +48,11 @@ import { isLayoutFile, parseLayoutYaml, serializeLayout } from '@workspec/c4-sch
 import { assembleMcpServer, mountMcpHttp } from '@workspec/mcp-core';
 import type { McpToolProvider } from '@workspec/mcp-core';
 import { modelToWire } from './model-to-wire.js';
+import { createHostHeaderGuard } from './mutations/host-header-guard.js';
+import { createMutationQueue } from './mutations/mutation-queue.js';
+import type { MutationQueue } from './mutations/mutation-queue.js';
+import { buildMutationRouter } from './mutations/mutation-router.js';
+import { createTreeIo } from './mutations/tree-io.js';
 import { isWorkspecPath } from './workspec-path.js';
 
 /** Options for {@link createServer}. */
@@ -49,6 +71,20 @@ export interface CreateServerOptions {
    * default — most callers (tests, the client dev server) don't need it.
    */
   mcpProvider?: McpToolProvider;
+  /**
+   * The address `serve.ts` binds (`--host <addr>`). Added to the Host-header
+   * guard's allowlist so a documented non-loopback bind still authors —
+   * without it, `--host 192.168.1.5` served a page that loaded fine and then
+   * 403'd every write. Absent (the default) means loopback only.
+   */
+  bindHost?: string;
+  /**
+   * The served tree's write queue. Injectable so a caller that ALSO writes
+   * the tree in-process (`serve --mcp`, whose `c4_write_layout` tool writes
+   * the same `.layout/` files) can share this exact instance. Defaults to a
+   * fresh per-server queue, which is correct for every other caller.
+   */
+  writeQueue?: MutationQueue;
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -164,6 +200,18 @@ export function createServer(options: CreateServerOptions): Express {
 
   app.use(express.json({ limit: '4mb' }));
 
+  // DNS-rebinding backstop across the ENTIRE JSON API — reads included (see
+  // this module's header). Mounted before every `/api` route so no route can
+  // be added later that forgets it. The static client and `/mcp` are
+  // deliberately out of scope: the former is public bundle code, and
+  // `mountMcpHttp` runs its own equivalent host/origin pre-check.
+  const hostGuard = createHostHeaderGuard(options.bindHost !== undefined ? [options.bindHost] : []);
+  app.use('/api', hostGuard);
+
+  // ONE write queue per served tree, shared by `PUT /api/file` below and the
+  // mutation router — they write the same `.layout/` files.
+  const writeQueue = options.writeQueue ?? createMutationQueue();
+
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, dir: root });
   });
@@ -236,11 +284,25 @@ export function createServer(options: CreateServerOptions): Express {
       res.status(400).json({ error: 'invalid layout', issues: parsed.errors });
       return;
     }
-    source
-      .writeFile(path, serializeLayout(parsed.data))
+    // Through the shared queue: `removeDiagramNode`→`scrubLayoutRefs` and
+    // `createElement`→`upsertLayoutPin` read-modify-write this same file, and
+    // the client's drag-to-pin body is a FULL-file merge computed from the
+    // last model fetch — so an unqueued PUT racing a mutation either
+    // resurrects a scrubbed pin or silently loses the drag.
+    writeQueue(() => source.writeFile(path, serializeLayout(parsed.data)))
       .then(() => res.status(204).end())
       .catch((error: unknown) => sendInternalError(res, error, path));
   });
+
+  // The element/relation write API (issue #132): zod-gated JSON mutations
+  // over the same `source`, plus a root-confined `TreeIo` for the one
+  // operation the `C4FileSource` port cannot express (element deletion).
+  // Clients supply slugs and kind enums only — never paths — see
+  // `mutations/mutation-router.ts` for the route table and containment story.
+  app.use(
+    '/api',
+    buildMutationRouter({ source, treeIo: createTreeIo(root), queue: writeQueue, hostGuard }),
+  );
 
   // Mounted before the static/SPA fallback below — that fallback's catch-all
   // GET (`/^(?!\/api\/).*/`) would otherwise swallow `/mcp` before this

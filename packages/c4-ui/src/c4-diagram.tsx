@@ -21,10 +21,13 @@ import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@worksp
 import { layoutPathFor, serializeLayout } from '@workspec/c4-schema';
 import type { Spec } from '@workspec/c4-schema';
 import {
+  Background,
   Canvas,
   CanvasProvider,
   CanvasSpecContext,
+  CanvasZoomControls,
   ConnectorLayer,
+  Minimap,
   ShapeLayer,
   createCanvasStore,
   pageToScreen,
@@ -32,7 +35,7 @@ import {
   useCanvasStore,
   useCanvasViewport,
 } from '@workspec/canvas';
-import type { CanvasStoreInstance, ShapeId } from '@workspec/canvas';
+import type { BackgroundVariant, CanvasStoreInstance, ShapeId } from '@workspec/canvas';
 import {
   buildC4Shapes,
   buildCanvasSpec,
@@ -72,6 +75,60 @@ export interface C4DiagramProps {
   direction?: LayoutDirection | undefined;
   theme?: ThemeName | undefined;
   className?: string | undefined;
+  /**
+   * Grid style for the shared `@workspec/canvas` Background layer, mounted
+   * BENEATH the edges/cards (the enterprise app-shell's dotted grid — A1,
+   * #131). Omitted = no grid, the pre-A1 render — existing consumers are
+   * byte-unchanged.
+   */
+  backgroundVariant?: BackgroundVariant | undefined;
+  /**
+   * Mount the shared Minimap (bottom-right, click-to-centre + drag-the-
+   * viewport). Defaults to false — chrome is opt-in so embedded/golden
+   * renders stay exactly as before A1. Dot colours derive from the resolved
+   * element styles (spec accent per kind), matching the on-canvas cards.
+   */
+  showMinimap?: boolean | undefined;
+  /** Mount the shared zoom controls (bottom-left: in / % / out / fit). Defaults to false, same opt-in rationale as {@link C4DiagramProps.showMinimap}. */
+  showZoomControls?: boolean | undefined;
+  /**
+   * Instance-exposure seam (A1 review, for A2/A3): called exactly once per
+   * canvas mount with the live {@link CanvasStoreInstance}, AFTER the C4
+   * shape modules and facade tool are registered — the hook an embedding
+   * shell uses to install a persistence host (`instance.host = …`, e.g.
+   * c4-studio's `installStudioCanvasHost`) or its own tools before the
+   * user can gesture. NOTE the lifetime: this component creates ONE
+   * instance per mount and disposes it on unmount, and `C4Explorer`
+   * remounts the diagram on every diagram/lens/direction switch — so the
+   * callback fires again with a FRESH instance after each switch;
+   * reinstall there, never cache the old instance. It does NOT fire again
+   * for a mere model REFRESH (same view, new data): that keeps the same
+   * instance, so a host installed on the first mount stays installed and
+   * whatever camera the user set survives (see `cameraFitKey`). Purely
+   * additive: omitted = no behaviour change.
+   */
+  onCanvasReady?: ((instance: CanvasStoreInstance) => void) | undefined;
+  /**
+   * View identity for the CAMERA-FIT gate (A2 review, the editor defect):
+   * an opaque string naming *which view* the `diagram` prop is a rendering
+   * OF — diagram + lens + direction, whatever the caller's notion of
+   * "navigation" is.
+   *
+   * The projection effect always re-projects the shapes, but it only
+   * FRAMES the content (`fitCamera`) when this key differs from the one
+   * the camera was last framed for — the first projection of a mount
+   * always counts as a change. So a caller that re-supplies a *new*
+   * `diagram` object for the SAME view (a model refresh after an edit,
+   * which mints byte-identical-but-new layout objects) keeps the user's
+   * zoom/pan, exactly like enterprise's `useC4Diagram` `resetCamera=false`
+   * refetch path; a caller that navigates passes a new key and gets the
+   * fit it always got.
+   *
+   * OMITTED = the pre-A2 behaviour, byte-for-byte: every new `diagram`
+   * identity re-fits the camera. Purely additive — no existing consumer
+   * changes.
+   */
+  cameraFitKey?: string | undefined;
 }
 
 const PAN_STEP = 40;
@@ -116,7 +173,11 @@ const TooltipOverlay: FC<{
     <div
       className="c4-tooltip"
       data-canvas-ui
-      style={{ position: 'absolute', left: `${String(clamped.left)}%`, top: `${String(clamped.top)}%` }}
+      style={{
+        position: 'absolute',
+        left: `${String(clamped.left)}%`,
+        top: `${String(clamped.top)}%`,
+      }}
     >
       <TooltipContent
         content={tooltipContentFor(node, elementsByKindAndSlug)}
@@ -139,6 +200,11 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     direction = 'LR',
     theme,
     className,
+    backgroundVariant,
+    showMinimap = false,
+    showZoomControls = false,
+    onCanvasReady,
+    cameraFitKey,
   } = props;
   void direction; // positions are authoritative; the shared router recomputes edge look live
 
@@ -160,7 +226,16 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
   nodesByIdRef.current = nodesById;
 
   const [instance] = useState<CanvasStoreInstance>(() => {
-    const inst = createCanvasStore();
+    // The kind seam (issue #117): C4 cards filter/colour under their ELEMENT
+    // kind (actor/system/container/…), not the engine shape type 'c4node' —
+    // this is what keys the Minimap's per-kind dot colours to the same map
+    // the cards' accents resolve from. Nothing else consumes the resolver
+    // here (`hiddenKinds` is never set by this facade), so pre-A1 behaviour
+    // is unchanged.
+    const inst = createCanvasStore({
+      kindResolver: (shape) =>
+        shape.type === 'c4node' ? (shape as C4NodeShape).nodeType : shape.type,
+    });
     registerC4(inst);
     // The facade's a11y wrapper replaces the raw card Component; the facade
     // tool replaces the whiteboard select tool (see c4-canvas/facade-tool.ts
@@ -218,18 +293,38 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
       );
   };
 
-  // Projection: a new diagram prop (fresh layout / lens / diagram switch)
-  // re-projects the POSITIONED view (the caller's layout + lens choice is
-  // authoritative — the synthetic single-view resolved guarantees the
-  // projection can never disagree with what the caller laid out), resets
-  // the camera, and frames the content with the enterprise fit (1× cap).
+  // The view the camera was last framed for — `null` until this mount has
+  // framed anything, so the FIRST projection always fits. Only ever written
+  // when {@link C4DiagramProps.cameraFitKey} is supplied; without it the
+  // gate below short-circuits to "always fit" (the pre-A2 behaviour).
+  const fittedKeyRef = useRef<string | null>(null);
+
+  // Projection: a new diagram prop (fresh layout / lens / diagram switch /
+  // post-edit model refresh) re-projects the POSITIONED view (the caller's
+  // layout + lens choice is authoritative — the synthetic single-view
+  // resolved guarantees the projection can never disagree with what the
+  // caller laid out) and, WHEN THE VIEW ITSELF CHANGED, frames the content
+  // with the enterprise fit (1× cap). See `cameraFitKey`: re-projecting is
+  // unconditional, re-framing is not, so an edit that refetches the model
+  // no longer throws away the zoom/pan the user set.
   useEffect(() => {
     const synthetic: ResolvedDiagram = {
       ...resolved,
-      // The caller's PositionedDiagram is ALREADY the chosen lens view —
-      // the projection must not re-partition it, so a c4-container type is
-      // masked (buildC4Shapes's lens filter only bites on 'c4-container';
-      // the type string feeds nothing else in the projection).
+      // Mask a c4-container type so `buildC4Shapes`'s lens filter cannot
+      // fire (it only bites on 'c4-container'; the type string feeds
+      // nothing else in the projection).
+      //
+      // The reason is NOT that the caller already partitioned the nodes —
+      // it hasn't. `@workspec/c4-model`'s `resolveDiagram` partitions EDGES
+      // per lens and hands both lenses the SAME `nodes` array, so the
+      // node-kind partition enterprise performs has no studio equivalent
+      // yet (tracked separately as the lens-partition parity gap). The real
+      // reason is narrower and still sound: this component renders a
+      // PositionedDiagram, so every node it draws must be a node the caller
+      // laid out. Filtering here would drop nodes that already occupy
+      // coordinates, leaving holes in the layout. Whatever set the caller
+      // positioned is the set that renders — partitioning is the model
+      // layer's job, upstream of the coordinates.
       type: resolved.type === 'c4-container' ? 'c4-container(positioned-view)' : resolved.type,
       view: { nodes: diagram.nodes, edges: diagram.edges },
       lensViews: null,
@@ -245,13 +340,33 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     const projection = buildC4Shapes(synthetic, { positions });
     instance.getState()._setShapesRaw(projection.shapes);
 
+    // The camera-fit gate. `cameraFitKey === undefined` keeps every
+    // pre-A2 consumer on the old always-fit path; with a key, a DATA
+    // REFRESH of the same view (same key, already framed once) re-projects
+    // above and returns here, leaving `store.camera` untouched.
+    const alreadyFitted = cameraFitKey !== undefined && fittedKeyRef.current === cameraFitKey;
+    if (cameraFitKey !== undefined) fittedKeyRef.current = cameraFitKey;
+    if (alreadyFitted) return;
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (rect && rect.width > 0 && rect.height > 0 && projection.bounds) {
       instance.getState().setCamera(fitCamera(projection.bounds, rect.width, rect.height));
     } else {
       instance.getState().setCamera({ x: 0, y: 0, zoom: 1 });
     }
-  }, [diagram, resolved, instance]);
+  }, [diagram, resolved, instance, cameraFitKey]);
+
+  // Instance exposure (A1 review, for A2/A3 host installation): fire once
+  // per mount — the instance is created in the state initializer and never
+  // replaced — AFTER the projection effect above (declaration order), so
+  // the callback observes a fully projected canvas. Read through a ref so
+  // an inline-lambda caller neither retriggers the effect nor gets a stale
+  // callback.
+  const onCanvasReadyRef = useRef(onCanvasReady);
+  onCanvasReadyRef.current = onCanvasReady;
+  useEffect(() => {
+    onCanvasReadyRef.current?.(instance);
+  }, [instance]);
 
   // Controlled selection: the caller owns it; the store halo follows.
   useEffect(() => {
@@ -322,12 +437,38 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         store.clearSelection();
         onSelect?.(null);
         break;
+      case 'Delete':
+      case 'Backspace': {
+        // Deletion is a MODEL mutation, so it only exists when an embedding
+        // shell has installed a persistence host that owns it (A1 review —
+        // `instance.host.deleteShapes`, e.g. c4-studio's studio canvas
+        // host via `onCanvasReady`). Host-less renders (goldens, the site
+        // demo, the MF smoke) keep their pre-A1 keyboard surface exactly:
+        // Delete falls through untouched, never a local-only delete.
+        if (instance.host.deleteShapes === undefined) break;
+        const ids = [...store.selectedIds];
+        if (ids.length === 0) break;
+        event.preventDefault();
+        store.deleteShapes(ids);
+        onSelect?.(null);
+        break;
+      }
       default:
         break;
     }
   }
 
   const canvasSpec = useMemo(() => buildCanvasSpec(spec), [spec]);
+  // Minimap dot colours: element kind → the SAME resolved accent the card
+  // chrome renders with (spec overrides included), so the minimap is a true
+  // recolour of the canvas, not a second palette.
+  const minimapKindColors = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(canvasSpec.elements).map(([kind, style]) => [kind, style.accent]),
+      ),
+    [canvasSpec],
+  );
   const linkResolver = useMemo(
     () => host?.linkResolver ?? createInertLinkResolver(),
     [host?.linkResolver],
@@ -366,8 +507,11 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
             <CanvasSpecContext.Provider value={canvasSpec}>
               <A11yBridgeContext.Provider value={bridge}>
                 <Canvas shortcutScope="none" renderContextMenu={() => null}>
+                  {backgroundVariant !== undefined && <Background variant={backgroundVariant} />}
                   <ConnectorLayer />
                   <ShapeLayer />
+                  {showZoomControls && <CanvasZoomControls />}
+                  {showMinimap && <Minimap kindColors={minimapKindColors} />}
                   <TooltipOverlay
                     nodesById={nodesById}
                     elementsByKindAndSlug={elementsByKindAndSlug}

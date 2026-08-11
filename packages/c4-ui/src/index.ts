@@ -33,6 +33,12 @@ export type { C4DiagramProps } from './c4-diagram.js';
 export { C4Explorer } from './c4-explorer.js';
 export type { C4ExplorerProps } from './c4-explorer.js';
 
+// ── Level-tab derivation (A1, #131) — the explorer's diagram ordering +
+// default-selection rule, exported so hosts composing their own diagram
+// navigation (c4-studio's sidebar) agree with the explorer exactly. ──────────
+export { deriveLevelTabs } from './derive-level-tabs.js';
+export type { LevelTab } from './derive-level-tabs.js';
+
 // ── Standalone SVG rendering ────────────────────────────────────────────────
 export { renderSvg } from './render-svg.js';
 export type { RenderSvgOptions } from './render-svg.js';
@@ -40,8 +46,7 @@ export type { RenderSvgOptions } from './render-svg.js';
 // ── The C4 layer (src/c4/ — folded in from the retired @workspec/canvas-c4
 // package, ADR i): C4 semantics on the @workspec/canvas engine. Exported in
 // full so enterprise hosts consume the projection, shape modules, host
-// bridge and layout composition from THIS package's surface. c4-studio's
-// render paths keep taking `labelAwareLayerSpacing` from here, unchanged. ──
+// bridge and layout composition from THIS package's surface. ──
 
 // Model + projection
 export {
@@ -60,7 +65,7 @@ export type {
   NodePlacement,
   ProjectionResult,
 } from './c4/index.js';
-export { elkC4Layout, labelAwareLayerSpacing, projectC4Diagram } from './c4/index.js';
+export { elkC4Layout, projectC4Diagram } from './c4/index.js';
 export type { C4LayoutFn, ProjectC4DiagramOptions } from './c4/index.js';
 
 // Types + host contract

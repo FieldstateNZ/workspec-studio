@@ -24,6 +24,8 @@ import { iconForKey, labelForType } from '../style/icons.js';
 import { REWORKING_COLOUR, REWORKING_HALO_BG, VALID_GREEN } from '../style/status-colors.js';
 import { ShapeFrame } from './shape-renderers.js';
 import { useC4NodeStatus } from '../node-status-slot.js';
+import { useC4DetailLevel } from './c4-detail-level.js';
+import { C4NodeLod } from './c4-node-lod.js';
 
 // The C4 node card — THE visual parity target (#119): badged cards with
 // kind-coloured accents, exact enterprise typography/spacing. Ported from
@@ -165,6 +167,25 @@ export const C4NodeComponent: FC<Props> = ({ shape, isEditing }) => {
   // SelectionLayer deliberately skips c4 nodes (selfRendersSelection) so
   // this is the only indicator.
   const selected = useCanvasStore((s) => s.selectedIds.has(shape.id));
+
+  // Low-zoom level of detail (#134) — the enterprise card idiom, applied to
+  // C4. Must sit after every hook above (React ordering), and is skipped
+  // while inline-editing so a node being named at low zoom keeps its
+  // editor. The a11y wrapper (c4-canvas/a11y-node.tsx) supplies this
+  // node's role, accessible name and Enter activation from model data, so
+  // dropping the card's visual chrome cannot drop its a11y surface.
+  const detail = useC4DetailLevel();
+  if (detail !== 'full' && !isEditing) {
+    return (
+      <C4NodeLod
+        shape={shape}
+        level={detail}
+        accent={accent}
+        nodeShape={nodeShape}
+        variant={nodeVariant}
+      />
+    );
+  }
 
   const meta = (shape.meta ?? {}) as C4NodeMeta;
   // A pending node hasn't persisted yet — it only exists locally until named.

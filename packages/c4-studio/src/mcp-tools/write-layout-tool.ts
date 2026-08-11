@@ -2,6 +2,8 @@ import type { C4FileSource } from '@workspec/c4-model';
 import { isLayoutFile, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
 import type { McpToolDef } from '@workspec/mcp-core';
 import { InvalidRefError, readStringArg } from '@workspec/mcp-core';
+import { createMutationQueue } from '../mutations/mutation-queue.js';
+import type { MutationQueue } from '../mutations/mutation-queue.js';
 import { isWorkspecPath } from '../workspec-path.js';
 import { mapC4ErrorToResult } from './map-c4-error-to-result.js';
 
@@ -30,8 +32,18 @@ const INPUT_SCHEMA = {
  * validate-then-write flow. Rejects (without writing) in the same order
  * `server.ts` checks: an ill-shaped or `.workspec/`-escaping path, a
  * non-`.layout/` path, then a layout YAML that fails `parseLayoutYaml`.
+ *
+ * The write itself rides `writeQueue` for the same reason `PUT /api/file`
+ * does: under `serve --mcp` this tool and the HTTP API are two writers of
+ * one tree's `.layout/` files, and several queued mutations read-modify-
+ * write those same files. `createC4McpProvider` passes the server's own
+ * queue there; the default is a private one, which is what a standalone
+ * `workspec-c4 mcp` process wants.
  */
-export function buildWriteLayoutTool(source: C4FileSource): McpToolDef {
+export function buildWriteLayoutTool(
+  source: C4FileSource,
+  writeQueue: MutationQueue = createMutationQueue(),
+): McpToolDef {
   return {
     name: 'write_layout',
     description:
@@ -65,13 +77,17 @@ export function buildWriteLayoutTool(source: C4FileSource): McpToolDef {
         if (!parsed.ok) {
           return {
             content: [
-              { type: 'text', text: JSON.stringify({ error: 'invalid layout', issues: parsed.errors }) },
+              {
+                type: 'text',
+                text: JSON.stringify({ error: 'invalid layout', issues: parsed.errors }),
+              },
             ],
             isError: true,
           };
         }
 
-        await source.writeFile(path, serializeLayout(parsed.data));
+        const ref = path;
+        await writeQueue(() => source.writeFile(ref, serializeLayout(parsed.data)));
         return { content: [{ type: 'text', text: `wrote layout "${path}"` }] };
       } catch (error) {
         return mapC4ErrorToResult(error, path);

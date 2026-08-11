@@ -6,7 +6,7 @@
 package (never published) was folded into this package as `src/c4/` and deleted; `@workspec/canvas`
 stays the one shared engine dependency. The C4 API is now **exported from `@workspec/c4-ui`** so
 enterprise hosts consume the whole C4 surface from one package: `buildC4Shapes`,
-`projectC4Diagram`, `elkC4Layout`, `labelAwareLayerSpacing`, `registerC4`, `buildCanvasSpec`,
+`projectC4Diagram`, `elkC4Layout`, `registerC4`, `buildCanvasSpec`,
 `C4CanvasHost` (+ `getC4Host`, `C4NodeMeta`, `C4NodeShape`, `C4BoundaryShape`,
 `C4ValidationError`), the `c4node`/`c4boundary` shape modules and card components,
 `C4NodeStatusSlot`/`useC4NodeStatus`, the C4 icon/label maps, and the `C4Demo` fixture — plus the
@@ -48,16 +48,21 @@ behavioural notes for consumers:
   output stays deterministic and self-contained. All string interpolation is
   now escaped (CodeQL `js/html-constructed-from-input` #1–#3 hardening),
   including hostile `spec.yaml` accents.
-- **Label-aware layer spacing.** The composed elk layout now widens the gap
-  between node layers to fit the widest edge-label pill (the enterprise
-  `ranksep = max(120, maxLabelWidth + 60)` formula, computed by
-  `@workspec/canvas-c4`'s `labelAwareLayerSpacing` and passed through
-  `@workspec/c4-layout`'s new additive `layerSpacing` option — that
-  package's own default stays the fixed 80px, and existing `.layout/` pins
-  are untouched). Previously a long label on a short edge clipped under the
-  neighbouring cards. Auto-laid node positions shift accordingly;
-  `C4Explorer`, `renderSvg` consumers (c4-studio `render`/`c4_render`) and
-  the parity fixtures all pick this up.
+- **Low-zoom level of detail (replaces the reverted label-aware spacing).**
+  An interim S4 change widened the inter-layer gap to the enterprise
+  `ranksep = max(120, maxLabelWidth + 60)` scalar, intending to make the
+  midpoint label pills fit by construction. It never shipped and has been
+  reverted: the pill is screen-space while the gap is page-space, so no
+  gap wins under fit-to-width, and on a real 11-node tree the widening
+  cost 72% bbox width (fit 0.58 → 0.34) and made pill crowding worse.
+  The composed layout is back on `@workspec/c4-layout`'s pinned 80px
+  default. Readability at low zoom is now handled where it is solvable:
+  the C4 card collapses to a flat accent bar + title below 0.35 zoom and
+  edge labels stop rendering below 0.45, matching the enterprise card
+  idiom. Accessible names are unaffected — they come from the a11y
+  wrapper, not the card body. Auto-laid node positions shift back
+  accordingly; `C4Explorer`, `renderSvg` consumers (c4-studio
+  `render`/`c4_render`) and the parity fixtures all pick this up.
 - **Pinned node sizes are honoured end-to-end.** A `.layout/` pin carrying
   `width`/`height` now sizes the interactive card AND anchors its edges to
   the real card faces (previously the projection forced every node to the

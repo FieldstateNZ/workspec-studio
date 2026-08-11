@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import type { ResolvedDiagram, ResolvedDiagramNode } from '@workspec/c4-model';
 import type { Diagram, Layout } from '@workspec/c4-schema';
-import { resolveConnectorGeometry } from '@workspec/canvas';
-import type { ConnectorShape } from '@workspec/canvas';
-import { elkC4Layout, labelAwareLayerSpacing, projectC4Diagram } from './layout.js';
-import { buildC4Shapes, edgeShapeId, nodeShapeId } from './project-model.js';
+import { layoutDiagram } from '@workspec/c4-layout';
+import { elkC4Layout, projectC4Diagram } from './layout.js';
+import { nodeShapeId } from './project-model.js';
 import { C4_NODE_HEIGHT, C4_NODE_WIDTH } from './shapes/c4-node-shape-util.js';
 
 // Decision-A composition (#119): elk (@workspec/c4-layout) is the position
@@ -89,68 +88,45 @@ describe('elkC4Layout', () => {
   });
 });
 
-describe('labelAwareLayerSpacing (S4 fix round, #120)', () => {
-  test('mirrors the enterprise ranksep formula: max(120, maxLabelWidth + 60)', () => {
-    // No labels → the enterprise LR floor.
-    expect(labelAwareLayerSpacing([])).toBe(120);
-    expect(labelAwareLayerSpacing([{ label: null }])).toBe(120);
-    // One long label: ceil(len * 6.5 + 30) + 60.
-    const label = 'authors .workspec/ specs and layout pins';
-    const estimated = Math.ceil(label.length * 6.5 + 30);
-    expect(labelAwareLayerSpacing([{ label }, { label: 'short' }])).toBe(
-      Math.max(120, estimated + 60),
-    );
+describe('inter-layer spacing is c4-layout’s pinned default (#120 revert, #134)', () => {
+  // The S4 round widened the inter-layer gap to enterprise's `ranksep`
+  // scalar so the midpoint pills would "fit by construction". They don't
+  // (the pill is screen-space, the gap is page-space), and the widening
+  // cost 72% bbox width on the dogfood container diagram. `elkC4Layout`
+  // must therefore pass NO `layerSpacing` and inherit the package default.
+  //
+  // Mutation guard: re-adding any `layerSpacing:` override to elkC4Layout
+  // widens the composed column pitch past the bare-`layoutDiagram`
+  // baseline and fails the equality below.
+  const wideLabel = 'consumes as a workspace devDependency (pre-publish)';
+  const view: NonNullable<ResolvedDiagram['view']> = {
+    nodes: [node('left', 'actor'), node('right', 'system')],
+    edges: [{ from: 'left', to: 'right', label: wideLabel, category: null, lens: null, dangling: false }],
+  };
+
+  test('composed layout matches bare layoutDiagram — long labels do not widen the gap', async () => {
+    const composed = await elkC4Layout(view, null);
+    const baseline = await layoutDiagram({ nodes: view.nodes, edges: view.edges, layout: null });
+
+    const baselineById = Object.fromEntries(baseline.nodes.map((n) => [n.nodeId, n]));
+    for (const [nodeId, placement] of Object.entries(composed)) {
+      const expected = baselineById[nodeId];
+      if (!expected) throw new Error(`${nodeId} missing from the baseline layout`);
+      expect(placement).toEqual({
+        x: expected.x,
+        y: expected.y,
+        width: expected.width,
+        height: expected.height,
+      });
+    }
   });
 
-  test('a long label on a short edge gets a gap the pill fits into — its bbox clears both node rects', async () => {
-    // The exact defect class the parity review caught: a ~300px midpoint
-    // pill in c4-layout's fixed 80px inter-layer gap clips under both
-    // cards. The composed pipeline must pass label-aware spacing through.
-    const label = 'authors .workspec/ specs, diagrams and layout pins';
-    const view: NonNullable<ResolvedDiagram['view']> = {
-      nodes: [node('left', 'actor'), node('right', 'system')],
-      edges: [{ from: 'left', to: 'right', label, category: null, lens: null, dangling: false }],
+  test('label length does not move any node — spacing is label-blind again', async () => {
+    const short: NonNullable<ResolvedDiagram['view']> = {
+      nodes: view.nodes,
+      edges: [{ from: 'left', to: 'right', label: 'x', category: null, lens: null, dangling: false }],
     };
-    const placements = await elkC4Layout(view, null);
-    const projection = buildC4Shapes(
-      {
-        slug: 'gap',
-        path: 'diagrams/gap.yaml',
-        title: 'Gap',
-        type: 'c4-context',
-        description: null,
-        raw: {} as Diagram,
-        view,
-        lensViews: null,
-        layout: null,
-      },
-      { positions: placements },
-    );
-    const connector = projection.shapes[edgeShapeId('left', 'right')] as ConnectorShape;
-    const geom = resolveConnectorGeometry(connector, projection.shapes);
-    if (!geom) throw new Error('edge geometry missing');
-
-    // The pill renders centred on the route midpoint: estimate its bbox the
-    // way the layout estimates it (the enterprise formula) plus the chip's
-    // vertical extent, and require clearance from every node card rect.
-    const pillW = Math.ceil(label.length * 6.5 + 30);
-    const pillH = 24;
-    const pill = {
-      minX: geom.label.x - pillW / 2,
-      maxX: geom.label.x + pillW / 2,
-      minY: geom.label.y - pillH / 2,
-      maxY: geom.label.y + pillH / 2,
-    };
-    for (const id of [nodeShapeId('left'), nodeShapeId('right')]) {
-      const shape = projection.shapes[id];
-      if (!shape) throw new Error(`${id} missing`);
-      const intersects =
-        pill.minX < shape.x + shape.width &&
-        pill.maxX > shape.x &&
-        pill.minY < shape.y + shape.height &&
-        pill.maxY > shape.y;
-      expect(intersects).toBe(false);
-    }
+    expect(await elkC4Layout(view, null)).toEqual(await elkC4Layout(short, null));
   });
 });
 

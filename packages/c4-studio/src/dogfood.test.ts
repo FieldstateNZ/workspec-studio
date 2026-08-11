@@ -23,6 +23,29 @@ describe("the repo's own .workspec/ tree (dogfood)", () => {
     );
   });
 
+  it('every container node is pinned by the committed .layout/ file', async () => {
+    // The hand-arranged layout (#134) is what makes the container level
+    // readable: enterprise runs auto-layout ONLY when a diagram has zero
+    // saved positions and otherwise renders hand-arranged coordinates, and
+    // this tree had no `.layout/container.yaml` at all, so every load was a
+    // cold auto-layout. A PARTIAL pin set is the dangerous state — the
+    // unpinned nodes get nudged around the pinned ones and the careful
+    // arrangement silently degrades — so assert total coverage, not merely
+    // that the file exists.
+    //
+    // Mutation guard: deleting the layout file, or adding a node to
+    // container.yaml without pinning it, fails this.
+    const model = await loadC4Model(createFsSource(REPO_ROOT));
+    const container = model.diagrams.find((d) => d.slug === 'container');
+    if (!container) throw new Error('container diagram missing');
+    const pinned = new Set(Object.keys(container.layout?.data?.nodes ?? {}));
+    const view = container.view ?? container.lensViews?.deployment;
+    if (!view) throw new Error('container view missing');
+    const unpinned = view.nodes.map((n) => n.nodeId).filter((id) => !pinned.has(id));
+    expect(unpinned).toEqual([]);
+    expect(pinned.size).toBeGreaterThan(0);
+  });
+
   it.each(['system-context', 'container'])(
     'docs/c4/studio-%s.svg matches re-rendering the tree right now',
     async (slug) => {

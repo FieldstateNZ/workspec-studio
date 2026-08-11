@@ -28,6 +28,40 @@ import {
 
 const CORNER_RADIUS = 12;
 
+/**
+ * Below this camera zoom the midpoint label pill stops rendering (#134).
+ *
+ * The pill is SCREEN-space — a fixed 11px chip capped at `maxWidth: 180`,
+ * so ~194x19 screen px no matter the zoom — while the corridor it has to
+ * sit in is PAGE-space and shrinks with the camera. Under fit-to-width the
+ * corridor asymptotes below the pill's own width, so past this point the
+ * pills provably cannot fit: they pile onto the node cards and onto each
+ * other, which is exactly what "the container level is horrific" looked
+ * like. The enterprise idiom at low zoom is to DROP detail, never to
+ * counter-scale it, so the pill is dropped rather than shrunk.
+ */
+const LABEL_MIN_ZOOM = 0.45;
+
+/**
+ * Keeps the label's TEXT in the accessibility tree while its pill is
+ * visually dropped. Zoom is a viewport concern, not a content one — a
+ * screen-reader user must still be able to read what a connector means at
+ * any camera position, and any test asserting on edge-label text must keep
+ * passing regardless of zoom.
+ */
+const VISUALLY_HIDDEN: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 // SVG dash pattern for a connection line style. Solid → no dashes.
 function dashFor(style: string | undefined): string | undefined {
   if (style === 'dashed') return '6 5';
@@ -314,6 +348,17 @@ export const ConnectorLayer: FC = () => {
           return <EdgeLabelEditor key={`edit-${c.id}`} shape={c} screen={labelScreen} />;
         }
         if (!c.label) return null;
+        // Low-zoom LOD (#134): drop the pill, keep the text. Placed after
+        // the editing check so an actively-edited label keeps its editor at
+        // any zoom, and before both pill variants so Discovery and C4 edges
+        // behave identically.
+        if (camera.zoom < LABEL_MIN_ZOOM) {
+          return (
+            <span key={`label-${c.id}`} style={VISUALLY_HIDDEN}>
+              {c.label}
+            </span>
+          );
+        }
         // Discovery Board connector label (#363): a mono midpoint chip whose
         // text colour matches the line's stroke.
         if (isDiscoveryConnector(c, shapes, routingOpts)) {

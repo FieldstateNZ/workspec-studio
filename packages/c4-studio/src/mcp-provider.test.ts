@@ -19,11 +19,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createFsSource } from '@workspec/c4-model/fs';
 import type { McpToolDef } from '@workspec/mcp-core';
 import { createC4McpProvider } from './mcp-provider.js';
+import { createMutationQueue } from './mutations/mutation-queue.js';
+import type { MutationQueue } from './mutations/mutation-queue.js';
 
 const REPRESENTATIVE_DIR = fileURLToPath(
   new URL('../../c4-schema/test/fixtures/representative', import.meta.url),
 );
-const SAMPLE_GRAPH = fileURLToPath(new URL('../test/fixtures/aspire/sample-graph.json', import.meta.url));
+const SAMPLE_GRAPH = fileURLToPath(
+  new URL('../test/fixtures/aspire/sample-graph.json', import.meta.url),
+);
 const LAYOUT_PATH = '.workspec/diagrams/.layout/system-context.yaml';
 
 /** Finds a tool by its module-local name (not the namespaced wire name). */
@@ -83,7 +87,10 @@ describe('validate', () => {
     // Same invalid shape as @workspec/c4-schema's own
     // `test/fixtures/invalid/actor-missing-description.yaml`: a required
     // `description` field is missing.
-    await writeFile(join(dir, '.workspec/actors/architect.yaml'), 'title: Architect\ntags:\n  - human\n');
+    await writeFile(
+      join(dir, '.workspec/actors/architect.yaml'),
+      'title: Architect\ntags:\n  - human\n',
+    );
 
     const result = await tool(dir, 'validate').handler({});
     expect(result.isError).toBeFalsy();
@@ -114,9 +121,15 @@ describe('render', () => {
 
 describe('write_layout', () => {
   it('persists a valid layout write, re-parseable by parseLayoutYaml', async () => {
-    const content = ['version: 1', 'nodes:', '  architect:', '    x: 100', '    y: 50', 'edges: {}', ''].join(
-      '\n',
-    );
+    const content = [
+      'version: 1',
+      'nodes:',
+      '  architect:',
+      '    x: 100',
+      '    y: 50',
+      'edges: {}',
+      '',
+    ].join('\n');
 
     const result = await tool(dir, 'write_layout').handler({ path: LAYOUT_PATH, content });
     expect(result.isError).toBeFalsy();
@@ -153,7 +166,9 @@ describe('write_layout', () => {
       content: 'version: 1\nnodes: {}\nedges: {}\n',
     });
     expect(result.isError).toBe(true);
-    await expect(readFile(join(dir, 'not-workspec/diagrams/.layout/system-context.yaml'), 'utf8')).rejects.toBeTruthy();
+    await expect(
+      readFile(join(dir, 'not-workspec/diagrams/.layout/system-context.yaml'), 'utf8'),
+    ).rejects.toBeTruthy();
   });
 
   it('rejects a backslash-traversal-shaped path up front, creating no garbage file (issue #52)', async () => {
@@ -212,7 +227,10 @@ describe('import_aspire', () => {
     const firstReport = JSON.parse(textOf(first)) as { files: { action: string }[] };
     expect(firstReport.files.some((f) => f.action !== 'unchanged')).toBe(true);
 
-    const apiServerText = await readFile(join(aspireDir, '.workspec/containers/api-server.yaml'), 'utf8');
+    const apiServerText = await readFile(
+      join(aspireDir, '.workspec/containers/api-server.yaml'),
+      'utf8',
+    );
     expect(apiServerText).toContain('aspire-managed');
 
     const second = await tool(aspireDir, 'import_aspire').handler({ graph, mode: 'scaffold' });
@@ -282,5 +300,46 @@ describe('import_aspire', () => {
     // And on disk: nothing was created at or above the served root — the only
     // top-level entry is `.workspec/` (no `etc`, `evil-apphost`, `C:` etc.).
     expect(await readdir(aspireDir)).toEqual(['.workspec']);
+  });
+});
+
+describe('write_layout — the shared write queue (serve --mcp)', () => {
+  it('routes its write through the queue it is given, so it serializes with the HTTP API', async () => {
+    // Under `serve --mcp` this tool and `PUT /api/file` are two writers of
+    // ONE tree's `.layout/` files in ONE process, and several queued
+    // mutations read-modify-write those same files. `serve.ts` therefore
+    // builds the queue and hands the SAME instance to `createServer` and to
+    // this provider. Unqueued, `seen` stays empty.
+    const seen: string[] = [];
+    const inner = createMutationQueue();
+    const queue: MutationQueue = <T>(task: () => Promise<T>): Promise<T> =>
+      inner(async () => {
+        seen.push('enter');
+        try {
+          return await task();
+        } finally {
+          seen.push('exit');
+        }
+      });
+
+    const provider = createC4McpProvider(createFsSource(dir), queue);
+    const writeLayout = provider.tools.find((t) => t.name === 'write_layout');
+    if (writeLayout === undefined) throw new Error('no such tool: write_layout');
+
+    const content = ['version: 1', 'nodes:', '  architect:', '    x: 7', '    y: 9', ''].join('\n');
+    const result = await writeLayout.handler({ path: LAYOUT_PATH, content });
+    expect(result.isError).toBeFalsy();
+    expect(seen).toEqual(['enter', 'exit']);
+    expect(await readFile(join(dir, LAYOUT_PATH), 'utf8')).toContain('x: 7');
+  });
+
+  it('defaults to a private queue, so a standalone `workspec-c4 mcp` process still works', async () => {
+    // No cross-process file lock is attempted or implied — the default is a
+    // fresh in-process queue.
+    const result = await tool(dir, 'write_layout').handler({
+      path: LAYOUT_PATH,
+      content: 'version: 1\nnodes: {}\n',
+    });
+    expect(result.isError).toBeFalsy();
   });
 });

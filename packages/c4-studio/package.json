@@ -39,15 +39,17 @@
     "provenance": true
   },
   "scripts": {
-    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && vite build",
-    "build:client": "vite build",
-    "dev": "vite build && tsx src/bin.ts serve --dir ../.. --port 4174",
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup && pnpm run build:client",
+    "build:ui": "pnpm --filter @workspec/c4-ui run build",
+    "build:client": "pnpm run build:ui && vite build",
+    "dev": "pnpm run build:client && tsx src/bin.ts serve --dir ../.. --port 4174",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "render:dogfood": "tsx src/bin.ts render system-context --dir ../.. --out ../../docs/c4/studio-system-context.svg && tsx src/bin.ts render container --dir ../.. --out ../../docs/c4/studio-container.svg"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@workspec/canvas": "workspace:*",
     "@workspec/c4-layout": "workspace:^",
     "@workspec/c4-model": "workspace:^",
     "@workspec/c4-schema": "workspace:^",
@@ -59,6 +61,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/express": "^4.17.21",
     "@types/node": "^24.0.0",
     "@types/react": "^18.3.18",
@@ -66,6 +71,7 @@
     "@types/supertest": "^6.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/expect": "4.1.10",
+    "jsdom": "^25.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "supertest": "^7.0.0",

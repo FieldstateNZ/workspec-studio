@@ -175,19 +175,18 @@
   text-transform: capitalize;
 }
 
-/* ── C4Explorer — workbench layout ───────────────────────────────────────────
-   A header row (segmented level tabs + crumb + hint) over a body row (canvas
-   pane + detail rail). Replaces the earlier left tree-nav sidebar (Site
-   Review UX pass follow-up: the S4 workbench-layout upgrade) — every diagram
-   is still reachable, just as a segmented tab instead of a list item, and
-   selecting an element now has somewhere to show up (the rail) instead of
-   only a hover tooltip. */
+/* ── C4Explorer — enterprise-shaped workbench layout (A1, #131) ──────────────
+   A header bar (segmented level tabs + crumb + hint) over a FULL-BLEED
+   canvas: the pane fills every pixel below the bar, the lens pills float
+   over the canvas top-left, and the detail rail is a dismissible overlay
+   that mounts on selection instead of reserving a permanent 300px column
+   (the pre-A1 side-by-side layout collapsed at narrow widths — thumbnail
+   canvas, edge labels visually detached from the squeezed pane). */
 .c4-explorer {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 400px;
-  gap: var(--s-4);
 }
 
 .c4-explorer-header {
@@ -195,6 +194,10 @@
   align-items: center;
   gap: var(--s-4);
   flex-wrap: wrap;
+  flex: 0 0 auto;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
 }
 
 /* The segmented level-tab group — a toggle button group (role="group" +
@@ -250,62 +253,97 @@
   color: var(--ink-fade);
 }
 
-/* Body: the canvas pane and the detail rail, side by side. */
+/* Body: the full-bleed canvas pane, with the lens pills and the detail
+   overlay floating above it. */
 .c4-explorer-body {
+  position: relative;
   display: flex;
-  gap: var(--s-5);
-  align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
 }
 
 .c4-explorer-pane {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--r-5);
 }
 
 .c4-explorer-pane .c4-diagram {
   flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 0;
 }
 
-/* ── Detail rail — click-to-select's destination ─────────────────────────── */
-.c4-detail-rail {
-  width: 300px;
-  flex: 0 0 auto;
+.c4-explorer-pane .c4-explorer-error,
+.c4-explorer-pane .c4-explorer-loading {
+  margin: var(--s-3) var(--s-4);
+}
+
+/* The lens pills (LOGICAL / DEPLOYMENT) float over the canvas TOP-CENTER —
+   enterprise HEAD's C4Toolbar places the lens toggle top-centre in the
+   shared floating group chrome (container level only; owner-review round —
+   the earlier top-LEFT slot came from the April-era verify-05 crop and is
+   where the diagram navigation belongs instead). */
+.c4-lens-overlay {
+  position: absolute;
+  top: var(--s-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--s-3);
   border: 1px solid var(--line);
-  border-radius: var(--r-5);
-  background: var(--bg-elevated);
+  border-radius: var(--r-4);
+  background: color-mix(in oklab, var(--bg) 95%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-3);
+}
+
+/* ── Detail rail — click-to-select's destination (A1: a dismissible overlay
+   panel docked to the canvas's right edge, mounted only while an element is
+   selected — enterprise DetailPanel-style, never a permanent column). ────── */
+.c4-detail-rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 80%;
+  z-index: 14;
+  border-left: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg-elevated) 94%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--sh-3);
   padding: var(--s-6);
-  align-self: stretch;
   overflow-y: auto;
 }
 
-.c4-detail-empty {
-  border: 1px dashed var(--line-2);
-  border-radius: var(--r-5);
-  padding: var(--s-8) var(--s-5);
-  text-align: center;
-}
-
-.c4-detail-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-fade);
-}
-
-.c4-detail-empty-copy {
-  font-size: 12.5px;
+.c4-rail-close {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-3);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--ink-muted);
-  line-height: 1.55;
-  margin: var(--s-3) 0 0;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.c4-rail-close:hover {
+  color: var(--ink);
+  background: var(--bg-soft);
+  border-color: var(--line);
 }
 
 /* The selected element's own accent, staged through the SAME raw-custom-

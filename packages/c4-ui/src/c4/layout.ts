@@ -17,36 +17,29 @@ import {
 // advisory — the projection never reads `PositionedEdge.route`. This
 // retires the enterprise dagre-fresh / seat-incremental placement paths.
 
-// Label-width estimate (px) for an edge's midpoint pill — the Enterprise
-// `autoLayout.ts` estimate (`ceil(length * 6.5 + 30)`) verbatim, so the
-// spacing this layer derives matches what the enterprise dagre engine
-// guaranteed by construction.
-function estimateEdgeLabelWidth(label: string | null): number {
-  if (label === null || label === '') return 0;
-  return Math.ceil(label.length * 6.5 + 30);
-}
-
-/**
- * Label-aware inter-layer gap for one view's edges — the Enterprise LR
- * `ranksep = max(120, maxLabelWidth + 60)` formula (S4 fix round, #120).
- * `@workspec/c4-layout` deliberately keeps a fixed label-unaware 80px
- * default (it has no rendering context to measure against), which lets a
- * midpoint label pill clip under the node cards it runs between; this
- * layer DOES know the pill rendering (screen-space 11px chip at the route
- * midpoint — `@workspec/canvas`'s ConnectorLayer and c4-ui's renderSvg
- * alike), so every layout call in the composed pipeline passes this value
- * through `LayoutDiagramOptions.layerSpacing`.
- */
-export function labelAwareLayerSpacing(
-  edges: readonly { readonly label: string | null }[],
-): number {
-  let maxLabelWidth = 0;
-  for (const edge of edges) {
-    const width = estimateEdgeLabelWidth(edge.label);
-    if (width > maxLabelWidth) maxLabelWidth = width;
-  }
-  return Math.max(120, maxLabelWidth + 60);
-}
+// Inter-layer spacing is deliberately NOT derived here (reverted, #134).
+// The S4 fix round (#120) added a `labelAwareLayerSpacing` helper copying
+// enterprise's LR `ranksep = max(120, maxLabelWidth + 60)` scalar, on the
+// theory that a wider corridor would make the midpoint label pills fit by
+// construction. It does not, and the docstring that claimed it did was
+// measurably false:
+//
+//   - Enterprise's dagre HALVES that ranksep (`makeSpaceForEdgeLabels`)
+//     and spends the difference on an injected label-proxy RANK that
+//     actually holds the labels. We ported the scalar without the rank,
+//     so the whole gap stays empty.
+//   - The pill is screen-space (fixed 11px / maxWidth:180 ⇒ 194x19 screen
+//     px) while the gap is page-space, so under fit-to-width the corridor
+//     asymptotes at ~270px only as the card title shrinks past legibility.
+//     No spacing value wins.
+//   - Measured on the dogfood container diagram: raising the gap 80 -> 422
+//     cost +72% bbox width, dropped fit 0.584 -> 0.339, and made pill-pill
+//     overlaps WORSE (26 -> 36 pairs).
+//
+// So the composed pipeline now passes no `layerSpacing` at all and takes
+// `@workspec/c4-layout`'s pinned 80px default. Readability at low zoom is
+// handled where it is actually solvable — level-of-detail on the card and
+// the edge labels (see `c4-node-component.tsx` / `connector-layer.tsx`).
 
 /**
  * The injectable layout seam: view + pins → node placements (top-left
@@ -64,17 +57,13 @@ export type C4LayoutFn = (
 
 /**
  * The default layout: elk positions merged with `.layout/` pins
- * (@workspec/c4-layout), with label-aware layer spacing (see
- * {@link labelAwareLayerSpacing}) and each node's resolved size carried
- * through for the projection.
+ * (@workspec/c4-layout), at that package's pinned inter-layer spacing,
+ * with each node's resolved size carried through for the projection.
  */
 export const elkC4Layout: C4LayoutFn = async (view, layout, direction) => {
   const positioned = await layoutDiagram(
     { nodes: view.nodes, edges: view.edges, layout },
-    {
-      layerSpacing: labelAwareLayerSpacing(view.edges),
-      ...(direction !== undefined ? { direction } : {}),
-    },
+    { ...(direction !== undefined ? { direction } : {}) },
   );
   const out: Record<string, NodePlacement> = {};
   for (const n of positioned.nodes) {

@@ -12,14 +12,14 @@ from the retired, never-published `@workspec/canvas-c4` package, ADR
 [i](../../docs/canvas/decisions/i-fold-canvas-c4-into-c4-ui.md)) supplies the
 `ResolvedDiagram` → shape projection, the enterprise C4 card chrome and the canonical
 spec-defaults style tables (this package's `style/spec-defaults.ts` is a re-export). The C4
-layer's API — `buildC4Shapes`, `projectC4Diagram`, `elkC4Layout`, `labelAwareLayerSpacing`,
+layer's API — `buildC4Shapes`, `projectC4Diagram`, `elkC4Layout`,
 `registerC4`, `buildCanvasSpec`, the `C4CanvasHost` bridge contract (+ `C4NodeMeta` and the
 shape types), the `c4node`/`c4boundary` modules and `C4NodeStatusSlot` — is exported from this
 package's index, so enterprise hosts consume the whole C4 surface from `@workspec/c4-ui` alone.
 The public props, interaction contract and a11y surface of both components are unchanged —
 consumers of the pre-S4 SVG renderer need no code changes; see `CHANGELOG.md` for the
-behavioural notes (camera replaces the stretch model, enterprise card/edge chrome, label-aware
-layer spacing).
+behavioural notes (camera replaces the stretch model, enterprise card/edge chrome,
+low-zoom level-of-detail).
 
 Components receive already-loaded data as props — there is no repository fetch, no global, no
 ambient theme. Load a model with `@workspec/c4-model`, lay it out with `@workspec/c4-layout`, and

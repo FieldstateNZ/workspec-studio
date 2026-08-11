@@ -12,6 +12,8 @@
 
 import type { C4FileSource } from '@workspec/c4-model';
 import type { McpToolProvider } from '@workspec/mcp-core';
+import { createMutationQueue } from './mutations/mutation-queue.js';
+import type { MutationQueue } from './mutations/mutation-queue.js';
 import { buildGetModelTool } from './mcp-tools/get-model-tool.js';
 import { buildImportAspireTool } from './mcp-tools/import-aspire-tool.js';
 import { buildRenderTool } from './mcp-tools/render-tool.js';
@@ -40,8 +42,19 @@ import { buildWriteLayoutTool } from './mcp-tools/write-layout-tool.js';
  * extra line — `createFsSource(dir)` — at the call site (`run-mcp.ts`,
  * `serve.ts`), exactly where `server.ts` already resolves `dir` and builds
  * its own `source` today.
+ *
+ * `writeQueue` exists for exactly one caller: `serve --mcp`, where this
+ * provider and the HTTP API run in ONE process over ONE tree and both write
+ * `.layout/` files. Passing the server's queue makes `write_layout`
+ * serialize against drag-to-pin and against every element/relation mutation
+ * that scrubs a pin. The default (a fresh queue) is right for `run-mcp.ts`,
+ * which is a standalone process — cross-PROCESS serialization would need a
+ * file lock and is deliberately not attempted here.
  */
-export function createC4McpProvider(source: C4FileSource): McpToolProvider {
+export function createC4McpProvider(
+  source: C4FileSource,
+  writeQueue: MutationQueue = createMutationQueue(),
+): McpToolProvider {
   return {
     namespace: 'c4',
     tools: [
@@ -49,7 +62,7 @@ export function createC4McpProvider(source: C4FileSource): McpToolProvider {
       buildValidateTool(source),
       buildRenderTool(source),
       buildImportAspireTool(source),
-      buildWriteLayoutTool(source),
+      buildWriteLayoutTool(source, writeQueue),
     ],
   };
 }

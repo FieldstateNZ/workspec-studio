@@ -1,0 +1,35 @@
+version: 1
+nodes:
+  decision-studio:
+    x: 0
+    y: 0
+  decision-ui:
+    x: 460
+    y: 0
+  decision-engine:
+    x: 920
+    y: 0
+  decision-schema:
+    x: 1380
+    y: 0
+  c4-studio:
+    x: 0
+    y: 340
+  c4-ui:
+    x: 460
+    y: 340
+  c4-layout:
+    x: 920
+    y: 340
+  c4-model:
+    x: 1380
+    y: 340
+  site:
+    x: 0
+    y: 680
+  mf-host:
+    x: 460
+    y: 680
+  c4-schema:
+    x: 1380
+    y: 680

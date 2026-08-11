@@ -9,13 +9,15 @@
 // engine camera (shape-wrapper transforms).
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
 import { Layout, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
 import type { C4Model, ResolvedDiagram } from '@workspec/c4-model';
 import { THEME_TOKENS } from '@workspec/design';
+import type { CanvasStoreInstance } from '@workspec/canvas';
 import { C4Diagram } from './c4-diagram.js';
+import { nodeShapeId } from './c4/index.js';
 import { elementKey } from './element-key.js';
 import type { C4StudioHost } from './host.js';
 import { firePointer } from './test-helpers/fire-pointer.js';
@@ -42,7 +44,10 @@ function readOnlyHost(): C4StudioHost {
 }
 
 /** The node's page-centre — where a pointer gesture must land to hit it (identity camera, zero rects). */
-function centerOf(diagram: PositionedDiagram, nodeId: string): { clientX: number; clientY: number } {
+function centerOf(
+  diagram: PositionedDiagram,
+  nodeId: string,
+): { clientX: number; clientY: number } {
   const node = diagram.nodes.find((n) => n.nodeId === nodeId);
   if (!node) throw new Error(`node ${nodeId} missing`);
   return { clientX: node.x + node.width / 2, clientY: node.y + node.height / 2 };
@@ -619,5 +624,321 @@ describe('C4Diagram — pan/zoom/keyboard (the enterprise camera)', () => {
     const outer = container.querySelector('.c4-diagram') as HTMLElement;
     fireEvent.wheel(outer, { deltaY: -100, clientX: 100, clientY: 100 });
     expect(firstTransform(container)).toContain('scale(1.2)');
+  });
+});
+
+describe('C4Diagram — opt-in canvas chrome (A1, #131: grid / zoom / minimap)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('mounts NO chrome by default — the pre-A1 DOM (goldens/embeds byte-unchanged)', async () => {
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
+
+    expect(container.querySelector('svg pattern')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Zoom in' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Fit view' })).toBeNull();
+    expect(container.querySelector('svg[width="192"]')).toBeNull();
+  });
+
+  it('backgroundVariant="dots" mounts the Background dot grid beneath the layers', async () => {
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} backgroundVariant="dots" />,
+    );
+
+    expect(container.querySelectorAll('svg pattern circle').length).toBeGreaterThan(0);
+  });
+
+  it('backgroundVariant="lines" mounts the line grid variant', async () => {
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} backgroundVariant="lines" />,
+    );
+
+    const patterns = container.querySelectorAll('svg pattern');
+    expect(patterns.length).toBeGreaterThan(0);
+    expect(container.querySelector('svg pattern circle')).toBeNull();
+    expect(container.querySelectorAll('svg pattern path').length).toBeGreaterThan(0);
+  });
+
+  it('showZoomControls mounts the shared zoom cluster and its buttons drive the camera', async () => {
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} showZoomControls />,
+    );
+
+    // All four controls present…
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fit view' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset zoom to 100%' })).toBeInTheDocument();
+    // …and they are LIVE against this diagram's camera. jsdom rects are
+    // zero, so the measured viewport is 0×0 and zoom-in no-ops by contract
+    // (no measurable rect = no-op) — assert the wiring instead through the
+    // % readout, which reflects the store camera.
+    const readout = screen.getByRole('button', { name: 'Reset zoom to 100%' });
+    expect(readout.textContent).toBe('100%');
+    const outer = container.querySelector('.c4-diagram') as HTMLElement;
+    fireEvent.keyDown(outer, { key: '+' });
+    expect(readout.textContent).toBe('120%');
+  });
+
+  it('showMinimap mounts the shared minimap once the canvas measures a viewport, dotted per element kind', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} showMinimap />);
+
+    const panelSvg = container.querySelector('svg[width="192"]');
+    expect(panelSvg).not.toBeNull();
+    // One dot per node (the context fixture's nodes; connectors excluded),
+    // coloured by ELEMENT kind via the C4 kind resolver — the actor dot
+    // carries the actor accent token, not a flat default.
+    const dots = panelSvg?.querySelectorAll('rect[fill^="var(--el-"]') ?? [];
+    expect(dots.length).toBe(diagram.nodes.length);
+  });
+});
+
+describe('C4Diagram — minimap default-off, proven against a MEASURED viewport (A1 review: anti-vacuous)', () => {
+  // The sibling "mounts NO chrome by default" case asserts the minimap is
+  // absent under jsdom's all-zero rects — but the Minimap self-gates on a
+  // non-zero measured viewport, so that assertion holds even if the
+  // default flipped to `true`. A mutation probe confirmed it: flipping
+  // `showMinimap = false` to `true` left the whole suite green (only the
+  // apps/parity browser goldens, which have real rects, caught it). This
+  // case mocks a real box FIRST, so the minimap WOULD mount if the default
+  // were on — it is the assertion that dies on a default flip.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function mockMeasuredViewport(): void {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON: () => ({}),
+    } as DOMRect);
+  }
+
+  it('mounts no minimap with a measured 800×600 viewport and showMinimap omitted', async () => {
+    mockMeasuredViewport();
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
+
+    expect(container.querySelector('svg[width="192"]')).toBeNull();
+  });
+
+  it('…and the SAME measured viewport does mount it with showMinimap — the control for the case above', async () => {
+    mockMeasuredViewport();
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} showMinimap />);
+
+    expect(container.querySelector('svg[width="192"]')).not.toBeNull();
+  });
+
+  it('showMinimap={false} is explicitly off under the same measured viewport', async () => {
+    mockMeasuredViewport();
+    const { resolved, diagram } = await loadContext();
+    const { container } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} showMinimap={false} />,
+    );
+
+    expect(container.querySelector('svg[width="192"]')).toBeNull();
+  });
+});
+
+describe('C4Diagram — onCanvasReady instance exposure (A1 review seam; A2 installs its host here)', () => {
+  it('fires exactly once per mount with the live CanvasStoreInstance, already projected', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onCanvasReady = vi.fn();
+    const { rerender } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onCanvasReady={onCanvasReady} />,
+    );
+
+    expect(onCanvasReady).toHaveBeenCalledTimes(1);
+    const instance = onCanvasReady.mock.calls[0]?.[0] as CanvasStoreInstance;
+    // A LIVE instance, not a snapshot: it carries this diagram's projected
+    // shapes (so a host installed here can read/write them immediately).
+    expect(Object.keys(instance.getState().shapes).length).toBeGreaterThan(0);
+
+    // A re-render with unchanged props does NOT re-fire — the instance is
+    // created once per mount and never replaced.
+    rerender(<C4Diagram diagram={diagram} resolved={resolved} onCanvasReady={onCanvasReady} />);
+    expect(onCanvasReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('the exposed instance is the one the component renders — installing a host arms the delete gesture', async () => {
+    const { resolved, diagram } = await loadContext();
+    let captured: CanvasStoreInstance | null = null;
+    const deleteShapes = vi.fn(() => false);
+    const { container } = render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        onCanvasReady={(instance) => {
+          captured = instance;
+          instance.host = { deleteShapes };
+        }}
+      />,
+    );
+    expect(captured).not.toBeNull();
+
+    // Delete is host-gated (see `onContainerKeyDown`): with the host this
+    // callback installed, a selected node's Delete now reaches it.
+    const target = diagram.nodes[0];
+    if (!target) throw new Error('fixture has no nodes');
+    (captured as unknown as CanvasStoreInstance)
+      .getState()
+      .select([nodeShapeId(target.nodeId)], 'replace');
+    const outer = container.querySelector('.c4-diagram') as HTMLElement;
+    fireEvent.keyDown(outer, { key: 'Delete' });
+
+    expect(deleteShapes).toHaveBeenCalledOnce();
+  });
+
+  it('omitting onCanvasReady leaves the host un-armed — Delete stays inert for golden/embed renders', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        selectedNodeId={diagram.nodes[0]?.nodeId ?? null}
+        onSelect={onSelect}
+      />,
+    );
+
+    const outer = container.querySelector('.c4-diagram') as HTMLElement;
+    fireEvent.keyDown(outer, { key: 'Delete' });
+
+    // No host ⇒ the key falls through: no clear-selection side effect.
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+describe('C4Diagram — cameraFitKey gates the camera fit (A2 review: re-project always, re-frame only on a view change)', () => {
+  // Zero jsdom rects make `fitCamera` return the identity camera, which
+  // would make every assertion here indistinguishable from "nothing
+  // happened". Give the canvas a real 800×600 box.
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON: () => ({}),
+    } as DOMRect);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Where the user parked the viewport — nothing `fitCamera` would return for this fixture. */
+  const PARKED = { x: 137, y: -42, zoom: 0.61 };
+
+  /** A new `PositionedDiagram` OBJECT carrying identical content — what a post-edit model refresh hands back. */
+  function sameContentCopy(diagram: PositionedDiagram): PositionedDiagram {
+    return { nodes: [...diagram.nodes], edges: [...diagram.edges] };
+  }
+
+  it('a new diagram object under the SAME key re-projects the shapes but leaves the camera alone', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onCanvasReady = vi.fn();
+    const { rerender } = render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        cameraFitKey="context|logical|LR"
+        onCanvasReady={onCanvasReady}
+      />,
+    );
+    const instance = onCanvasReady.mock.calls[0]?.[0] as CanvasStoreInstance;
+    const fitted = instance.getState().camera;
+    expect(fitted).not.toEqual(PARKED); // the camera assertion below discriminates
+    instance.getState().setCamera(PARKED);
+    const shapesBefore = instance.getState().shapes;
+
+    rerender(
+      <C4Diagram
+        diagram={sameContentCopy(diagram)}
+        resolved={resolved}
+        cameraFitKey="context|logical|LR"
+        onCanvasReady={onCanvasReady}
+      />,
+    );
+
+    // Re-projected (a fresh shape record)…
+    expect(instance.getState().shapes).not.toBe(shapesBefore);
+    // …but NOT re-framed, and still the same instance.
+    expect(instance.getState().camera).toEqual(PARKED);
+    expect(onCanvasReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('a CHANGED key re-frames within the same mount — navigation still fits', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onCanvasReady = vi.fn();
+    const { rerender } = render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        cameraFitKey="context|logical|LR"
+        onCanvasReady={onCanvasReady}
+      />,
+    );
+    const instance = onCanvasReady.mock.calls[0]?.[0] as CanvasStoreInstance;
+    const fitted = instance.getState().camera;
+    instance.getState().setCamera(PARKED);
+
+    rerender(
+      <C4Diagram
+        diagram={sameContentCopy(diagram)}
+        resolved={resolved}
+        cameraFitKey="context|deployment|LR"
+        onCanvasReady={onCanvasReady}
+      />,
+    );
+
+    expect(instance.getState().camera).toEqual(fitted);
+  });
+
+  it('OMITTING cameraFitKey keeps the pre-A2 always-fit behaviour — every new diagram identity re-frames', async () => {
+    const { resolved, diagram } = await loadContext();
+    const onCanvasReady = vi.fn();
+    const { rerender } = render(
+      <C4Diagram diagram={diagram} resolved={resolved} onCanvasReady={onCanvasReady} />,
+    );
+    const instance = onCanvasReady.mock.calls[0]?.[0] as CanvasStoreInstance;
+    const fitted = instance.getState().camera;
+    instance.getState().setCamera(PARKED);
+
+    rerender(
+      <C4Diagram
+        diagram={sameContentCopy(diagram)}
+        resolved={resolved}
+        onCanvasReady={onCanvasReady}
+      />,
+    );
+
+    expect(instance.getState().camera).toEqual(fitted);
   });
 });

@@ -17,7 +17,6 @@ import {
 import {
   buildC4Shapes,
   buildCanvasSpec,
-  labelAwareLayerSpacing,
   nodeShapeId,
   registerC4,
   C4Diagram,
@@ -279,12 +278,10 @@ const FacadeScene: FC<{ resolved: ResolvedDiagram; theme: Theme }> = ({ resolved
   useEffect(() => {
     const view = resolved.view;
     if (!view) return;
-    void layoutDiagram(
-      { nodes: view.nodes, edges: view.edges, layout: null },
-      // The composed pipeline's label-aware spacing (S4 fix round) — this
-      // fixture must lay out exactly the way the dogfood surfaces do.
-      { layerSpacing: labelAwareLayerSpacing(view.edges) },
-    ).then(setPositioned);
+    // No `layerSpacing` override — this fixture must lay out exactly the
+    // way the dogfood surfaces do, and those now take c4-layout's pinned
+    // default (the #120 widening was reverted in #134).
+    void layoutDiagram({ nodes: view.nodes, edges: view.edges, layout: null }).then(setPositioned);
   }, [resolved]);
   if (!positioned) return <div data-loading>laying out…</div>;
   return (

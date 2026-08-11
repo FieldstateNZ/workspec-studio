@@ -12,7 +12,7 @@
 
 import type { C4Model, ResolvedDiagram, ResolvedDiagramView } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
-import { labelAwareLayerSpacing, renderSvg } from '@workspec/c4-ui';
+import { renderSvg } from '@workspec/c4-ui';
 import type { ThemeName } from '@workspec/c4-ui';
 
 export interface RenderDiagramOptions {
@@ -49,10 +49,6 @@ export async function renderDiagramToSvg(
       edges: view.edges,
       layout: diagram.layout?.data ?? null,
     },
-    // Label-aware layer spacing (S4 fix round, #120): the rendered midpoint
-    // label pills must fit the inter-layer gap by construction — the same
-    // spacing C4Explorer's interactive layout passes.
-    { layerSpacing: labelAwareLayerSpacing(view.edges) },
   );
   const svg = renderSvg(positioned, {
     spec: model.spec.data,

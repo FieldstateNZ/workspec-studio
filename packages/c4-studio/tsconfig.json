@@ -20,6 +20,7 @@
   // package.json "types" fields advertise, which is what lets tsc map the
   // imports back to source.
   "references": [
+    { "path": "../canvas/tsconfig.build.json" },
     { "path": "../c4-schema/tsconfig.build.json" },
     { "path": "../c4-model/tsconfig.build.json" },
     { "path": "../c4-layout/tsconfig.build.json" },
