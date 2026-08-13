@@ -3,14 +3,7 @@
 // port, so swapping FsRepository (server) for HttpRepository (browser) needs no
 // change to any view. Client → HTTP → Express → FsRepository → working tree.
 
-import type {
-  Catalog,
-  CatalogRef,
-  Decision,
-  DecisionRef,
-  DecisionRepositoryPort,
-  Ref,
-} from '@workspec/decision-schema';
+import type { Decision, DecisionRef, DecisionRepositoryPort, Ref } from '@workspec/decision-schema';
 
 async function fail(response: Response): Promise<never> {
   let detail = response.statusText;
@@ -52,17 +45,5 @@ export class HttpRepository implements DecisionRepositoryPort {
 
   writeDecision(ref: Ref, decision: Decision): Promise<void> {
     return this.put(`/api/decision?ref=${encodeURIComponent(ref)}`, decision);
-  }
-
-  listCatalogs(): Promise<CatalogRef[]> {
-    return this.getJson('/api/catalogs');
-  }
-
-  readCatalog(ref: Ref): Promise<Catalog> {
-    return this.getJson(`/api/catalog?ref=${encodeURIComponent(ref)}`);
-  }
-
-  writeCatalog(ref: Ref, catalog: Catalog): Promise<void> {
-    return this.put(`/api/catalog?ref=${encodeURIComponent(ref)}`, catalog);
   }
 }

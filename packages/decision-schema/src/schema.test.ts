@@ -32,31 +32,11 @@ function makeDecision(): Record<string, unknown> {
     metadata: { slug: 'dec' },
     spec: {
       title: 'T',
-      status: 'exploring',
+      status: 'proposed',
       context: 'ctx',
-      catalog: 'x',
-      currency: 'NZD',
-      environments: ['dev', 'prod'],
-      criteria: [{ id: 'cost', label: 'Cost', weight: 1 }],
-      options: [
-        {
-          id: 'a',
-          name: 'A',
-          environments: ['dev', 'prod'],
-          lines: [{ id: 'l1', label: 'L1', flat: true, amount: { dev: 10, prod: 20 } }],
-          scores: { cost: { score: 3 } },
-        },
-      ],
+      decision: 'Choose A.',
     },
   };
-}
-
-/** Mutate the (single) option of a decision produced by `makeDecision`. */
-function withOption(mutate: (opt: Record<string, unknown>) => void): unknown {
-  const doc = makeDecision();
-  const spec = doc.spec as { options: Record<string, unknown>[] };
-  mutate(must(spec.options[0]));
-  return doc;
 }
 
 describe('identifier', () => {
@@ -157,67 +137,33 @@ describe('Lever', () => {
   });
 });
 
-describe('DecisionArtifact cross-field integrity', () => {
+describe('DecisionArtifact core record', () => {
   it('parses a minimal valid decision', () => {
     expect(DecisionArtifact.safeParse(makeDecision()).success).toBe(true);
   });
 
-  it('rejects an option environment not declared on the decision', () => {
-    const doc = withOption((opt) => {
-      opt.environments = ['dev', 'staging'];
-    });
-    const res = DecisionArtifact.safeParse(doc);
-    expect(res.success).toBe(false);
-    if (!res.success) {
-      expect(must(res.error.issues[0]).path).toEqual(['spec', 'options', 0, 'environments', 1]);
-    }
-  });
-
-  it('rejects a per-env line key not declared on the decision', () => {
-    const doc = withOption((opt) => {
-      must((opt.lines as { amount: Record<string, number> }[])[0]).amount = {
-        dev: 10,
-        staging: 5,
-      };
-    });
-    const res = DecisionArtifact.safeParse(doc);
-    expect(res.success).toBe(false);
-    if (!res.success) {
-      expect(res.error.issues.some((i) => i.path.at(-1) === 'staging')).toBe(true);
-    }
-  });
-
-  it('rejects a score for an undeclared criterion', () => {
-    const doc = withOption((opt) => {
-      opt.scores = { cost: { score: 3 }, nope: { score: 1 } };
-    });
-    const res = DecisionArtifact.safeParse(doc);
-    expect(res.success).toBe(false);
-    if (!res.success) {
-      expect(res.error.issues.some((i) => i.path.at(-1) === 'nope')).toBe(true);
-    }
-  });
-
-  it('rejects an outcome that references an unknown option', () => {
+  it('rejects legacy analysis fields instead of silently stripping them', () => {
     const doc = makeDecision();
-    (doc.spec as { outcome?: unknown }).outcome = {
-      option: 'ghost',
-      rationale: 'because',
-    };
+    (doc.spec as { catalog?: string }).catalog = 'legacy';
     const res = DecisionArtifact.safeParse(doc);
     expect(res.success).toBe(false);
-    if (!res.success) {
-      expect(must(res.error.issues[0]).path).toEqual(['spec', 'outcome', 'option']);
-    }
   });
 
-  it('accepts a well-formed decided outcome', () => {
+  it('accepts graph links and supporting references', () => {
     const doc = makeDecision();
-    (doc.spec as { status: string }).status = 'decided';
-    (doc.spec as { outcome?: unknown }).outcome = {
-      option: 'a',
-      rationale: 'we accept X for Y',
-    };
+    Object.assign(doc.spec as object, {
+      links: [{ container: '~/containers/api.yaml' }],
+      references: [{ kind: 'issue', target: 'https://example.com/issues/1' }],
+    });
     expect(DecisionArtifact.safeParse(doc).success).toBe(true);
+  });
+
+  it('rejects malformed link refs and malformed dates', () => {
+    const badLink = makeDecision();
+    Object.assign(badLink.spec as object, { links: [{ container: 'banana' }] });
+    expect(DecisionArtifact.safeParse(badLink).success).toBe(false);
+    const badDate = makeDecision();
+    Object.assign(badDate.spec as object, { created: '13/08/2026' });
+    expect(DecisionArtifact.safeParse(badDate).success).toBe(false);
   });
 });

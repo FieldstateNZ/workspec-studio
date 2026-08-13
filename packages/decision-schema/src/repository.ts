@@ -10,9 +10,7 @@
 // `MemoryRepository` is the in-memory test double that UI component tests
 // (S4/S5) run against — factory-built, never a shared mutable fixture.
 
-import { CatalogArtifact } from './catalog.js';
 import { DecisionArtifact } from './decision.js';
-import type { Catalog } from './catalog.js';
 import type { Decision } from './decision.js';
 
 /**
@@ -33,20 +31,9 @@ export interface DecisionRef {
 }
 
 /** A catalog list entry: its ref plus enough identity to render a picker. */
-export interface CatalogRef {
-  /** The opaque ref to pass back to `readCatalog`/`writeCatalog`. */
-  ref: Ref;
-  /** The catalog's `metadata.slug`, when the artifact carries one explicitly. */
-  slug?: string;
-  /** The catalog's `spec.name`, when known. */
-  title?: string;
-}
-
 /**
- * The storage port. **Exactly six methods** — three per artifact kind. Any
- * implementation (filesystem, in-memory, graph-backed) provides these and only
- * these; extending the port is a deliberate cross-cutting change, not a local
- * one.
+ * The core Decision storage port. Git provides history and review; this port
+ * only discovers, reads, and writes repository-native Decision records.
  */
 export interface DecisionRepositoryPort {
   /** List every decision artifact the repository can see. */
@@ -55,12 +42,6 @@ export interface DecisionRepositoryPort {
   readDecision(ref: Ref): Promise<Decision>;
   /** Validate + persist a decision at ref. Rejects if invalid. */
   writeDecision(ref: Ref, decision: Decision): Promise<void>;
-  /** List every catalog artifact the repository can see. */
-  listCatalogs(): Promise<CatalogRef[]>;
-  /** Read + validate a catalog by ref. Rejects if missing or invalid. */
-  readCatalog(ref: Ref): Promise<Catalog>;
-  /** Validate + persist a catalog at ref. Rejects if invalid. */
-  writeCatalog(ref: Ref, catalog: Catalog): Promise<void>;
 }
 
 /** The exact method names of the port, as a runtime-checkable tuple. */
@@ -68,17 +49,12 @@ export const DECISION_REPOSITORY_METHODS = [
   'listDecisions',
   'readDecision',
   'writeDecision',
-  'listCatalogs',
-  'readCatalog',
-  'writeCatalog',
 ] as const;
 
 /** Seed data for {@link createMemoryRepository}. Both maps are keyed by ref. */
 export interface MemoryRepositorySeed {
   /** Decisions to preload, keyed by the ref they are stored under. */
   decisions?: Record<Ref, Decision>;
-  /** Catalogs to preload, keyed by the ref they are stored under. */
-  catalogs?: Record<Ref, Catalog>;
 }
 
 function cloneJson<T>(value: T): T {
@@ -95,16 +71,6 @@ function validateDecision(ref: Ref, decision: Decision): Decision {
   return result.data;
 }
 
-function validateCatalog(ref: Ref, catalog: Catalog): Catalog {
-  const result = CatalogArtifact.safeParse(catalog);
-  if (!result.success) {
-    const first = result.error.issues[0];
-    const where = first ? `${first.path.join('.') || '<root>'}: ${first.message}` : 'invalid';
-    throw new Error(`MemoryRepository: invalid catalog at "${ref}" (${where})`);
-  }
-  return result.data;
-}
-
 /**
  * Build an in-memory {@link DecisionRepositoryPort} — the UI test double.
  *
@@ -115,13 +81,9 @@ function validateCatalog(ref: Ref, catalog: Catalog): Catalog {
  */
 export function createMemoryRepository(seed: MemoryRepositorySeed = {}): DecisionRepositoryPort {
   const decisions = new Map<Ref, Decision>();
-  const catalogs = new Map<Ref, Catalog>();
 
   for (const [ref, decision] of Object.entries(seed.decisions ?? {})) {
     decisions.set(ref, cloneJson(validateDecision(ref, decision)));
-  }
-  for (const [ref, catalog] of Object.entries(seed.catalogs ?? {})) {
-    catalogs.set(ref, cloneJson(validateCatalog(ref, catalog)));
   }
 
   return {
@@ -144,30 +106,6 @@ export function createMemoryRepository(seed: MemoryRepositorySeed = {}): Decisio
     writeDecision(ref: Ref, decision: Decision): Promise<void> {
       try {
         decisions.set(ref, cloneJson(validateDecision(ref, decision)));
-        return Promise.resolve();
-      } catch (error) {
-        return Promise.reject(error as Error);
-      }
-    },
-    listCatalogs(): Promise<CatalogRef[]> {
-      return Promise.resolve(
-        [...catalogs.entries()].map(([ref, catalog]) => ({
-          ref,
-          ...(catalog.metadata.slug !== undefined ? { slug: catalog.metadata.slug } : {}),
-          ...(catalog.spec.name !== undefined ? { title: catalog.spec.name } : {}),
-        })),
-      );
-    },
-    readCatalog(ref: Ref): Promise<Catalog> {
-      const catalog = catalogs.get(ref);
-      if (catalog === undefined) {
-        return Promise.reject(new Error(`MemoryRepository: no catalog at "${ref}"`));
-      }
-      return Promise.resolve(cloneJson(catalog));
-    },
-    writeCatalog(ref: Ref, catalog: Catalog): Promise<void> {
-      try {
-        catalogs.set(ref, cloneJson(validateCatalog(ref, catalog)));
         return Promise.resolve();
       } catch (error) {
         return Promise.reject(error as Error);

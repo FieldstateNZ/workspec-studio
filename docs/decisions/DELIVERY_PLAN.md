@@ -1,5 +1,9 @@
 # WorkSpec Decision Studio — Delivery Plan
 
+> **Historical delivery plan.** This records the original cost-analysis studio. Decision records
+> now use the lean canonical ADR schema; pricing, criteria, evidence, and recommendation are
+> separate higher-order concerns.
+
 **Owner:** Fieldstate Dev Lead · **Status:** Draft for sign-off · **Date:** 2026-07-04
 **Branch:** `claude/fieldstate-delivery-plan-fslm6l`
 

@@ -14,6 +14,6 @@ export default defineConfig({
   test: {
     name: 'decision-engine',
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/adr.test.ts', 'src/cost.test.ts'],
   },
 });

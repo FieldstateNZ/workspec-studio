@@ -1,5 +1,5 @@
 // The localhost host shell's HTTP server. A thin Express app over `FsRepository`:
-// list / read / write decisions and catalogs, plus static serving of the built
+// list / read / write Decision records, plus static serving of the built
 // Vite client. Writes are Zod-validated (reusing the schema) before they reach
 // the repository, so a malformed PUT is rejected with located issues, never
 // written. Refs are repo-root-relative POSIX paths; traversal outside the served
@@ -11,14 +11,14 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import type { Express, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { CatalogArtifact, DecisionArtifact } from '@workspec/decision-schema';
+import { DecisionArtifact } from '@workspec/decision-schema';
 import { assembleMcpServer, isSafeRelativeRef, mountMcpHttp } from '@workspec/mcp-core';
 import type { McpToolProvider } from '@workspec/mcp-core';
 import { ArtifactValidationError, FsRepository, RefEscapesRootError } from './fs-repository.js';
 
 /** Options for {@link createServer}. */
 export interface CreateServerOptions {
-  /** Root containing `.workspec/{decisions,catalogs}/` artifacts to serve. */
+  /** Root containing `.workspec/decisions/` artifacts to serve. */
   dir: string;
   /**
    * Directory of the built Vite client to serve at `/`. Defaults to the
@@ -167,48 +167,6 @@ export function createServer(options: CreateServerOptions): Express {
     }
     repo
       .writeDecision(ref, parsed.data)
-      .then(() => res.status(204).end())
-      .catch((error: unknown) => {
-        if (sendIfRefEscapes(res, error)) return;
-        sendInternalError(res, error, ref);
-      });
-  });
-
-  app.get('/api/catalogs', (_req, res) => {
-    repo
-      .listCatalogs()
-      .then((list) => res.json(list))
-      .catch((error: unknown) => sendInternalError(res, error));
-  });
-
-  app.get('/api/catalog', (req, res) => {
-    const ref = refFrom(req);
-    if (ref === undefined) {
-      res.status(400).json({ error: 'missing or invalid ref' });
-      return;
-    }
-    repo
-      .readCatalog(ref)
-      .then((catalog) => res.json(catalog))
-      .catch((error: unknown) => sendReadError(res, error, ref));
-  });
-
-  app.put('/api/catalog', (req, res) => {
-    const ref = refFrom(req);
-    if (ref === undefined) {
-      res.status(400).json({ error: 'missing or invalid ref' });
-      return;
-    }
-    const parsed = CatalogArtifact.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'invalid catalog',
-        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
-      });
-      return;
-    }
-    repo
-      .writeCatalog(ref, parsed.data)
       .then(() => res.status(204).end())
       .catch((error: unknown) => {
         if (sendIfRefEscapes(res, error)) return;

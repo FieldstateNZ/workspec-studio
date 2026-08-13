@@ -1,82 +1,38 @@
-// Shared test helpers (not part of the published surface — never imported from
-// `index.ts`, so tsup does not bundle it). Loads the real hosting-platform example
-// artifacts from disk and seeds a factory-built MemoryRepository, so component
-// tests assert against the same golden data the engine snapshot locks.
-
 import { render } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import {
-  createMemoryRepository,
-  parseCatalogYaml,
-  parseDecisionYaml,
-} from '@workspec/decision-schema';
-import type { Catalog, Decision, DecisionRepositoryPort } from '@workspec/decision-schema';
-// The real example artifacts, imported as raw strings (Vite `?raw`) so tests run
-// against the same golden data the engine snapshot locks — no filesystem access.
-// The fixtures moved under `.workspec/<type-dir>/<slug>.yaml` (S3's directory-walk
-// discovery convention) when the decision family migrated onto schema-core.
-import hostingDecisionYaml from '../../../examples/hosting-platform/.workspec/decisions/hosting-platform.yaml?raw';
-import hostingCatalogYaml from '../../../examples/hosting-platform/.workspec/catalogs/platform.yaml?raw';
+import { createMemoryRepository } from '@workspec/decision-schema';
+import type { Decision, DecisionRepositoryPort } from '@workspec/decision-schema';
 import { DecisionStudioProvider } from './context.js';
-import { createInertLinkResolver } from './host.js';
-import type { DecisionStudioHost, LinkResolver } from './host.js';
-import type { ThemeName } from './themes.js';
+import type { DecisionStudioHost } from './host.js';
 
-/** The stable refs the hosting-platform memory repository is seeded under. */
-export const HOSTING_DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
-export const HOSTING_CATALOG_REF = '.workspec/catalogs/platform.yaml';
-
-/** Parse the hosting-platform decision from the example file (throws on any schema error). */
-export function loadHostingDecision(): Decision {
-  const parsed = parseDecisionYaml(hostingDecisionYaml);
-  if (!parsed.ok)
-    throw new Error(`hosting-platform decision fixture invalid: ${parsed.errors[0]?.message}`);
-  return parsed.data;
-}
-
-/** Parse the hosting-platform catalog from the example file. */
-export function loadHostingCatalog(): Catalog {
-  const parsed = parseCatalogYaml(hostingCatalogYaml);
-  if (!parsed.ok)
-    throw new Error(`hosting-platform catalog fixture invalid: ${parsed.errors[0]?.message}`);
-  return parsed.data;
-}
-
-/** A factory-built MemoryRepository seeded with the hosting-platform decision + catalog. */
-export function createHostingRepository(): DecisionRepositoryPort {
-  return createMemoryRepository({
-    decisions: { [HOSTING_DECISION_REF]: loadHostingDecision() },
-    catalogs: { [HOSTING_CATALOG_REF]: loadHostingCatalog() },
-  });
-}
-
-/** Build a host over a repository, defaulting to the inert link resolver. */
-export function createTestHost(
-  repository: DecisionRepositoryPort,
-  overrides: Partial<DecisionStudioHost> = {},
-): DecisionStudioHost {
-  return {
-    repository,
-    links: createInertLinkResolver(),
-    capabilities: { editCatalog: false, decide: false },
-    ...overrides,
-  };
-}
-
-/** Render `ui` inside a provider over `host`, with a fresh theme. */
-export function renderWithHost(
-  ui: ReactElement,
-  options: { host: DecisionStudioHost; theme?: ThemeName } = {
-    host: createTestHost(createHostingRepository()),
+export const DECISION_REF = '.workspec/decisions/database.yaml';
+export const CORE_DECISION: Decision = {
+  apiVersion: 'workspec.io/v1alpha1',
+  kind: 'Decision',
+  metadata: { slug: 'database' },
+  spec: {
+    title: 'Choose the primary database',
+    status: 'accepted',
+    created: '2026-08-01',
+    decided: '2026-08-03',
+    context: 'The service needs a durable transactional store.',
+    decision: 'Use PostgreSQL as the primary database.',
+    rationale: 'It fits the relational workload and the team already operates it.',
+    consequences: ['Schema migrations become part of every release.'],
+    alternatives: [{ title: 'Document database', reason: 'Weaker fit for relational queries.' }],
+    tags: ['architecture'],
   },
-): RenderResult {
-  return render(
-    <DecisionStudioProvider host={options.host} theme={options.theme}>
-      {ui}
-    </DecisionStudioProvider>,
-  );
+};
+
+export function createTestRepository(): DecisionRepositoryPort {
+  return createMemoryRepository({ decisions: { [DECISION_REF]: CORE_DECISION } });
 }
 
-export { createInertLinkResolver };
-export type { LinkResolver };
+export function createTestHost(repository = createTestRepository()): DecisionStudioHost {
+  return { repository, capabilities: { editDecision: true } };
+}
+
+export function renderWithHost(ui: ReactElement, host = createTestHost()): RenderResult {
+  return render(<DecisionStudioProvider host={host}>{ui}</DecisionStudioProvider>);
+}

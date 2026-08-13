@@ -1,5 +1,5 @@
-// The Decision Studio CLI — a small, extensible subcommand skeleton. S4 adds
-// `serve` as the default; for now it ships `validate` and `render-adr`.
+// The Decision Studio CLI: serve, validate, render ADRs, or expose the same
+// repository operations to agents over MCP.
 //
 // `run(argv, io)` is the testable entry point: it returns a process exit code
 // and writes through an injectable IO (defaulting to the real streams), so tests
@@ -9,7 +9,7 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import type { Catalog, Decision, ParseIssue } from '@workspec/decision-schema';
+import type { Decision, ParseIssue } from '@workspec/decision-schema';
 import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
 import { collectDiagnostics } from './collect-diagnostics.js';
 import { formatDiagnostic } from './format-diagnostic.js';
@@ -28,14 +28,14 @@ const defaultIO: CliIO = {
   err: (text) => process.stderr.write(text),
 };
 
-const HELP = `workspec-decisions — costed architecture decisions from your working tree
+const HELP = `workspec-decisions — repository-native architecture decisions
 
 Usage:
   workspec-decisions [command] [options]
 
 Commands:
   serve        Run the localhost host shell over a directory (DEFAULT command).
-  validate     Validate every decision + catalog under a directory (CI-friendly).
+  validate     Validate every Decision under a directory (CI-friendly).
   render-adr   Render a decision to a deterministic Markdown ADR.
   mcp          Run the decisions MCP server over stdio.
 
@@ -52,9 +52,8 @@ Options:
   --dir <path>   Directory to scan (default: current directory).
   --json         Also print the diagnostics array as JSON to stdout.
 
-Zod-validates every artifact under .workspec/decisions and .workspec/catalogs,
-then checks each decision's authored SKU-line references against its catalog. Dangling
-references inside levers are reported as (non-fatal) warnings. Prints
+Validates every artifact under .workspec/decisions and checks authored
+supersession refs. Prints
 "file:line:col: message" diagnostics and exits non-zero on any error.
 `;
 
@@ -120,28 +119,22 @@ async function runValidate(argv: string[], io: CliIO): Promise<number> {
   // the diagnostics list (which only has entries for problems), so it's
   // computed from the same discovery `collectDiagnostics` uses internally —
   // a second, cheap directory walk, not a second validation pass.
-  const [catalogs, decisions, diagnostics] = await Promise.all([
-    repo.listCatalogs(),
+  const [decisions, diagnostics] = await Promise.all([
     repo.listDecisions(),
     collectDiagnostics(repo),
   ]);
-  const fileCount = catalogs.length + decisions.length;
+  const fileCount = decisions.length;
 
   for (const diagnostic of diagnostics) io.err(formatDiagnostic(diagnostic));
 
   if (json) io.out(`${JSON.stringify(diagnostics)}\n`);
 
   const errorCount = diagnostics.filter((d) => d.severity === 'error').length;
-  const warningCount = diagnostics.filter((d) => d.severity === 'warning').length;
-
   if (errorCount === 0) {
-    const suffix = warningCount > 0 ? `, ${warningCount} warning(s)` : '';
-    io.err(`validate: ${fileCount} artifact(s) OK${suffix}\n`);
+    io.err(`validate: ${fileCount} artifact(s) OK\n`);
     return 0;
   }
-  io.err(
-    `validate: ${errorCount} error(s), ${warningCount} warning(s) across ${fileCount} artifact(s)\n`,
-  );
+  io.err(`validate: ${errorCount} error(s) across ${fileCount} artifact(s)\n`);
   return 1;
 }
 
@@ -204,16 +197,7 @@ async function runRenderAdr(argv: string[], io: CliIO): Promise<number> {
     return 1;
   }
 
-  const catalogRef = repo.resolveCatalogRef(ref, decision);
-  let catalog: Catalog;
-  try {
-    catalog = await repo.readCatalog(catalogRef);
-  } catch (error) {
-    reportReadError(catalogRef, error, io);
-    return 1;
-  }
-
-  const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog, slug));
+  const markdown = renderAdrMarkdown(buildAdrModel(decision, slug));
   if (values.out !== undefined) {
     const outPath = resolve(process.cwd(), values.out);
     await writeFile(outPath, markdown, 'utf8');

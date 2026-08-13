@@ -18,7 +18,7 @@ Usage:
   workspec-decisions [serve] [--dir <path>] [--port <n>] [--host <addr>] [--mcp]
 
 Options:
-  --dir <path>    Root containing .workspec/{decisions,catalogs}/ to serve
+  --dir <path>    Root containing .workspec/decisions/ to serve
                   (default: current directory).
   --port <n>      Port to listen on (default: 4173).
   --host <addr>   Address to bind (default: 127.0.0.1 — localhost only).

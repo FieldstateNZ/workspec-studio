@@ -4,144 +4,54 @@ kind: Decision
 metadata:
   slug: aspire-publishing-strategy
 spec:
-  title: 'WorkSpec as an Aspire publishing layer: enrichment vs own publisher'
-  status: decided
-  created: '2026-07-26'
+  title: "WorkSpec as an Aspire publishing layer: enrichment vs own publisher"
+  status: accepted
+  created: 2026-07-26
+  decided: 2026-07-26
   deciders:
-    - 'Brett (PO) — via the S0 decision procedure (direction doc §3)'
-  context: >-
-    Topology v0.1 inserts WorkSpec into Aspire's publish chain: the apphost
-    declares app resources; WorkSpec enriches the model with what Aspire does
-    not carry (resource groups, vnet/subnet placement, environments, per-env
-    SKUs) before emission. Two strategies were on the table — enrich the stock
-    provider's input in flight, or own emission outright against OpenTofu. The
-    choice was frozen as an empirical question: the S0 spike (issue #103)
-    answered it against Aspire 13.4.6 with real `aspire publish` runs. Full
-    findings: docs/topology/s0-publishing-provider-spike.md. Criteria weights
-    follow the frozen procedure: interposability and concept survivability ARE
-    the procedure's two gates, hence highest weight; churn exposure is weighted
-    lowest because it is mitigable in-design (isolation seam + compile-time
-    tripwire) rather than a gate. The outcome is robust to reweighting — the
-    fallback only overtakes under an implausible ~10x churn weighting combined
-    with discounting build cost to zero.
-  catalog: aspire-publishing
-  currency: NZD
-  environments:
-    - dev
-    - prod
-  criteria:
-    - id: chainability
-      label: 'Interposability'
-      hint: 'Can WorkSpec mutate the model in flight, cross-package (higher = cleaner)'
-      weight: 3
-    - id: survivability
-      label: 'Concept survivability'
-      hint: 'Do SKUs / RG placement / alien networking survive to emitted output'
-      weight: 3
-    - id: fanout
-      label: 'Per-env fan-out'
-      hint: 'One apphost, N environment outputs'
-      weight: 2
-    - id: tsParity
-      label: 'TS apphost parity'
-      hint: 'Works identically under apphost.ts (higher = no TS gap)'
-      weight: 2
-    - id: churnExposure
-      label: 'API churn exposure'
-      hint: 'Insulation from the experimental Pipelines surface (higher = safer)'
-      weight: 1
-    - id: buildCost
-      label: 'Build/maintain cost'
-      hint: 'Ongoing emission/provider surface WorkSpec must own (higher = less)'
-      weight: 2
-  options:
-    - id: enrichment
-      name: 'Enrichment (interpose + mutate + delegate)'
-      archetype: 'Pipeline step ahead of the stock emitter'
-      summary: >-
-        WorkSpec registers an early-window pipeline step (after
-        validate-compute-environments, required by the provider's
-        prepare-deployment-targets step), mutates the live
-        DistributedApplicationModel from topology artifacts, and the stock
-        provider (Docker Compose / Azure Bicep) emits. Proven end-to-end in S0:
-        cross-package mutation landed in emitted compose YAML and Bicep,
-        including SKU changes, per-resource resource-group scoping, and alien
-        vnet/subnet constructs. Works identically from TS apphosts (C# package
-        under the guest/host split).
-      tag: 'chosen'
-      environments: [dev, prod]
-      complete: true
-      lines: []
-      scores:
-        chainability:
-          score: 5
-          note: 'Cross-package interposition proven; ordering honored exactly as declared.'
-        survivability:
-          score: 5
-          note: 'All three probes landed at step time (SKU, RG scope, alien vnet/subnet).'
-        fanout:
-          score: 5
-          note: '--environment divergence AND parallel multi-environment emission in one run.'
-        tsParity:
-          score: 4
-          note: 'C# package serves TS apphosts identically; TS-side generic mutation not possible (moot).'
-        churnExposure:
-          score: 2
-          note: 'Rides the [Experimental] Pipelines DAG + provider step names; compile-time tripwire, seam required.'
-        buildCost:
-          score: 5
-          note: 'No emitter to own; stock providers keep their maintenance burden.'
-    - id: own-publisher
-      name: 'Own publisher (OpenTofu-only emission)'
-      archetype: 'WorkSpec IComputeEnvironmentResource emitting HCL'
-      summary: >-
-        WorkSpec implements its own compute-environment resource mirroring
-        DockerComposeEnvironmentResource, consuming the model + topology
-        artifacts and emitting HCL directly; OpenTofu sole target. Well
-        precedented pattern; retained as the documented fallback in #106 should
-        the experimental surface shift underneath the enrichment step. NOTE:
-        S0 ran no probes against this path — these scores are analytic
-        estimates, unlike the enrichment option's evidence-backed scores.
-      tag: 'fallback'
-      environments: [dev, prod]
-      complete: true
-      lines: []
-      scores:
-        chainability:
-          score: 3
-          note: 'Does not need chaining, but forfeits stock-provider output entirely.'
-        survivability:
-          score: 5
-          note: 'Owns emission; expressiveness bounded only by what we build.'
-        fanout:
-          score: 4
-          note: 'Same pipeline fan-out applies; all emission logic ours.'
-        tsParity:
-          score: 4
-          note: 'Same C#-package-under-TS story.'
-        churnExposure:
-          score: 3
-          note: 'Still registers pipeline steps, but fewer touchpoints on provider internals.'
-        buildCost:
-          score: 1
-          note: 'WorkSpec owns an HCL emitter + provider coverage forever; no production-grade prior art to lean on.'
-  outcome:
-    option: enrichment
-    rationale: >-
-      We accept dependence on the experimental Aspire Pipelines surface (with a
-      thin isolation seam and compile-time tripwires) for not owning an
-      infrastructure emitter: S0 proved both decision gates — cross-package
-      interposition works and every probed infra-shell concept survives the
-      stock providers at step time — so enrichment achieves the required
-      per-env publishing behaviour while the stock providers keep their own
-      emission burden. The own-publisher path remains the documented fallback
-      in #106.
-    decidedBy: 'Brett (PO), via the frozen S0 decision procedure; executed by the dev lead'
-    decidedAt: '2026-07-26'
-  links:
+    - Brett (PO), via the frozen S0 decision procedure; executed by the dev lead
+  context: "Topology v0.1 inserts WorkSpec into Aspire's publish chain: the apphost declares app
+    resources; WorkSpec enriches the model with what Aspire does not carry (resource groups,
+    vnet/subnet placement, environments, per-env SKUs) before emission. Two strategies were on the
+    table — enrich the stock provider's input in flight, or own emission outright against OpenTofu.
+    The choice was frozen as an empirical question: the S0 spike (issue #103) answered it against
+    Aspire 13.4.6 with real `aspire publish` runs. Full findings:
+    docs/topology/s0-publishing-provider-spike.md. Criteria weights follow the frozen procedure:
+    interposability and concept survivability ARE the procedure's two gates, hence highest weight;
+    churn exposure is weighted lowest because it is mitigable in-design (isolation seam +
+    compile-time tripwire) rather than a gate. The outcome is robust to reweighting — the fallback
+    only overtakes under an implausible ~10x churn weighting combined with discounting build cost to
+    zero."
+  decision: Use Enrichment (interpose + mutate + delegate).
+  rationale: "We accept dependence on the experimental Aspire Pipelines surface (with a thin isolation
+    seam and compile-time tripwires) for not owning an infrastructure emitter: S0 proved both
+    decision gates — cross-package interposition works and every probed infra-shell concept survives
+    the stock providers at step time — so enrichment achieves the required per-env publishing
+    behaviour while the stock providers keep their own emission burden. The own-publisher path
+    remains the documented fallback in #106."
+  consequences:
+    - "WorkSpec registers an early-window pipeline step (after validate-compute-environments,
+      required by the provider's prepare-deployment-targets step), mutates the live
+      DistributedApplicationModel from topology artifacts, and the stock provider (Docker Compose /
+      Azure Bicep) emits. Proven end-to-end in S0: cross-package mutation landed in emitted compose
+      YAML and Bicep, including SKU changes, per-resource resource-group scoping, and alien
+      vnet/subnet constructs. Works identically from TS apphosts (C# package under the guest/host
+      split)."
+  alternatives:
+    - title: Own publisher (OpenTofu-only emission)
+      reason: "WorkSpec implements its own compute-environment resource mirroring
+        DockerComposeEnvironmentResource, consuming the model + topology artifacts and emitting HCL
+        directly; OpenTofu sole target. Well precedented pattern; retained as the documented
+        fallback in #106 should the experimental surface shift underneath the enrichment step. NOTE:
+        S0 ran no probes against this path — these scores are analytic estimates, unlike the
+        enrichment option's evidence-backed scores."
+  references:
     - kind: system-requirement
-      label: 'Topology v0.1 decision procedure (recorded in workspec-studio#103)'
+      target: Topology v0.1 decision procedure (recorded in workspec-studio#103)
+      label: Topology v0.1 decision procedure (recorded in workspec-studio#103)
     - kind: feature
-      label: 'workspec-studio#112 Epic — Topology v0.1'
+      target: workspec-studio#112 Epic — Topology v0.1
+      label: workspec-studio#112 Epic — Topology v0.1
     - kind: feature
-      label: 'workspec-studio#106 publisher MVP (scoped to A1 by this decision)'
+      target: workspec-studio#106 publisher MVP (scoped to A1 by this decision)
+      label: workspec-studio#106 publisher MVP (scoped to A1 by this decision)

@@ -1,665 +1,241 @@
 {
   "$id": "https://schema.workspec.io/v1alpha1/decision.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "A WorkSpec decision artifact.",
+  "additionalProperties": false,
   "properties": {
     "apiVersion": {
       "const": "workspec.io/v1alpha1",
-      "description": "Artifact API version discriminant.",
-      "type": "string"
+      "type": "string",
+      "description": "Artifact API version discriminant."
     },
     "kind": {
       "const": "Decision",
-      "description": "Artifact kind discriminant.",
-      "type": "string"
+      "type": "string",
+      "description": "Artifact kind discriminant."
     },
     "metadata": {
-      "description": "Common artifact identity.",
+      "additionalProperties": false,
       "properties": {
         "slug": {
-          "description": "Stable filename slug. Optional: the loader derives it from the artifact's filename under `.workspec/<kind-dir>/<slug>.yaml` when absent; when present it must already be a valid slug.",
+          "description": "Stable filename slug. Optional because repository tooling can derive it from `.workspec/decisions/<slug>.yaml`.",
           "maxLength": 64,
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
-      "type": "object"
+      "type": "object",
+      "description": "Common artifact identity."
     },
     "spec": {
-      "description": "The decision body.",
+      "additionalProperties": false,
       "properties": {
-        "catalog": {
-          "description": "Bare-slug intra-tree ref → catalogs/*: the catalog this decision prices against. Resolved by the loader to `.workspec/catalogs/<slug>.yaml`.",
-          "maxLength": 64,
-          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-          "type": "string"
-        },
-        "context": {
-          "description": "The problem framing: what is being decided and why.",
-          "minLength": 1,
-          "type": "string"
-        },
-        "created": {
-          "description": "Creation date, ISO 8601.",
-          "minLength": 1,
-          "type": "string"
-        },
-        "criteria": {
-          "description": "Weighted criteria the options are scored against.",
+        "alternatives": {
           "items": {
-            "description": "A decision criterion and its weight in the recommendation.",
+            "additionalProperties": false,
             "properties": {
-              "hint": {
-                "description": "Optional guidance on what a high score means.",
-                "type": "string"
-              },
-              "id": {
-                "description": "Stable id referenced by option `scores` keys, e.g. \"opsBurden\".",
+              "reason": {
                 "minLength": 1,
-                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                "type": "string"
+                "type": "string",
+                "description": "Why the alternative was not selected."
               },
-              "label": {
-                "description": "Human-readable name, e.g. \"Ops burden\".",
+              "title": {
                 "minLength": 1,
-                "type": "string"
-              },
-              "weight": {
-                "description": "Relative importance in the weighted recommendation (higher matters more; 0 disables the criterion).",
-                "minimum": 0,
-                "type": "number"
+                "type": "string",
+                "description": "Name of an alternative that was considered."
               }
             },
             "required": [
-              "id",
-              "label",
-              "weight"
+              "title"
             ],
             "type": "object"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Other approaches considered while making the decision."
         },
-        "currency": {
-          "description": "ISO 4217 currency for all amounts; should match the catalog.",
+        "consequences": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Expected consequences of the decision."
+        },
+        "context": {
           "minLength": 1,
-          "type": "string"
+          "type": "string",
+          "description": "The circumstances, problem, and constraints that made a decision necessary."
+        },
+        "created": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string",
+          "format": "date",
+          "description": "Date the decision record was created, in quoted ISO 8601 full-date form (`YYYY-MM-DD`). Quote the value in YAML so parsers do not coerce it to a date object."
+        },
+        "decided": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string",
+          "format": "date",
+          "description": "Date the decision was accepted or rejected, in quoted ISO 8601 full-date form (`YYYY-MM-DD`). Quote the value in YAML so parsers do not coerce it to a date object."
         },
         "deciders": {
-          "description": "People accountable for the decision.",
           "items": {
             "minLength": 1,
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "People or groups accountable for the decision.",
+          "uniqueItems": true
         },
-        "environments": {
-          "description": "Ordered environment ids, e.g. [\"dev\",\"test\",\"prod\"].",
-          "items": {
-            "minLength": 1,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-            "type": "string"
-          },
-          "minItems": 1,
-          "type": "array"
+        "decision": {
+          "minLength": 1,
+          "type": "string",
+          "description": "The proposed or recorded decision."
         },
         "links": {
-          "description": "External references the host resolves.",
+          "type": "array",
           "items": {
-            "description": "An external reference the host resolves.",
+            "type": "object",
+            "properties": {
+              "cardinality": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "enum": [
+                      "0..1",
+                      "1",
+                      "1..1",
+                      "0..*",
+                      "1..*"
+                    ],
+                    "description": "Multiplicity at the source end."
+                  },
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "0..1",
+                      "1",
+                      "1..1",
+                      "0..*",
+                      "1..*"
+                    ],
+                    "description": "Multiplicity at the target end."
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional human-readable relationship label."
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The link type, or `cardinality` for the optional relationship multiplicity."
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^(~/|@workspace/)",
+              "description": "A WorkSpec-tree (`~/`) or published-workspace (`@workspace/`) path reference."
+            },
+            "if": {
+              "required": [
+                "cardinality"
+              ]
+            },
+            "then": {
+              "minProperties": 2,
+              "maxProperties": 2
+            },
+            "else": {
+              "minProperties": 1,
+              "maxProperties": 1
+            }
+          },
+          "description": "Traversable relationships to WorkSpec artifacts: exactly one `{<linkType>: <pathRef>}` pair per entry, plus optional cardinality. Path refs must start with `~/` or `@workspace/`."
+        },
+        "rationale": {
+          "minLength": 1,
+          "type": "string",
+          "description": "Why this decision was selected."
+        },
+        "references": {
+          "items": {
+            "additionalProperties": false,
             "properties": {
               "kind": {
-                "description": "Link kind, e.g. \"deployment\", \"feature\", \"system-requirement\".",
                 "minLength": 1,
-                "type": "string"
+                "type": "string",
+                "description": "Type of supporting material, such as `issue`, `evidence`, `rfc`, or `spike`."
               },
               "label": {
-                "description": "Human-readable link label.",
                 "minLength": 1,
-                "type": "string"
+                "type": "string",
+                "description": "Optional human-readable label for the reference."
               },
               "target": {
-                "description": "Optional URL or opaque ref the host resolves.",
                 "minLength": 1,
-                "type": "string"
+                "type": "string",
+                "description": "A repository-relative path, absolute URL, or opaque external reference."
               }
             },
             "required": [
               "kind",
-              "label"
+              "target"
             ],
             "type": "object"
           },
-          "type": "array"
-        },
-        "options": {
-          "description": "The costed options under comparison.",
-          "items": {
-            "description": "A costed architecture option under comparison.",
-            "properties": {
-              "archetype": {
-                "description": "Short architecture archetype, e.g. \"Azure Kubernetes Service\".",
-                "minLength": 1,
-                "type": "string"
-              },
-              "complete": {
-                "description": "Author flag: `false` marks the option as still being modelled. Defaults to complete (true) when omitted.",
-                "type": "boolean"
-              },
-              "environments": {
-                "description": "Active subset of the decision environments this option is costed for, in order. Must be a subset of the decision's environments.",
-                "items": {
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "id": {
-                "description": "Stable option id, e.g. \"aks\".",
-                "minLength": 1,
-                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                "type": "string"
-              },
-              "levers": {
-                "description": "Declarative what-if toggles over the lines.",
-                "items": {
-                  "description": "A declarative what-if transform (lever) over an option's lines.",
-                  "properties": {
-                    "enabled": {
-                      "default": false,
-                      "description": "Whether the lever is applied by default. Defaults to false (off).",
-                      "type": "boolean"
-                    },
-                    "hint": {
-                      "description": "Optional explanation shown alongside the toggle.",
-                      "type": "string"
-                    },
-                    "id": {
-                      "description": "Stable lever id, unique within the option.",
-                      "minLength": 1,
-                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                      "type": "string"
-                    },
-                    "label": {
-                      "description": "Human-readable toggle label.",
-                      "minLength": 1,
-                      "type": "string"
-                    },
-                    "patch": {
-                      "description": "Ordered patch operations applied, in order, when enabled.",
-                      "items": {
-                        "description": "One declarative patch operation: a match plus a set and/or added lines.",
-                        "properties": {
-                          "addLines": {
-                            "description": "Extra lines this op contributes when the lever is enabled.",
-                            "items": {
-                              "oneOf": [
-                                {
-                                  "description": "A metered SKU line priced from the catalog.",
-                                  "properties": {
-                                    "flat": {
-                                      "const": false,
-                                      "description": "Discriminant: `false` marks a metered SKU line priced from the catalog. May be omitted when authoring (defaults to false).",
-                                      "type": "boolean"
-                                    },
-                                    "group": {
-                                      "description": "Optional display grouping, e.g. \"compute\", \"data\".",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    },
-                                    "id": {
-                                      "description": "Stable line id, unique within the option.",
-                                      "minLength": 1,
-                                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                      "type": "string"
-                                    },
-                                    "label": {
-                                      "description": "Human-readable line name.",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    },
-                                    "mode": {
-                                      "description": "Ref to a catalog `pricingModes[].id`.",
-                                      "minLength": 1,
-                                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                      "type": "string"
-                                    },
-                                    "qty": {
-                                      "additionalProperties": {
-                                        "minimum": 0,
-                                        "type": "number"
-                                      },
-                                      "description": "Units of the SKU per environment, keyed by env id. A missing env is treated as 0.",
-                                      "propertyNames": {
-                                        "minLength": 1,
-                                        "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                        "type": "string"
-                                      },
-                                      "type": "object"
-                                    },
-                                    "schedule": {
-                                      "description": "Ref to a catalog `schedules[].id`.",
-                                      "minLength": 1,
-                                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                      "type": "string"
-                                    },
-                                    "sku": {
-                                      "description": "Ref to a catalog `skus[].id`.",
-                                      "minLength": 1,
-                                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                      "type": "string"
-                                    },
-                                    "tag": {
-                                      "description": "Optional tag used by lever patch `match.tags`, e.g. \"steady-prod\".",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "id",
-                                    "label",
-                                    "flat",
-                                    "sku",
-                                    "mode",
-                                    "schedule",
-                                    "qty"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "description": "A flat line with explicit per-env monthly amounts.",
-                                  "properties": {
-                                    "amount": {
-                                      "additionalProperties": {
-                                        "minimum": 0,
-                                        "type": "number"
-                                      },
-                                      "description": "Explicit monthly amount per environment, keyed by env id, in the decision currency.",
-                                      "propertyNames": {
-                                        "minLength": 1,
-                                        "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                        "type": "string"
-                                      },
-                                      "type": "object"
-                                    },
-                                    "estimate": {
-                                      "description": "Marks the amount as an estimate rather than a firm price.",
-                                      "type": "boolean"
-                                    },
-                                    "flat": {
-                                      "const": true,
-                                      "description": "Discriminant: `true` marks a flat line with explicit per-env amounts.",
-                                      "type": "boolean"
-                                    },
-                                    "group": {
-                                      "description": "Optional display grouping, e.g. \"compute\", \"data\".",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    },
-                                    "id": {
-                                      "description": "Stable line id, unique within the option.",
-                                      "minLength": 1,
-                                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                      "type": "string"
-                                    },
-                                    "label": {
-                                      "description": "Human-readable line name.",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    },
-                                    "tag": {
-                                      "description": "Optional tag used by lever patch `match.tags`.",
-                                      "minLength": 1,
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "id",
-                                    "label",
-                                    "flat",
-                                    "amount"
-                                  ],
-                                  "type": "object"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          },
-                          "match": {
-                            "description": "Which lines/envs this op targets.",
-                            "properties": {
-                              "envs": {
-                                "description": "Restrict the patch to these environment ids. Omit to apply to all of the option's environments.",
-                                "items": {
-                                  "minLength": 1,
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "groups": {
-                                "description": "Match lines whose `group` is in this list.",
-                                "items": {
-                                  "minLength": 1,
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "ids": {
-                                "description": "Match lines whose `id` is in this list.",
-                                "items": {
-                                  "minLength": 1,
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "tags": {
-                                "description": "Match lines whose `tag` is in this list.",
-                                "items": {
-                                  "minLength": 1,
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "set": {
-                            "description": "Field mutations to apply to matched lines.",
-                            "properties": {
-                              "mode": {
-                                "description": "Set the matched SKU line `mode` to this catalog pricingMode id.",
-                                "minLength": 1,
-                                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                "type": "string"
-                              },
-                              "qtyScale": {
-                                "description": "Multiply matched SKU line quantities by this factor (per env).",
-                                "minimum": 0,
-                                "type": "number"
-                              },
-                              "schedule": {
-                                "description": "Set the matched SKU line `schedule` to this catalog schedule id.",
-                                "minLength": 1,
-                                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                                "type": "string"
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "match"
-                        ],
-                        "type": "object"
-                      },
-                      "minItems": 1,
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "label",
-                    "patch"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "lines": {
-                "description": "Cost lines: metered SKU lines and flat lines.",
-                "items": {
-                  "oneOf": [
-                    {
-                      "description": "A metered SKU line priced from the catalog.",
-                      "properties": {
-                        "flat": {
-                          "const": false,
-                          "description": "Discriminant: `false` marks a metered SKU line priced from the catalog. May be omitted when authoring (defaults to false).",
-                          "type": "boolean"
-                        },
-                        "group": {
-                          "description": "Optional display grouping, e.g. \"compute\", \"data\".",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "id": {
-                          "description": "Stable line id, unique within the option.",
-                          "minLength": 1,
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                          "type": "string"
-                        },
-                        "label": {
-                          "description": "Human-readable line name.",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "mode": {
-                          "description": "Ref to a catalog `pricingModes[].id`.",
-                          "minLength": 1,
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                          "type": "string"
-                        },
-                        "qty": {
-                          "additionalProperties": {
-                            "minimum": 0,
-                            "type": "number"
-                          },
-                          "description": "Units of the SKU per environment, keyed by env id. A missing env is treated as 0.",
-                          "propertyNames": {
-                            "minLength": 1,
-                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                            "type": "string"
-                          },
-                          "type": "object"
-                        },
-                        "schedule": {
-                          "description": "Ref to a catalog `schedules[].id`.",
-                          "minLength": 1,
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                          "type": "string"
-                        },
-                        "sku": {
-                          "description": "Ref to a catalog `skus[].id`.",
-                          "minLength": 1,
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                          "type": "string"
-                        },
-                        "tag": {
-                          "description": "Optional tag used by lever patch `match.tags`, e.g. \"steady-prod\".",
-                          "minLength": 1,
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "flat",
-                        "sku",
-                        "mode",
-                        "schedule",
-                        "qty"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "description": "A flat line with explicit per-env monthly amounts.",
-                      "properties": {
-                        "amount": {
-                          "additionalProperties": {
-                            "minimum": 0,
-                            "type": "number"
-                          },
-                          "description": "Explicit monthly amount per environment, keyed by env id, in the decision currency.",
-                          "propertyNames": {
-                            "minLength": 1,
-                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                            "type": "string"
-                          },
-                          "type": "object"
-                        },
-                        "estimate": {
-                          "description": "Marks the amount as an estimate rather than a firm price.",
-                          "type": "boolean"
-                        },
-                        "flat": {
-                          "const": true,
-                          "description": "Discriminant: `true` marks a flat line with explicit per-env amounts.",
-                          "type": "boolean"
-                        },
-                        "group": {
-                          "description": "Optional display grouping, e.g. \"compute\", \"data\".",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "id": {
-                          "description": "Stable line id, unique within the option.",
-                          "minLength": 1,
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                          "type": "string"
-                        },
-                        "label": {
-                          "description": "Human-readable line name.",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "tag": {
-                          "description": "Optional tag used by lever patch `match.tags`.",
-                          "minLength": 1,
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "flat",
-                        "amount"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                },
-                "type": "array"
-              },
-              "name": {
-                "description": "Human-readable option name.",
-                "minLength": 1,
-                "type": "string"
-              },
-              "scores": {
-                "additionalProperties": {
-                  "description": "A 0–5 score for one criterion, with an optional note.",
-                  "properties": {
-                    "note": {
-                      "description": "Optional rationale for the score.",
-                      "type": "string"
-                    },
-                    "score": {
-                      "description": "Score 0–5 for this criterion (higher is better).",
-                      "maximum": 5,
-                      "minimum": 0,
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "score"
-                  ],
-                  "type": "object"
-                },
-                "description": "Per-criterion scores, keyed by criterion id. Keys must be declared decision criteria.",
-                "propertyNames": {
-                  "minLength": 1,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              "summary": {
-                "description": "One-paragraph summary of the option.",
-                "type": "string"
-              },
-              "tag": {
-                "description": "Optional short badge, e.g. \"current direction\".",
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "environments",
-              "lines",
-              "scores"
-            ],
-            "type": "object"
-          },
-          "minItems": 1,
-          "type": "array"
-        },
-        "outcome": {
-          "description": "The recorded outcome; present once the decision is decided.",
-          "properties": {
-            "decidedAt": {
-              "description": "When the decision was made, ISO 8601.",
-              "minLength": 1,
-              "type": "string"
-            },
-            "decidedBy": {
-              "description": "Who made the decision.",
-              "minLength": 1,
-              "type": "string"
-            },
-            "option": {
-              "description": "Id of the chosen option.",
-              "minLength": 1,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-              "type": "string"
-            },
-            "rationale": {
-              "description": "The \"we accept X for Y\" rationale for the decision.",
-              "minLength": 1,
-              "type": "string"
-            }
-          },
-          "required": [
-            "option",
-            "rationale"
-          ],
-          "type": "object"
+          "type": "array",
+          "description": "Supporting repository files, issues, evidence, RFCs, and external resources that are not traversable WorkSpec artifact relationships."
         },
         "status": {
-          "description": "Lifecycle status: exploring → decided; a decided decision may later be superseded.",
           "enum": [
-            "exploring",
-            "decided",
+            "proposed",
+            "accepted",
+            "rejected",
+            "deprecated",
             "superseded"
           ],
-          "type": "string"
+          "type": "string",
+          "description": "Lifecycle state of the decision record."
         },
         "supersedes": {
-          "description": "Bare-slug intra-tree ref → decisions/*: the decision this one supersedes.",
+          "description": "Bare slug of the earlier decision this record supersedes.",
           "maxLength": 64,
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Free-form labels used to organise and discover decisions.",
+          "uniqueItems": true
         },
         "title": {
-          "description": "Decision title.",
           "minLength": 1,
-          "type": "string"
+          "type": "string",
+          "description": "Short human-readable title for the decision."
         }
       },
       "required": [
         "title",
         "status",
         "context",
-        "catalog",
-        "currency",
-        "environments",
-        "criteria",
-        "options"
+        "decision"
       ],
-      "type": "object"
+      "type": "object",
+      "description": "The decision record."
     }
   },
   "required": [
@@ -669,5 +245,6 @@
     "spec"
   ],
   "title": "WorkSpec Decision (v1alpha1)",
-  "type": "object"
+  "type": "object",
+  "description": "A repository-native record of an architectural or technical decision."
 }

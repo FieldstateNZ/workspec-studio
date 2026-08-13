@@ -94,7 +94,7 @@ describe('decisions module page (/decisions)', () => {
   it('renders the positioning and routes to its demo', () => {
     render(<Decisions />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /costed architecture decisions/i,
+      /architecture decisions as reviewable repository artifacts/i,
     );
     const demoLinks = screen.getAllByRole('link', { name: /demo/i });
     expect(demoLinks.length).toBeGreaterThan(0);
@@ -305,8 +305,8 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
     render(<Demo />);
     // Chrome we own renders synchronously.
     expect(screen.getByText(/changes live only in your browser/i)).toBeInTheDocument();
-    // Proof the published DecisionApp mounted: its four-view nav appears…
-    expect(await screen.findByText('Compare')).toBeInTheDocument();
+    // Proof the DecisionApp mounted: its record/ADR navigation appears.
+    expect(await screen.findByText('ADR preview')).toBeInTheDocument();
     // …and the seeded decision's title loads through the async repository port.
     expect(
       await screen.findByRole('heading', { name: /hosting platform for the data/i }),
@@ -337,7 +337,7 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
 
   it('keeps the worked-example switcher and module actions in the workbench bar', async () => {
     render(<Demo />);
-    await screen.findByText('Compare'); // wait for the published DecisionApp to mount
+    await screen.findByText('ADR preview'); // wait for the DecisionApp to mount
 
     const switcher = screen.getByRole('group', { name: /worked examples/i });
     expect(within(switcher).getByRole('button', { name: 'Hosting platform' })).toHaveAttribute(
@@ -359,7 +359,7 @@ describe('export ADR — same renderer as the CLI render-adr', () => {
     const hosting = DEMO_EXAMPLES[0];
     if (hosting === undefined) throw new Error('expected at least one seeded example');
     const { filename, markdown } = await renderAdr(repository, hosting.decisionRef);
-    expect(filename).toBe('dec-hosting.adr.md');
+    expect(filename).toBe('hosting-platform.adr.md');
     expect(markdown).toMatch(/hosting platform/i);
     // A real ADR body, not an empty shell.
     expect(markdown.length).toBeGreaterThan(200);

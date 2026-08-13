@@ -23,6 +23,9 @@
     "noEmit": true
   },
   "references": [
+    { "path": "../../packages/decision-schema/tsconfig.build.json" },
+    { "path": "../../packages/decision-engine/tsconfig.build.json" },
+    { "path": "../../packages/decision-ui/tsconfig.build.json" },
     { "path": "../../packages/c4-schema/tsconfig.build.json" },
     { "path": "../../packages/c4-model/tsconfig.build.json" },
     { "path": "../../packages/c4-layout/tsconfig.build.json" },

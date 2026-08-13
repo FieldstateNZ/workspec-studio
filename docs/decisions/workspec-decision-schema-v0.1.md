@@ -1,5 +1,9 @@
 # WorkSpec Decision Schema — v0.1 (`v1alpha1`)
 
+> **Historical specification.** This describes the original cost-analysis model and is no longer
+> the Decision artifact contract. The current source of truth is `packages/decision-schema` and
+> `json-schema/decision.schema.json`; catalog/pricing analysis is now a separate concern.
+
 **Status:** draft · **Schema version:** `v1alpha1` · **Package:** `@workspec/decision-schema`
 
 WorkSpec Decision Studio records a costed architecture decision as two plain YAML

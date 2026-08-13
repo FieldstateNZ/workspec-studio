@@ -20,15 +20,11 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, posix, resolve } from 'node:path';
 import { FILE_EXTENSION, Slug, slugFromPath } from '@workspec/schema-core';
 import {
-  CATALOG_SCHEMA_DIRECTIVE,
   DECISION_SCHEMA_DIRECTIVE,
-  parseCatalogYaml,
   parseDecisionYaml,
   typeDirectoryFor,
 } from '@workspec/decision-schema';
 import type {
-  Catalog,
-  CatalogRef,
   Decision,
   DecisionRef,
   DecisionRepositoryPort,
@@ -36,7 +32,7 @@ import type {
   ParseResult,
   Ref,
 } from '@workspec/decision-schema';
-import { CatalogArtifact, DecisionArtifact } from '@workspec/decision-schema';
+import { DecisionArtifact } from '@workspec/decision-schema';
 import { resolveWithinRoot } from './path-containment.js';
 import { serializeArtifact } from './serialize.js';
 
@@ -71,9 +67,8 @@ interface KindRef {
  * A repository backed by a directory tree of YAML artifacts.
  *
  * Construct with the root directory to scan (defaults to `process.cwd()`).
- * Implements the six-method {@link DecisionRepositoryPort}; the extra
- * `root` / `resolve` / `resolveCatalogRef` helpers are conveniences for the CLI
- * and are not part of the port.
+ * Implements the three-operation {@link DecisionRepositoryPort}. The extra
+ * `root` / `resolve` helpers are filesystem conveniences for the CLI.
  */
 export class FsRepository implements DecisionRepositoryPort {
   readonly root: string;
@@ -91,17 +86,6 @@ export class FsRepository implements DecisionRepositoryPort {
    */
   resolve(ref: Ref): string {
     return resolveWithinRoot(this.root, ref);
-  }
-
-  /**
-   * Resolve the catalog SLUG a decision points at (`spec.catalog`) to its ref:
-   * `.workspec/catalogs/<slug>.yaml`. `decisionRef` is accepted (and ignored,
-   * beyond typing) for call-site symmetry with the pre-migration signature —
-   * the catalog ref no longer depends on where the decision file itself lives,
-   * since `spec.catalog` is a bare intra-tree slug, not a relative path.
-   */
-  resolveCatalogRef(_decisionRef: Ref, decision: Decision): Ref {
-    return posix.join(typeDirectoryFor('Catalog'), `${decision.spec.catalog}${FILE_EXTENSION}`);
   }
 
   /**
@@ -160,20 +144,9 @@ export class FsRepository implements DecisionRepositoryPort {
     return refs.map(({ ref, slug, title }) => ({ ref, slug, title: title ?? slug }));
   }
 
-  async listCatalogs(): Promise<CatalogRef[]> {
-    return this.listKind<Catalog>(typeDirectoryFor('Catalog'), parseCatalogYaml, (c) => c.spec.name);
-  }
-
   async readDecision(ref: Ref): Promise<Decision> {
     const text = await readFile(this.resolve(ref), 'utf8');
     const parsed = parseDecisionYaml(text);
-    if (!parsed.ok) throw new ArtifactValidationError(ref, parsed.errors);
-    return parsed.data;
-  }
-
-  async readCatalog(ref: Ref): Promise<Catalog> {
-    const text = await readFile(this.resolve(ref), 'utf8');
-    const parsed = parseCatalogYaml(text);
     if (!parsed.ok) throw new ArtifactValidationError(ref, parsed.errors);
     return parsed.data;
   }
@@ -198,25 +171,6 @@ export class FsRepository implements DecisionRepositoryPort {
         DECISION_SCHEMA_DIRECTIVE,
         await this.readTextIfExists(ref),
       ),
-    );
-  }
-
-  async writeCatalog(ref: Ref, catalog: Catalog): Promise<void> {
-    const validated = CatalogArtifact.safeParse(catalog);
-    if (!validated.success) {
-      throw new ArtifactValidationError(
-        ref,
-        validated.error.issues.map((issue) => ({
-          path: issue.path.join('.'),
-          message: issue.message,
-          line: 0,
-          col: 0,
-        })),
-      );
-    }
-    await this.writeText(
-      ref,
-      serializeArtifact(validated.data, CATALOG_SCHEMA_DIRECTIVE, await this.readTextIfExists(ref)),
     );
   }
 

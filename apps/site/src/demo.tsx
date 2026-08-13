@@ -1,7 +1,5 @@
-// The in-browser demo. Mounts the real DecisionApp (Options / Compare / Catalog
-// / ADR) from the PUBLISHED @workspec/decision-ui against a MemoryRepository
-// seeded with both worked examples. Everything — lever toggles, cost edits,
-// compare, the decide flow — runs in memory; nothing leaves the browser.
+// The in-browser demo. Mounts the repository-native Decision editor and ADR
+// preview against a MemoryRepository seeded with two worked examples.
 import { useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
@@ -36,8 +34,7 @@ export function Demo(): ReactElement {
     () => ({
       repository,
       links: createInertLinkResolver(),
-      // A full in-memory sandbox: editing and deciding are both on.
-      capabilities: { editCatalog: true, decide: true },
+      capabilities: { editDecision: true },
     }),
     [repository],
   );
@@ -94,8 +91,9 @@ export function Demo(): ReactElement {
       />
 
       <p className="demo-note" role="note">
-        Changes live only in your browser — the real thing writes <code>*.decision.yaml</code> files
-        in your repo. <span className="demo-blurb">{active.blurb}</span>
+        Changes live only in your browser — the real thing writes{' '}
+        <code>.workspec/decisions/*.yaml</code> files in your repo.{' '}
+        <span className="demo-blurb">{active.blurb}</span>
       </p>
 
       <DecisionStudioProvider host={host} theme={theme}>

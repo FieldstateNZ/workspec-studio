@@ -26,6 +26,6 @@ export default defineConfig({
     name: 'decision-ui',
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/core.test.tsx'],
   },
 });

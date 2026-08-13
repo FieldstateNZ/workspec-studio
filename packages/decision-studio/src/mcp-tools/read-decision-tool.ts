@@ -8,7 +8,7 @@ const INPUT_SCHEMA = {
   properties: {
     ref: {
       type: 'string',
-      description: 'Repo-relative POSIX path to the decision artifact, e.g. "hosting-platform.decision.yaml".',
+      description: 'Repo-relative POSIX path, e.g. ".workspec/decisions/hosting-platform.yaml".',
     },
   },
   required: ['ref'],

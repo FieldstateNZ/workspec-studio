@@ -1,5 +1,9 @@
 # WorkSpec Decision Studio — Technical Design v0.1
 
+> **Historical implementation specification.** The cost-comparison model, six-method repository,
+> and four-view UI below have been retired. Current Decision Studio uses the lean Decision schema,
+> a three-operation repository port, and catalog-free ADR rendering.
+
 **Status:** draft · **Schema version:** `v1alpha1` · **Companion:** [decision schema spec](./workspec-decision-schema-v0.1.md)
 
 Decision Studio is an open-source, standalone, git-native tool for **costed architecture

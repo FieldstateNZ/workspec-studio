@@ -33,13 +33,12 @@ export function Decisions(): ReactElement {
         <main>
           <section className="hero">
             <Lbl>Free · standalone · git-native</Lbl>
-            <h1>Costed architecture decisions as reviewable YAML artifacts.</h1>
+            <h1>Architecture decisions as reviewable repository artifacts.</h1>
             <p className="lede">
-              “Which platform should we run on?” usually ends up as a slide deck and a lost Slack
-              thread. Decision Studio turns it into a <strong>reviewable artifact</strong>: options
-              costed across dev / test / prod, weighed on the criteria that matter, and recorded as
-              an ADR — all as plain <code>*.decision.yaml</code> files that live beside your code
-              and version with git.
+              Decisions often disappear into a slide deck or a lost Slack thread. Decision Studio
+              turns each one into a <strong>reviewable artifact</strong>: context, the decision,
+              rationale, consequences, and alternatives in a strict YAML record that lives beside
+              your code and versions with git.
             </p>
             <div className="cta-row">
               <Button asChild>
@@ -51,23 +50,14 @@ export function Decisions(): ReactElement {
             </div>
             <p className="hero-sub">
               <strong>No database.</strong> The files in your working tree are the single source of
-              truth — toggle a lever and every number reprices live; decide, and the outcome is
-              written back to the YAML for your next PR.
+              truth — edit the record, preview the ADR, and commit the same YAML in your next PR.
             </p>
-          </section>
-
-          <section className="shot" aria-label="The Decision Studio workspace">
-            <img
-              src="/workspace.png"
-              alt="The Decision Studio workspace — options costed across dev/test/prod with live optimisation levers"
-              loading="lazy"
-            />
           </section>
 
           <section className="quickstart">
             <h2>60-second quickstart</h2>
             <p>
-              In any repo that has a <code>*.decision.yaml</code> (grab the examples to try it):
+              In any repo that has a <code>.workspec/decisions/*.yaml</code> record:
             </p>
             <pre className="code">
               <code>
@@ -116,11 +106,10 @@ export function Decisions(): ReactElement {
             <p>
               Decision Studio is the free, standalone half of WorkSpec. The{' '}
               <strong>artifact schema is shared</strong> with WorkSpec Enterprise, so the same{' '}
-              <code>*.decision.yaml</code> files come alive inside the enterprise graph: the{' '}
-              <code>links</code> block that renders as inert labels standalone — deployments,
-              features, system requirements — resolves to real objects in Enterprise. The identical
-              UI mounts inside Enterprise’s shell as a module-federation remote. No forks, one
-              source.
+              <code>.workspec/decisions/*.yaml</code> files come alive inside the enterprise graph:
+              traversable <code>links</code> resolve to real objects while explicit references
+              remain supporting material. The identical UI mounts inside Enterprise’s shell as a
+              module-federation remote. No forks, one source.
             </p>
           </section>
 

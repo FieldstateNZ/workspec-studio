@@ -3,18 +3,17 @@
 // (`buildAdrModel` → `renderAdrMarkdown` from @workspec/decision-engine), so the
 // download byte-for-byte matches what the terminal produces.
 import { buildAdrModel, renderAdrMarkdown } from '@workspec/decision-engine';
-import { resolveCatalogRef } from '@workspec/decision-ui';
 import type { DecisionRepositoryPort, Ref } from '@workspec/decision-schema';
 
-/** Render the decision at `decisionRef` (with its resolved catalog) to ADR Markdown. */
+/** Render the decision at `decisionRef` to ADR Markdown. */
 export async function renderAdr(
   repository: DecisionRepositoryPort,
   decisionRef: Ref,
 ): Promise<{ filename: string; markdown: string }> {
   const decision = await repository.readDecision(decisionRef);
-  const catalog = await repository.readCatalog(resolveCatalogRef(decisionRef, decision));
-  const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog));
-  const filename = `${decision.metadata.id}.adr.md`;
+  const slug = decision.metadata.slug ?? decisionRef.replace(/^.*\//, '').replace(/\.ya?ml$/, '');
+  const markdown = renderAdrMarkdown(buildAdrModel(decision, slug));
+  const filename = `${slug}.adr.md`;
   return { filename, markdown };
 }
 

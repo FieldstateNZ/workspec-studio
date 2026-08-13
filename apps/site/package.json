@@ -17,9 +17,9 @@
     "@workspec/cost-engine": "0.1.0-alpha.5",
     "@workspec/cost-schema": "0.1.0-alpha.5",
     "@workspec/cost-ui": "0.1.0-alpha.5",
-    "@workspec/decision-engine": "0.1.0-alpha.5",
-    "@workspec/decision-schema": "0.1.0-alpha.5",
-    "@workspec/decision-ui": "0.1.0-alpha.5",
+    "@workspec/decision-engine": "workspace:*",
+    "@workspec/decision-schema": "workspace:*",
+    "@workspec/decision-ui": "workspace:*",
     "@workspec/design": "0.1.0-alpha.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
