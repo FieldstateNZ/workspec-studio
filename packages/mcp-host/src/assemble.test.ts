@@ -54,10 +54,10 @@ describe('the aggregate WorkSpec MCP Host server', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('calls decisions_list_catalogs end to end through the real assembled server', async () => {
+  it('calls decisions_list_decisions end to end through the real assembled server', async () => {
     const client = await connectClient(fixture.dir);
 
-    const result = await client.callTool({ name: 'decisions_list_catalogs', arguments: {} });
+    const result = await client.callTool({ name: 'decisions_list_decisions', arguments: {} });
 
     expect(result.isError).not.toBe(true);
     const content = result.content as { type: string; text: string }[];
