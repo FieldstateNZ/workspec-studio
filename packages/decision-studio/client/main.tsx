@@ -1,7 +1,6 @@
 // The standalone client entry. Wires the browser HttpRepository into the host
-// contract and mounts the full four-view DecisionApp inside DecisionStudioProvider.
-// S5 turns the capabilities on — `{ editCatalog: true, decide: true }` — so the
-// Catalog editor and the decide flow are live. Theme + selected decision are the
+// contract and mounts the core DecisionApp inside DecisionStudioProvider.
+// This local repository host permits direct Decision record edits. Theme + selected decision are the
 // only client-owned state; everything else flows through the port.
 
 import { StrictMode, useState } from 'react';
@@ -23,7 +22,7 @@ const repository = new HttpRepository();
 const host: DecisionStudioHost = {
   repository,
   links: createInertLinkResolver(),
-  capabilities: { editCatalog: true, decide: true },
+  capabilities: { editDecision: true },
 };
 
 function App(): ReactElement {

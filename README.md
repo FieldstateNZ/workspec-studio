@@ -41,20 +41,20 @@ changes to `packages/canvas` or `packages/c4-ui` chrome (including its `src/c4/`
 
 ## Decisions module
 
-Costed architecture decisions as reviewable `*.decision.yaml` / `*.catalog.yaml` artifacts —
+Architecture decision records as strict, reviewable `.workspec/decisions/*.yaml` artifacts —
 imported with full git history from
 [`FieldstateNZ/workspec-decision-studio`](https://github.com/FieldstateNZ/workspec-decision-studio).
 
 | Package                     | Path                       | Role                                                                      |
 | --------------------------- | -------------------------- | ------------------------------------------------------------------------- |
 | `@workspec/decision-schema` | `packages/decision-schema` | Zod source of truth → TS types, runtime validation, JSON Schema           |
-| `@workspec/decision-engine` | `packages/decision-engine` | Pure, normative cost engine (no IO, no DOM)                               |
+| `@workspec/decision-engine` | `packages/decision-engine` | Pure deterministic ADR projection (no IO, no DOM)                         |
 | `@workspec/decision-ui`     | `packages/decision-ui`     | Host-agnostic React views (standalone + module-federation remote)         |
 | `@workspec/decision-studio` | `packages/decision-studio` | Standalone CLI + localhost host shell (`validate`, `render-adr`, `serve`) |
 
 `apps/site` is the product site + in-browser demo (consumes the published npm packages).
 `apps/mf-host` is the module-federation smoke host (CI integration proof, never published).
-`examples/` holds the worked example decision/catalog trees. Docs — the schema spec, the tech
+`examples/` holds worked Decision trees (with legacy pricing catalogs retained for Topology). Docs — the schema spec, the tech
 design, and the project's own dogfooded decision records (D1–D6) — live under
 [`docs/decisions/`](docs/decisions).
 

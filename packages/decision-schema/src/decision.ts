@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { defineArtifact, Slug } from '@workspec/schema-core';
+import { API_VERSION, Slug } from '@workspec/schema-core';
 import { identifier } from './common.js';
 
 // ── Line (discriminated union on `flat`) ────────────────────────────────────
@@ -203,169 +203,94 @@ export const Option = z
   })
   .describe('A costed architecture option under comparison.');
 
-// ── Decision top level ──────────────────────────────────────────────────────
+// ── Core Decision record ────────────────────────────────────────────────────
 
-/** A decision criterion with a weight for the weighted recommendation (P4). */
-export const Criterion = z
+export const DecisionStatus = z.enum([
+  'proposed',
+  'accepted',
+  'rejected',
+  'deprecated',
+  'superseded',
+]);
+
+export const LinkCardinality = z
   .object({
-    id: identifier.describe('Stable id referenced by option `scores` keys, e.g. "opsBurden".'),
-    label: z.string().min(1).describe('Human-readable name, e.g. "Ops burden".'),
-    hint: z.string().optional().describe('Optional guidance on what a high score means.'),
-    weight: z
-      .number()
-      .nonnegative()
-      .describe(
-        'Relative importance in the weighted recommendation (higher matters more; 0 disables the criterion).',
-      ),
+    from: z.enum(['0..1', '1', '1..1', '0..*', '1..*']),
+    to: z.enum(['0..1', '1', '1..1', '0..*', '1..*']),
+    label: z.string().min(1).optional(),
   })
-  .describe('A decision criterion and its weight in the recommendation.');
+  .strict();
 
-/** The recorded outcome once a decision is decided. */
-export const Outcome = z
+/** One traversable WorkSpec relationship: one dynamic link key plus optional cardinality. */
+export const Link = z.record(z.string().min(1), z.unknown()).superRefine((entry, ctx) => {
+  const linkKeys = Object.keys(entry).filter((key) => key !== 'cardinality');
+  if (linkKeys.length !== 1) {
+    ctx.addIssue({ code: 'custom', message: 'each links entry must contain exactly one link' });
+    return;
+  }
+  const key = linkKeys[0] as string;
+  const ref = entry[key];
+  if (typeof ref !== 'string' || !/^(~\/|@workspace\/)/.test(ref)) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'link path refs must start with ~/ or @workspace/',
+      path: [key],
+    });
+  }
+  if ('cardinality' in entry) {
+    const parsed = LinkCardinality.safeParse(entry.cardinality);
+    if (!parsed.success) {
+      ctx.addIssue({ code: 'custom', message: 'invalid link cardinality', path: ['cardinality'] });
+    }
+  }
+});
+
+/** Supporting material outside the traversable WorkSpec artifact graph. */
+export const Reference = z
   .object({
-    option: identifier.describe('Id of the chosen option.'),
-    rationale: z.string().min(1).describe('The "we accept X for Y" rationale for the decision.'),
-    decidedBy: z.string().min(1).optional().describe('Who made the decision.'),
-    decidedAt: z.string().min(1).optional().describe('When the decision was made, ISO 8601.'),
+    kind: z.string().min(1),
+    target: z.string().min(1),
+    label: z.string().min(1).optional(),
   })
-  .describe('The recorded outcome once a decision is decided.');
+  .strict();
 
-/** An external reference the host resolves (deployment, feature, requirement…). */
-export const Link = z
+export const Alternative = z
   .object({
-    kind: z
-      .string()
-      .min(1)
-      .describe('Link kind, e.g. "deployment", "feature", "system-requirement".'),
-    label: z.string().min(1).describe('Human-readable link label.'),
-    target: z.string().min(1).optional().describe('Optional URL or opaque ref the host resolves.'),
+    title: z.string().min(1),
+    reason: z.string().min(1).optional(),
   })
-  .describe('An external reference the host resolves.');
+  .strict();
 
-/**
- * The decision body: lifecycle (former `metadata` fields), problem framing,
- * catalog ref, envs, criteria, options, and outcome.
- *
- * Built on `@workspec/schema-core`'s `defineArtifact`: the envelope
- * (apiVersion/kind/metadata) and identity (`metadata.slug`, loader-derived
- * from the filename when absent) are the shared shape every schema-core-based
- * kind uses. `title`/`status`/`created`/`deciders`/`supersedes` (former
- * `metadata` fields) now live here — they moved out of the old hand-rolled
- * `metadata.id`/`...` envelope; there is no more `metadata.id`, identity is
- * the filename slug.
- *
- * `supersedes` and `catalog` are bare-slug intra-tree refs (the field implies
- * the kind): `supersedes` → `decisions/*` (the decision this one supersedes),
- * `catalog` → `catalogs/*` (the catalog this decision prices against, resolved
- * by the loader to `.workspec/catalogs/<slug>.yaml`). Both used to be
- * identifier-shaped (`supersedes`) or a relative file path (`catalog`); dangling
- * refs are a `verify`-time failure (typo protection), not a schema error — the
- * schema only enforces slug *shape*, not resolution.
- */
+const FullDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
+
 export const DecisionSpec = z
   .object({
-    title: z.string().min(1).describe('Decision title.'),
-    status: z
-      .enum(['exploring', 'decided', 'superseded'])
-      .describe(
-        'Lifecycle status: exploring → decided; a decided decision may later be superseded.',
-      ),
-    created: z.string().min(1).optional().describe('Creation date, ISO 8601.'),
-    deciders: z
-      .array(z.string().min(1))
-      .optional()
-      .describe('People accountable for the decision.'),
-    supersedes: Slug.optional().describe(
-      'Bare-slug intra-tree ref → decisions/*: the decision this one supersedes.',
-    ),
-    context: z.string().min(1).describe('The problem framing: what is being decided and why.'),
-    catalog: Slug.describe(
-      'Bare-slug intra-tree ref → catalogs/*: the catalog this decision prices against. ' +
-        'Resolved by the loader to `.workspec/catalogs/<slug>.yaml`.',
-    ),
-    currency: z
-      .string()
-      .min(1)
-      .describe('ISO 4217 currency for all amounts; should match the catalog.'),
-    environments: z
-      .array(identifier)
-      .min(1)
-      .describe('Ordered environment ids, e.g. ["dev","test","prod"].'),
-    criteria: z.array(Criterion).describe('Weighted criteria the options are scored against.'),
-    options: z.array(Option).min(1).describe('The costed options under comparison.'),
-    outcome: Outcome.optional().describe(
-      'The recorded outcome; present once the decision is decided.',
-    ),
-    links: z.array(Link).optional().describe('External references the host resolves.'),
+    title: z.string().min(1),
+    status: DecisionStatus,
+    created: FullDate.optional(),
+    decided: FullDate.optional(),
+    deciders: z.array(z.string().min(1)).optional(),
+    context: z.string().min(1),
+    decision: z.string().min(1),
+    rationale: z.string().min(1).optional(),
+    consequences: z.array(z.string().min(1)).optional(),
+    alternatives: z.array(Alternative).optional(),
+    supersedes: Slug.optional(),
+    links: z.array(Link).optional(),
+    references: z.array(Reference).optional(),
+    tags: z.array(z.string().min(1)).optional(),
   })
-  .describe('The decision body.');
+  .strict();
 
-/**
- * A `*.decision.yaml` artifact.
- *
- * Cross-field integrity is enforced by `superRefine`: option environments must
- * be a subset of the decision environments; every per-env `qty`/`amount` key
- * must be a declared environment; every score key must be a declared criterion;
- * and a recorded `outcome.option` must reference an existing option. (Catalog
- * ref integrity — sku/mode/schedule — is validated by the engine, which has the
- * catalog in hand. `supersedes`/`catalog` slug-ref *resolution* is a loader/
- * `verify`-time concern, not enforced here.)
- */
-export const DecisionArtifact = defineArtifact('Decision', DecisionSpec)
-  .superRefine((doc, ctx) => {
-    const envs = new Set(doc.spec.environments);
-    const criteriaIds = new Set(doc.spec.criteria.map((c) => c.id));
-    const optionIds = new Set(doc.spec.options.map((o) => o.id));
-
-    doc.spec.options.forEach((option, oi) => {
-      // Option environments ⊆ decision environments.
-      option.environments.forEach((env, ei) => {
-        if (!envs.has(env)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['spec', 'options', oi, 'environments', ei],
-            message: `unknown environment "${env}" (not declared in spec.environments)`,
-          });
-        }
-      });
-
-      // Per-env line keys ⊆ decision environments.
-      option.lines.forEach((line, li) => {
-        const perEnv = line.flat ? line.amount : line.qty;
-        const field = line.flat ? 'amount' : 'qty';
-        for (const key of Object.keys(perEnv)) {
-          if (!envs.has(key)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ['spec', 'options', oi, 'lines', li, field, key],
-              message: `unknown environment "${key}" (not declared in spec.environments)`,
-            });
-          }
-        }
-      });
-
-      // Score keys ⊆ declared criteria.
-      for (const key of Object.keys(option.scores)) {
-        if (!criteriaIds.has(key)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['spec', 'options', oi, 'scores', key],
-            message: `unknown criterion "${key}" (not declared in spec.criteria)`,
-          });
-        }
-      }
-    });
-
-    // Outcome must reference an existing option.
-    if (doc.spec.outcome && !optionIds.has(doc.spec.outcome.option)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['spec', 'outcome', 'option'],
-        message: `unknown option "${doc.spec.outcome.option}" (not one of spec.options)`,
-      });
-    }
+/** Strict repository-native Decision artifact. Filename is the canonical identity. */
+export const DecisionArtifact = z
+  .object({
+    apiVersion: z.literal(API_VERSION),
+    kind: z.literal('Decision'),
+    metadata: z.object({ slug: Slug.optional() }).strict(),
+    spec: DecisionSpec,
   })
-  .describe('A WorkSpec decision artifact.');
+  .strict();
 
 // Inferred TypeScript types (Zod is the single source of truth).
 export type SkuLine = z.infer<typeof SkuLine>;
@@ -377,8 +302,11 @@ export type PatchOp = z.infer<typeof PatchOp>;
 export type Lever = z.infer<typeof Lever>;
 export type OptionScore = z.infer<typeof OptionScore>;
 export type Option = z.infer<typeof Option>;
-export type Criterion = z.infer<typeof Criterion>;
-export type Outcome = z.infer<typeof Outcome>;
 export type Link = z.infer<typeof Link>;
+export type LinkType = Link;
+export type LinkCardinality = z.infer<typeof LinkCardinality>;
+export type Reference = z.infer<typeof Reference>;
+export type Alternative = z.infer<typeof Alternative>;
+export type DecisionStatus = z.infer<typeof DecisionStatus>;
 export type DecisionSpec = z.infer<typeof DecisionSpec>;
 export type Decision = z.infer<typeof DecisionArtifact>;

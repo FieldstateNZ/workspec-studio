@@ -21,8 +21,6 @@ export type { CreateServerOptions } from './server.js';
 export { runServe } from './serve.js';
 
 // ── Lever reference warnings (non-fatal companion to engine validateRefs) ─────
-export { collectLeverRefWarnings } from './lever-refs.js';
-export type { LeverRefWarning } from './lever-refs.js';
 
 // ── Shared validate diagnostics core (CLI `validate` + the `validate` MCP tool) ─
 export { collectDiagnostics } from './collect-diagnostics.js';
@@ -37,9 +35,4 @@ export type { CliIO } from './cli.js';
 
 // ── Re-export the port + in-memory double for host/embedder convenience ───────
 export { createMemoryRepository } from '@workspec/decision-schema';
-export type {
-  DecisionRepositoryPort,
-  DecisionRef,
-  CatalogRef,
-  Ref,
-} from '@workspec/decision-schema';
+export type { DecisionRepositoryPort, DecisionRef, Ref } from '@workspec/decision-schema';

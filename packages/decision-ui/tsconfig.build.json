@@ -9,7 +9,20 @@
     { "path": "../decision-schema/tsconfig.build.json" },
     { "path": "../decision-engine/tsconfig.build.json" }
   ],
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": [
+    "src/index.ts",
+    "src/host.ts",
+    "src/context.tsx",
+    "src/themes.ts",
+    "src/app.tsx",
+    "src/workspace.tsx",
+    "src/adr.tsx",
+    "src/card.tsx",
+    "src/read-only-adr.tsx",
+    "src/raw.d.ts",
+    "src/mf/**/*.ts",
+    "src/mf/**/*.tsx"
+  ],
   // test-utils is a test-only helper (imported exclusively by *.test.tsx):
   // excluding it keeps its @testing-library devDep type references out of
   // the published dist/ tree.

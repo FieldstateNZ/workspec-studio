@@ -22,7 +22,7 @@ Usage:
   workspec-decisions mcp [--dir <path>]
 
 Options:
-  --dir <path>   Directory of *.decision.yaml / *.catalog.yaml to serve
+  --dir <path>   Repository root containing .workspec/decisions/
                  (default: current directory).
 
 Speaks MCP over stdin/stdout (JSON-RPC) — meant to be spawned by an MCP

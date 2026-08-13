@@ -157,14 +157,14 @@ importers:
         specifier: 0.1.0-alpha.5
         version: 0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       '@workspec/decision-engine':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
+        specifier: workspace:*
+        version: link:../../packages/decision-engine
       '@workspec/decision-schema':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
+        specifier: workspace:*
+        version: link:../../packages/decision-schema
       '@workspec/decision-ui':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: workspace:*
+        version: link:../../packages/decision-ui
       '@workspec/design':
         specifier: 0.1.0-alpha.1
         version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
@@ -3611,19 +3611,6 @@ packages:
 
   '@workspec/cost-ui@0.1.0-alpha.5':
     resolution: {integrity: sha512-gGKLX8w8mV9tKdcXKTA//F6Tl/gUalR4LHbW4Z+KYGNYu5fMSsGL4bFUBASYrSE8G2qvURps10HR0CakyPCaNA==}
-    peerDependencies:
-      '@tanstack/react-query': ^5.0.0
-      react: ^18.3.0
-      react-dom: ^18.3.0
-
-  '@workspec/decision-engine@0.1.0-alpha.5':
-    resolution: {integrity: sha512-nrDEUXnqmbMkQGLyk5+a4AwxHrNKqZa+Gm3kHSz9lKQfVjWFanHrhUwF0YWryzZny8w5IwZuq8dqpuj0dEcPog==}
-
-  '@workspec/decision-schema@0.1.0-alpha.5':
-    resolution: {integrity: sha512-R97/3QRxLvJRT2g8VwxQLg8gVcbIAbbx1HUhjoYxVezr+YHUk2U/xwzHvJYhzTR1/Z7KAs/X13dwq1MKP3rMAQ==}
-
-  '@workspec/decision-ui@0.1.0-alpha.5':
-    resolution: {integrity: sha512-27jSLPJXP61icv/OLGXAhJ/0buRMo9u49uhlCYbq3gbSP0Wc7FJ50JGW2vHhBfgce775geQ3FvKNTjd/xoqOsg==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       react: ^18.3.0
@@ -7806,29 +7793,6 @@ snapshots:
       '@tanstack/react-query': 5.101.2(react@18.3.1)
       '@workspec/cost-engine': 0.1.0-alpha.5
       '@workspec/cost-schema': 0.1.0-alpha.5
-      '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    transitivePeerDependencies:
-      - '@types/react'
-      - '@types/react-dom'
-      - tailwindcss
-
-  '@workspec/decision-engine@0.1.0-alpha.5':
-    dependencies:
-      '@workspec/decision-schema': 0.1.0-alpha.5
-
-  '@workspec/decision-schema@0.1.0-alpha.5':
-    dependencies:
-      yaml: 2.9.0
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
-
-  '@workspec/decision-ui@0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
-    dependencies:
-      '@tanstack/react-query': 5.101.2(react@18.3.1)
-      '@workspec/decision-engine': 0.1.0-alpha.5
-      '@workspec/decision-schema': 0.1.0-alpha.5
       '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)

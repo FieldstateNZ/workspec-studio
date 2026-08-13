@@ -5,9 +5,8 @@ import type { FsRepository } from '../fs-repository.js';
 import { mapRepoErrorToResult } from './map-repo-error-to-result.js';
 
 /**
- * The generated JSON Schema for a `Decision` artifact — see
- * `write-catalog-tool.ts`'s equivalent constant for why this is reused
- * verbatim from `@workspec/decision-schema` rather than hand-derived.
+ * The generated JSON Schema is reused verbatim from
+ * `@workspec/decision-schema` rather than hand-derived.
  */
 const DECISION_JSON_SCHEMA = buildDecisionJsonSchema();
 
@@ -32,8 +31,8 @@ export function buildWriteDecisionTool(repo: FsRepository): McpToolDef {
       'Schema-validate and persist a decision artifact at ref. Rejects (without writing) on any validation issue.',
     inputSchema: INPUT_SCHEMA,
     handler: async (args) => {
-      // See `write-catalog-tool.ts`: guard the arg readers so a bad ref is a
-      // clean isError and never reaches `writeDecision`.
+      // Guard the arg readers so a bad ref is a clean isError and never
+      // reaches `writeDecision`.
       let ref: string | undefined;
       try {
         ref = readRefArg(args, 'ref');

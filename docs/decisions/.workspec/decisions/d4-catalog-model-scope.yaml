@@ -4,106 +4,30 @@ kind: Decision
 metadata:
   slug: d4-catalog-model-scope
 spec:
-  title: 'D4 — Catalog model scope for OSS v1'
-  status: decided
-  created: '2026-07-01'
+  title: D4 — Catalog model scope for OSS v1
+  status: accepted
+  created: 2026-07-01
+  decided: 2026-07-01
   deciders:
-    - 'Fieldstate Dev Lead'
-  context: >-
-    The design prototype carried two pricing models: a simple engine model
+    - Fieldstate Dev Lead
+  context: "The design prototype carried two pricing models: a simple engine model
     (pricingModes/schedules/skus) that actually feeds compute(), and a rich
-    provider/resource/tier/usage/custom model that does not. OSS v1 must pick a
-    catalog schema. Costs below are the ongoing monthly build + maintenance
-    effort of carrying each model, in loaded engineer-days.
-  catalog: decisions
-  currency: NZD
-  environments:
-    - ongoing
-  criteria:
-    - id: v1Scope
-      label: 'v1 scope fit'
-      hint: 'Ships the golden fixture without over-building (higher = leaner)'
-      weight: 1.5
-    - id: conformanceRisk
-      label: 'Conformance safety'
-      hint: 'Risk to the normative golden numbers a Rust/Enterprise impl must match (higher = safer)'
-      weight: 1.2
-    - id: expressiveness
-      label: 'Expressiveness'
-      hint: 'Can model tiered/usage-based/provider-specific pricing'
-      weight: 1.0
-  options:
-    - id: simple-model
-      name: 'Simple engine model'
-      archetype: 'pricingModes(mult,committed) + schedules(pct) + skus(price)'
-      summary: >-
-        Ship exactly the tables the engine reads. Covers the hosting-platform golden fixture
-        and every case the recommendation needs, with a tiny normative surface.
-      tag: 'chosen'
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: build
-          group: effort
-          label: 'Schema + engine + docs maintenance'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 1 }
-      scores:
-        v1Scope: { score: 5, note: 'Nothing beyond what compute() consumes.' }
-        conformanceRisk: { score: 5, note: 'Small, fully snapshot-locked surface.' }
-        expressiveness: { score: 2, note: 'No tiers/usage; flat lines cover the escape hatch.' }
-    - id: rich-model
-      name: 'Rich provider/resource model'
-      archetype: 'providers → resources → pricingModels → tiers → usage → custom'
-      summary: >-
-        Port the prototype's full catalog-data model. Far more expressive, but a
-        large normative surface to specify, validate and hold stable across a
-        future Rust CLI and WorkSpec Enterprise.
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: build
-          group: effort
-          label: 'Model + validation + conformance maintenance'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 4 }
-      scores:
-        v1Scope: { score: 1, note: 'Weeks of modelling the fixture never exercises.' }
-        conformanceRisk: { score: 2, note: 'Large surface to keep byte-identical across impls.' }
-        expressiveness: { score: 5, note: 'Tiered/usage/provider pricing first-class.' }
-    - id: both-coexist
-      name: 'Keep both models'
-      archetype: 'Prototype status quo — two catalogs, one feeds compute()'
-      summary: >-
-        Ship both and let them diverge — exactly the prototype's confusing state,
-        where only one of the two models actually prices anything.
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: build
-          group: effort
-          label: 'Maintaining two divergent models'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 5 }
-      scores:
-        v1Scope: { score: 1, note: 'Most to build, most to explain.' }
-        conformanceRisk: { score: 1, note: 'Two sources of truth invite drift.' }
-        expressiveness: { score: 5, note: 'Everything, at the cost of coherence.' }
-  outcome:
-    option: simple-model
-    rationale: >-
-      We accept a less expressive catalog in exchange for a small, snapshot-lockable
-      normative surface that a future Rust CLI and WorkSpec Enterprise can match
-      byte-for-byte. Flat lines are the escape hatch for anything the simple model
-      cannot price; the rich provider/resource model is deferred to Enterprise.
-    decidedBy: 'Fieldstate Dev Lead'
-    decidedAt: '2026-07-01'
+    provider/resource/tier/usage/custom model that does not. OSS v1 must pick a catalog schema.
+    Costs below are the ongoing monthly build + maintenance effort of carrying each model, in loaded
+    engineer-days."
+  decision: Use Simple engine model.
+  rationale: We accept a less expressive catalog in exchange for a small, snapshot-lockable normative
+    surface that a future Rust CLI and WorkSpec Enterprise can match byte-for-byte. Flat lines are
+    the escape hatch for anything the simple model cannot price; the rich provider/resource model is
+    deferred to Enterprise.
+  consequences:
+    - Ship exactly the tables the engine reads. Covers the hosting-platform golden fixture and every
+      case the recommendation needs, with a tiny normative surface.
+  alternatives:
+    - title: Rich provider/resource model
+      reason: Port the prototype's full catalog-data model. Far more expressive, but a large normative
+        surface to specify, validate and hold stable across a future Rust CLI and WorkSpec
+        Enterprise.
+    - title: Keep both models
+      reason: Ship both and let them diverge — exactly the prototype's confusing state, where only one of
+        the two models actually prices anything.

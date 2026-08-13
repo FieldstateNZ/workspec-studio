@@ -5,9 +5,8 @@ import { expect, test } from '@playwright/test';
 // DecisionCard + DecisionWorkspace + C4Diagram + C4Explorer +
 // AttributionWorkbench + CostReport + CostInventory + TagPlanView +
 // TopologyWorkbench. Proven:
-//   1. DecisionCard renders the correct golden cost (the recommended AKS annual,
-//      $54,336.58) — the remote computes it with the bundled engine over the
-//      MemoryRepository the host seeded from the hosting-platform fixtures.
+//   1. DecisionCard and DecisionWorkspace render the repository-native record
+//      supplied by the host without a catalog dependency.
 //   2. C4Diagram/C4Explorer render the in-memory C4 model's elements.
 //   3. AttributionWorkbench renders its coverage meter and resource table over
 //      the inline cost estate (see ../src/cost-seed.ts), CostReport renders its
@@ -38,19 +37,19 @@ test.describe('MF smoke — host consumes the decision-ui, c4-ui, cost-ui, and t
 
     await page.goto('/');
 
-    // ── 1. DecisionCard renders the recommended option + its annual cost ──────
+    // ── 1. DecisionCard renders the record's authored decision ────────────────
     const card = page.locator('#card-mount .ds-card');
     await expect(card).toBeVisible();
     await expect(card.locator('.ds-card-title')).toHaveText(
       'Hosting platform for the data and delivery services',
     );
-    await expect(card.locator('.ds-card-choice-lab')).toHaveText('Recommended');
-    await expect(card.locator('.ds-card-choice-nm')).toHaveText('AKS');
-    await expect(card.locator('.ds-card-cost-v')).toHaveText('$54,336.58');
+    await expect(card.locator('.ds-core-card-decision')).toContainText('AKS');
 
-    // ── 2a. DecisionWorkspace (the full four-view app) renders — its hooks run,
+    // ── 2a. DecisionWorkspace (record + ADR preview) renders — its hooks run,
     //        which is only possible with a single shared React. ────────────────
-    await expect(page.locator('#workspace-mount .ds-opt-title').first()).toContainText('AKS');
+    await expect(page.locator('#workspace-mount').getByLabel('Title', { exact: true })).toHaveValue(
+      'Hosting platform for the data and delivery services',
+    );
 
     // ── 2b. reactProbe: the remote sees the exact React the host stamped. ──────
     const probe = page.locator('#react-probe');
@@ -120,9 +119,10 @@ test.describe('MF smoke — host consumes the decision-ui, c4-ui, cost-ui, and t
     await page.getByRole('button', { name: 'Move rule r1 down' }).click();
     await expect(railRuleIds.first()).toHaveText('r2');
     const reorderErrors = consoleErrors.slice(errorsBeforeReorder);
-    expect(reorderErrors, `unexpected console errors from the rule-reorder write:\n${reorderErrors.join('\n')}`).toEqual(
-      [],
-    );
+    expect(
+      reorderErrors,
+      `unexpected console errors from the rule-reorder write:\n${reorderErrors.join('\n')}`,
+    ).toEqual([]);
 
     // ── 4f. CostInventory renders its stock-take table over the same estate,
     //        as a fourth cost-ui view sharing the one CostStudioProvider. ─────

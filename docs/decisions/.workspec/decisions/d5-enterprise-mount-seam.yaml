@@ -4,120 +4,31 @@ kind: Decision
 metadata:
   slug: d5-enterprise-mount-seam
 spec:
-  title: 'D5 — Enterprise mount seam for the UI'
-  status: decided
-  created: '2026-07-01'
+  title: D5 — Enterprise mount seam for the UI
+  status: accepted
+  created: 2026-07-01
+  decided: 2026-07-01
   deciders:
-    - 'Fieldstate Dev Lead'
-  context: >-
-    The open-core promise is that the SAME decision-ui runs standalone and inside
-    WorkSpec Enterprise's shell, with no component forks — links that are inert
-    labels standalone come alive against the enterprise graph. How should
-    Enterprise mount the UI? Costs below are ongoing monthly integration +
-    maintenance effort in loaded engineer-days.
-  catalog: decisions
-  currency: NZD
-  environments:
-    - ongoing
-  criteria:
-    - id: singleSource
-      label: 'Single source, no forks'
-      hint: 'One component source drives standalone + enterprise (higher = better)'
-      weight: 2.0
-    - id: runtimeMount
-      label: 'Runtime mount'
-      hint: 'Host mounts the UI at runtime, deployed independently (higher = better)'
-      weight: 1.5
-    - id: versionSafety
-      label: 'Dependency safety'
-      hint: 'React singleton + shared-dep version safety across the boundary'
-      weight: 1.0
-    - id: simplicity
-      label: 'Build simplicity'
-      hint: 'How simple the build + infra stay (higher = simpler)'
-      weight: 0.8
-  options:
-    - id: module-federation
-      name: 'Module federation remote'
-      archetype: '@module-federation/vite remote, React as a shared singleton'
-      summary: >-
-        Build decision-ui a second time as an MF remote exposing DecisionWorkspace
-        / DecisionCard / AdrView. Enterprise loads it at runtime; a smoke host
-        proves a single React instance across the boundary.
-      tag: 'chosen'
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: integ
-          group: effort
-          label: 'MF build target + shared-dep policy upkeep'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 2 }
-      scores:
-        singleSource: { score: 5, note: 'Lib + MF build from one source; no forks.' }
-        runtimeMount:
-          { score: 5, note: 'Enterprise mounts the remote at runtime, ships on its own cadence.' }
-        versionSafety:
-          { score: 4, note: 'Shared singletons work but need a documented version-range policy.' }
-        simplicity: { score: 2, note: 'A second build target + federation config to carry.' }
-    - id: npm-embed
-      name: 'npm package, host bundles'
-      archetype: 'Publish decision-ui; Enterprise imports + bundles it'
-      summary: >-
-        Enterprise depends on the published @workspec/decision-ui and bundles it
-        at build time. Simplest and cheapest — but the UI can only ship when
-        Enterprise rebuilds, and there is no runtime seam.
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: integ
-          group: effort
-          label: 'Version bumps + coordinated rebuilds'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 1 }
-      scores:
-        singleSource: { score: 5, note: 'One package, imported directly.' }
-        runtimeMount:
-          { score: 1, note: 'No runtime mount — Enterprise must rebuild to ship a UI change.' }
-        versionSafety: { score: 5, note: 'One bundler resolves everything; no dual-React risk.' }
-        simplicity: { score: 5, note: 'Just a dependency.' }
-    - id: iframe
-      name: 'Iframe embed'
-      archetype: 'Enterprise embeds the standalone app in an iframe'
-      summary: >-
-        Run the standalone studio and frame it inside Enterprise. Hard isolation,
-        but a clumsy seam: postMessage plumbing for auth/links/theme and no shared
-        component model.
-      environments: [ongoing]
-      complete: true
-      lines:
-        - id: integ
-          group: effort
-          label: 'postMessage bridge + theming upkeep'
-          flat: false
-          sku: eng_day
-          mode: payg
-          schedule: always
-          qty: { ongoing: 1.5 }
-      scores:
-        singleSource: { score: 3, note: 'Shares the app, but the link/theme contract is bespoke.' }
-        runtimeMount: { score: 4, note: 'Mounts at runtime, but as an opaque frame.' }
-        versionSafety: { score: 5, note: 'Total isolation — nothing shared to clash.' }
-        simplicity: { score: 3, note: 'Simple to embed, fiddly to integrate.' }
-  outcome:
-    option: module-federation
-    rationale: >-
-      We accept a second build target and a shared-dependency policy in exchange
-      for one component source that Enterprise mounts at runtime with no forks —
-      the core of the open-core promise. npm-embed is cheaper and simpler but
-      cannot mount at runtime; an iframe isolates too hard to share the host
-      contract (links, theme, capabilities). The S6 smoke host proves a single
-      React instance across the seam.
-    decidedBy: 'Fieldstate Dev Lead'
-    decidedAt: '2026-07-01'
+    - Fieldstate Dev Lead
+  context: The open-core promise is that the SAME decision-ui runs standalone and inside WorkSpec
+    Enterprise's shell, with no component forks — links that are inert labels standalone come alive
+    against the enterprise graph. How should Enterprise mount the UI? Costs below are ongoing
+    monthly integration + maintenance effort in loaded engineer-days.
+  decision: Use Module federation remote.
+  rationale: We accept a second build target and a shared-dependency policy in exchange for one
+    component source that Enterprise mounts at runtime with no forks — the core of the open-core
+    promise. npm-embed is cheaper and simpler but cannot mount at runtime; an iframe isolates too
+    hard to share the host contract (links, theme, capabilities). The S6 smoke host proves a single
+    React instance across the seam.
+  consequences:
+    - Build decision-ui a second time as an MF remote exposing DecisionWorkspace / DecisionCard /
+      AdrView. Enterprise loads it at runtime; a smoke host proves a single React instance across
+      the boundary.
+  alternatives:
+    - title: npm package, host bundles
+      reason: Enterprise depends on the published @workspec/decision-ui and bundles it at build time.
+        Simplest and cheapest — but the UI can only ship when Enterprise rebuilds, and there is no
+        runtime seam.
+    - title: Iframe embed
+      reason: "Run the standalone studio and frame it inside Enterprise. Hard isolation, but a clumsy
+        seam: postMessage plumbing for auth/links/theme and no shared component model."

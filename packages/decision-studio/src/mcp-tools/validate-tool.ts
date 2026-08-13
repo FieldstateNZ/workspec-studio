@@ -7,16 +7,14 @@ const INPUT_SCHEMA = { type: 'object', properties: {}, additionalProperties: fal
 
 /**
  * Builds the `validate` tool: the exact same check the CLI's `validate`
- * command runs (both call {@link collectDiagnostics}) — schema parse-errors,
- * dangling authored SKU-line references (fatal), and dangling lever
- * references (non-fatal warnings) — returned as the diagnostics array rather
- * than formatted text.
+ * command runs (both call {@link collectDiagnostics}) — schema errors and
+ * dangling supersession refs, returned as the diagnostics array.
  */
 export function buildValidateTool(repo: FsRepository): McpToolDef {
   return {
     name: 'validate',
     description:
-      'Validate every decision + catalog under the served directory. Returns the diagnostics array (schema errors, dangling references, lever warnings).',
+      'Validate every Decision under the served directory. Returns schema and supersession diagnostics.',
     inputSchema: INPUT_SCHEMA,
     handler: async () => {
       try {

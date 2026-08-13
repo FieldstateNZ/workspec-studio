@@ -9,7 +9,8 @@ const INPUT_SCHEMA = {
   properties: {
     decision: {
       type: 'string',
-      description: 'Which decision to render — its ref (e.g. ".workspec/decisions/hosting-platform.yaml") or its slug.',
+      description:
+        'Which decision to render — its ref (e.g. ".workspec/decisions/hosting-platform.yaml") or its slug.',
     },
   },
   required: ['decision'],
@@ -18,14 +19,13 @@ const INPUT_SCHEMA = {
 
 /**
  * Builds the `render_adr` tool: resolve a decision (by ref or id), read it
- * and its catalog, then render the same deterministic Markdown ADR the CLI's
+ * then render the same deterministic Markdown ADR the CLI's
  * `render-adr` command produces.
  */
 export function buildRenderAdrTool(repo: FsRepository): McpToolDef {
   return {
     name: 'render_adr',
-    description:
-      'Render a decision (by ref or slug) to a deterministic Markdown ADR, resolving its catalog and computing costs.',
+    description: 'Render a Decision (by ref or slug) to deterministic ADR Markdown.',
     inputSchema: INPUT_SCHEMA,
     handler: async (args) => {
       const wanted = readStringArg(args, 'decision');
@@ -43,11 +43,9 @@ export function buildRenderAdrTool(repo: FsRepository): McpToolDef {
           };
         }
         const decision = await repo.readDecision(found.ref);
-        const catalogRef = repo.resolveCatalogRef(found.ref, decision);
-        const catalog = await repo.readCatalog(catalogRef);
         // Mirror the CLI's `render-adr`: fall back to the caller-supplied
         // identifier when the artifact carries no explicit `metadata.slug`.
-        const markdown = renderAdrMarkdown(buildAdrModel(decision, catalog, found.slug ?? wanted));
+        const markdown = renderAdrMarkdown(buildAdrModel(decision, found.slug ?? wanted));
         return { content: [{ type: 'text', text: markdown }] };
       } catch (error) {
         return mapRepoErrorToResult(error);

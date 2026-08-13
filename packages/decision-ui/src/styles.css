@@ -1419,3 +1419,133 @@
     position: static;
   }
 }
+
+/* ── Core Decision record editor / ADR ─────────────────────────────────── */
+.ds-root .ds-core-editor {
+  display: grid;
+  gap: var(--s-4);
+}
+.ds-root .ds-core-panel {
+  padding: var(--s-5);
+}
+.ds-root .ds-core-grid {
+  display: grid;
+  gap: var(--s-4);
+}
+.ds-root .ds-core-grid-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ds-root .ds-core-field {
+  display: grid;
+  gap: var(--s-2);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.ds-root .ds-core-field > span {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ds-root .ds-core-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg);
+  color: var(--ink);
+  padding: var(--s-3);
+  font: inherit;
+}
+.ds-root .ds-core-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.ds-root .ds-core-input:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+.ds-root .ds-core-textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.ds-root .ds-core-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ds-root .ds-core-status-accepted {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.ds-root .ds-core-status-rejected,
+.ds-root .ds-core-status-deprecated,
+.ds-root .ds-core-status-superseded {
+  color: var(--ink-fade);
+}
+.ds-root .ds-core-adr {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px);
+}
+.ds-root .ds-core-adr-header {
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--line);
+}
+.ds-root .ds-core-adr-header h1 {
+  margin: var(--s-3) 0;
+  font-size: clamp(26px, 4vw, 42px);
+  line-height: 1.1;
+}
+.ds-root .ds-core-adr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+.ds-root .ds-core-adr-section {
+  padding-top: var(--s-6);
+}
+.ds-root .ds-core-adr-section h2 {
+  margin: 0 0 var(--s-3);
+  font-size: 17px;
+}
+.ds-root .ds-core-adr-section p,
+.ds-root .ds-core-adr-section li {
+  line-height: 1.65;
+}
+.ds-root .ds-core-adr-section ul {
+  margin: 0;
+  padding-left: 22px;
+}
+.ds-root .ds-core-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-top: var(--s-6);
+}
+.ds-root .ds-core-tags span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+.ds-root .ds-core-card-decision {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .ds-root .ds-core-grid-meta {
+    grid-template-columns: 1fr;
+  }
+}

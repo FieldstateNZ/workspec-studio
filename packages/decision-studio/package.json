@@ -1,11 +1,10 @@
 {
   "name": "@workspec/decision-studio",
   "version": "0.1.0-alpha.6",
-  "description": "WorkSpec Decision Studio — standalone CLI + localhost host shell. Run costed decisions from your working tree.",
+  "description": "WorkSpec Decision Studio — read, write, validate, and render repository-native architecture decisions.",
   "keywords": [
     "architecture-decision-records",
     "adr",
-    "cost-modelling",
     "yaml",
     "cli"
   ],

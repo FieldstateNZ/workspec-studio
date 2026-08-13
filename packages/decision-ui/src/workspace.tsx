@@ -1,179 +1,247 @@
-// The Decision Workspace view. `DecisionWorkspace` is the container: it loads the
-// decision and its catalog through the port (TanStack Query) and hands them to
-// `WorkspaceView`, which owns a local editable draft so lever toggles and line
-// edits reprice instantly via the engine, then persists each change through the
-// write mutation. The decision header, links row, and the grid of option cards
-// (with cheapest + recommended badges) are faithful to the prototype Workspace.
-
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
-import { compute, recommend } from '@workspec/decision-engine';
-import type { Catalog, Decision, Ref } from '@workspec/decision-schema';
-import {
-  useCapabilities,
-  useDecision,
-  useCatalog,
-  useLinkResolver,
-  useNavigate,
-  useWriteDecision,
-} from './context.js';
-import {
-  setLineAmount,
-  setLineField,
-  setLineQty,
-  setScore,
-  toggleLever,
-  toggleOptionEnv,
-} from './edits.js';
-import { Button, Lbl } from '@workspec/design/components';
-import { decisionSlug, resolveCatalogRef } from './host.js';
-import { LinksBlock } from './links.js';
-import { OptionCard } from './option-card.js';
-import { DecisionStatusPill, Icon } from './primitives.js';
+import type { Alternative, Decision, DecisionStatus, Ref } from '@workspec/decision-schema';
+import { Button, Card, Lbl } from '@workspec/design/components';
+import { useCapabilities, useDecision, useWriteDecision } from './context.js';
+import { decisionSlug } from './host.js';
 
-/** Props for {@link DecisionWorkspace}. */
 export interface DecisionWorkspaceProps {
-  /** The ref of the decision to render (opaque to the UI). */
   decisionRef: Ref;
 }
 
-function Notice(props: { tone: 'muted' | 'error'; children: ReactElement | string }): ReactElement {
+function Notice(props: { error?: boolean; children: string }): ReactElement {
   return (
-    <div className={props.tone === 'error' ? 'ds-notice ds-notice-error' : 'ds-notice'}>
-      {props.children}
-    </div>
+    <div className={props.error ? 'ds-notice ds-notice-error' : 'ds-notice'}>{props.children}</div>
   );
 }
 
-/**
- * Load a decision + its catalog and render the workspace. Remounts (via `key`)
- * when the decision ref changes so a fresh editing draft is seeded.
- */
-export function DecisionWorkspace(props: DecisionWorkspaceProps): ReactElement {
-  const { decisionRef } = props;
-  const decisionQuery = useDecision(decisionRef);
-  const decision = decisionQuery.data;
-  const catalogRef = decision !== undefined ? resolveCatalogRef(decisionRef, decision) : undefined;
-  const catalogQuery = useCatalog(catalogRef);
+const STATUSES: DecisionStatus[] = ['proposed', 'accepted', 'rejected', 'deprecated', 'superseded'];
 
-  if (decisionQuery.isPending) return <Notice tone="muted">Loading decision…</Notice>;
-  if (decisionQuery.isError) {
-    return (
-      <Notice tone="error">{`Could not load decision: ${decisionQuery.error.message}`}</Notice>
-    );
-  }
-  if (decision === undefined) return <Notice tone="error">Decision not found.</Notice>;
-  if (catalogQuery.isPending) return <Notice tone="muted">Loading catalog…</Notice>;
-  if (catalogQuery.isError) {
-    return <Notice tone="error">{`Could not load catalog: ${catalogQuery.error.message}`}</Notice>;
-  }
-  const catalog = catalogQuery.data;
-  if (catalog === undefined) return <Notice tone="error">Catalog not found.</Notice>;
-
-  return (
-    <WorkspaceView
-      key={decisionRef}
-      decisionRef={decisionRef}
-      initialDecision={decision}
-      catalog={catalog}
-    />
-  );
+function lines(value: string): string[] | undefined {
+  const result = value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
 }
 
-function WorkspaceView(props: {
-  decisionRef: Ref;
-  initialDecision: Decision;
-  catalog: Catalog;
+function alternatives(value: string): Alternative[] | undefined {
+  const result = value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const [title, ...reason] = item.split('|').map((part) => part.trim());
+      return reason.join(' | ').length > 0
+        ? { title: title as string, reason: reason.join(' | ') }
+        : { title: title as string };
+    });
+  return result.length > 0 ? result : undefined;
+}
+
+function alternativesText(value: Alternative[] | undefined): string {
+  return (value ?? [])
+    .map((item) => (item.reason ? `${item.title} | ${item.reason}` : item.title))
+    .join('\n');
+}
+
+function Field(props: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
 }): ReactElement {
-  const { decisionRef, initialDecision, catalog } = props;
-  const [draft, setDraft] = useState<Decision>(initialDecision);
-  const [openId, setOpenId] = useState<string | null>(initialDecision.spec.options[0]?.id ?? null);
+  const controlProps = {
+    className: props.multiline ? 'ds-core-input ds-core-textarea' : 'ds-core-input',
+    value: props.value,
+    onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      props.onChange(event.target.value),
+    placeholder: props.placeholder,
+    disabled: props.disabled,
+  };
+  return (
+    <label className="ds-core-field">
+      <span>{props.label}</span>
+      {props.multiline ? <textarea {...controlProps} /> : <input {...controlProps} />}
+    </label>
+  );
+}
 
-  const resolveLink = useLinkResolver();
-  const navigate = useNavigate();
+export function DecisionWorkspace(props: DecisionWorkspaceProps): ReactElement {
+  const query = useDecision(props.decisionRef);
+  if (query.isPending) return <Notice>Loading decision…</Notice>;
+  if (query.isError)
+    return <Notice error>{`Could not load decision: ${query.error.message}`}</Notice>;
+  if (query.data === undefined) return <Notice error>Decision not found.</Notice>;
+  return (
+    <DecisionEditor key={props.decisionRef} decisionRef={props.decisionRef} initial={query.data} />
+  );
+}
+
+function DecisionEditor(props: { decisionRef: Ref; initial: Decision }): ReactElement {
+  const [draft, setDraft] = useState(props.initial);
   const capabilities = useCapabilities();
-  const writeDecision = useWriteDecision();
+  const write = useWriteDecision();
+  const editable = capabilities.editDecision;
 
-  const commit = (next: Decision): void => {
-    setDraft(next);
-    writeDecision.mutate({ ref: decisionRef, decision: next });
+  useEffect(() => setDraft(props.initial), [props.initial]);
+
+  const updateSpec = (patch: Partial<Decision['spec']>): void => {
+    setDraft((current) => ({ ...current, spec: { ...current.spec, ...patch } }));
+  };
+  const optional = (
+    key: keyof Decision['spec'],
+    value: string | string[] | Alternative[] | undefined,
+  ): void => {
+    setDraft((current) => {
+      const spec = Object.fromEntries(
+        Object.entries(current.spec).filter(([field]) => field !== key),
+      );
+      if (value !== undefined && value !== '') spec[key] = value;
+      return { ...current, spec: spec as Decision['spec'] };
+    });
   };
 
-  const result = useMemo(() => compute(draft, catalog), [draft, catalog]);
-  const recommendedId = useMemo(() => recommend(result, draft), [result, draft]);
-  const cheapestId = result.cheapestId;
-
-  const options = draft.spec.options;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(props.initial);
 
   return (
-    <div className="ds-wrap">
+    <div className="ds-wrap ds-core-editor">
       <div className="ds-dechead">
         <div className="ds-dechead-meta">
-          <Lbl>{`Decision · ${decisionSlug(draft, decisionRef)}`}</Lbl>
+          <Lbl>{`Decision · ${decisionSlug(draft, props.decisionRef)}`}</Lbl>
           <h1 className="ds-dechead-title">{draft.spec.title}</h1>
-          <p className="ds-ctx">{draft.spec.context}</p>
-          <LinksBlock links={draft.spec.links ?? []} resolve={resolveLink} />
+          <p className="ds-ctx">Repository-native architecture decision record</p>
         </div>
         <div className="ds-actions">
-          <DecisionStatusPill status={draft.spec.status} />
-          {navigate !== undefined && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate({ kind: 'view', label: 'Compare', target: 'compare' })}
-              >
-                <Icon.scale /> Compare
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate({ kind: 'view', label: 'ADR', target: 'adr' })}
-              >
-                <Icon.doc /> {capabilities.decide ? 'Decide' : 'View ADR'}
-              </Button>
-            </>
+          <span className={`ds-core-status ds-core-status-${draft.spec.status}`}>
+            {draft.spec.status}
+          </span>
+          {editable && (
+            <Button
+              size="sm"
+              disabled={!dirty || write.isPending}
+              onClick={() => write.mutate({ ref: props.decisionRef, decision: draft })}
+            >
+              {write.isPending ? 'Saving…' : 'Save decision'}
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="ds-sectlabel">
-        <h2>Options</h2>
-        <span className="ds-ln" />
-        <span className="ds-ct">{`${options.length} candidate${options.length === 1 ? '' : 's'}`}</span>
-      </div>
+      {!editable && <Notice>This host has opened the record read-only.</Notice>}
+      {write.isError && <Notice error>{`Save failed: ${write.error.message}`}</Notice>}
+      {write.isSuccess && !dirty && <Notice>Saved to the repository.</Notice>}
 
-      <div className="ds-optgrid">
-        {options.map((option) => {
-          const cost = result.byOption[option.id];
-          if (cost === undefined) return null;
-          return (
-            <OptionCard
-              key={option.id}
-              option={option}
-              decision={draft}
-              catalog={catalog}
-              criteria={draft.spec.criteria}
-              cost={cost}
-              open={openId === option.id}
-              onToggle={() => setOpenId(openId === option.id ? null : option.id)}
-              cheapest={cheapestId === option.id}
-              recommended={recommendedId === option.id}
-              onToggleLever={(leverId) => commit(toggleLever(draft, option.id, leverId))}
-              onLineField={(lineId, patch) => commit(setLineField(draft, option.id, lineId, patch))}
-              onLineQty={(lineId, env, qty) =>
-                commit(setLineQty(draft, option.id, lineId, env, qty))
-              }
-              onLineAmount={(lineId, env, amount) =>
-                commit(setLineAmount(draft, option.id, lineId, env, amount))
-              }
-              onToggleEnv={(env) => commit(toggleOptionEnv(draft, option.id, env))}
-              onScore={(criterionId, score) =>
-                commit(setScore(draft, option.id, criterionId, score))
-              }
-            />
-          );
-        })}
-      </div>
+      <Card className="ds-core-panel">
+        <div className="ds-core-grid ds-core-grid-meta">
+          <Field
+            label="Title"
+            value={draft.spec.title}
+            disabled={!editable}
+            onChange={(title) => updateSpec({ title })}
+          />
+          <label className="ds-core-field">
+            <span>Status</span>
+            <select
+              className="ds-core-input"
+              value={draft.spec.status}
+              disabled={!editable}
+              onChange={(event) => updateSpec({ status: event.target.value as DecisionStatus })}
+            >
+              {STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Field
+            label="Created"
+            value={draft.spec.created ?? ''}
+            placeholder="YYYY-MM-DD"
+            disabled={!editable}
+            onChange={(value) => optional('created', value)}
+          />
+          <Field
+            label="Decided"
+            value={draft.spec.decided ?? ''}
+            placeholder="YYYY-MM-DD"
+            disabled={!editable}
+            onChange={(value) => optional('decided', value)}
+          />
+        </div>
+      </Card>
+
+      <Card className="ds-core-panel ds-core-grid">
+        <Field
+          label="Context"
+          value={draft.spec.context}
+          multiline
+          disabled={!editable}
+          onChange={(context) => updateSpec({ context })}
+        />
+        <Field
+          label="Decision"
+          value={draft.spec.decision}
+          multiline
+          disabled={!editable}
+          onChange={(decision) => updateSpec({ decision })}
+        />
+        <Field
+          label="Rationale"
+          value={draft.spec.rationale ?? ''}
+          multiline
+          disabled={!editable}
+          onChange={(value) => optional('rationale', value)}
+        />
+        <Field
+          label="Consequences (one per line)"
+          value={(draft.spec.consequences ?? []).join('\n')}
+          multiline
+          disabled={!editable}
+          onChange={(value) => optional('consequences', lines(value))}
+        />
+        <Field
+          label="Alternatives (title | reason, one per line)"
+          value={alternativesText(draft.spec.alternatives)}
+          multiline
+          disabled={!editable}
+          onChange={(value) => optional('alternatives', alternatives(value))}
+        />
+      </Card>
+
+      <Card className="ds-core-panel ds-core-grid ds-core-grid-meta">
+        <Field
+          label="Deciders (one per line)"
+          value={(draft.spec.deciders ?? []).join('\n')}
+          multiline
+          disabled={!editable}
+          onChange={(value) => optional('deciders', lines(value))}
+        />
+        <Field
+          label="Tags (one per line)"
+          value={(draft.spec.tags ?? []).join('\n')}
+          multiline
+          disabled={!editable}
+          onChange={(value) => optional('tags', lines(value))}
+        />
+        <Field
+          label="Supersedes"
+          value={draft.spec.supersedes ?? ''}
+          disabled={!editable}
+          onChange={(value) => optional('supersedes', value)}
+        />
+        <Field
+          label="Filename slug assertion"
+          value={draft.metadata.slug ?? ''}
+          disabled={!editable}
+          onChange={(value) =>
+            setDraft((current) => ({ ...current, metadata: value === '' ? {} : { slug: value } }))
+          }
+        />
+      </Card>
     </div>
   );
 }

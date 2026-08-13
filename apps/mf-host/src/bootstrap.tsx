@@ -22,11 +22,7 @@
 
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-  createMemoryRepository,
-  parseCatalogYaml,
-  parseDecisionYaml,
-} from '@workspec/decision-schema';
+import { createMemoryRepository, parseDecisionYaml } from '@workspec/decision-schema';
 import type { DecisionStudioHost } from '@workspec/decision-ui';
 import { createMemorySource, loadC4Model } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
@@ -41,7 +37,6 @@ import {
 import { createTopologySeedSource } from './topology-seed.js';
 // The hosting-platform fixtures as raw strings, parsed at runtime into the MemoryRepository.
 import hostingDecisionYaml from '../../../examples/hosting-platform/.workspec/decisions/hosting-platform.yaml?raw';
-import hostingCatalogYaml from '../../../examples/hosting-platform/.workspec/catalogs/platform.yaml?raw';
 import './smoke.css';
 
 // Stamp the host React for the single-instance probe (must precede remote loads).
@@ -72,24 +67,19 @@ const { reactProbe: topologyReactProbe } = await import('topologyUi/reactProbe')
 
 // ── Seed the in-memory repository from the hosting-platform fixtures ───────────
 const DECISION_REF = '.workspec/decisions/hosting-platform.yaml';
-const CATALOG_REF = '.workspec/catalogs/platform.yaml';
 
 const decision = parseDecisionYaml(hostingDecisionYaml);
 if (!decision.ok)
   throw new Error(`hosting decision fixture invalid: ${decision.errors[0]?.message}`);
-const catalog = parseCatalogYaml(hostingCatalogYaml);
-if (!catalog.ok) throw new Error(`hosting catalog fixture invalid: ${catalog.errors[0]?.message}`);
-
 const repository = createMemoryRepository({
   decisions: { [DECISION_REF]: decision.data },
-  catalogs: { [CATALOG_REF]: catalog.data },
 });
 
 const host: DecisionStudioHost = {
   repository,
   links: createInertLinkResolver(),
   // A read-only mount — the smoke host grants no editing capabilities.
-  capabilities: { editCatalog: false, decide: false },
+  capabilities: { editDecision: false },
 };
 
 // ── Seed a tiny in-memory C4 model (loaded through the real @workspec/c4-model
@@ -233,7 +223,10 @@ function CostSmokeApp(): React.ReactElement {
         />
         <section id="cost-workbench-mount" className="smoke-section">
           <h2 className="smoke-h">AttributionWorkbench · remote</h2>
-          <AttributionWorkbench inventoryRef={COST_INVENTORY_REF} attributionRef={COST_ATTRIBUTION_REF} />
+          <AttributionWorkbench
+            inventoryRef={COST_INVENTORY_REF}
+            attributionRef={COST_ATTRIBUTION_REF}
+          />
         </section>
         <section id="cost-report-mount" className="smoke-section">
           <h2 className="smoke-h">CostReport · remote</h2>

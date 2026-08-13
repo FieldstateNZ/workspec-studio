@@ -23,5 +23,21 @@
     { "path": "../decision-schema/tsconfig.build.json" },
     { "path": "../decision-engine/tsconfig.build.json" }
   ],
-  "include": ["src"]
+  "include": [
+    "src/index.ts",
+    "src/host.ts",
+    "src/context.tsx",
+    "src/themes.ts",
+    "src/app.tsx",
+    "src/workspace.tsx",
+    "src/adr.tsx",
+    "src/card.tsx",
+    "src/read-only-adr.tsx",
+    "src/test-utils.tsx",
+    "src/core.test.tsx",
+    "src/testing.d.ts",
+    "src/raw.d.ts",
+    "src/mf/**/*.ts",
+    "src/mf/**/*.tsx"
+  ]
 }

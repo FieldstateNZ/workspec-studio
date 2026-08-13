@@ -6,6 +6,6 @@
     "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo"
   },
   "references": [{ "path": "../decision-schema/tsconfig.build.json" }],
-  "include": ["src/**/*.ts"],
+  "include": ["src/index.ts", "src/adr.ts", "src/cost.ts"],
   "exclude": ["src/**/*.test.ts"]
 }
