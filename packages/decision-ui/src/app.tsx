@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { Ref } from '@workspec/decision-schema';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspec/design/components';
+import { Button } from '@workspec/design/components';
 import { DecisionWorkspace } from './workspace.js';
 import { DecisionAdr } from './adr.js';
+import { useCapabilities } from './context.js';
 
 export type DecisionView = 'record' | 'adr';
 
@@ -12,27 +13,37 @@ export interface DecisionAppProps {
   initialView?: DecisionView;
 }
 
-/** The core Studio: edit the canonical record and preview its ADR projection. */
+/** The core Studio: consume the ADR by default and enter record editing explicitly. */
 export function DecisionApp(props: DecisionAppProps): ReactElement {
-  const [view, setView] = useState<DecisionView>(props.initialView ?? 'record');
+  const initialView = props.initialView ?? 'adr';
+  const [view, setView] = useState<DecisionView>(initialView);
+  const capabilities = useCapabilities();
+
+  useEffect(() => setView(initialView), [initialView, props.decisionRef]);
+
   return (
     <div className="ds-app">
-      <Tabs value={view} onValueChange={(value) => setView(value as DecisionView)}>
-        <div className="ds-appbar">
-          <TabsList aria-label="Decision views">
-            <TabsTrigger value="record">Record</TabsTrigger>
-            <TabsTrigger value="adr">ADR preview</TabsTrigger>
-          </TabsList>
-        </div>
-        <div className="ds-view">
-          <TabsContent value="record">
-            <DecisionWorkspace decisionRef={props.decisionRef} />
-          </TabsContent>
-          <TabsContent value="adr">
-            <DecisionAdr decisionRef={props.decisionRef} />
-          </TabsContent>
-        </div>
-      </Tabs>
+      {view === 'adr' ? (
+        <DecisionAdr
+          decisionRef={props.decisionRef}
+          action={
+            capabilities.editDecision ? (
+              <Button size="sm" onClick={() => setView('record')}>
+                Edit
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <DecisionWorkspace
+          decisionRef={props.decisionRef}
+          action={
+            <Button size="sm" variant="secondary" onClick={() => setView('adr')}>
+              Cancel
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 }

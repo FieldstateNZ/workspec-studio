@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { Alternative, Decision, DecisionStatus, Ref } from '@workspec/decision-schema';
 import { Button, Card, Lbl } from '@workspec/design/components';
 import { useCapabilities, useDecision, useWriteDecision } from './context.js';
@@ -7,6 +7,7 @@ import { decisionSlug } from './host.js';
 
 export interface DecisionWorkspaceProps {
   decisionRef: Ref;
+  action?: ReactNode;
 }
 
 function Notice(props: { error?: boolean; children: string }): ReactElement {
@@ -76,11 +77,20 @@ export function DecisionWorkspace(props: DecisionWorkspaceProps): ReactElement {
     return <Notice error>{`Could not load decision: ${query.error.message}`}</Notice>;
   if (query.data === undefined) return <Notice error>Decision not found.</Notice>;
   return (
-    <DecisionEditor key={props.decisionRef} decisionRef={props.decisionRef} initial={query.data} />
+    <DecisionEditor
+      key={props.decisionRef}
+      decisionRef={props.decisionRef}
+      initial={query.data}
+      action={props.action}
+    />
   );
 }
 
-function DecisionEditor(props: { decisionRef: Ref; initial: Decision }): ReactElement {
+function DecisionEditor(props: {
+  decisionRef: Ref;
+  initial: Decision;
+  action?: ReactNode;
+}): ReactElement {
   const [draft, setDraft] = useState(props.initial);
   const capabilities = useCapabilities();
   const write = useWriteDecision();
@@ -107,141 +117,148 @@ function DecisionEditor(props: { decisionRef: Ref; initial: Decision }): ReactEl
   const dirty = JSON.stringify(draft) !== JSON.stringify(props.initial);
 
   return (
-    <div className="ds-wrap ds-core-editor">
-      <div className="ds-dechead">
-        <div className="ds-dechead-meta">
-          <Lbl>{`Decision · ${decisionSlug(draft, props.decisionRef)}`}</Lbl>
-          <h1 className="ds-dechead-title">{draft.spec.title}</h1>
-          <p className="ds-ctx">Repository-native architecture decision record</p>
-        </div>
-        <div className="ds-actions">
-          <span className={`ds-core-status ds-core-status-${draft.spec.status}`}>
-            {draft.spec.status}
-          </span>
+    <>
+      <div className="ds-app-toolbar">
+        <span className="ds-app-toolbar-label">Edit</span>
+        <div className="ds-app-toolbar-actions">
+          {props.action}
           {editable && (
             <Button
               size="sm"
               disabled={!dirty || write.isPending}
               onClick={() => write.mutate({ ref: props.decisionRef, decision: draft })}
             >
-              {write.isPending ? 'Saving…' : 'Save decision'}
+              {write.isPending ? 'Saving…' : 'Save'}
             </Button>
           )}
         </div>
       </div>
 
-      {!editable && <Notice>This host has opened the record read-only.</Notice>}
-      {write.isError && <Notice error>{`Save failed: ${write.error.message}`}</Notice>}
-      {write.isSuccess && !dirty && <Notice>Saved to the repository.</Notice>}
-
-      <Card className="ds-core-panel">
-        <div className="ds-core-grid ds-core-grid-meta">
-          <Field
-            label="Title"
-            value={draft.spec.title}
-            disabled={!editable}
-            onChange={(title) => updateSpec({ title })}
-          />
-          <label className="ds-core-field">
-            <span>Status</span>
-            <select
-              className="ds-core-input"
-              value={draft.spec.status}
-              disabled={!editable}
-              onChange={(event) => updateSpec({ status: event.target.value as DecisionStatus })}
-            >
-              {STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Field
-            label="Created"
-            value={draft.spec.created ?? ''}
-            placeholder="YYYY-MM-DD"
-            disabled={!editable}
-            onChange={(value) => optional('created', value)}
-          />
-          <Field
-            label="Decided"
-            value={draft.spec.decided ?? ''}
-            placeholder="YYYY-MM-DD"
-            disabled={!editable}
-            onChange={(value) => optional('decided', value)}
-          />
+      <div className="ds-wrap ds-core-editor">
+        <div className="ds-dechead">
+          <div className="ds-dechead-meta">
+            <Lbl>{`Decision · ${decisionSlug(draft, props.decisionRef)}`}</Lbl>
+            <h1 className="ds-dechead-title">{draft.spec.title}</h1>
+            <p className="ds-ctx">Repository-native architecture decision record</p>
+          </div>
+          <span className={`ds-core-status ds-core-status-${draft.spec.status}`}>
+            {draft.spec.status}
+          </span>
         </div>
-      </Card>
 
-      <Card className="ds-core-panel ds-core-grid">
-        <Field
-          label="Context"
-          value={draft.spec.context}
-          multiline
-          disabled={!editable}
-          onChange={(context) => updateSpec({ context })}
-        />
-        <Field
-          label="Decision"
-          value={draft.spec.decision}
-          multiline
-          disabled={!editable}
-          onChange={(decision) => updateSpec({ decision })}
-        />
-        <Field
-          label="Rationale"
-          value={draft.spec.rationale ?? ''}
-          multiline
-          disabled={!editable}
-          onChange={(value) => optional('rationale', value)}
-        />
-        <Field
-          label="Consequences (one per line)"
-          value={(draft.spec.consequences ?? []).join('\n')}
-          multiline
-          disabled={!editable}
-          onChange={(value) => optional('consequences', lines(value))}
-        />
-        <Field
-          label="Alternatives (title | reason, one per line)"
-          value={alternativesText(draft.spec.alternatives)}
-          multiline
-          disabled={!editable}
-          onChange={(value) => optional('alternatives', alternatives(value))}
-        />
-      </Card>
+        {!editable && <Notice>This host has opened the record read-only.</Notice>}
+        {write.isError && <Notice error>{`Save failed: ${write.error.message}`}</Notice>}
+        {write.isSuccess && !dirty && <Notice>Saved to the repository.</Notice>}
 
-      <Card className="ds-core-panel ds-core-grid ds-core-grid-meta">
-        <Field
-          label="Deciders (one per line)"
-          value={(draft.spec.deciders ?? []).join('\n')}
-          multiline
-          disabled={!editable}
-          onChange={(value) => optional('deciders', lines(value))}
-        />
-        <Field
-          label="Tags (one per line)"
-          value={(draft.spec.tags ?? []).join('\n')}
-          multiline
-          disabled={!editable}
-          onChange={(value) => optional('tags', lines(value))}
-        />
-        <Field
-          label="Supersedes"
-          value={draft.spec.supersedes ?? ''}
-          disabled={!editable}
-          onChange={(value) => optional('supersedes', value)}
-        />
-        <Field
-          label="Filename slug assertion"
-          value={draft.metadata.slug ?? ''}
-          disabled={!editable}
-          onChange={(value) =>
-            setDraft((current) => ({ ...current, metadata: value === '' ? {} : { slug: value } }))
-          }
-        />
-      </Card>
-    </div>
+        <Card className="ds-core-panel">
+          <div className="ds-core-grid ds-core-grid-meta">
+            <Field
+              label="Title"
+              value={draft.spec.title}
+              disabled={!editable}
+              onChange={(title) => updateSpec({ title })}
+            />
+            <label className="ds-core-field">
+              <span>Status</span>
+              <select
+                className="ds-core-input"
+                value={draft.spec.status}
+                disabled={!editable}
+                onChange={(event) => updateSpec({ status: event.target.value as DecisionStatus })}
+              >
+                {STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Field
+              label="Created"
+              value={draft.spec.created ?? ''}
+              placeholder="YYYY-MM-DD"
+              disabled={!editable}
+              onChange={(value) => optional('created', value)}
+            />
+            <Field
+              label="Decided"
+              value={draft.spec.decided ?? ''}
+              placeholder="YYYY-MM-DD"
+              disabled={!editable}
+              onChange={(value) => optional('decided', value)}
+            />
+          </div>
+        </Card>
+
+        <Card className="ds-core-panel ds-core-grid">
+          <Field
+            label="Context"
+            value={draft.spec.context}
+            multiline
+            disabled={!editable}
+            onChange={(context) => updateSpec({ context })}
+          />
+          <Field
+            label="Decision"
+            value={draft.spec.decision}
+            multiline
+            disabled={!editable}
+            onChange={(decision) => updateSpec({ decision })}
+          />
+          <Field
+            label="Rationale"
+            value={draft.spec.rationale ?? ''}
+            multiline
+            disabled={!editable}
+            onChange={(value) => optional('rationale', value)}
+          />
+          <Field
+            label="Consequences (one per line)"
+            value={(draft.spec.consequences ?? []).join('\n')}
+            multiline
+            disabled={!editable}
+            onChange={(value) => optional('consequences', lines(value))}
+          />
+          <Field
+            label="Alternatives (title | reason, one per line)"
+            value={alternativesText(draft.spec.alternatives)}
+            multiline
+            disabled={!editable}
+            onChange={(value) => optional('alternatives', alternatives(value))}
+          />
+        </Card>
+
+        <Card className="ds-core-panel ds-core-grid ds-core-grid-meta">
+          <Field
+            label="Deciders (one per line)"
+            value={(draft.spec.deciders ?? []).join('\n')}
+            multiline
+            disabled={!editable}
+            onChange={(value) => optional('deciders', lines(value))}
+          />
+          <Field
+            label="Tags (one per line)"
+            value={(draft.spec.tags ?? []).join('\n')}
+            multiline
+            disabled={!editable}
+            onChange={(value) => optional('tags', lines(value))}
+          />
+          <Field
+            label="Supersedes"
+            value={draft.spec.supersedes ?? ''}
+            disabled={!editable}
+            onChange={(value) => optional('supersedes', value)}
+          />
+          <Field
+            label="Filename slug assertion"
+            value={draft.metadata.slug ?? ''}
+            disabled={!editable}
+            onChange={(value) =>
+              setDraft((current) => ({ ...current, metadata: value === '' ? {} : { slug: value } }))
+            }
+          />
+        </Card>
+      </div>
+    </>
   );
 }

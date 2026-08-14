@@ -18,6 +18,7 @@ import { HttpRepository } from './http-repository.js';
 import { Shell } from './shell.js';
 
 const repository = new HttpRepository();
+const THEME_STORAGE_KEY = 'workspec.decision-studio.theme';
 
 const host: DecisionStudioHost = {
   repository,
@@ -25,18 +26,34 @@ const host: DecisionStudioHost = {
   capabilities: { editDecision: true },
 };
 
+function storedTheme(): ThemeName {
+  try {
+    const value = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return value === 'light' || value === 'dark' ? value : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
 function App(): ReactElement {
-  const [theme, setTheme] = useState<ThemeName>('dark');
+  const [theme, setTheme] = useState<ThemeName>(storedTheme);
   const [ref, setRef] = useState<string | undefined>(undefined);
+
+  const toggleTheme = (): void => {
+    setTheme((current) => {
+      const next = current === 'dark' ? 'light' : 'dark';
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, next);
+      } catch {
+        // A storage-denied browser still gets an in-memory theme toggle.
+      }
+      return next;
+    });
+  };
 
   return (
     <DecisionStudioProvider host={host} theme={theme}>
-      <Shell
-        theme={theme}
-        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        selectedRef={ref}
-        onSelectRef={setRef}
-      >
+      <Shell theme={theme} onToggleTheme={toggleTheme} selectedRef={ref} onSelectRef={setRef}>
         {ref !== undefined ? (
           <DecisionApp decisionRef={ref} />
         ) : (

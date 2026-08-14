@@ -5,7 +5,7 @@ Host-agnostic React views for repository-native WorkSpec Decision records.
 The core app has two views:
 
 - **Record** edits the canonical Decision fields and persists them through the repository port.
-- **ADR preview** renders the same record as a readable architecture decision record.
+- **View mode** renders the record as a readable architecture decision record.
 
 ```tsx
 const host: DecisionStudioHost = {
