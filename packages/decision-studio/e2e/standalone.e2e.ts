@@ -54,25 +54,45 @@ test.afterAll(() => {
   if (tmpDir !== undefined) rmSync(tmpDir, { recursive: true, force: true });
 });
 
-test('read → edit → write → ADR preview → YAML updated', async ({ page }) => {
+test('view → edit → write → view → YAML updated', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByText('WorkSpec', { exact: true })).toBeVisible();
+  await expect(page.getByText('Decision Studio', { exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await expect(page.locator('.ds-root')).toHaveAttribute('data-theme', 'light');
+  await page.reload();
+  await expect(page.locator('.ds-root')).toHaveAttribute('data-theme', 'light');
+  await expect(page.getByRole('button', { name: 'Switch to dark theme' })).toBeVisible();
+
+  const decisionNav = page.getByRole('navigation', { name: 'Decisions' });
+  await expect(decisionNav).toBeVisible();
+  await expect(
+    decisionNav.getByRole('button', {
+      name: /Hosting platform for the data and delivery services/,
+    }),
+  ).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('combobox', { name: 'Decision' })).toHaveCount(0);
+
+  await expect(
+    page.getByRole('heading', { name: 'Hosting platform for the data and delivery services' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Edit' }).click();
   await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
     'Hosting platform for the data and delivery services',
   );
   await expect(page.getByText('proposed', { exact: true }).first()).toBeVisible();
 
-  const decision = page
-    .getByRole('tabpanel', { name: 'Record' })
-    .getByRole('textbox', { name: 'Decision', exact: true });
+  const decision = page.getByRole('textbox', { name: 'Decision', exact: true });
   await decision.fill('Adopt AKS as the hosting platform.');
-  await page.getByRole('button', { name: 'Save decision' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Saved to the repository.')).toBeVisible();
 
   await expect
     .poll(() => readDecisionOnDisk().spec.decision)
     .toBe('Adopt AKS as the hosting platform.');
 
-  await page.getByRole('tab', { name: 'ADR preview' }).click();
-  await expect(page.getByRole('heading', { name: 'Decision' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('heading', { name: 'Decision', exact: true })).toBeVisible();
   await expect(page.getByText('Adopt AKS as the hosting platform.')).toBeVisible();
 });

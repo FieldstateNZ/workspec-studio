@@ -305,8 +305,8 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
     render(<Demo />);
     // Chrome we own renders synchronously.
     expect(screen.getByText(/changes live only in your browser/i)).toBeInTheDocument();
-    // Proof the DecisionApp mounted: its record/ADR navigation appears.
-    expect(await screen.findByText('ADR preview')).toBeInTheDocument();
+    // Proof the DecisionApp mounted in its default consumption mode.
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument();
     // …and the seeded decision's title loads through the async repository port.
     expect(
       await screen.findByRole('heading', { name: /hosting platform for the data/i }),
@@ -337,7 +337,7 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
 
   it('keeps the worked-example switcher and module actions in the workbench bar', async () => {
     render(<Demo />);
-    await screen.findByText('ADR preview'); // wait for the DecisionApp to mount
+    await screen.findByRole('button', { name: 'Edit' }); // wait for the DecisionApp to mount
 
     const switcher = screen.getByRole('group', { name: /worked examples/i });
     expect(within(switcher).getByRole('button', { name: 'Hosting platform' })).toHaveAttribute(

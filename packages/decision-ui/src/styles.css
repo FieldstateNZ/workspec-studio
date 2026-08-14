@@ -871,16 +871,38 @@
   font-family: var(--mono);
 }
 
-/* ── full app: view nav chrome around the adopted Tabs ─────────────────────── */
-.ds-root .ds-appbar {
-  display: flex;
-  justify-content: center;
-  padding: var(--s-5) var(--s-10) 0;
-}
-
 /* wide wrap for Compare / Catalog / ADR */
 .ds-root .ds-wrap.ds-wide {
   max-width: 1760px;
+}
+
+/* ── app-level actions ───────────────────────────────────────────────────── */
+.ds-root .ds-app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-2) var(--s-10);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+.ds-root .ds-app-toolbar-label {
+  color: var(--ink-fade);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ds-root .ds-app-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
 }
 
 /* ── Compare view ──────────────────────────────────────────────────────────── */
@@ -1428,6 +1450,9 @@
 .ds-root .ds-core-panel {
   padding: var(--s-5);
 }
+.ds-root .ds-core-editor .ds-core-panel {
+  border-color: var(--line-2);
+}
 .ds-root .ds-core-grid {
   display: grid;
   gap: var(--s-4);
@@ -1448,21 +1473,42 @@
 }
 .ds-root .ds-core-input {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-2);
   border-radius: var(--r-2);
-  background: var(--bg);
+  background: var(--bg-soft);
   color: var(--ink);
   padding: var(--s-3);
   font: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 3%, transparent);
+  transition:
+    border-color var(--d-fast),
+    background-color var(--d-fast),
+    box-shadow var(--d-fast);
+}
+.ds-root input.ds-core-input:not(:disabled),
+.ds-root textarea.ds-core-input:not(:disabled) {
+  cursor: text;
+}
+.ds-root select.ds-core-input:not(:disabled) {
+  cursor: pointer;
+}
+.ds-root .ds-core-input:not(:disabled):hover {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line-2));
+  background: var(--bg-elevated);
 }
 .ds-root .ds-core-input:focus {
   outline: none;
   border-color: var(--accent);
+  background: var(--bg-elevated);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .ds-root .ds-core-input:disabled {
-  opacity: 0.75;
-  cursor: default;
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--ink-muted);
+  box-shadow: none;
+  opacity: 0.58;
+  cursor: not-allowed;
 }
 .ds-root .ds-core-textarea {
   min-height: 110px;

@@ -3,7 +3,7 @@
 // studio package) and, later, inside WorkSpec Enterprise over a graph-backed
 // implementation. Both satisfy this port.
 //
-// It is deliberately SMALL: exactly six methods, no watch/subscribe, no history,
+// It is deliberately SMALL: exactly three methods, no watch/subscribe, no history,
 // no concurrency control. That minimal surface is the standalone feature ceiling
 // by design (the working tree + git already provide versioning and review).
 //

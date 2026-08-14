@@ -45,11 +45,16 @@ test.describe('MF smoke — host consumes the decision-ui, c4-ui, cost-ui, and t
     );
     await expect(card.locator('.ds-core-card-decision')).toContainText('AKS');
 
-    // ── 2a. DecisionWorkspace (record + ADR preview) renders — its hooks run,
+    // ── 2a. DecisionWorkspace renders its default read-only ADR — its hooks run,
     //        which is only possible with a single shared React. ────────────────
-    await expect(page.locator('#workspace-mount').getByLabel('Title', { exact: true })).toHaveValue(
-      'Hosting platform for the data and delivery services',
-    );
+    await expect(
+      page
+        .locator('#workspace-mount')
+        .getByRole('heading', { name: 'Hosting platform for the data and delivery services' }),
+    ).toBeVisible();
+    await expect(
+      page.locator('#workspace-mount').getByRole('button', { name: 'Edit' }),
+    ).toHaveCount(0);
 
     // ── 2b. reactProbe: the remote sees the exact React the host stamped. ──────
     const probe = page.locator('#react-probe');

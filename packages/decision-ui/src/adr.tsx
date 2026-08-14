@@ -6,6 +6,7 @@ import { decisionSlug } from './host.js';
 
 export interface DecisionAdrProps {
   decisionRef: Ref;
+  action?: ReactNode;
 }
 
 function Notice(props: { error?: boolean; children: string }): ReactElement {
@@ -30,7 +31,15 @@ export function DecisionAdr(props: DecisionAdrProps): ReactElement {
   if (query.isError)
     return <Notice error>{`Could not load decision: ${query.error.message}`}</Notice>;
   if (query.data === undefined) return <Notice error>Decision not found.</Notice>;
-  return <AdrView decisionRef={props.decisionRef} decision={query.data} />;
+  return (
+    <>
+      <div className="ds-app-toolbar">
+        <span className="ds-app-toolbar-label">View</span>
+        <div className="ds-app-toolbar-actions">{props.action}</div>
+      </div>
+      <AdrView decisionRef={props.decisionRef} decision={query.data} />
+    </>
+  );
 }
 
 export function AdrView(props: { decisionRef: Ref; decision: Decision }): ReactElement {
