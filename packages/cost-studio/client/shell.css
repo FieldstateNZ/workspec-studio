@@ -98,6 +98,34 @@ body,
   flex: 1;
   overflow-y: auto;
 }
+.csh-agent-status {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.csh-agent-status strong {
+  color: var(--ink);
+}
+.csh-agent-kicker {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.csh-agent-status--applied .csh-agent-kicker,
+.csh-agent-status--ready .csh-agent-kicker {
+  color: var(--success);
+}
+.csh-agent-status--error .csh-agent-kicker {
+  color: var(--danger);
+}
 .csh-empty {
   max-width: 1180px;
   margin: 0 auto;

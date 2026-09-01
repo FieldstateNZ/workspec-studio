@@ -24,6 +24,6 @@ export default defineConfig({
   test: {
     name: 'cost-studio',
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'client/**/*.test.ts'],
   },
 });

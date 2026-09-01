@@ -51,6 +51,16 @@ interface DiskAttribution {
   spec: { rules: DiskRule[] };
 }
 
+interface BrowserTool {
+  execute(input: Record<string, unknown>): Promise<Record<string, unknown>>;
+}
+
+declare global {
+  interface Window {
+    __costWebMcpTools?: Record<string, BrowserTool>;
+  }
+}
+
 /** Read + YAML-parse the attribution file the running host is writing to. */
 function readAttributionOnDisk(): DiskAttribution {
   return parseYaml(readFileSync(attributionPath, 'utf8')) as DiskAttribution;
@@ -81,7 +91,8 @@ test.beforeAll(async () => {
   // was itself produced by — reproducing exactly the 8-rule, 81.2%-coverage
   // golden estate `@workspec/cost-ui`'s demo-smoke test already pins.
   const before = parseAttributionYaml(readFileSync(attributionPath, 'utf8'));
-  if (!before.ok) throw new Error(`fixture attribution failed to parse: ${JSON.stringify(before.errors)}`);
+  if (!before.ok)
+    throw new Error(`fixture attribution failed to parse: ${JSON.stringify(before.errors)}`);
   const reduced = {
     ...before.data,
     spec: {
@@ -92,7 +103,16 @@ test.beforeAll(async () => {
   writeFileSync(attributionPath, serializeAttributionYaml(reduced));
 
   const diskBefore = readAttributionOnDisk();
-  expect(diskBefore.spec.rules.map((r) => r.id)).toEqual(['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8']);
+  expect(diskBefore.spec.rules.map((r) => r.id)).toEqual([
+    'r1',
+    'r2',
+    'r3',
+    'r4',
+    'r5',
+    'r6',
+    'r7',
+    'r8',
+  ]);
 
   // 3. Boot the BUILT server exactly as `npx @workspec/cost-studio` would.
   server = spawn(
@@ -108,7 +128,9 @@ test.afterAll(() => {
   if (tmpDir !== undefined) rmSync(tmpDir, { recursive: true, force: true });
 });
 
-test('all four views render — Inventory · Attribution · Reports · Plan review', async ({ page }) => {
+test('all four views render — Inventory · Attribution · Reports · Plan review', async ({
+  page,
+}) => {
   await page.goto('/');
 
   const tabs = page.getByRole('tablist', { name: 'Cost views' });
@@ -125,11 +147,60 @@ test('all four views render — Inventory · Attribution · Reports · Plan revi
   await expect(page.getByRole('button', { name: 'Export CSV' })).toBeVisible();
 
   await page.getByRole('tab', { name: 'Plan review' }).click();
-  await expect(page.locator('.cost-plan-header-baseline')).toContainText('baseline: inventory asOf');
+  await expect(page.locator('.cost-plan-header-baseline')).toContainText(
+    'baseline: inventory asOf',
+  );
 
   // Leave the shell on Attribution for the tests that follow.
   await page.getByRole('tab', { name: 'Attribution' }).click();
   await expect(page.locator('.cost-coverage-figure')).toHaveText('81.2%');
+});
+
+test('a supported agent browser receives the five local artifact tools', async ({ page }) => {
+  await page.addInitScript(() => {
+    const tools: Record<string, BrowserTool> = {};
+    window.__costWebMcpTools = tools;
+    Object.defineProperty(document, 'modelContext', {
+      value: {
+        async registerTool(
+          tool: BrowserTool & { name: string },
+          options?: { signal?: AbortSignal },
+        ) {
+          tools[tool.name] = tool;
+          options?.signal?.addEventListener(
+            'abort',
+            () => Reflect.deleteProperty(tools, tool.name),
+            {
+              once: true,
+            },
+          );
+        },
+      },
+    });
+  });
+  await page.goto('/');
+
+  await expect
+    .poll(() => page.evaluate(() => Object.keys(window.__costWebMcpTools ?? {})))
+    .toEqual([
+      'get_cost_overview',
+      'list_unattributed_clusters',
+      'inspect_unattributed_cluster',
+      'preview_attribution_rule',
+      'apply_attribution_rule',
+    ]);
+  await expect(page.getByText('Agent tools ready')).toBeVisible();
+
+  const overview = await page.evaluate(async () => {
+    const tool = window.__costWebMcpTools?.get_cost_overview;
+    if (tool === undefined) throw new Error('get_cost_overview was not registered');
+    return tool.execute({});
+  });
+  expect(overview).toMatchObject({
+    ok: true,
+    resourceCount: 80,
+    coverage: { percent: 81.2, unattributedResourceCount: 20 },
+  });
 });
 
 test('Fix coverage → promote rg-legacy-misc into r9 — coverage rises and the file on disk gains the rule', async ({
@@ -149,7 +220,9 @@ test('Fix coverage → promote rg-legacy-misc into r9 — coverage rises and the
   // dimension's declared "shared" value), and projects the exact same
   // 81.2% → 90.0% coverage jump `@workspec/cost-ui`'s own unit test pins for
   // this cluster.
-  await expect(page.locator('.cost-composer-matcher')).toContainText('resourceGroup ~ rg-legacy-misc');
+  await expect(page.locator('.cost-composer-matcher')).toContainText(
+    'resourceGroup ~ rg-legacy-misc',
+  );
   await expect(page.locator('.cost-composer-projection')).toContainText('matches 12 · $1,159/mo');
   await expect(page.locator('.cost-composer-projection-delta')).toHaveText('90.0%');
 

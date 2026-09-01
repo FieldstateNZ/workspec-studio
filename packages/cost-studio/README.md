@@ -1,12 +1,61 @@
 # @workspec/cost-studio
 
-WorkSpec Cost Attribution — the standalone `workspec-cost` CLI, and (later) a localhost host
-shell, mirroring `@workspec/decision-studio` / `@workspec/c4-studio`.
+WorkSpec Cost Attribution — the standalone `workspec-cost` CLI and localhost Cost Studio. Stocktake
+an Azure estate into reviewable YAML, then share the live workbench with an agent through WebMCP.
 
 Part of the Cost Attribution module (in progress — see issues C0–C7). This is the C4 slice: the
 filesystem repository (`FsRepository`, implementing `@workspec/cost-schema`'s
 `CostRepositoryPort`) and the real `workspec-cost` CLI — `stocktake`, `validate`, `report`, `plan`,
-`apply`.
+`apply`, `serve`, and `mcp`.
+
+## Use it on your Azure subscription
+
+The quickest human-and-agent flow is:
+
+```bash
+az login
+mkdir cost-review && cd cost-review
+
+# Read Azure into local .workspec YAML. Repeat --subscription when needed.
+npx @workspec/cost-studio@alpha stocktake --subscription <subscription-id>
+
+# Serve those artifacts on localhost. This does not upload them anywhere.
+npx @workspec/cost-studio@alpha serve
+```
+
+Open `http://127.0.0.1:4173` in ChatGPT's browser. The page advertises two setup tools when it has
+an inventory but no attribution yet:
+
+- `inspect_cost_setup` reads resource groups and observed tag values from the stocktake.
+- `create_cost_attribution` creates the first `.workspec/attributions/<slug>.yaml` after you and the
+  agent agree the primary reporting dimension and its allowed values. It never overwrites a file.
+
+As soon as that attribution exists, the page switches to five working tools:
+
+- `get_cost_overview`
+- `list_unattributed_clusters`
+- `inspect_unattributed_cluster`
+- `preview_attribution_rule`
+- `apply_attribution_rule`
+
+`preview_attribution_rule` is read-only. `apply_attribution_rule` requires the opaque id from a
+fresh preview, rejects stale state, writes exactly one rule to the attribution YAML, and updates the
+visible workbench immediately. These browser tools do **not** apply Azure tags.
+
+Once the attribution looks right, keep the cloud write behind the existing review gates:
+
+```bash
+npx @workspec/cost-studio@alpha validate
+npx @workspec/cost-studio@alpha report
+npx @workspec/cost-studio@alpha plan
+npx @workspec/cost-studio@alpha apply .workspec/tagplans/<period>.yaml --dry-run
+# Remove --dry-run only after reviewing the YAML, plan, and simulated results.
+```
+
+Azure credentials stay in the local CLI process. `serve` binds to `127.0.0.1` by default and the
+browser reads only the artifacts in the directory you chose. See the
+[Azure setup and least-privilege roles](../../docs/cost/azure-setup.md) before the first stocktake
+or apply.
 
 ## The workflow
 
@@ -43,6 +92,28 @@ A slug is lowercase alphanumeric segments separated by single hyphens (e.g. `est
 against this shape — an invalid value is a clean usage error (exit `2`), not a write-time failure.
 
 ## Commands
+
+### `serve`
+
+```bash
+workspec-cost serve [--dir <path>] [--port <n>] [--host <addr>] [--mcp]
+```
+
+Serves the Cost Studio client and a thin JSON API over the selected working tree (default: the
+current directory) at `http://127.0.0.1:4173`. The `.workspec` artifacts remain the source of truth;
+there is no database. `--mcp` additionally mounts the full 17-tool MCP surface at `/mcp` for MCP
+clients that can connect to a local HTTP server.
+
+### `mcp`
+
+```bash
+workspec-cost mcp [--dir <path>]
+```
+
+Runs the same full repository/provider tool surface over stdio. This is useful when an agent should
+perform the stocktake itself, author any of the four artifact kinds, validate/report/plan, and run
+the guarded apply flow before or alongside the shared browser session. The tools are advertised as
+`cost_*` (for example `cost_stocktake`, `cost_write_attribution`, and `cost_apply`).
 
 ### `stocktake`
 

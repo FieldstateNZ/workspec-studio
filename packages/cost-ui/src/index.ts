@@ -45,6 +45,21 @@ export {
   useWriteAttribution,
 } from './context.js';
 export type { CostArtifacts, CostStudioProviderProps, WriteAttributionVars } from './context.js';
+export {
+  COST_WEBMCP_TOOL_NAMES,
+  CostWebMcpError,
+  CostWebMcpService,
+  createCostWebMcpTools,
+  registerCostWebMcpTools,
+} from './webmcp.js';
+export type {
+  CostWebMcpActivity,
+  CostWebMcpActivityKind,
+  CostWebMcpServiceOptions,
+  WebMcpModelContext,
+  WebMcpToolAnnotations,
+  WebMcpToolDefinition,
+} from './webmcp.js';
 
 // ── Formatting / derivation helpers ─────────────────────────────────────────
 export {
@@ -66,7 +81,10 @@ export type { EffectChip, UnattributedCluster } from './format.js';
 
 // ── Views ────────────────────────────────────────────────────────────────────
 export { AttributionWorkbench, DEFAULT_WORKBENCH_STATE } from './attribution-workbench.js';
-export type { AttributionWorkbenchProps, AttributionWorkbenchState } from './attribution-workbench.js';
+export type {
+  AttributionWorkbenchProps,
+  AttributionWorkbenchState,
+} from './attribution-workbench.js';
 export { CostInventory } from './cost-inventory.js';
 export type { CostInventoryProps } from './cost-inventory.js';
 export { CostReport } from './cost-report.js';

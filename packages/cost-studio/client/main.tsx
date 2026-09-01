@@ -19,6 +19,7 @@
 import { StrictMode, useState } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient } from '@tanstack/react-query';
 import { resolveInitialTheme, setTheme as persistTheme } from '@workspec/design';
 import { CostStudioProvider, createInertLinkResolver } from '@workspec/cost-ui';
 import type { CostStudioHost, ThemeName } from '@workspec/cost-ui';
@@ -28,6 +29,11 @@ import { HttpRepository } from './http-repository.js';
 import { Shell } from './shell.js';
 
 const repository = new HttpRepository();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { refetchOnWindowFocus: false, retry: false, staleTime: 5_000 },
+  },
+});
 
 const host: CostStudioHost = {
   repository,
@@ -44,7 +50,7 @@ function App(): ReactElement {
   }
 
   return (
-    <CostStudioProvider host={host} theme={theme} className="csh-shell">
+    <CostStudioProvider host={host} queryClient={queryClient} theme={theme} className="csh-shell">
       <Shell theme={theme} onSelectTheme={selectTheme} />
     </CostStudioProvider>
   );

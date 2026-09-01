@@ -25,8 +25,8 @@ Usage:
   workspec-cost serve [--dir <path>] [--port <n>] [--host <addr>] [--mcp]
 
 Options:
-  --dir <path>    Directory of cost artifacts (*.inventory.yaml,
-                  *.spend.yaml, *.attribution.yaml, *.tagplan.yaml) to serve
+  --dir <path>    Working tree containing .workspec/inventories, spends,
+                  attributions, and tagplans directories to serve
                   (default: current directory).
   --port <n>      Port to listen on (default: 4173).
   --host <addr>   Address to bind (default: 127.0.0.1 — localhost only).

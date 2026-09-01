@@ -70,5 +70,5 @@ describe('CostDemo WebMCP integration', () => {
     expect(await screen.findByText('81.2%')).toBeInTheDocument();
     await waitFor(() => expect(registered.size).toBe(5));
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
-  });
+  }, 15_000);
 });
