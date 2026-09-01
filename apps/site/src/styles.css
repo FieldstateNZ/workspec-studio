@@ -90,47 +90,28 @@
   .brand:hover {
     text-decoration: none;
   }
-  .brand-mark {
-    width: 12px;
-    height: 12px;
-    border-radius: var(--r-1);
-    background: var(--accent);
+  .brand-symbol {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    color: var(--ink);
   }
   .brand-word {
+    display: inline-flex;
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.01em;
     color: var(--ink);
+  }
+  .brand-word strong {
+    color: var(--accent);
+    font-weight: 600;
   }
   .brand-sub {
     font-family: var(--mono);
     font-size: 13px;
     color: var(--ink-fade);
-  }
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: var(--s-1);
-    margin-left: var(--s-4);
-  }
-  /* Home / Decisions / C4 Model pills — the active one (current route, not a
-     per-page prop) carries the module signal the old brand crumb used to. */
-  .nav-pill {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px var(--s-3);
-    border-radius: var(--r-3);
-    color: var(--ink-soft);
-  }
-  .nav-pill:hover {
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .nav-pill-active {
-    background: var(--bg-soft);
-    color: var(--ink);
   }
   .nav-spacer {
     flex: 1;
@@ -171,6 +152,20 @@
     background: transparent;
     color: var(--ink-fade);
     cursor: pointer;
+  }
+
+  .not-found {
+    width: min(100% - 3rem, 62rem);
+    margin: 0 auto;
+    padding: clamp(5rem, 12vw, 9rem) 0;
+  }
+  .not-found h1 {
+    max-width: 18ch;
+    margin: var(--s-3) 0;
+  }
+  .not-found p:not(.eyebrow) {
+    color: var(--ink-muted);
+    margin-bottom: var(--s-6);
   }
   .theme-toggle-btn-active {
     border-color: var(--line-2);
@@ -709,38 +704,6 @@
     flex-wrap: wrap;
     gap: var(--s-4);
     padding: 10px var(--s-8);
-  }
-  /* Segmented Decisions / C4 Model tabs — these NAVIGATE between
-     `/decisions/demo` and `/c4/demo` (Link + aria-current), not an ARIA
-     tablist. */
-  .wb-tabs {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--r-4);
-    padding: 3px;
-  }
-  .wb-tab {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 7px var(--s-4);
-    border-radius: var(--r-3);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--ink-muted);
-    white-space: nowrap;
-  }
-  .wb-tab:hover {
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .wb-tab-active {
-    border-color: var(--line);
-    background: var(--bg-elevated);
-    color: var(--ink);
   }
   /* The mono crumb: "example ▸ <value>" — the value is a static name (C4) or
      the worked-example switcher (Decisions; see demo.tsx). */

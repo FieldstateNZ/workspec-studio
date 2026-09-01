@@ -1,30 +1,16 @@
-// A deliberately tiny path router — no dependency. Seven routes: the Studio
-// landing (`/`), each module's pitch page (`/decisions`, `/c4`, `/cost`) with
-// its demo nested under it (`/decisions/demo`, `/c4/demo`, `/cost/demo`) —
-// one route pattern for every module's demo (Site Review UX pass, finding
-// 06). GitHub Pages serves the SPA fallback (404.html, written at build) so
-// deep links resolve.
+// A deliberately tiny path router — no dependency. Cost is the sole public
+// module for now: `/` and `/cost` share its landing page, `/cost/demo` is the
+// agent-enabled workbench, and every retired or unknown route renders a 404.
 import { useCallback, useEffect, useState } from 'react';
 import type { AnchorHTMLAttributes, ReactElement } from 'react';
 
-export type Route =
-  | 'studio-home'
-  | 'decisions'
-  | 'decisions-demo'
-  | 'c4'
-  | 'c4-demo'
-  | 'cost'
-  | 'cost-demo';
+export type Route = 'cost' | 'cost-demo' | 'not-found';
 
 function routeOf(pathname: string): Route {
   const path = pathname.replace(/\/+$/, '') || '/';
-  if (path === '/decisions/demo') return 'decisions-demo';
-  if (path === '/decisions') return 'decisions';
-  if (path === '/c4/demo') return 'c4-demo';
-  if (path === '/c4') return 'c4';
   if (path === '/cost/demo') return 'cost-demo';
-  if (path === '/cost') return 'cost';
-  return 'studio-home';
+  if (path === '/' || path === '/cost') return 'cost';
+  return 'not-found';
 }
 
 /** Current route, kept in sync with browser history (back/forward). */

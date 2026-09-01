@@ -3,26 +3,34 @@ import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initTheme } from '@workspec/design';
 
-import { Decisions } from './decisions.js';
-import { Demo } from './demo.js';
-import { useRoute } from './router.js';
-import { StudioHome } from './studio-home.js';
+import { SiteNav } from './nav.js';
+import { Link, useRoute } from './router.js';
 import './styles.css';
 
-// The /c4 pages pull in the whole c4 stack — @workspec/c4-ui, c4-model, and
-// (heaviest of all) c4-layout's bundled elkjs. Lazy-loading them keeps those
-// out of the main chunk, so `/`, `/decisions`, and `/decisions/demo` never
-// pay for elkjs.
-const C4 = lazy(() => import('./c4.js').then((module) => ({ default: module.C4 })));
-const C4Demo = lazy(() => import('./c4-demo.js').then((module) => ({ default: module.C4Demo })));
-
-// Same reasoning for /cost — @workspec/cost-ui pulls in cost-engine's whole
-// attribution/rollup/cross-tab pipeline, kept out of the main chunk for the
-// same reason the c4 stack is.
+// Keep the Cost package family out of the initial shell until its public route
+// is selected. Disabled Studio modules are no longer imported or bundled.
 const Cost = lazy(() => import('./cost.js').then((module) => ({ default: module.Cost })));
 const CostDemo = lazy(() =>
   import('./cost-demo.js').then((module) => ({ default: module.CostDemo })),
 );
+
+const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
+
+function NotFound(): ReactElement {
+  return (
+    <>
+      <SiteNav repoUrl={REPO_URL} />
+      <main className="not-found">
+        <p className="eyebrow">404 · module unavailable</p>
+        <h1>This Studio page is not currently published.</h1>
+        <p>WorkSpec Cost is the active public workbench.</p>
+        <Link className="button" href="/cost">
+          Open WorkSpec Cost
+        </Link>
+      </main>
+    </>
+  );
+}
 
 // index.html's inline script set the initial theme signals before first
 // paint (stored preference, else OS); this keeps them in sync afterward —
@@ -34,22 +42,6 @@ initTheme();
 function App(): ReactElement {
   const route = useRoute();
   switch (route) {
-    case 'decisions':
-      return <Decisions />;
-    case 'decisions-demo':
-      return <Demo />;
-    case 'c4':
-      return (
-        <Suspense fallback={<div className="route-loading">Loading C4 Diagrams…</div>}>
-          <C4 />
-        </Suspense>
-      );
-    case 'c4-demo':
-      return (
-        <Suspense fallback={<div className="route-loading">Loading C4 Diagrams…</div>}>
-          <C4Demo />
-        </Suspense>
-      );
     case 'cost':
       return (
         <Suspense fallback={<div className="route-loading">Loading Cost Attribution…</div>}>
@@ -62,8 +54,8 @@ function App(): ReactElement {
           <CostDemo />
         </Suspense>
       );
-    case 'studio-home':
-      return <StudioHome />;
+    case 'not-found':
+      return <NotFound />;
   }
 }
 
