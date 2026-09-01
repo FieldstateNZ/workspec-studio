@@ -1,17 +1,20 @@
-import { copyFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 /**
- * Copies `<distDir>/index.html` to `<distDir>/404.html`. GitHub Pages serves
- * `404.html` for any path it doesn't recognise as a static file, so this makes
- * client-routed deep links — `/decisions`, `/decisions/demo`, `/c4` — resolve
- * to the SPA shell instead of a real 404. A no-op if `index.html` hasn't been
- * built yet (guards against running before the main build step).
+ * Copies `<distDir>/index.html` to the GitHub Pages SPA fallback and the Cost
+ * challenge's real nested entrypoint. `404.html` keeps every client-routed
+ * deep link working; `cost/demo/index.html` makes the submitted challenge URL
+ * return HTTP 200 rather than a rendered SPA shell with a 404 status.
+ *
+ * A no-op if `index.html` has not been built yet.
  */
-export function copyIndexToNotFound(distDir: string): void {
+export function copyIndexForGitHubPages(distDir: string): void {
   const index = resolve(distDir, 'index.html');
-  const notFound = resolve(distDir, '404.html');
-  if (existsSync(index)) {
-    copyFileSync(index, notFound);
+  if (!existsSync(index)) return;
+
+  for (const target of [resolve(distDir, '404.html'), resolve(distDir, 'cost/demo/index.html')]) {
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(index, target);
   }
 }
