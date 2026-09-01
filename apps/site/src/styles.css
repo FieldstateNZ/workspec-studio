@@ -638,9 +638,54 @@
   .demo-blurb {
     opacity: 0.9;
   }
+  .cost-agent-status {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--s-3);
+    margin: 0;
+    padding: 0.65rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+  }
+  .cost-agent-status strong {
+    color: var(--ink);
+    font-size: 0.84rem;
+  }
+  .cost-agent-kicker {
+    padding: 0.12rem 0.45rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-3);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cost-agent-status-previewed {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .cost-agent-status-applied {
+    box-shadow: inset 3px 0 0 var(--success, var(--accent));
+  }
+  .cost-agent-status-error {
+    box-shadow: inset 3px 0 0 var(--danger, var(--accent));
+  }
   .demo-stage {
     flex: 1;
     min-height: 0;
+  }
+
+  @media (max-width: 720px) {
+    .cost-agent-status {
+      grid-template-columns: auto 1fr;
+    }
+    .cost-agent-status > span:last-child {
+      grid-column: 1 / -1;
+    }
   }
 
   /* ── WORKBENCH bar (Studio redesign, round 3 — "workbench bar (shared demo

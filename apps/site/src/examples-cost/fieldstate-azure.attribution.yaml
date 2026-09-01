@@ -74,24 +74,6 @@ spec:
       assign:
         client: internal
         costType: opex
-    - id: r9
-      name: promoted-rg-legacy-misc
-      match:
-        resourceGroup: rg-legacy-misc
-      assign:
-        product: shared
-    - id: r10
-      name: promoted-rg-client-acme
-      match:
-        resourceGroup: rg-client-acme
-      assign:
-        product: shared
-    - id: r11
-      name: promoted-rg-client-kauri
-      match:
-        resourceGroup: rg-client-kauri
-      assign:
-        product: shared
   overrides:
     - resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourcegroups/rg-legacy-misc/providers/microsoft.compute/virtualmachines/vm-old-jenkins
       assign:

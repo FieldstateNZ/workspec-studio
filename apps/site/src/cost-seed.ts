@@ -3,8 +3,9 @@
 // runtime into a single MemoryRepository, so the demo runs with zero network
 // calls after load. The YAML is a verbatim copy of that example's own files —
 // the same 80-resource, 9-resource-group "fieldstate-azure" estate the CLI
-// and `@workspec/cost-ui`'s own smoke test exercise, extended to 100%
-// coverage on the primary dimension (see that example's own README for how).
+// and `@workspec/cost-ui`'s own smoke test exercise. It deliberately starts
+// at 81.2% product coverage, with three resource-group clusters left for a
+// human or WebMCP agent to inspect and promote into rules.
 import {
   createMemoryRepository,
   parseAttributionYaml,
@@ -33,7 +34,9 @@ export const COST_DEMO_TAGPLAN_REF: Ref = 'fieldstate-azure.tagplan.yaml';
 function parseInventory(ref: Ref, yaml: string): Inventory {
   const result = parseInventoryYaml(yaml);
   if (!result.ok) {
-    throw new Error(`cost demo seed: inventory "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`);
+    throw new Error(
+      `cost demo seed: inventory "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`,
+    );
   }
   return result.data;
 }
@@ -41,7 +44,9 @@ function parseInventory(ref: Ref, yaml: string): Inventory {
 function parseSpend(ref: Ref, yaml: string): Spend {
   const result = parseSpendYaml(yaml);
   if (!result.ok) {
-    throw new Error(`cost demo seed: spend "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`);
+    throw new Error(
+      `cost demo seed: spend "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`,
+    );
   }
   return result.data;
 }
@@ -49,7 +54,9 @@ function parseSpend(ref: Ref, yaml: string): Spend {
 function parseAttribution(ref: Ref, yaml: string): Attribution {
   const result = parseAttributionYaml(yaml);
   if (!result.ok) {
-    throw new Error(`cost demo seed: attribution "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`);
+    throw new Error(
+      `cost demo seed: attribution "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`,
+    );
   }
   return result.data;
 }
@@ -57,7 +64,9 @@ function parseAttribution(ref: Ref, yaml: string): Attribution {
 function parseTagPlan(ref: Ref, yaml: string): TagPlan {
   const result = parseTagPlanYaml(yaml);
   if (!result.ok) {
-    throw new Error(`cost demo seed: tag plan "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`);
+    throw new Error(
+      `cost demo seed: tag plan "${ref}" invalid — ${result.errors[0]?.message ?? 'unknown'}`,
+    );
   }
   return result.data;
 }
@@ -69,9 +78,13 @@ function parseTagPlan(ref: Ref, yaml: string): TagPlan {
  */
 export function createCostDemoRepository(): CostRepositoryPort {
   return createMemoryRepository({
-    inventories: { [COST_DEMO_INVENTORY_REF]: parseInventory(COST_DEMO_INVENTORY_REF, inventoryYaml) },
+    inventories: {
+      [COST_DEMO_INVENTORY_REF]: parseInventory(COST_DEMO_INVENTORY_REF, inventoryYaml),
+    },
     spends: { [COST_DEMO_SPEND_REF]: parseSpend(COST_DEMO_SPEND_REF, spendYaml) },
-    attributions: { [COST_DEMO_ATTRIBUTION_REF]: parseAttribution(COST_DEMO_ATTRIBUTION_REF, attributionYaml) },
+    attributions: {
+      [COST_DEMO_ATTRIBUTION_REF]: parseAttribution(COST_DEMO_ATTRIBUTION_REF, attributionYaml),
+    },
     tagPlans: { [COST_DEMO_TAGPLAN_REF]: parseTagPlan(COST_DEMO_TAGPLAN_REF, tagPlanYaml) },
   });
 }

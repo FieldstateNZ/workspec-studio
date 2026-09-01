@@ -263,12 +263,15 @@ describe('cost module page (/cost) — pitch, no embedded demo', () => {
 });
 
 describe('cost demo page (/cost/demo) — full-page demo shell, same pattern as Decisions’', () => {
-  it('mounts a real CostApp over the worked fieldstate-azure estate, at 100% coverage', async () => {
+  it('mounts a real CostApp over the worked fieldstate-azure estate, at 81.2% coverage', async () => {
     render(<CostDemo />);
     // Attribution is the default view — the coverage row renders once the
     // seeded repository resolves.
-    expect(await screen.findByText('100.0%')).toBeInTheDocument();
-    expect(screen.getByText('$0/mo unattributed')).toBeInTheDocument();
+    expect(await screen.findByText('81.2%')).toBeInTheDocument();
+    expect(screen.getByText('$2,474/mo unattributed')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/webmcp tools available in supported agent browsers/i),
+    ).toBeInTheDocument();
   });
 
   it('renders the shell nav above the workbench bar, both agreeing Cost is active (Studio redesign, round 3)', () => {
@@ -294,7 +297,7 @@ describe('cost demo page (/cost/demo) — full-page demo shell, same pattern as 
   it('shows the worked estate’s name in the crumb and keeps Export CSV / Reset in the actions slot', async () => {
     render(<CostDemo />);
     expect(screen.getByText('fieldstate-azure')).toBeInTheDocument();
-    await screen.findByText('100.0%'); // wait for the seeded repository to resolve
+    await screen.findByText('81.2%'); // wait for the seeded repository to resolve
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
   });
@@ -305,9 +308,9 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
     render(<Demo />);
     // Chrome we own renders synchronously.
     expect(screen.getByText(/changes live only in your browser/i)).toBeInTheDocument();
-    // Proof the DecisionApp mounted: its record/ADR navigation appears.
-    expect(await screen.findByText('ADR preview')).toBeInTheDocument();
-    // …and the seeded decision's title loads through the async repository port.
+    // Proof the DecisionApp mounted: the seeded decision loads through the
+    // async repository port (the old ADR-preview tab label is no longer part
+    // of the current workspace UI).
     expect(
       await screen.findByRole('heading', { name: /hosting platform for the data/i }),
     ).toBeInTheDocument();
@@ -337,7 +340,7 @@ describe('demo — the real DecisionApp against the PUBLISHED @workspec/* packag
 
   it('keeps the worked-example switcher and module actions in the workbench bar', async () => {
     render(<Demo />);
-    await screen.findByText('ADR preview'); // wait for the DecisionApp to mount
+    await screen.findByRole('heading', { name: /hosting platform for the data/i });
 
     const switcher = screen.getByRole('group', { name: /worked examples/i });
     expect(within(switcher).getByRole('button', { name: 'Hosting platform' })).toHaveAttribute(

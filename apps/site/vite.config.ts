@@ -4,17 +4,16 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
-import { copyIndexToNotFound } from './src/copy-index-to-not-found.js';
+import { copyIndexForGitHubPages } from './src/copy-index-to-not-found.js';
 
-// After the build, copy index.html → 404.html so client-routed deep links —
-// `/decisions`, `/decisions/demo`, `/c4`, `/cost` — resolve on GitHub Pages
-// (which serves 404.html for unknown paths).
-function spaFallback(): Plugin {
+// After the build, create both GitHub Pages' SPA fallback and a real static
+// `/cost/demo/` entrypoint for the WebMCP challenge submission.
+function githubPagesEntrypoints(): Plugin {
   return {
-    name: 'spa-404-fallback',
+    name: 'github-pages-entrypoints',
     apply: 'build',
     closeBundle() {
-      copyIndexToNotFound(fileURLToPath(new URL('dist', import.meta.url)));
+      copyIndexForGitHubPages(fileURLToPath(new URL('dist', import.meta.url)));
     },
   };
 }
@@ -33,7 +32,7 @@ function spaFallback(): Plugin {
 // v0.1.0-alpha.5 — drift-log entries 17 / cost entry 1.)
 export default defineConfig({
   base: '/',
-  plugins: [tailwindcss(), react(), spaFallback()],
+  plugins: [tailwindcss(), react(), githubPagesEntrypoints()],
   build: {
     outDir: 'dist',
     sourcemap: true,
