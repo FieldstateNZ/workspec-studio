@@ -106,6 +106,7 @@ function parseResource(value: unknown, index: number): SnapshotResourceInput {
   if (typeof monthlySpend !== 'number' || !Number.isFinite(monthlySpend)) {
     throw new Error(`${path}.monthlySpend must be a finite number.`);
   }
+  const tags = parseTags(input.tags, `${path}.tags`);
   return {
     id: requiredString(input.id, `${path}.id`, 2048),
     name: requiredString(input.name, `${path}.name`),
@@ -113,7 +114,7 @@ function parseResource(value: unknown, index: number): SnapshotResourceInput {
     location: requiredString(input.location, `${path}.location`, 128),
     resourceGroup: requiredString(input.resourceGroup, `${path}.resourceGroup`, 256),
     account: requiredString(input.account, `${path}.account`, 256),
-    ...(input.tags !== undefined ? { tags: parseTags(input.tags, `${path}.tags`)! } : {}),
+    ...(tags !== undefined ? { tags } : {}),
     monthlySpend,
     serviceCategory: requiredString(input.serviceCategory, `${path}.serviceCategory`, 256),
   };

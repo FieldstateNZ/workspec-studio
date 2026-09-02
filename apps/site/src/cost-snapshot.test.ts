@@ -49,6 +49,12 @@ const input = {
   ],
 };
 
+function archiveFile(files: Record<string, Uint8Array>, path: string): Uint8Array {
+  const file = files[path];
+  if (file === undefined) throw new Error(`Missing archive file: ${path}`);
+  return file;
+}
+
 describe('hosted cost snapshot workflow', () => {
   it('validates and normalizes a provider-neutral snapshot', () => {
     const snapshot = buildCostSnapshot(input);
@@ -123,10 +129,18 @@ describe('hosted cost snapshot workflow', () => {
       '.workspec/tagplans/2026-09.yaml',
     ]);
     const files = unzipSync(bundle.bytes);
-    const inventory = parseInventoryYaml(strFromU8(files[bundle.files[0]!]!));
-    const spend = parseSpendYaml(strFromU8(files[bundle.files[1]!]!));
-    const attribution = parseAttributionYaml(strFromU8(files[bundle.files[2]!]!));
-    const tagPlan = parseTagPlanYaml(strFromU8(files[bundle.files[3]!]!));
+    const inventory = parseInventoryYaml(
+      strFromU8(archiveFile(files, '.workspec/inventories/estate.yaml')),
+    );
+    const spend = parseSpendYaml(
+      strFromU8(archiveFile(files, '.workspec/spends/estate-2026-09.yaml')),
+    );
+    const attribution = parseAttributionYaml(
+      strFromU8(archiveFile(files, '.workspec/attributions/product.yaml')),
+    );
+    const tagPlan = parseTagPlanYaml(
+      strFromU8(archiveFile(files, '.workspec/tagplans/2026-09.yaml')),
+    );
     expect(inventory.ok).toBe(true);
     expect(spend.ok).toBe(true);
     expect(attribution.ok).toBe(true);

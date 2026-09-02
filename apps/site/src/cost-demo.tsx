@@ -86,13 +86,14 @@ export function CostDemo(): ReactElement {
   );
 
   const costService = useMemo(() => {
-    if (estate.attributionRef === undefined) return undefined;
+    const attributionRef = estate.attributionRef;
+    if (attributionRef === undefined) return undefined;
     return new CostWebMcpService({
       repository,
       inventoryRef: estate.inventoryRef,
-      attributionRef: estate.attributionRef,
+      attributionRef,
       onAttributionWritten: (attribution) => {
-        queryClient.setQueryData(attributionKey(repository, estate.attributionRef!), attribution);
+        queryClient.setQueryData(attributionKey(repository, attributionRef), attribution);
       },
       onActivity: setAgentActivity,
     });
