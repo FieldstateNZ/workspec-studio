@@ -307,6 +307,14 @@ export function CostDemo(): ReactElement {
               <span>Export CSV</span>
               <Download size={13} />
             </button>
+            <button
+              type="button"
+              className="architecture-nav-item architecture-nav-button"
+              onClick={resetSample}
+            >
+              <RotateCcw size={16} />
+              <span>Reset sample</span>
+            </button>
           </nav>
 
           <section
@@ -324,11 +332,6 @@ export function CostDemo(): ReactElement {
           </section>
 
           <div className="architecture-sidebar-footer">
-            <button type="button" onClick={resetSample}>
-              <RotateCcw size={14} />
-              <span>Reset sample</span>
-            </button>
-            <span className="architecture-sidebar-note">Browser only · no cloud upload</span>
             <ThemeToggle collapsed={sidebarCollapsed} />
             <button
               type="button"

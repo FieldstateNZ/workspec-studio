@@ -307,6 +307,14 @@ export function C4Demo(): ReactElement {
               <span>SVG diagrams</span>
               <Download size={13} />
             </button>
+            <button
+              type="button"
+              className="architecture-nav-item architecture-nav-button"
+              onClick={() => void reset()}
+            >
+              <RotateCcw size={16} />
+              <span>Reset sample</span>
+            </button>
           </nav>
 
           <section
@@ -324,11 +332,6 @@ export function C4Demo(): ReactElement {
           </section>
 
           <div className="architecture-sidebar-footer">
-            <button type="button" onClick={() => void reset()}>
-              <RotateCcw size={14} />
-              <span>Reset sample</span>
-            </button>
-            <span className="architecture-sidebar-note">Browser only · no cloud upload</span>
             <ThemeToggle collapsed={sidebarCollapsed} />
             <button
               type="button"

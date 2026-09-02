@@ -28,22 +28,24 @@ export function ThemeToggle(props: { collapsed?: boolean }): ReactElement {
       <button
         type="button"
         className={
-          theme === 'dark' ? 'theme-toggle-btn theme-toggle-btn-active' : 'theme-toggle-btn'
-        }
-        aria-pressed={theme === 'dark'}
-        onClick={() => setTheme('dark')}
-      >
-        Dark
-      </button>
-      <button
-        type="button"
-        className={
           theme === 'light' ? 'theme-toggle-btn theme-toggle-btn-active' : 'theme-toggle-btn'
         }
         aria-pressed={theme === 'light'}
         onClick={() => setTheme('light')}
       >
-        Light
+        <Sun size={13} aria-hidden="true" />
+        <span>Light</span>
+      </button>
+      <button
+        type="button"
+        className={
+          theme === 'dark' ? 'theme-toggle-btn theme-toggle-btn-active' : 'theme-toggle-btn'
+        }
+        aria-pressed={theme === 'dark'}
+        onClick={() => setTheme('dark')}
+      >
+        <Moon size={13} aria-hidden="true" />
+        <span>Dark</span>
       </button>
     </span>
   );

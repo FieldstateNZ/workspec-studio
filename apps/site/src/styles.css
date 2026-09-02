@@ -1631,8 +1631,7 @@
   }
   .architecture-sidebar-collapsed .architecture-nav-section,
   .architecture-sidebar-collapsed .architecture-model-summary,
-  .architecture-sidebar-collapsed .architecture-agent-panel,
-  .architecture-sidebar-collapsed .architecture-sidebar-note {
+  .architecture-sidebar-collapsed .architecture-agent-panel {
     display: none;
   }
   .architecture-sidebar-collapsed .architecture-nav-item {
@@ -1782,8 +1781,8 @@
   }
   .architecture-sidebar-footer {
     display: grid;
-    gap: var(--s-2);
-    padding: var(--s-3);
+    gap: var(--s-1);
+    padding: var(--s-2);
     border-top: 1px solid var(--line);
   }
   .architecture-sidebar-footer button {
@@ -1803,13 +1802,6 @@
     background: var(--bg-soft);
     color: var(--ink);
   }
-  .architecture-sidebar-note {
-    padding: 0 var(--s-2);
-    color: var(--ink-fade);
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.04em;
-  }
   .architecture-sidebar-footer .theme-toggle {
     display: flex;
     width: 100%;
@@ -1819,6 +1811,10 @@
     min-width: 0;
     flex: 1;
     padding-inline: var(--s-2);
+    font-family: inherit;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
   }
   .architecture-sidebar-footer .theme-toggle-btn-active {
     border-color: var(--line-2);
