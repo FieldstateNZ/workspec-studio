@@ -12,8 +12,13 @@ describe('cost module page (/cost)', () => {
   it('states what the module is, links each package source, and routes to its demo', () => {
     render(<Cost />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /stock-take a cloud estate/i,
+      /turn cloud cost attribution into a conversation/i,
     );
+    expect(
+      screen.getByRole('heading', { name: /use cost studio with your azure subscription/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/npx @workspec\/cost-studio@alpha stocktake/)).toHaveLength(2);
+    expect(screen.getByRole('navigation', { name: 'On this page' })).toBeInTheDocument();
     const packagesBase = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
     for (const pkg of [
       'cost-schema',
