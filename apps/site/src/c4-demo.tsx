@@ -42,11 +42,6 @@ const CHECKING_ACTIVITY: ArchitectureActivity = {
   detail: 'Checking this browser for WebMCP site-tool support.',
 };
 
-const host: C4StudioHost = {
-  linkResolver: createInertLinkResolver(),
-  capabilities: { editLayout: false },
-};
-
 const registrationTails = new WeakMap<WebMcpModelContext, Promise<void>>();
 
 async function registerArchitectureTools(
@@ -76,6 +71,41 @@ export function C4Demo(): ReactElement {
   const [downloadStatus, setDownloadStatus] = useState('');
   const [agentActivity, setAgentActivity] = useState<ArchitectureActivity>(CHECKING_ACTIVITY);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const host = useMemo<C4StudioHost>(
+    () => ({
+      linkResolver: createInertLinkResolver(),
+      capabilities: { editLayout: true },
+      source: {
+        async listFiles(dirPath) {
+          const files = workspaceRef.current?.files ?? {};
+          const prefix = dirPath.endsWith('/') ? dirPath : `${dirPath}/`;
+          return Object.keys(files).filter((path) => {
+            if (!path.startsWith(prefix)) return false;
+            const rest = path.slice(prefix.length);
+            return rest.length > 0 && !rest.includes('/');
+          });
+        },
+        async readFile(path) {
+          const content = workspaceRef.current?.files[path];
+          if (content === undefined) throw new Error(`No in-browser file at "${path}".`);
+          return content;
+        },
+        async writeFile(path, content) {
+          const current = workspaceRef.current;
+          if (current === null) throw new Error('The architecture is still loading.');
+          const next = { ...current, files: { ...current.files, [path]: content } };
+          workspaceRef.current = next;
+          setWorkspace(next);
+          setDownloadStatus('Layout updated in this browser and included in .workspec downloads.');
+        },
+        async exists(path) {
+          return workspaceRef.current?.files[path] !== undefined;
+        },
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;

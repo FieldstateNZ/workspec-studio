@@ -36,6 +36,9 @@ describe('Architecture Studio WebMCP integration', () => {
     await waitFor(() => expect(registered.size).toBe(5));
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
     expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.querySelector('.c4-diagram')).toHaveAttribute('data-layout-editable', 'true'),
+    );
     expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cost Attribution' })).toHaveAttribute('href', '/cost');
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));

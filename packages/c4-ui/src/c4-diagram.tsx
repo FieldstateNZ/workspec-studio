@@ -369,6 +369,7 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
       <div
         ref={containerRef}
         className="c4-diagram"
+        data-layout-editable={editable}
         tabIndex={0}
         onKeyDown={onContainerKeyDown}
         aria-label={`${resolved.title} diagram`}
