@@ -239,7 +239,10 @@ export class CostWebMcpService {
       ...new Set(snapshot.spends.flatMap((spend) => spend.spec.rows.map((row) => row.period))),
     ].sort();
     const output = {
-      estate: snapshot.attribution.metadata.name ?? snapshot.attribution.metadata.id,
+      estate:
+        snapshot.attribution.spec.name ??
+        snapshot.attribution.metadata.slug ??
+        this.options.attributionRef,
       inventoryRef: this.options.inventoryRef,
       attributionRef: this.options.attributionRef,
       asOf: snapshot.inventory.spec.asOf,
@@ -536,8 +539,10 @@ export function createCostWebMcpTools(service: CostWebMcpService): WebMcpToolDef
           resourceGroup: groupProperty,
           value: {
             type: 'string',
-            enum: ['workspec', 'atrium', 'coffers', 'shared'],
-            description: 'The product value to assign to the whole resource-group cluster.',
+            minLength: 1,
+            maxLength: 128,
+            description:
+              'An allowed value for the current primary dimension, returned by get_cost_overview.',
           },
         },
         ['resourceGroup', 'value'],

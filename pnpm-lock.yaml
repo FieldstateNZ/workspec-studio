@@ -148,14 +148,14 @@ importers:
         specifier: ^5.62.7
         version: 5.101.2(react@18.3.1)
       '@workspec/cost-engine':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
+        specifier: 0.1.0-alpha.7
+        version: 0.1.0-alpha.7
       '@workspec/cost-schema':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5
+        specifier: 0.1.0-alpha.7
+        version: 0.1.0-alpha.7
       '@workspec/cost-ui':
-        specifier: 0.1.0-alpha.5
-        version: 0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+        specifier: 0.1.0-alpha.7
+        version: 0.1.0-alpha.7(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       '@workspec/decision-engine':
         specifier: workspace:*
         version: link:../../packages/decision-engine
@@ -168,6 +168,9 @@ importers:
       '@workspec/design':
         specifier: 0.1.0-alpha.1
         version: 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -270,7 +273,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/c4-model:
     dependencies:
@@ -314,7 +317,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/c4-studio:
     dependencies:
@@ -3603,14 +3606,14 @@ packages:
   '@vitest/utils@4.1.10':
     resolution: {integrity: sha512-fy9am/HWxbaGt/Sawrp90vt6Y6jQwf1RX77cz3uwoJwJVMli/e1IEwRPnMNJ7vKfPTwo0diXifkpPvwH9v7nGA==}
 
-  '@workspec/cost-engine@0.1.0-alpha.5':
-    resolution: {integrity: sha512-uq1xRMw+wy3eZf03ujjnD499s3GP0wgioiH7nDqDMyrMQijcOJ+x6x8PYc41wpBPKMlHYLJUO3DzxabOugF9pA==}
+  '@workspec/cost-engine@0.1.0-alpha.7':
+    resolution: {integrity: sha512-kbXCaGgY2HOhABqf7o9PFTKOQ2ZtZuPWvhwfmeCGXnDfEHsIZP3F2vdG4LAgfWl7kXyKKz6Ek8kdLi6W2YjIvQ==}
 
-  '@workspec/cost-schema@0.1.0-alpha.5':
-    resolution: {integrity: sha512-wFTWZ9S4TAzCc7i7sXPFwIl0izc3T68xF8CACxMjrGNy/DbQMTrAMBxVUxYJYfS7MP2GCmpyuSKNsl4heO0z1Q==}
+  '@workspec/cost-schema@0.1.0-alpha.7':
+    resolution: {integrity: sha512-cgCoQqazBcpXHglajehKaqBPMqch1SkxterSlEwczNQdHkw9hoAu5qjl65VLKTs60TI+DvDQCJigs7REZ6zBZw==}
 
-  '@workspec/cost-ui@0.1.0-alpha.5':
-    resolution: {integrity: sha512-gGKLX8w8mV9tKdcXKTA//F6Tl/gUalR4LHbW4Z+KYGNYu5fMSsGL4bFUBASYrSE8G2qvURps10HR0CakyPCaNA==}
+  '@workspec/cost-ui@0.1.0-alpha.7':
+    resolution: {integrity: sha512-yVzuw1zXkCNKn2o7BTIOejro44Xy0n0g/vkmDKptw4nnRObA3bMclkzJGepaZXQxfz3n+X/IVTjeEIWSZBTkLg==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       react: ^18.3.0
@@ -3622,6 +3625,9 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
+
+  '@workspec/schema-core@0.1.0-alpha.5':
+    resolution: {integrity: sha512-2QUsYGS+rWv72uFMIm1RJ0pRAQqOxHo0a1CI6wDYzTZ7fLjd5ZAHJuOspiVjjvhKc9lXZJ6Xwf3jTqjaWt3yRA==}
 
   accepts@1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -4211,6 +4217,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
@@ -5683,9 +5692,6 @@ packages:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
     peerDependencies:
       zod: ^3.25.28 || ^4
-
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
@@ -7704,13 +7710,13 @@ snapshots:
     optionalDependencies:
       vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
 
-  '@vitest/mocker@4.1.10(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.10(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
+      vite: 8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
   '@vitest/mocker@4.1.10(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
@@ -7778,21 +7784,21 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@workspec/cost-engine@0.1.0-alpha.5':
+  '@workspec/cost-engine@0.1.0-alpha.7':
     dependencies:
-      '@workspec/cost-schema': 0.1.0-alpha.5
+      '@workspec/cost-schema': 0.1.0-alpha.7
 
-  '@workspec/cost-schema@0.1.0-alpha.5':
+  '@workspec/cost-schema@0.1.0-alpha.7':
     dependencies:
+      '@workspec/schema-core': 0.1.0-alpha.5
       yaml: 2.9.0
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
+      zod: 4.4.3
 
-  '@workspec/cost-ui@0.1.0-alpha.5(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
+  '@workspec/cost-ui@0.1.0-alpha.7(@tanstack/react-query@5.101.2(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)':
     dependencies:
       '@tanstack/react-query': 5.101.2(react@18.3.1)
-      '@workspec/cost-engine': 0.1.0-alpha.5
-      '@workspec/cost-schema': 0.1.0-alpha.5
+      '@workspec/cost-engine': 0.1.0-alpha.7
+      '@workspec/cost-schema': 0.1.0-alpha.7
       '@workspec/design': 0.1.0-alpha.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -7852,6 +7858,10 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
       - tailwindcss
+
+  '@workspec/schema-core@0.1.0-alpha.5':
+    dependencies:
+      zod: 4.4.3
 
   accepts@1.3.8:
     dependencies:
@@ -8495,6 +8505,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
+
+  fflate@0.8.3: {}
 
   file-entry-cache@8.0.0:
     dependencies:
@@ -9938,7 +9950,7 @@ snapshots:
       tsx: 4.23.1
       yaml: 2.9.0
 
-  vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0):
+  vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.5
@@ -9950,7 +9962,7 @@ snapshots:
       esbuild: 0.27.7
       fsevents: 2.3.3
       jiti: 2.7.0
-      tsx: 4.23.1
+      tsx: 4.23.0
       yaml: 2.9.0
 
   vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0):
@@ -10193,10 +10205,10 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)):
+  vitest@4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -10213,7 +10225,7 @@ snapshots:
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vite: 8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
+      vite: 8.1.3(@types/node@24.13.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.13.2
@@ -10329,15 +10341,9 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-to-json-schema@3.25.2(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
-
   zod-to-json-schema@3.25.2(zod@4.4.3):
     dependencies:
       zod: 4.4.3
-
-  zod@3.25.76: {}
 
   zod@4.4.3: {}
 

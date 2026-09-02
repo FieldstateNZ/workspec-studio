@@ -1,15 +1,7 @@
-// The Cost module's full-page demo (`/cost/demo`) — the real CostApp
-// (Inventory / Attribution / Reports / Plan review) from
-// `@workspec/cost-ui`, against a MemoryRepository seeded with the worked
-// "fieldstate-azure" estate (see `cost-seed.ts`). Everything — rule
-// toggles, the Fix-coverage promote-to-rule composer, rail reorder — runs in
-// memory; nothing leaves the browser. Mirrors `demo.tsx` (Decisions): a full
-// in-browser sandbox with `capabilities: { editAttribution: true }`, not
-// `c4-demo.tsx`'s read-only showcase, since editing the ruleset live is the
-// whole point of this module.
 import { QueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
+import { flushSync } from 'react-dom';
 import {
   attributionKey,
   CostApp,
@@ -24,20 +16,33 @@ import {
   COST_DEMO_ATTRIBUTION_REF,
   COST_DEMO_ESTATE_NAME,
   COST_DEMO_INVENTORY_REF,
+  COST_DEMO_PERIOD,
+  COST_DEMO_SPEND_REF,
   COST_DEMO_TAGPLAN_REF,
-  createCostDemoRepository,
+  createCostDemoSeed,
 } from './cost-seed.js';
 import { buildCostReportCsv, downloadCsv } from './export-cost.js';
 import {
   CostWebMcpService,
-  registerCostWebMcpTools,
+  createCostWebMcpTools,
   type CostWebMcpActivity,
 } from './cost-webmcp.js';
+import {
+  CostSetupWebMcpService,
+  CostSnapshotWebMcpService,
+  buildWorkspecBundle,
+  createSetupTools,
+  createSnapshotRepository,
+  createSnapshotTool,
+  downloadWorkspecBundle,
+  registerCostDemoTools,
+  stateFromSnapshot,
+  type CostEstateState,
+} from './cost-snapshot.js';
 import { WorkbenchBar } from './demo-bar.js';
 import { SiteNav } from './nav.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
-
 const CHECKING_ACTIVITY: CostWebMcpActivity = {
   kind: 'checking',
   title: 'Connecting agent tools',
@@ -46,50 +51,82 @@ const CHECKING_ACTIVITY: CostWebMcpActivity = {
 
 function createDemoQueryClient(): QueryClient {
   return new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false,
-        retry: false,
-        staleTime: 5_000,
-      },
-    },
+    defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false, staleTime: 5_000 } },
   });
 }
 
-export function CostDemo(): ReactElement {
-  // Bumping this token discards every in-browser edit by rebuilding the repo.
-  const [resetToken, setResetToken] = useState(0);
-  const [agentActivity, setAgentActivity] = useState<CostWebMcpActivity>(CHECKING_ACTIVITY);
-  // The shell's own Dark/Light preference (Site Review UX pass, finding 03) —
-  // never this component's own OS-preference listener.
-  const theme = useTheme();
+function initialEstate(key = 0): CostEstateState {
+  return {
+    key,
+    estateName: COST_DEMO_ESTATE_NAME,
+    period: COST_DEMO_PERIOD,
+    inventoryRef: COST_DEMO_INVENTORY_REF,
+    spendRef: COST_DEMO_SPEND_REF,
+    attributionRef: COST_DEMO_ATTRIBUTION_REF,
+    tagPlanRef: COST_DEMO_TAGPLAN_REF,
+    seed: createCostDemoSeed(),
+    imported: false,
+  };
+}
 
-  const repository = useMemo(() => createCostDemoRepository(), [resetToken]);
-  const queryClient = useMemo(() => createDemoQueryClient(), [resetToken]);
+export function CostDemo(): ReactElement {
+  const [estate, setEstate] = useState<CostEstateState>(() => initialEstate());
+  const [agentActivity, setAgentActivity] = useState<CostWebMcpActivity>(CHECKING_ACTIVITY);
+  const [downloadStatus, setDownloadStatus] = useState('');
+  const theme = useTheme();
+  const repository = useMemo(() => createSnapshotRepository(estate), [estate.key]);
+  const queryClient = useMemo(() => createDemoQueryClient(), [estate.key]);
   const host: CostStudioHost = useMemo(
     () => ({
       repository,
       links: createInertLinkResolver(),
-      // A full in-memory sandbox: rail reorder/promotion/removal are all on.
       capabilities: { editAttribution: true },
     }),
     [repository],
   );
-  const webMcpService = useMemo(
+
+  const costService = useMemo(() => {
+    if (estate.attributionRef === undefined) return undefined;
+    return new CostWebMcpService({
+      repository,
+      inventoryRef: estate.inventoryRef,
+      attributionRef: estate.attributionRef,
+      onAttributionWritten: (attribution) => {
+        queryClient.setQueryData(attributionKey(repository, estate.attributionRef!), attribution);
+      },
+      onActivity: setAgentActivity,
+    });
+  }, [estate.attributionRef, estate.inventoryRef, queryClient, repository]);
+
+  const setupService = useMemo(() => {
+    if (estate.attributionRef !== undefined) return undefined;
+    return new CostSetupWebMcpService(repository, estate.inventoryRef, (ref, attribution) => {
+      queryClient.setQueryData(attributionKey(repository, ref), attribution);
+      flushSync(() => {
+        setEstate((current) => ({ ...current, attributionRef: ref }));
+        setAgentActivity({
+          kind: 'applied',
+          title: 'Attribution created',
+          detail: 'The workbench is ready. Inspect gaps and preview rules before applying them.',
+        });
+      });
+    });
+  }, [estate.attributionRef, estate.inventoryRef, queryClient, repository]);
+
+  const snapshotService = useMemo(
     () =>
-      new CostWebMcpService({
-        repository,
-        inventoryRef: COST_DEMO_INVENTORY_REF,
-        attributionRef: COST_DEMO_ATTRIBUTION_REF,
-        onAttributionWritten: (attribution) => {
-          queryClient.setQueryData(
-            attributionKey(repository, COST_DEMO_ATTRIBUTION_REF),
-            attribution,
-          );
-        },
-        onActivity: setAgentActivity,
+      new CostSnapshotWebMcpService((snapshot) => {
+        flushSync(() => {
+          setEstate((current) => stateFromSnapshot(snapshot, current.key + 1));
+          setDownloadStatus('');
+          setAgentActivity({
+            kind: 'applied',
+            title: 'Stocktake loaded',
+            detail: `${snapshot.inventory.spec.resources.length} resources replaced the demo estate. No cloud account was accessed.`,
+          });
+        });
       }),
-    [queryClient, repository],
+    [],
   );
 
   useEffect(() => {
@@ -103,22 +140,30 @@ export function CostDemo(): ReactElement {
       });
       return undefined;
     }
-
     const controller = new AbortController();
     setAgentActivity(CHECKING_ACTIVITY);
-    void registerCostWebMcpTools(context, webMcpService, controller.signal)
+    const tools = [
+      createSnapshotTool(snapshotService),
+      ...(costService !== undefined
+        ? createCostWebMcpTools(costService)
+        : setupService !== undefined
+          ? createSetupTools(setupService)
+          : []),
+    ];
+    void registerCostDemoTools(context, tools, controller.signal)
       .then(() => {
         if (controller.signal.aborted) return;
         setAgentActivity({
           kind: 'ready',
-          title: 'Agent tools ready',
-          detail: 'Five WebMCP site tools share this in-browser estate with you.',
+          title: costService !== undefined ? 'Agent tools ready' : 'Setup tools ready',
+          detail:
+            costService !== undefined
+              ? 'Six tools can replace, inspect, and improve this in-browser estate.'
+              : 'The agent can inspect this stocktake and create its first attribution dimension.',
         });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
-        // A rejected batch may have registered an earlier subset. Abort the
-        // shared signal so the browser removes every partial registration.
         controller.abort();
         setAgentActivity({
           kind: 'error',
@@ -128,25 +173,57 @@ export function CostDemo(): ReactElement {
         });
       });
     return () => controller.abort();
-  }, [webMcpService]);
+  }, [costService, setupService, snapshotService]);
 
   async function onExportCsv(): Promise<void> {
-    const { filename, csv } = await buildCostReportCsv(
-      repository,
-      COST_DEMO_INVENTORY_REF,
-      COST_DEMO_ATTRIBUTION_REF,
-    );
-    downloadCsv(filename, csv);
+    if (estate.attributionRef === undefined) return;
+    const result = await buildCostReportCsv(repository, estate.inventoryRef, estate.attributionRef);
+    downloadCsv(result.filename, result.csv);
+  }
+
+  async function onDownloadBundle(): Promise<void> {
+    if (estate.attributionRef === undefined) return;
+    try {
+      const bundle = await buildWorkspecBundle(
+        repository,
+        estate.inventoryRef,
+        estate.spendRef,
+        estate.attributionRef,
+        estate.period,
+      );
+      downloadWorkspecBundle(bundle.filename, bundle.bytes);
+      setDownloadStatus(
+        `Downloaded ${bundle.filename} with ${bundle.files.length} validated artifacts.`,
+      );
+    } catch (error) {
+      setDownloadStatus(error instanceof Error ? error.message : 'The bundle could not be built.');
+    }
   }
 
   return (
     <div className="demo">
       <SiteNav repoUrl={REPO_URL} />
       <WorkbenchBar
-        crumb={<span className="wb-crumb-value">{COST_DEMO_ESTATE_NAME}</span>}
+        crumb={<span className="wb-crumb-value">{estate.estateName}</span>}
         actions={
           <>
-            <button type="button" className="wb-action" onClick={() => void onExportCsv()}>
+            <button
+              type="button"
+              className="wb-action wb-action-primary"
+              disabled={estate.attributionRef === undefined}
+              title={
+                estate.attributionRef === undefined ? 'Create an attribution first' : undefined
+              }
+              onClick={() => void onDownloadBundle()}
+            >
+              Download .workspec bundle
+            </button>
+            <button
+              type="button"
+              className="wb-action"
+              disabled={estate.attributionRef === undefined}
+              onClick={() => void onExportCsv()}
+            >
               Export CSV
             </button>
             <button
@@ -154,7 +231,8 @@ export function CostDemo(): ReactElement {
               className="wb-action-ghost"
               onClick={() => {
                 setAgentActivity(CHECKING_ACTIVITY);
-                setResetToken((n) => n + 1);
+                setDownloadStatus('');
+                setEstate((current) => initialEstate(current.key + 1));
               }}
             >
               Reset
@@ -164,14 +242,19 @@ export function CostDemo(): ReactElement {
       />
 
       <p className="demo-note" role="note">
-        Changes live only in your browser — the real thing writes <code>*.attribution.yaml</code>{' '}
-        files in your repo.{' '}
+        Everything stays in your browser. An agent can replace this sample with a stocktake, help
+        create the attribution, and prepare a local <code>.workspec</code> bundle.{' '}
         <span className="demo-blurb">
-          80 resources across 9 resource groups, starting at 81.2% coverage with three gaps to
-          inspect, preview, and resolve.
+          {estate.imported
+            ? 'This imported snapshot has not contacted or changed its cloud provider.'
+            : 'The sample starts with 80 resources and three attribution gaps.'}
         </span>
       </p>
-
+      {downloadStatus !== '' && (
+        <p className="cost-download-status" role="status">
+          {downloadStatus}
+        </p>
+      )}
       <section
         className={`cost-agent-status cost-agent-status-${agentActivity.kind}`}
         aria-live="polite"
@@ -182,15 +265,36 @@ export function CostDemo(): ReactElement {
         <span>{agentActivity.detail}</span>
       </section>
 
-      <CostStudioProvider host={host} queryClient={queryClient} theme={theme}>
-        <main className="demo-stage" key={resetToken}>
-          <CostApp
-            inventoryRef={COST_DEMO_INVENTORY_REF}
-            attributionRef={COST_DEMO_ATTRIBUTION_REF}
-            tagPlanRef={COST_DEMO_TAGPLAN_REF}
-          />
+      {estate.attributionRef !== undefined ? (
+        <CostStudioProvider host={host} queryClient={queryClient} theme={theme}>
+          <main className="demo-stage" key={estate.key}>
+            <CostApp
+              inventoryRef={estate.inventoryRef}
+              attributionRef={estate.attributionRef}
+              {...(estate.tagPlanRef !== undefined ? { tagPlanRef: estate.tagPlanRef } : {})}
+            />
+          </main>
+        </CostStudioProvider>
+      ) : (
+        <main className="cost-setup-stage">
+          <div className="cost-setup-card">
+            <span className="cost-agent-kicker">Stocktake loaded</span>
+            <h1>{estate.estateName}</h1>
+            <p>
+              The inventory and {estate.period} spend are ready in this browser. Ask your agent to
+              inspect the setup, agree a reporting dimension with you, and create the attribution.
+            </p>
+            <ol>
+              <li>Inspect resource groups, accounts, and observed tags.</li>
+              <li>Agree the primary dimension and allowed values.</li>
+              <li>Create attribution, resolve gaps, then download the bundle.</li>
+            </ol>
+            <p className="cost-setup-safety">
+              No cloud credentials are used and no cloud resource can be changed here.
+            </p>
+          </div>
         </main>
-      </CostStudioProvider>
+      )}
     </div>
   );
 }

@@ -39,7 +39,7 @@ describe('CostDemo WebMCP integration', () => {
     );
 
     expect(await screen.findByText('81.2%')).toBeInTheDocument();
-    await waitFor(() => expect(registered.size).toBe(5));
+    await waitFor(() => expect(registered.size).toBe(6));
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
 
     const previewTool = registered.get('preview_attribution_rule');
@@ -68,7 +68,61 @@ describe('CostDemo WebMCP integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     expect(await screen.findByText('81.2%')).toBeInTheDocument();
-    await waitFor(() => expect(registered.size).toBe(5));
+    await waitFor(() => expect(registered.size).toBe(6));
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
+  }, 15_000);
+
+  it('replaces the sample, enters setup, then opens the workbench after attribution creation', async () => {
+    const registered = installModelContext();
+    render(<CostDemo />);
+    await waitFor(() => expect(registered.size).toBe(6));
+    const loadTool = registered.get('load_cost_snapshot');
+
+    await act(async () => {
+      await loadTool?.execute({
+        estateName: 'Demo subscription',
+        provider: 'azure',
+        asOf: '2026-09-02T00:00:00Z',
+        period: '2026-09',
+        currency: 'NZD',
+        resources: [
+          {
+            id: '/subscriptions/demo/resourceGroups/rg-app/providers/Microsoft.Web/sites/app',
+            name: 'app',
+            type: 'Microsoft.Web/sites',
+            location: 'australiaeast',
+            resourceGroup: 'rg-app',
+            account: 'demo',
+            monthlySpend: 42,
+            serviceCategory: 'App Service',
+          },
+        ],
+      });
+    });
+
+    expect(screen.getByRole('heading', { name: 'Demo subscription' })).toBeInTheDocument();
+    expect(screen.getByText(/no cloud credentials are used/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download .workspec bundle' })).toBeDisabled();
+    await waitFor(() =>
+      expect([...registered.keys()].sort()).toEqual([
+        'create_cost_attribution',
+        'inspect_cost_setup',
+        'load_cost_snapshot',
+      ]),
+    );
+
+    await act(async () => {
+      await registered.get('create_cost_attribution')?.execute({
+        name: 'Product ownership',
+        dimensionId: 'product',
+        dimensionLabel: 'Product',
+        values: ['app'],
+      });
+    });
+
+    await waitFor(() => expect(registered.size).toBe(6));
+    expect(screen.queryByRole('heading', { name: 'Demo subscription' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download .workspec bundle' })).toBeEnabled();
+    expect(registered.has('list_unattributed_clusters')).toBe(true);
   }, 15_000);
 });

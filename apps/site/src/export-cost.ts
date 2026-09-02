@@ -33,7 +33,8 @@ export async function buildCostReportCsv(
     .map((b) => ({
       key: b.key,
       amount: b.amount,
-      share: result.totals.inventorySpend === 0 ? 0 : (b.amount / result.totals.inventorySpend) * 100,
+      share:
+        result.totals.inventorySpend === 0 ? 0 : (b.amount / result.totals.inventorySpend) * 100,
     }))
     .sort((a, b) => {
       if (a.key === 'unattributed') return 1;
@@ -46,7 +47,10 @@ export async function buildCostReportCsv(
     header.join(','),
     ...rows.map((r) => [r.key, r.amount.toFixed(2), r.share.toFixed(1)].join(',')),
   ];
-  return { filename: `${attribution.metadata.id}.cost-report.csv`, csv: lines.join('\n') };
+  return {
+    filename: `${attribution.metadata.slug ?? primaryDimension.id}.cost-report.csv`,
+    csv: lines.join('\n'),
+  };
 }
 
 /** Trigger a browser download of `csv` as `filename` (no server round-trip). */

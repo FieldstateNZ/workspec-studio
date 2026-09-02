@@ -217,6 +217,7 @@ export function Cost(): ReactElement {
                 Azure roles and least privilege <span aria-hidden="true">↗</span>
               </a>
               <nav className="cost-doc-nav" aria-label="On this page">
+                <a href="#browser-demo">Try the hosted workflow</a>
                 <a href="#collect">1. Collect your estate</a>
                 <a href="#collaborate">2. Open the workbench</a>
                 <a href="#review">3. Review attribution</a>
@@ -226,6 +227,35 @@ export function Cost(): ReactElement {
             </div>
 
             <div className="cost-doc-steps">
+              <article id="browser-demo" className="cost-doc-step">
+                <div className="cost-step-heading">
+                  <span>00</span>
+                  <div>
+                    <p>Try it now</p>
+                    <h3>Build a real bundle without cloud credentials.</h3>
+                  </div>
+                </div>
+                <p>
+                  Open the hosted demo in a browser with site tools enabled. Ask the agent to load a
+                  provider-neutral stocktake with resource ids, groups, tags, monthly spend, and
+                  service categories. The sample is replaced only after the whole payload validates.
+                </p>
+                <blockquote className="cost-prompt-card">
+                  “Load a small Azure stocktake for September 2026, help me define product
+                  ownership, resolve the attribution gaps, and prepare the WorkSpec bundle.”
+                </blockquote>
+                <p>
+                  When the workbench is ready, click <strong>Download .workspec bundle</strong>. The
+                  ZIP contains inventory, spend, attribution, and tag-plan YAML that the local CLI
+                  can validate, report on, and dry-run.
+                </p>
+                <div className="hero-actions">
+                  <Link className="btn btn-primary" href="/cost/demo">
+                    Open the hosted workflow
+                  </Link>
+                </div>
+              </article>
+
               <article id="collect" className="cost-doc-step">
                 <div className="cost-step-heading">
                   <span>01</span>

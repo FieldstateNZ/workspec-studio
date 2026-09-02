@@ -26,6 +26,7 @@ import attributionYaml from './examples-cost/fieldstate-azure.attribution.yaml?r
 import tagPlanYaml from './examples-cost/fieldstate-azure.tagplan.yaml?raw';
 
 export const COST_DEMO_ESTATE_NAME = 'fieldstate-azure';
+export const COST_DEMO_PERIOD = '2026-07';
 export const COST_DEMO_INVENTORY_REF: Ref = 'fieldstate-azure.inventory.yaml';
 export const COST_DEMO_SPEND_REF: Ref = 'fieldstate-azure.spend.yaml';
 export const COST_DEMO_ATTRIBUTION_REF: Ref = 'fieldstate-azure.attribution.yaml';
@@ -77,7 +78,11 @@ function parseTagPlan(ref: Ref, yaml: string): TagPlan {
  * discards in-browser edits.
  */
 export function createCostDemoRepository(): CostRepositoryPort {
-  return createMemoryRepository({
+  return createMemoryRepository(createCostDemoSeed());
+}
+
+export function createCostDemoSeed() {
+  return {
     inventories: {
       [COST_DEMO_INVENTORY_REF]: parseInventory(COST_DEMO_INVENTORY_REF, inventoryYaml),
     },
@@ -86,5 +91,5 @@ export function createCostDemoRepository(): CostRepositoryPort {
       [COST_DEMO_ATTRIBUTION_REF]: parseAttribution(COST_DEMO_ATTRIBUTION_REF, attributionYaml),
     },
     tagPlans: { [COST_DEMO_TAGPLAN_REF]: parseTagPlan(COST_DEMO_TAGPLAN_REF, tagPlanYaml) },
-  });
+  };
 }
