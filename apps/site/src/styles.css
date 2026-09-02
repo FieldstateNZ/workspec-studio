@@ -1900,9 +1900,8 @@
     position: absolute;
     z-index: 22;
     top: var(--s-2);
-    left: 50%;
+    right: var(--s-2);
     padding: 3px;
-    transform: translateX(-50%);
   }
   .architecture-canvas .c4-explorer-pane > [role='tablist'] button {
     height: 28px;
