@@ -22,9 +22,12 @@ import { layoutPathFor, serializeLayout } from '@workspec/c4-schema';
 import type { Spec } from '@workspec/c4-schema';
 import {
   Canvas,
+  Background,
+  CanvasZoomControls,
   CanvasProvider,
   CanvasSpecContext,
   ConnectorLayer,
+  Minimap,
   ShapeLayer,
   createCanvasStore,
   pageToScreen,
@@ -72,12 +75,25 @@ export interface C4DiagramProps {
   direction?: LayoutDirection | undefined;
   theme?: ThemeName | undefined;
   className?: string | undefined;
+  /** Show camera-aligned grid, zoom controls, and minimap from the shared infinite canvas. */
+  canvasChrome?: boolean | undefined;
 }
 
 const PAN_STEP = 40;
 const ZOOM_FACTOR = 1.2;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4;
+
+const MINIMAP_KIND_COLORS: Record<string, string> = {
+  actor: 'var(--el-actor)',
+  system: 'var(--el-system)',
+  'external-system': 'var(--el-external-system)',
+  container: 'var(--el-container)',
+  component: 'var(--type-feature)',
+  domain: 'var(--el-domain)',
+  database: 'var(--el-database)',
+  queue: 'var(--el-queue)',
+};
 
 /** Zoom the camera about a canvas-relative screen point by `factor`, clamped 0.1–4. */
 function zoomCamera(
@@ -116,7 +132,11 @@ const TooltipOverlay: FC<{
     <div
       className="c4-tooltip"
       data-canvas-ui
-      style={{ position: 'absolute', left: `${String(clamped.left)}%`, top: `${String(clamped.top)}%` }}
+      style={{
+        position: 'absolute',
+        left: `${String(clamped.left)}%`,
+        top: `${String(clamped.top)}%`,
+      }}
     >
       <TooltipContent
         content={tooltipContentFor(node, elementsByKindAndSlug)}
@@ -139,6 +159,7 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     direction = 'LR',
     theme,
     className,
+    canvasChrome = false,
   } = props;
   void direction; // positions are authoritative; the shared router recomputes edge look live
 
@@ -366,8 +387,15 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
             <CanvasSpecContext.Provider value={canvasSpec}>
               <A11yBridgeContext.Provider value={bridge}>
                 <Canvas shortcutScope="none" renderContextMenu={() => null}>
+                  {canvasChrome && <Background variant="lines" />}
                   <ConnectorLayer />
                   <ShapeLayer />
+                  {canvasChrome && (
+                    <>
+                      <CanvasZoomControls />
+                      <Minimap kindColors={MINIMAP_KIND_COLORS} />
+                    </>
+                  )}
                   <TooltipOverlay
                     nodesById={nodesById}
                     elementsByKindAndSlug={elementsByKindAndSlug}

@@ -331,6 +331,8 @@ export function C4Demo(): ReactElement {
                 host={host}
                 theme={theme}
                 initialDiagramSlug="system-context"
+                canvasChrome
+                collapsibleDetails
               />
             </div>
           )}

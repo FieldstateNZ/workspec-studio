@@ -84,6 +84,24 @@ describe('C4Explorer — segmented level tabs + crumb (replaces the old tree nav
 });
 
 describe('C4Explorer — clicking an element populates the detail rail', () => {
+  it('keeps collapsible details closed until selection and lets the user close them again', async () => {
+    const model = await loadSyntheticModel();
+    render(<C4Explorer model={model} initialDiagramSlug="context" collapsibleDetails />);
+    await screen.findByText('Architect');
+
+    expect(
+      screen.queryByRole('complementary', { name: 'Element details' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /actor: Architect/i }));
+    expect(screen.getByRole('complementary', { name: 'Element details' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse element details' }));
+    expect(
+      screen.queryByRole('complementary', { name: 'Element details' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows the empty state until something is selected', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="context" />);

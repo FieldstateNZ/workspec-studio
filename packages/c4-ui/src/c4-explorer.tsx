@@ -15,6 +15,7 @@ import { layoutDiagram } from '@workspec/c4-layout';
 import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
 import { labelAwareLayerSpacing } from './c4/index.js';
 import { LensToggle } from '@workspec/design/components';
+import { PanelRightClose } from 'lucide-react';
 import { C4Diagram } from './c4-diagram.js';
 import { elementKey } from './element-key.js';
 import { createInertLinkResolver } from './host.js';
@@ -35,6 +36,10 @@ export interface C4ExplorerProps {
   direction?: LayoutDirection | undefined;
   /** Initially selected diagram slug. Defaults to the first LEVEL TAB's diagram (the lowest-numbered canonical level present — a multi-diagram model opens on `1 · Context` when a context diagram exists, never `3 · Component`), falling back to `model.diagrams[0]` only for an empty tab set (i.e. an empty model). */
   initialDiagramSlug?: string | undefined;
+  /** Show the shared infinite-canvas grid, zoom controls, and minimap. */
+  canvasChrome?: boolean | undefined;
+  /** Hide the details rail until selection and let the user collapse it. */
+  collapsibleDetails?: boolean | undefined;
 }
 
 type Lens = 'logical' | 'deployment';
@@ -119,7 +124,16 @@ function buildElementsByKindAndSlug(model: C4Model): ReadonlyMap<string, LoadedE
 }
 
 export function C4Explorer(props: C4ExplorerProps): ReactElement {
-  const { model, host, theme, className, direction = 'LR', initialDiagramSlug } = props;
+  const {
+    model,
+    host,
+    theme,
+    className,
+    direction = 'LR',
+    initialDiagramSlug,
+    canvasChrome = false,
+    collapsibleDetails = false,
+  } = props;
 
   // Default selection = the first LEVEL TAB's diagram, not `model.diagrams[0]`:
   // `model.diagrams` is discovery (file) order, so a lexicographic accident
@@ -316,6 +330,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
                 elementsByKindAndSlug={elementsByKindAndSlug}
                 direction={direction}
                 theme={theme}
+                canvasChrome={canvasChrome}
               />
             )}
           </div>
@@ -323,47 +338,62 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
           {/* aria-live (not a focus move): selecting a canvas node announces
               the rail's new content to assistive tech while focus stays on
               the node the user just activated. */}
-          <aside className="c4-detail-rail" aria-label="Element details" aria-live="polite">
-            {!railContent && (
-              <div className="c4-detail-empty">
-                <div className="c4-detail-eyebrow">Element details</div>
-                <p className="c4-detail-empty-copy">
-                  Select an element on the canvas to inspect it — kind, technology, and the
-                  decisions that shaped it.
-                </p>
-              </div>
-            )}
-            {railContent && (
-              <>
-                <div
-                  className="c4-rail-selected c4-rail-kind"
-                  style={{ '--c4-el-accent-raw': selectedElementStyle?.accent } as CSSProperties}
-                >
-                  {railContent.kind?.replace(/-/g, ' ') ?? 'element'}
-                </div>
-                <div className="c4-rail-name">{railContent.title}</div>
-                {railContent.description !== null && railContent.description !== '' && (
-                  <p className="c4-rail-desc">{railContent.description}</p>
-                )}
-                {railContent.technology !== null && railContent.technology !== '' && (
-                  <div className="c4-rail-tech">
-                    <span className="c4-rail-tech-label">Tech</span>
-                    <span className="c4-rail-tech-value">{railContent.technology}</span>
-                  </div>
-                )}
-                <LinksBlock links={railContent.links} resolve={linkResolver} />
-                {drillTarget && (
+          {(!collapsibleDetails || railContent !== null) && (
+            <aside className="c4-detail-rail" aria-label="Element details" aria-live="polite">
+              {collapsibleDetails && railContent !== null && (
+                <div className="c4-detail-header">
+                  <span>Element details</span>
                   <button
                     type="button"
-                    className="c4-rail-drill"
-                    onClick={() => selectDiagram(drillTarget.slug)}
+                    className="c4-detail-collapse"
+                    aria-label="Collapse element details"
+                    onClick={() => setSelectedNodeId(null)}
                   >
-                    {`${drillLabelFor(drillTarget)} →`}
+                    <PanelRightClose size={16} />
                   </button>
-                )}
-              </>
-            )}
-          </aside>
+                </div>
+              )}
+              {!railContent && (
+                <div className="c4-detail-empty">
+                  <div className="c4-detail-eyebrow">Element details</div>
+                  <p className="c4-detail-empty-copy">
+                    Select an element on the canvas to inspect it — kind, technology, and the
+                    decisions that shaped it.
+                  </p>
+                </div>
+              )}
+              {railContent && (
+                <>
+                  <div
+                    className="c4-rail-selected c4-rail-kind"
+                    style={{ '--c4-el-accent-raw': selectedElementStyle?.accent } as CSSProperties}
+                  >
+                    {railContent.kind?.replace(/-/g, ' ') ?? 'element'}
+                  </div>
+                  <div className="c4-rail-name">{railContent.title}</div>
+                  {railContent.description !== null && railContent.description !== '' && (
+                    <p className="c4-rail-desc">{railContent.description}</p>
+                  )}
+                  {railContent.technology !== null && railContent.technology !== '' && (
+                    <div className="c4-rail-tech">
+                      <span className="c4-rail-tech-label">Tech</span>
+                      <span className="c4-rail-tech-value">{railContent.technology}</span>
+                    </div>
+                  )}
+                  <LinksBlock links={railContent.links} resolve={linkResolver} />
+                  {drillTarget && (
+                    <button
+                      type="button"
+                      className="c4-rail-drill"
+                      onClick={() => selectDiagram(drillTarget.slug)}
+                    >
+                      {`${drillLabelFor(drillTarget)} →`}
+                    </button>
+                  )}
+                </>
+              )}
+            </aside>
+          )}
         </div>
       </div>
     </ThemedRoot>

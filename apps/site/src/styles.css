@@ -1908,10 +1908,6 @@
     border: 0;
     border-radius: 0;
     background-color: var(--canvas-bg, var(--bg));
-    background-image:
-      linear-gradient(var(--canvas-grid-major, rgba(0, 0, 0, 0.04)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--canvas-grid-major, rgba(0, 0, 0, 0.04)) 1px, transparent 1px);
-    background-size: 32px 32px;
   }
   .architecture-canvas .c4-explorer-pane > [role='tablist'] {
     position: absolute;
@@ -1929,30 +1925,17 @@
   }
   .architecture-canvas .c4-detail-rail {
     width: 300px;
-    padding: 56px var(--s-5) var(--s-5);
+    padding: 0 var(--s-5) var(--s-5);
     border: 0;
     border-left: 1px solid var(--line);
     border-radius: 0;
     background: var(--bg-elevated);
-  }
-  .architecture-canvas .c4-detail-rail::before {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    height: 36px;
-    padding: 0 var(--s-3);
-    border-bottom: 1px solid var(--line);
-    color: var(--ink-muted);
-    content: 'ELEMENT DETAILS';
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.12em;
-  }
-  .architecture-canvas .c4-detail-rail {
     position: relative;
+  }
+  .architecture-canvas .c4-detail-header {
+    height: 44px;
+    margin: 0 calc(var(--s-5) * -1) var(--s-5);
+    padding: 0 var(--s-3);
   }
   .architecture-canvas .c4-detail-empty {
     padding: var(--s-6) var(--s-4);
@@ -2051,12 +2034,13 @@
     .architecture-canvas .c4-detail-rail {
       width: 100%;
       max-height: 180px;
-      padding: var(--s-4);
+      padding: 0 var(--s-4) var(--s-4);
       border-top: 1px solid var(--line);
       border-left: 0;
     }
-    .architecture-canvas .c4-detail-rail::before {
-      display: none;
+    .architecture-canvas .c4-detail-header {
+      margin-right: calc(var(--s-4) * -1);
+      margin-left: calc(var(--s-4) * -1);
     }
     .architecture-canvas .c4-explorer-header {
       right: var(--s-2);

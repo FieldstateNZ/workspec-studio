@@ -42,7 +42,10 @@ function readOnlyHost(): C4StudioHost {
 }
 
 /** The node's page-centre — where a pointer gesture must land to hit it (identity camera, zero rects). */
-function centerOf(diagram: PositionedDiagram, nodeId: string): { clientX: number; clientY: number } {
+function centerOf(
+  diagram: PositionedDiagram,
+  nodeId: string,
+): { clientX: number; clientY: number } {
   const node = diagram.nodes.find((n) => n.nodeId === nodeId);
   if (!node) throw new Error(`node ${nodeId} missing`);
   return { clientX: node.x + node.width / 2, clientY: node.y + node.height / 2 };
@@ -103,6 +106,15 @@ function unresolvedNodeFixture(): { diagram: PositionedDiagram; resolved: Resolv
 }
 
 describe('C4Diagram — representative fixture render', () => {
+  it('can expose the shared infinite-canvas navigation chrome', async () => {
+    const { resolved, diagram } = await loadContext();
+    render(<C4Diagram diagram={diagram} resolved={resolved} canvasChrome />);
+
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fit view' })).toBeInTheDocument();
+  });
+
   it('renders every node title and kind from the loaded model as role=button cards', async () => {
     const { resolved, diagram } = await loadContext();
     render(<C4Diagram diagram={diagram} resolved={resolved} host={readOnlyHost()} />);
