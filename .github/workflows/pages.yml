@@ -70,12 +70,14 @@ jobs:
           test -f apps/site/dist/CNAME
           test -f apps/site/dist/404.html
           test -f apps/site/dist/cost/demo/index.html
+          test -f apps/site/dist/architecture/demo/index.html
           # 404.html must be byte-identical to index.html — that's what makes
           # deep links (/decisions, /decisions/demo, /c4) resolve on Pages.
           diff apps/site/dist/index.html apps/site/dist/404.html
           # The challenge URL gets a real static entrypoint and therefore a
           # 200 response rather than relying on the SPA's 404 fallback.
           diff apps/site/dist/index.html apps/site/dist/cost/demo/index.html
+          diff apps/site/dist/index.html apps/site/dist/architecture/demo/index.html
           echo "serving $(cat apps/site/dist/CNAME)"
 
       - uses: actions/upload-pages-artifact@v3

@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import { copyIndexForGitHubPages } from './copy-index-to-not-found.js';
 
-describe('copyIndexForGitHubPages — fallback plus a real challenge entrypoint', () => {
-  it('duplicates index.html as 404.html and cost/demo/index.html', () => {
+describe('copyIndexForGitHubPages — fallback plus real Studio entrypoints', () => {
+  it('duplicates index.html as the fallback and both nested entrypoints', () => {
     const dist = mkdtempSync(join(tmpdir(), 'site-dist-'));
     const shell = '<html><body><div id="root"></div></body></html>';
     writeFileSync(join(dist, 'index.html'), shell);
@@ -16,6 +16,7 @@ describe('copyIndexForGitHubPages — fallback plus a real challenge entrypoint'
 
     expect(readFileSync(join(dist, '404.html'), 'utf8')).toBe(shell);
     expect(readFileSync(join(dist, 'cost/demo/index.html'), 'utf8')).toBe(shell);
+    expect(readFileSync(join(dist, 'architecture/demo/index.html'), 'utf8')).toBe(shell);
   });
 
   it('is a no-op when index.html has not been built yet', () => {
@@ -25,5 +26,6 @@ describe('copyIndexForGitHubPages — fallback plus a real challenge entrypoint'
 
     expect(existsSync(join(dist, '404.html'))).toBe(false);
     expect(existsSync(join(dist, 'cost/demo/index.html'))).toBe(false);
+    expect(existsSync(join(dist, 'architecture/demo/index.html'))).toBe(false);
   });
 });
