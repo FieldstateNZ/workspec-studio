@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { Cost } from './cost.js';
@@ -90,15 +90,21 @@ describe('cost demo page (/cost/demo)', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows no redundant module switchers', () => {
+  it('uses the shared collapsible Studio sidebar', () => {
     window.history.pushState({}, '', '/cost/demo');
     render(<CostDemo />);
 
-    expect(screen.queryByRole('link', { name: 'Cost' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Studio' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Decisions' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'C4 Model' })).not.toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Architecture' })).toHaveAttribute(
+      'href',
+      '/architecture',
+    );
+    const toggle = screen.getByRole('button', { name: 'Collapse sidebar' });
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 
   it('keeps the worked estate crumb and actions', async () => {
@@ -106,6 +112,6 @@ describe('cost demo page (/cost/demo)', () => {
     expect(screen.getByText('fieldstate-azure')).toBeInTheDocument();
     await screen.findByText('81.2%');
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
   });
 });

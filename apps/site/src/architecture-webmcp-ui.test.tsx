@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -38,6 +38,11 @@ describe('Architecture Studio WebMCP integration', () => {
     expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cost Attribution' })).toHaveAttribute('href', '/cost');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
 
     let result: Record<string, unknown> | undefined;
     await act(async () => {

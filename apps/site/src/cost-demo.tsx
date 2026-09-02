@@ -10,7 +10,22 @@ import {
 } from '@workspec/cost-ui';
 import type { CostStudioHost } from '@workspec/cost-ui';
 import { useTheme } from '@workspec/design';
+import { WorkspecMark } from '@workspec/design/components';
 import '@workspec/cost-ui/styles.css';
+import {
+  Bot,
+  Boxes,
+  CalendarDays,
+  DollarSign,
+  Download,
+  FileArchive,
+  FileSpreadsheet,
+  Github,
+  Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RotateCcw,
+} from 'lucide-react';
 
 import {
   COST_DEMO_ATTRIBUTION_REF,
@@ -39,8 +54,8 @@ import {
   stateFromSnapshot,
   type CostEstateState,
 } from './cost-snapshot.js';
-import { WorkbenchBar } from './demo-bar.js';
-import { SiteNav } from './nav.js';
+import { Link } from './router.js';
+import { ThemeToggle } from './theme-toggle.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
 const CHECKING_ACTIVITY: CostWebMcpActivity = {
@@ -73,6 +88,7 @@ export function CostDemo(): ReactElement {
   const [estate, setEstate] = useState<CostEstateState>(() => initialEstate());
   const [agentActivity, setAgentActivity] = useState<CostWebMcpActivity>(CHECKING_ACTIVITY);
   const [downloadStatus, setDownloadStatus] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useTheme();
   const repository = useMemo(() => createSnapshotRepository(estate), [estate.key]);
   const queryClient = useMemo(() => createDemoQueryClient(), [estate.key]);
@@ -201,101 +217,180 @@ export function CostDemo(): ReactElement {
     }
   }
 
+  function resetSample(): void {
+    setAgentActivity(CHECKING_ACTIVITY);
+    setDownloadStatus('');
+    setEstate((current) => initialEstate(current.key + 1));
+  }
+
+  const resourceCount =
+    estate.seed.inventories?.[estate.inventoryRef]?.spec.resources.length ?? '—';
+
   return (
-    <div className="demo">
-      <SiteNav repoUrl={REPO_URL} moduleHref="/" ariaLabel="WorkSpec Studio home" />
-      <WorkbenchBar
-        crumb={<span className="wb-crumb-value">{estate.estateName}</span>}
-        actions={
-          <>
+    <div className="architecture-studio cost-studio-shell">
+      <header className="architecture-app-header">
+        <Link className="architecture-app-brand" href="/" aria-label="WorkSpec Studio home">
+          <WorkspecMark size={24} />
+          <span className="architecture-wordmark">
+            work<strong>spec</strong>
+          </span>
+        </Link>
+        <span className="architecture-header-divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="architecture-sidebar-toggle"
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!sidebarCollapsed}
+          onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
+        <DollarSign size={16} aria-hidden="true" />
+        <strong className="architecture-project-title">{estate.estateName}</strong>
+        <span className="architecture-header-spacer" />
+        <span className={`architecture-connection architecture-connection-${agentActivity.kind}`}>
+          <span aria-hidden="true" />
+          WebMCP {agentActivity.kind === 'ready' ? 'ready' : agentActivity.kind}
+        </span>
+        <a className="architecture-icon-link" href={REPO_URL} aria-label="View source on GitHub">
+          <Github size={16} />
+        </a>
+        <ThemeToggle />
+      </header>
+
+      <div className="architecture-app-body">
+        <aside
+          className={`architecture-sidebar${sidebarCollapsed ? ' architecture-sidebar-collapsed' : ''}`}
+          aria-label="Studio navigation"
+        >
+          <nav className="architecture-sidebar-nav">
+            <p className="architecture-nav-section">Studio</p>
+            <span
+              className="architecture-nav-item architecture-nav-item-active"
+              aria-current="page"
+            >
+              <DollarSign size={16} />
+              <span>Cost Attribution</span>
+            </span>
+            <Link className="architecture-nav-item" href="/architecture">
+              <Layers size={16} />
+              <span>Architecture</span>
+            </Link>
+
+            <p className="architecture-nav-section">Estate</p>
+            <div className="architecture-model-summary">
+              <span>
+                <Boxes size={14} />
+                Resources
+                <strong>{resourceCount}</strong>
+              </span>
+              <span>
+                <CalendarDays size={14} />
+                Period
+                <strong>{estate.period}</strong>
+              </span>
+            </div>
+
+            <p className="architecture-nav-section">Output</p>
             <button
               type="button"
-              className="wb-action wb-action-primary"
+              className="architecture-nav-item architecture-nav-button"
+              aria-label="Download .workspec bundle"
               disabled={estate.attributionRef === undefined}
               title={
                 estate.attributionRef === undefined ? 'Create an attribution first' : undefined
               }
               onClick={() => void onDownloadBundle()}
             >
-              Download .workspec bundle
+              <FileArchive size={16} />
+              <span>.workspec bundle</span>
+              <Download size={13} />
             </button>
             <button
               type="button"
-              className="wb-action"
+              className="architecture-nav-item architecture-nav-button"
+              aria-label="Export CSV"
               disabled={estate.attributionRef === undefined}
               onClick={() => void onExportCsv()}
             >
-              Export CSV
+              <FileSpreadsheet size={16} />
+              <span>Export CSV</span>
+              <Download size={13} />
             </button>
-            <button
-              type="button"
-              className="wb-action-ghost"
-              onClick={() => {
-                setAgentActivity(CHECKING_ACTIVITY);
-                setDownloadStatus('');
-                setEstate((current) => initialEstate(current.key + 1));
-              }}
-            >
-              Reset
+          </nav>
+
+          <section
+            className={`architecture-agent-panel architecture-agent-panel-${agentActivity.kind}`}
+            aria-live="polite"
+            aria-label="WebMCP agent activity"
+          >
+            <div className="architecture-agent-heading">
+              <Bot size={15} />
+              <span>Agent</span>
+              <small>WebMCP</small>
+            </div>
+            <strong>{agentActivity.title}</strong>
+            <p>{agentActivity.detail}</p>
+          </section>
+
+          <div className="architecture-sidebar-footer">
+            <button type="button" onClick={resetSample}>
+              <RotateCcw size={14} />
+              <span>Reset sample</span>
             </button>
-          </>
-        }
-      />
-
-      <p className="demo-note" role="note">
-        Everything stays in your browser. An agent can replace this sample with a stocktake, help
-        create the attribution, and prepare a local <code>.workspec</code> bundle.{' '}
-        <span className="demo-blurb">
-          {estate.imported
-            ? 'This imported snapshot has not contacted or changed its cloud provider.'
-            : 'The sample starts with 80 resources and three attribution gaps.'}
-        </span>
-      </p>
-      {downloadStatus !== '' && (
-        <p className="cost-download-status" role="status">
-          {downloadStatus}
-        </p>
-      )}
-      <section
-        className={`cost-agent-status cost-agent-status-${agentActivity.kind}`}
-        aria-live="polite"
-        aria-label="WebMCP agent activity"
-      >
-        <span className="cost-agent-kicker">WebMCP</span>
-        <strong>{agentActivity.title}</strong>
-        <span>{agentActivity.detail}</span>
-      </section>
-
-      {estate.attributionRef !== undefined ? (
-        <CostStudioProvider host={host} queryClient={queryClient} theme={theme}>
-          <main className="demo-stage" key={estate.key}>
-            <CostApp
-              inventoryRef={estate.inventoryRef}
-              attributionRef={estate.attributionRef}
-              {...(estate.tagPlanRef !== undefined ? { tagPlanRef: estate.tagPlanRef } : {})}
-            />
-          </main>
-        </CostStudioProvider>
-      ) : (
-        <main className="cost-setup-stage">
-          <div className="cost-setup-card">
-            <span className="cost-agent-kicker">Stocktake loaded</span>
-            <h1>{estate.estateName}</h1>
-            <p>
-              The inventory and {estate.period} spend are ready in this browser. Ask your agent to
-              inspect the setup, agree a reporting dimension with you, and create the attribution.
-            </p>
-            <ol>
-              <li>Inspect resource groups, accounts, and observed tags.</li>
-              <li>Agree the primary dimension and allowed values.</li>
-              <li>Create attribution, resolve gaps, then download the bundle.</li>
-            </ol>
-            <p className="cost-setup-safety">
-              No cloud credentials are used and no cloud resource can be changed here.
-            </p>
+            <span>Browser only · no cloud upload</span>
           </div>
+        </aside>
+
+        <main className="architecture-workspace cost-studio-workspace">
+          <p className="demo-note" role="note">
+            Everything stays in your browser. An agent can replace this sample with a stocktake,
+            help create the attribution, and prepare a local <code>.workspec</code> bundle.{' '}
+            <span className="demo-blurb">
+              {estate.imported
+                ? 'This imported snapshot has not contacted or changed its cloud provider.'
+                : 'The sample starts with 80 resources and three attribution gaps.'}
+            </span>
+          </p>
+          {downloadStatus !== '' && (
+            <p className="cost-download-status" role="status">
+              {downloadStatus}
+            </p>
+          )}
+
+          {estate.attributionRef !== undefined ? (
+            <CostStudioProvider host={host} queryClient={queryClient} theme={theme}>
+              <div className="demo-stage" key={estate.key}>
+                <CostApp
+                  inventoryRef={estate.inventoryRef}
+                  attributionRef={estate.attributionRef}
+                  {...(estate.tagPlanRef !== undefined ? { tagPlanRef: estate.tagPlanRef } : {})}
+                />
+              </div>
+            </CostStudioProvider>
+          ) : (
+            <div className="cost-setup-stage">
+              <div className="cost-setup-card">
+                <span className="cost-agent-kicker">Stocktake loaded</span>
+                <h1>{estate.estateName}</h1>
+                <p>
+                  The inventory and {estate.period} spend are ready in this browser. Ask your agent
+                  to inspect the setup, agree a reporting dimension with you, and create the
+                  attribution.
+                </p>
+                <ol>
+                  <li>Inspect resource groups, accounts, and observed tags.</li>
+                  <li>Agree the primary dimension and allowed values.</li>
+                  <li>Create attribution, resolve gaps, then download the bundle.</li>
+                </ol>
+                <p className="cost-setup-safety">
+                  No cloud credentials are used and no cloud resource can be changed here.
+                </p>
+              </div>
+            </div>
+          )}
         </main>
-      )}
+      </div>
     </div>
   );
 }

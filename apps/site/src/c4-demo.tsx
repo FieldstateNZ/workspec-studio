@@ -15,6 +15,8 @@ import {
   Github,
   Layers,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   RotateCcw,
 } from 'lucide-react';
 
@@ -73,6 +75,7 @@ export function C4Demo(): ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState('');
   const [agentActivity, setAgentActivity] = useState<ArchitectureActivity>(CHECKING_ACTIVITY);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,6 +207,15 @@ export function C4Demo(): ReactElement {
           </span>
         </Link>
         <span className="architecture-header-divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="architecture-sidebar-toggle"
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!sidebarCollapsed}
+          onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
         <Layers size={16} aria-hidden="true" />
         <strong className="architecture-project-title">
           {workspace?.snapshot.system.name ?? 'Architecture Studio'}
@@ -220,7 +232,10 @@ export function C4Demo(): ReactElement {
       </header>
 
       <div className="architecture-app-body">
-        <aside className="architecture-sidebar" aria-label="Studio navigation">
+        <aside
+          className={`architecture-sidebar${sidebarCollapsed ? ' architecture-sidebar-collapsed' : ''}`}
+          aria-label="Studio navigation"
+        >
           <nav className="architecture-sidebar-nav">
             <p className="architecture-nav-section">Studio</p>
             <Link className="architecture-nav-item" href="/cost">
@@ -291,7 +306,7 @@ export function C4Demo(): ReactElement {
           <div className="architecture-sidebar-footer">
             <button type="button" onClick={() => void reset()}>
               <RotateCcw size={14} />
-              Reset sample
+              <span>Reset sample</span>
             </button>
             <span>Browser only · no cloud upload</span>
           </div>

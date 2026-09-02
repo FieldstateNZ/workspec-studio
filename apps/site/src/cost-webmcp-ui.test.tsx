@@ -66,7 +66,7 @@ describe('CostDemo WebMCP integration', () => {
     expect(await screen.findByText('90.0%')).toBeInTheDocument();
     expect(screen.getByText('Agent applied r9')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    await user.click(screen.getByRole('button', { name: 'Reset sample' }));
     expect(await screen.findByText('81.2%')).toBeInTheDocument();
     await waitFor(() => expect(registered.size).toBe(6));
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
