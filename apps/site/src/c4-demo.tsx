@@ -197,7 +197,7 @@ export function C4Demo(): ReactElement {
   return (
     <div className="architecture-studio">
       <header className="architecture-app-header">
-        <Link className="architecture-app-brand" href="/cost" aria-label="WorkSpec Studio home">
+        <Link className="architecture-app-brand" href="/" aria-label="WorkSpec Studio home">
           <WorkspecMark size={24} />
           <span className="architecture-wordmark">
             work<strong>spec</strong>
@@ -233,7 +233,6 @@ export function C4Demo(): ReactElement {
             >
               <Layers size={16} />
               <span>Architecture</span>
-              <small>ROOM ↗</small>
             </span>
 
             <p className="architecture-nav-section">Model</p>

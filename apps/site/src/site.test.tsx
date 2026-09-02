@@ -3,9 +3,32 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { Cost } from './cost.js';
 import { CostDemo } from './cost-demo.js';
+import { StudioHome } from './studio-home.js';
 
 afterEach(() => {
   window.history.pushState({}, '', '/');
+});
+
+describe('studio home page (/)', () => {
+  it('presents Cost and Architecture as the two canonical studios', () => {
+    render(<StudioHome />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      /make the architecture and cost model discussable/i,
+    );
+    expect(screen.getAllByRole('link', { name: /open cost studio/i })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /open architecture studio/i })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /open cost studio/i })[0]).toHaveAttribute(
+      'href',
+      '/cost',
+    );
+    expect(screen.getAllByRole('link', { name: /open architecture studio/i })[0]).toHaveAttribute(
+      'href',
+      '/architecture',
+    );
+    expect(screen.queryByText('Decisions')).not.toBeInTheDocument();
+    expect(screen.queryByText('Traceability')).not.toBeInTheDocument();
+  });
 });
 
 describe('cost module page (/cost)', () => {

@@ -21,13 +21,18 @@ describe('useRoute — exposes the focused Studio workflows', () => {
   });
 
   it.each<[string, Route]>([
-    ['/', 'cost'],
-    ['/cost', 'cost'],
-    ['/cost/', 'cost'],
+    ['/', 'home'],
+    ['/cost', 'cost-demo'],
+    ['/cost/', 'cost-demo'],
     ['/cost/demo', 'cost-demo'],
     ['/cost/demo/', 'cost-demo'],
+    ['/architecture', 'architecture-demo'],
+    ['/architecture/', 'architecture-demo'],
     ['/architecture/demo', 'architecture-demo'],
     ['/architecture/demo/', 'architecture-demo'],
+    ['/arhitecture', 'architecture-demo'],
+    ['/arhitecture/', 'architecture-demo'],
+    ['/arhitecture/demo', 'architecture-demo'],
     ['/decisions', 'not-found'],
     ['/decisions/demo', 'not-found'],
     ['/c4', 'not-found'],

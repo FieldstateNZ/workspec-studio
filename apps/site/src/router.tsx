@@ -1,16 +1,23 @@
-// A deliberately tiny path router — no dependency. Cost is the sole public
-// primary module: `/` and `/cost` share its landing page, while Cost and the
-// bounded Architecture workflow each expose an agent-enabled workbench.
+// A deliberately tiny path router — no dependency. The public information
+// architecture is intentionally flat: Studio home, Cost, and Architecture.
 import { useCallback, useEffect, useState } from 'react';
 import type { AnchorHTMLAttributes, ReactElement } from 'react';
 
-export type Route = 'cost' | 'cost-demo' | 'architecture-demo' | 'not-found';
+export type Route = 'home' | 'cost-demo' | 'architecture-demo' | 'not-found';
 
 function routeOf(pathname: string): Route {
   const path = pathname.replace(/\/+$/, '') || '/';
-  if (path === '/cost/demo') return 'cost-demo';
-  if (path === '/architecture/demo' || path === '/c4/demo') return 'architecture-demo';
-  if (path === '/' || path === '/cost') return 'cost';
+  if (path === '/') return 'home';
+  if (path === '/cost' || path === '/cost/demo') return 'cost-demo';
+  if (
+    path === '/architecture' ||
+    path === '/architecture/demo' ||
+    path === '/arhitecture' ||
+    path === '/arhitecture/demo' ||
+    path === '/c4/demo'
+  ) {
+    return 'architecture-demo';
+  }
   return 'not-found';
 }
 

@@ -38,7 +38,6 @@ describe('Architecture Studio WebMCP integration', () => {
     expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cost Attribution' })).toHaveAttribute('href', '/cost');
-    expect(screen.getByText('ROOM ↗')).toBeInTheDocument();
 
     let result: Record<string, unknown> | undefined;
     await act(async () => {

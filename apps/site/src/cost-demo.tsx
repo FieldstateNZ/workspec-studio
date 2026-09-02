@@ -203,7 +203,7 @@ export function CostDemo(): ReactElement {
 
   return (
     <div className="demo">
-      <SiteNav repoUrl={REPO_URL} />
+      <SiteNav repoUrl={REPO_URL} moduleHref="/" ariaLabel="WorkSpec Studio home" />
       <WorkbenchBar
         crumb={<span className="wb-crumb-value">{estate.estateName}</span>}
         actions={

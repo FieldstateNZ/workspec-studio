@@ -1416,7 +1416,7 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
-    /* Below ~800px the crumb/switcher run out of room — wrap the bar's rows
+    /* Below ~800px the crumb/switcher run out of horizontal space — wrap the bar's rows
        rather than let labels wrap inside their own pills. */
     flex-wrap: wrap;
     gap: var(--s-4);
@@ -1502,7 +1502,7 @@
   }
 
   /* ── Architecture Studio — full WorkSpec project-shell composition ───────
-     This route deliberately follows the main WorkSpec application's C4 room:
+     This route deliberately follows the main WorkSpec application's C4 surface:
      a compact project header, grouped project rail, full-bleed blueprint
      canvas, floating diagram controls, and contextual detail rail. */
   .architecture-studio {
@@ -1666,17 +1666,6 @@
   }
   .architecture-nav-item > span {
     flex: 1;
-  }
-  .architecture-nav-item > small {
-    padding: 1px 4px;
-    border: 1px solid color-mix(in srgb, var(--type-persona) 22%, transparent);
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--type-persona) 8%, transparent);
-    color: var(--type-persona);
-    font-family: var(--mono);
-    font-size: 7.5px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
   }
   .architecture-nav-item-active {
     background: var(--accent-soft);

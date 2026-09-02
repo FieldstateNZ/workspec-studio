@@ -69,15 +69,21 @@ jobs:
           set -euo pipefail
           test -f apps/site/dist/CNAME
           test -f apps/site/dist/404.html
+          test -f apps/site/dist/cost/index.html
           test -f apps/site/dist/cost/demo/index.html
+          test -f apps/site/dist/architecture/index.html
           test -f apps/site/dist/architecture/demo/index.html
-          # 404.html must be byte-identical to index.html — that's what makes
-          # deep links (/decisions, /decisions/demo, /c4) resolve on Pages.
+          test -f apps/site/dist/arhitecture/index.html
+          # 404.html must be byte-identical to index.html so unknown client
+          # routes can still resolve through the SPA router.
           diff apps/site/dist/index.html apps/site/dist/404.html
-          # The challenge URL gets a real static entrypoint and therefore a
-          # 200 response rather than relying on the SPA's 404 fallback.
+          # Canonical workbench URLs get real static entrypoints and therefore
+          # return 200 responses without relying on the SPA's 404 fallback.
+          diff apps/site/dist/index.html apps/site/dist/cost/index.html
           diff apps/site/dist/index.html apps/site/dist/cost/demo/index.html
+          diff apps/site/dist/index.html apps/site/dist/architecture/index.html
           diff apps/site/dist/index.html apps/site/dist/architecture/demo/index.html
+          diff apps/site/dist/index.html apps/site/dist/arhitecture/index.html
           echo "serving $(cat apps/site/dist/CNAME)"
 
       - uses: actions/upload-pages-artifact@v3

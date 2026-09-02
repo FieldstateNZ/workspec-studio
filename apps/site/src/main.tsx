@@ -7,9 +7,11 @@ import { SiteNav } from './nav.js';
 import { Link, useRoute } from './router.js';
 import './styles.css';
 
-// Keep the Cost package family out of the initial shell until its public route
-// is selected. Disabled Studio modules are no longer imported or bundled.
-const Cost = lazy(() => import('./cost.js').then((module) => ({ default: module.Cost })));
+// Keep both workbench package families out of the homepage shell until their
+// public route is selected.
+const StudioHome = lazy(() =>
+  import('./studio-home.js').then((module) => ({ default: module.StudioHome })),
+);
 const CostDemo = lazy(() =>
   import('./cost-demo.js').then((module) => ({ default: module.CostDemo })),
 );
@@ -22,13 +24,13 @@ const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/pack
 function NotFound(): ReactElement {
   return (
     <>
-      <SiteNav repoUrl={REPO_URL} />
+      <SiteNav repoUrl={REPO_URL} moduleName="studio" moduleHref="/" ariaLabel="WorkSpec Studio" />
       <main className="not-found">
         <p className="eyebrow">404 · module unavailable</p>
         <h1>This Studio page is not currently published.</h1>
-        <p>WorkSpec Cost is the active public workbench.</p>
-        <Link className="button" href="/cost">
-          Open WorkSpec Cost
+        <p>Cost and Architecture are the active public workbenches.</p>
+        <Link className="button" href="/">
+          Return to Studio home
         </Link>
       </main>
     </>
@@ -45,10 +47,10 @@ initTheme();
 function App(): ReactElement {
   const route = useRoute();
   switch (route) {
-    case 'cost':
+    case 'home':
       return (
-        <Suspense fallback={<div className="route-loading">Loading Cost Attribution…</div>}>
-          <Cost />
+        <Suspense fallback={<div className="route-loading">Loading WorkSpec Studio…</div>}>
+          <StudioHome />
         </Suspense>
       );
     case 'cost-demo':
