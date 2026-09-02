@@ -15,7 +15,7 @@ function RouteProbe(): ReactElement {
   return <span data-testid="route">{route satisfies Route}</span>;
 }
 
-describe('useRoute — exposes only the focused Cost routes', () => {
+describe('useRoute — exposes the focused Studio workflows', () => {
   afterEach(() => {
     window.history.pushState({}, '', '/');
   });
@@ -26,10 +26,12 @@ describe('useRoute — exposes only the focused Cost routes', () => {
     ['/cost/', 'cost'],
     ['/cost/demo', 'cost-demo'],
     ['/cost/demo/', 'cost-demo'],
+    ['/architecture/demo', 'architecture-demo'],
+    ['/architecture/demo/', 'architecture-demo'],
     ['/decisions', 'not-found'],
     ['/decisions/demo', 'not-found'],
     ['/c4', 'not-found'],
-    ['/c4/demo', 'not-found'],
+    ['/c4/demo', 'architecture-demo'],
     ['/nonexistent', 'not-found'],
   ])('resolves %s to %s', (path, expected) => {
     window.history.pushState({}, '', path);

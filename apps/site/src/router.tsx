@@ -1,14 +1,15 @@
 // A deliberately tiny path router — no dependency. Cost is the sole public
-// module for now: `/` and `/cost` share its landing page, `/cost/demo` is the
-// agent-enabled workbench, and every retired or unknown route renders a 404.
+// primary module: `/` and `/cost` share its landing page, while Cost and the
+// bounded Architecture workflow each expose an agent-enabled workbench.
 import { useCallback, useEffect, useState } from 'react';
 import type { AnchorHTMLAttributes, ReactElement } from 'react';
 
-export type Route = 'cost' | 'cost-demo' | 'not-found';
+export type Route = 'cost' | 'cost-demo' | 'architecture-demo' | 'not-found';
 
 function routeOf(pathname: string): Route {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/cost/demo') return 'cost-demo';
+  if (path === '/architecture/demo' || path === '/c4/demo') return 'architecture-demo';
   if (path === '/' || path === '/cost') return 'cost';
   return 'not-found';
 }

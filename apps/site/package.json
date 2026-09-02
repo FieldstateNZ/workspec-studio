@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The WorkSpec Studio site — free workbench over your WorkSpec artifacts, modules as paths (/decisions, /c4, and /cost, each with its own in-browser demo). Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/c4-* packages are (again) a temporary workspace-devDependency exception (S5, #121) until the canvas-recomposition alpha publishes — see docs/c4/drift-log.md entry 20.",
+  "description": "The WorkSpec Studio site — focused Cost and Architecture workbenches over reviewable WorkSpec artifacts. Consumes the PUBLISHED @workspec/* packages from npm — if the site builds, those packages work for outside consumers. The @workspec/c4-* packages are (again) a temporary workspace-devDependency exception (S5, #121) until the canvas-recomposition alpha publishes — see docs/c4/drift-log.md entry 20.",
   "_LOUD_NOTICE_devDependencies_c4_packages": "The four @workspec/c4-* entries in devDependencies below are workspace:* — NOT registry pins like every other @workspec/* dependency above. This is the SECOND time the c4 family rides this deliberate, TEMPORARY exception to this app's registry-pins-only rule (the first was retired at v0.1.0-alpha.2 — drift-log entry 17; the cost family used the same shape, retired at alpha.5 — docs/cost/drift-log.md entry 1). Reinstated for S5 (#121): the S4 canvas recomposition rebuilt c4-ui on @workspec/canvas (unpublished; the C4 layer that was briefly @workspec/canvas-c4 is folded INTO c4-ui — ADR i), and c4-layout/c4-model carry unpublished changes c4-ui depends on, so the registry alpha.5 pins can no longer show the real /c4/demo. TODO(#121 follow-up): once @workspec/canvas is bootstrapped and the c4 family publishes at 0.1.0-alpha.6, flip each entry back to a registry pin in \"dependencies\", drop this notice, the tsconfig.json references block, and resolve drift-log entry 20 — a one-line change per package, mirroring PR #27 and PR #65.",
   "scripts": {
     "dev": "vite",
@@ -23,7 +23,8 @@
     "@workspec/design": "0.1.0-alpha.1",
     "fflate": "^0.8.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",

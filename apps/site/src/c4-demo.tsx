@@ -1,60 +1,78 @@
-// The C4 module's full-page demo (`/c4/demo`) — the live in-browser
-// `C4Explorer` over a `MemorySource` seeded with the representative example
-// tree (see `c4-seed.ts`). Read-only: `capabilities: { editLayout: false }`,
-// no `source` — this is a showcase, not an editor. Split out of `/c4` (Site
-// Review UX pass, finding 06 — the demo shells were unequal: Decisions got a
-// full-page workbench, C4 got a 640px box embedded in marketing copy) so
-// both modules' demos are the same route pattern and the same shell.
-//
-// Dependency note: the four `@workspec/c4-*` packages are TEMPORARILY
-// workspace:* devDependencies again (S5, #121 — the canvas recomposition
-// isn't published yet), not registry pins like `@workspec/decision-*`. They
-// flip back to registry pins at the c4 family's 0.1.0-alpha.6 publish — see
-// `docs/c4/drift-log.md` entry 20 (entry 17 documents the first round).
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
-import type { C4Model } from '@workspec/c4-model';
+import { flushSync } from 'react-dom';
 import { C4Explorer, createInertLinkResolver } from '@workspec/c4-ui';
 import type { C4StudioHost } from '@workspec/c4-ui';
 import '@workspec/c4-ui/styles.css';
 import { useTheme } from '@workspec/design';
 
-import { loadDemoModel } from './c4-seed.js';
+import {
+  ArchitectureWebMcpService,
+  DEFAULT_ARCHITECTURE_SNAPSHOT,
+  buildArchitectureBundle,
+  buildArchitectureSvgBundle,
+  buildArchitectureWorkspace,
+  createArchitectureWebMcpTools,
+  downloadBytes,
+  type ArchitectureActivity,
+  type ArchitectureWorkspace,
+} from './architecture-snapshot.js';
+import type { WebMcpModelContext } from './cost-webmcp.js';
 import { WorkbenchBar } from './demo-bar.js';
 import { SiteNav } from './nav.js';
+import { Link } from './router.js';
 
-// Same GitHub target C4's own pitch page (c4.tsx) links to — the c4-*
-// packages aren't published, so this points at package source, not npm.
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
-
-// The representative example tree's own system title (see
-// `examples-c4/.workspec/system/main-system.yaml`) — the workbench bar's
-// static crumb names it (Studio redesign, round 3), same as Decisions' crumb
-// names the active worked example.
-const DEMO_TREE_NAME = 'Fieldstate Ledger';
+const CHECKING_ACTIVITY: ArchitectureActivity = {
+  kind: 'checking',
+  title: 'Connecting agent tools',
+  detail: 'Checking this browser for WebMCP site-tool support.',
+};
 
 const host: C4StudioHost = {
   linkResolver: createInertLinkResolver(),
-  // Read-only showcase: no `source`, so drag-to-pin never activates even if a
-  // future edit accidentally flipped this to `true`.
   capabilities: { editLayout: false },
 };
 
+const registrationTails = new WeakMap<WebMcpModelContext, Promise<void>>();
+
+async function registerArchitectureTools(
+  context: WebMcpModelContext,
+  service: ArchitectureWebMcpService,
+  signal: AbortSignal,
+): Promise<void> {
+  const prior = registrationTails.get(context) ?? Promise.resolve();
+  const current = prior
+    .catch(() => undefined)
+    .then(async () => {
+      for (const tool of createArchitectureWebMcpTools(service)) {
+        if (signal.aborted) return;
+        await context.registerTool(tool, { signal });
+      }
+    });
+  registrationTails.set(context, current);
+  await current;
+  if (registrationTails.get(context) === current) registrationTails.delete(context);
+}
+
 export function C4Demo(): ReactElement {
-  // The shell's own Dark/Light preference (Site Review UX pass, finding 03) —
-  // never this component's own OS-preference listener.
   const theme = useTheme();
-  const [model, setModel] = useState<C4Model | null>(null);
+  const [workspace, setWorkspace] = useState<ArchitectureWorkspace | null>(null);
+  const workspaceRef = useRef<ArchitectureWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState('');
+  const [agentActivity, setAgentActivity] = useState<ArchitectureActivity>(CHECKING_ACTIVITY);
 
   useEffect(() => {
     let cancelled = false;
-    loadDemoModel().then(
+    void buildArchitectureWorkspace(DEFAULT_ARCHITECTURE_SNAPSHOT, 0, false).then(
       (loaded) => {
-        if (!cancelled) setModel(loaded);
+        if (cancelled) return;
+        workspaceRef.current = loaded;
+        setWorkspace(loaded);
       },
-      (err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      (reason: unknown) => {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : String(reason));
       },
     );
     return () => {
@@ -62,36 +80,190 @@ export function C4Demo(): ReactElement {
     };
   }, []);
 
-  const diagramCount = useMemo(() => model?.diagrams.length ?? 0, [model]);
+  const service = useMemo(
+    () =>
+      new ArchitectureWebMcpService({
+        getWorkspace: () => {
+          const current = workspaceRef.current;
+          if (current === null) throw new Error('The architecture is still loading.');
+          return current;
+        },
+        onWorkspace: (next) => {
+          flushSync(() => {
+            workspaceRef.current = next;
+            setWorkspace(next);
+            setDownloadStatus('');
+          });
+        },
+        onActivity: setAgentActivity,
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (workspace === null) return undefined;
+    const context = document.modelContext;
+    if (context === undefined || typeof context.registerTool !== 'function') {
+      setAgentActivity({
+        kind: 'unsupported',
+        title: 'WebMCP tools available in supported agent browsers',
+        detail:
+          'The Architecture Studio still works normally here; open this page in ChatGPT to share it with an agent.',
+      });
+      return undefined;
+    }
+    const controller = new AbortController();
+    setAgentActivity(CHECKING_ACTIVITY);
+    void registerArchitectureTools(context, service, controller.signal).then(
+      () => {
+        if (!controller.signal.aborted) {
+          setAgentActivity({
+            kind: 'ready',
+            title: 'Agent tools ready',
+            detail:
+              'Five tools can replace, inspect, preview, and evolve this in-browser architecture.',
+          });
+        }
+      },
+      (reason: unknown) => {
+        if (controller.signal.aborted) return;
+        controller.abort();
+        setAgentActivity({
+          kind: 'error',
+          title: 'Agent tools could not register',
+          detail:
+            reason instanceof Error ? reason.message : 'This browser rejected WebMCP registration.',
+        });
+      },
+    );
+    return () => controller.abort();
+  }, [service, workspace === null]);
+
+  async function reset(): Promise<void> {
+    try {
+      const next = await buildArchitectureWorkspace(
+        DEFAULT_ARCHITECTURE_SNAPSHOT,
+        (workspaceRef.current?.key ?? 0) + 1,
+        false,
+      );
+      workspaceRef.current = next;
+      setWorkspace(next);
+      setDownloadStatus('');
+      setAgentActivity({
+        kind: 'applied',
+        title: 'Sample architecture restored',
+        detail: 'The five agent tools remain ready against the restored in-browser model.',
+      });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }
+
+  function downloadWorkspec(): void {
+    if (workspace === null) return;
+    const bundle = buildArchitectureBundle(workspace);
+    downloadBytes(bundle.filename, bundle.bytes);
+    setDownloadStatus(
+      `Downloaded ${bundle.filename} with ${bundle.files.length} validated artifacts.`,
+    );
+  }
+
+  async function downloadSvgs(): Promise<void> {
+    if (workspace === null) return;
+    try {
+      const bundle = await buildArchitectureSvgBundle(workspace, theme);
+      downloadBytes(bundle.filename, bundle.bytes);
+      setDownloadStatus(
+        `Downloaded ${bundle.filename} with ${bundle.files.length} rendered diagrams.`,
+      );
+    } catch (reason) {
+      setDownloadStatus(
+        reason instanceof Error ? reason.message : 'The SVG bundle could not be built.',
+      );
+    }
+  }
 
   return (
-    <div className="demo">
-      <SiteNav repoUrl={REPO_URL} />
-      <WorkbenchBar crumb={<span className="wb-crumb-value">{DEMO_TREE_NAME}</span>} />
+    <div className="demo architecture-demo">
+      <SiteNav
+        repoUrl={REPO_URL}
+        moduleName="architecture"
+        moduleHref="/architecture/demo"
+        ariaLabel="WorkSpec Architecture"
+        extras={
+          <Link className="nav-module-link" href="/cost">
+            Cost Studio
+          </Link>
+        }
+      />
+      <WorkbenchBar
+        crumb={
+          <span className="wb-crumb-value">
+            {workspace?.snapshot.system.name ?? 'Architecture Studio'}
+          </span>
+        }
+        actions={
+          <>
+            <button
+              type="button"
+              className="wb-action wb-action-primary"
+              disabled={workspace === null}
+              onClick={downloadWorkspec}
+            >
+              Download .workspec bundle
+            </button>
+            <button
+              type="button"
+              className="wb-action"
+              disabled={workspace === null}
+              onClick={() => void downloadSvgs()}
+            >
+              Download SVGs
+            </button>
+            <button type="button" className="wb-action-ghost" onClick={() => void reset()}>
+              Reset
+            </button>
+          </>
+        }
+      />
 
       <p className="demo-note" role="note">
-        A live <code>C4Explorer</code> running entirely in your browser against a representative
-        example tree{diagramCount > 0 ? ` (${diagramCount} diagrams)` : ''} — no install, no signup,
-        read-only.{' '}
+        Everything stays in your browser. An agent can replace this sample with an architecture
+        stocktake, inspect the model, and preview relationships before applying them.{' '}
         <span className="demo-blurb">
-          <code>npx @workspec/c4-studio serve</code> gives you the same explorer with drag-to-pin
-          over your own repo.
+          The same validated <code>.workspec</code> source drives the canvas, YAML bundle, and SVG
+          exports.
         </span>
       </p>
+      {downloadStatus !== '' && (
+        <p className="cost-download-status" role="status">
+          {downloadStatus}
+        </p>
+      )}
+      <section
+        className={`cost-agent-status cost-agent-status-${agentActivity.kind}`}
+        aria-live="polite"
+        aria-label="WebMCP agent activity"
+      >
+        <span className="cost-agent-kicker">WebMCP</span>
+        <strong>{agentActivity.title}</strong>
+        <span>{agentActivity.detail}</span>
+      </section>
 
       {error !== null ? (
         <div className="c4-demo-error" role="alert">
-          Could not load the demo tree: {error}
+          Could not load the architecture: {error}
         </div>
-      ) : model === null ? (
-        <div className="c4-demo-loading">Loading the demo tree…</div>
+      ) : workspace === null ? (
+        <div className="c4-demo-loading">Building the architecture model…</div>
       ) : (
-        <main className="demo-stage">
-          {/* The discovery order (alphabetical by filename) puts "container"
-              before "system-context" — pin the more natural entry point
-              explicitly rather than leave the demo's first impression to
-              filename sort order. */}
-          <C4Explorer model={model} host={host} theme={theme} initialDiagramSlug="system-context" />
+        <main className="demo-stage" key={workspace.key}>
+          <C4Explorer
+            model={workspace.model}
+            host={host}
+            theme={theme}
+            initialDiagramSlug="system-context"
+          />
         </main>
       )}
     </div>

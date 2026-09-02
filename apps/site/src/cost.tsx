@@ -71,6 +71,9 @@ export function Cost(): ReactElement {
             <Link className="nav-extra" href="/cost/demo">
               Live demo
             </Link>
+            <Link className="nav-extra" href="/architecture/demo">
+              Architecture
+            </Link>
           </>
         }
       />

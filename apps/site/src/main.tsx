@@ -13,6 +13,9 @@ const Cost = lazy(() => import('./cost.js').then((module) => ({ default: module.
 const CostDemo = lazy(() =>
   import('./cost-demo.js').then((module) => ({ default: module.CostDemo })),
 );
+const ArchitectureDemo = lazy(() =>
+  import('./c4-demo.js').then((module) => ({ default: module.C4Demo })),
+);
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
 
@@ -52,6 +55,12 @@ function App(): ReactElement {
       return (
         <Suspense fallback={<div className="route-loading">Loading Cost Attribution…</div>}>
           <CostDemo />
+        </Suspense>
+      );
+    case 'architecture-demo':
+      return (
+        <Suspense fallback={<div className="route-loading">Loading Architecture Studio…</div>}>
+          <ArchitectureDemo />
         </Suspense>
       );
     case 'not-found':
