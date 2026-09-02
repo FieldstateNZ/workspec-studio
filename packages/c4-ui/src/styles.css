@@ -203,34 +203,42 @@
    tabpanels. Mirrors apps/site's `.demo-examples` toggle-group convention. */
 .c4-level-tabs {
   display: inline-flex;
-  gap: var(--s-1);
-  background: var(--bg-soft);
+  align-items: center;
+  gap: 2px;
+  background: color-mix(in srgb, var(--bg-soft) 40%, transparent);
   border: 1px solid var(--line);
-  border-radius: var(--r-4);
-  padding: var(--s-1);
+  border-radius: var(--r-3);
+  padding: 2px;
 }
 
 .c4-level-tab {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: var(--s-1) var(--s-3);
-  border-radius: var(--r-3);
-  border: 1px solid transparent;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 0;
   background: transparent;
-  color: var(--ink-fade);
+  color: var(--ink-muted);
   cursor: pointer;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
 
-.c4-level-tab:hover {
+.c4-level-tab:not(.c4-level-tab-active):hover {
   color: var(--ink-soft);
 }
 
 .c4-level-tab-active {
-  border-color: var(--line-2);
-  background: var(--bg-elevated);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--sh-1);
 }
 
 .c4-explorer-spacer {

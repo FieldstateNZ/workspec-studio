@@ -137,23 +137,34 @@
      to the mockup's segmented-control spec in round 3). */
   .theme-toggle {
     display: inline-flex;
-    gap: var(--s-1);
-    background: var(--bg-soft);
+    height: 36px;
+    box-sizing: border-box;
+    align-items: center;
+    gap: 2px;
+    background: color-mix(in srgb, var(--bg-soft) 40%, transparent);
     border: 1px solid var(--line);
-    border-radius: var(--r-4);
-    padding: 3px;
+    border-radius: var(--r-3);
+    padding: 2px;
   }
   .theme-toggle-btn {
+    display: inline-flex;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     font-family: var(--mono);
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 5px var(--s-3);
-    border-radius: var(--r-3);
-    border: 1px solid transparent;
+    letter-spacing: 0.05em;
+    padding: 0 10px;
+    border-radius: 4px;
+    border: 0;
     background: transparent;
-    color: var(--ink-fade);
+    color: var(--ink-muted);
     cursor: pointer;
+    transition:
+      color 120ms ease,
+      background-color 120ms ease;
   }
 
   .not-found {
@@ -170,9 +181,9 @@
     margin-bottom: var(--s-6);
   }
   .theme-toggle-btn-active {
-    border-color: var(--line-2);
-    background: var(--bg-elevated);
-    color: var(--ink);
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--sh-1);
   }
 
   .hero {
@@ -1798,7 +1809,7 @@
     cursor: pointer;
     font-size: 0.72rem;
   }
-  .architecture-sidebar-footer button:hover {
+  .architecture-sidebar-footer > button:hover {
     background: var(--bg-soft);
     color: var(--ink);
   }
@@ -1810,16 +1821,18 @@
   .architecture-sidebar-footer .theme-toggle-btn {
     min-width: 0;
     flex: 1;
-    padding-inline: var(--s-2);
-    font-family: inherit;
-    font-weight: 500;
-    letter-spacing: 0;
-    text-transform: none;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
   .architecture-sidebar-footer .theme-toggle-btn-active {
-    border-color: var(--line-2);
-    background: var(--bg-elevated);
-    color: var(--ink);
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--sh-1);
   }
   .architecture-workspace {
     position: relative;
@@ -1868,17 +1881,6 @@
   }
   .architecture-canvas .c4-level-tabs {
     flex: 0 0 auto;
-    padding: 3px;
-  }
-  .architecture-canvas .c4-level-tab {
-    padding: 0 var(--s-3);
-    border: 0;
-    font-size: 9px;
-  }
-  .architecture-canvas .c4-level-tab-active {
-    background: var(--accent);
-    color: var(--on-accent);
-    box-shadow: var(--sh-1);
   }
   .architecture-canvas .c4-explorer-spacer,
   .architecture-canvas .c4-explorer-hint {
