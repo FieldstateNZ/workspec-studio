@@ -5,6 +5,18 @@ import { C4Explorer, createInertLinkResolver } from '@workspec/c4-ui';
 import type { C4StudioHost } from '@workspec/c4-ui';
 import '@workspec/c4-ui/styles.css';
 import { useTheme } from '@workspec/design';
+import { WorkspecMark } from '@workspec/design/components';
+import {
+  Bot,
+  Boxes,
+  DollarSign,
+  Download,
+  FileArchive,
+  Github,
+  Layers,
+  Network,
+  RotateCcw,
+} from 'lucide-react';
 
 import {
   ArchitectureWebMcpService,
@@ -18,9 +30,8 @@ import {
   type ArchitectureWorkspace,
 } from './architecture-snapshot.js';
 import type { WebMcpModelContext } from './cost-webmcp.js';
-import { WorkbenchBar } from './demo-bar.js';
-import { SiteNav } from './nav.js';
 import { Link } from './router.js';
+import { ThemeToggle } from './theme-toggle.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
 const CHECKING_ACTIVITY: ArchitectureActivity = {
@@ -184,88 +195,133 @@ export function C4Demo(): ReactElement {
   }
 
   return (
-    <div className="demo architecture-demo">
-      <SiteNav
-        repoUrl={REPO_URL}
-        moduleName="architecture"
-        moduleHref="/architecture/demo"
-        ariaLabel="WorkSpec Architecture"
-        extras={
-          <Link className="nav-module-link" href="/cost">
-            Cost Studio
-          </Link>
-        }
-      />
-      <WorkbenchBar
-        crumb={
-          <span className="wb-crumb-value">
-            {workspace?.snapshot.system.name ?? 'Architecture Studio'}
+    <div className="architecture-studio">
+      <header className="architecture-app-header">
+        <Link className="architecture-app-brand" href="/cost" aria-label="WorkSpec Studio home">
+          <WorkspecMark size={24} />
+          <span className="architecture-wordmark">
+            work<strong>spec</strong>
           </span>
-        }
-        actions={
-          <>
+        </Link>
+        <span className="architecture-header-divider" aria-hidden="true" />
+        <Layers size={16} aria-hidden="true" />
+        <strong className="architecture-project-title">
+          {workspace?.snapshot.system.name ?? 'Architecture Studio'}
+        </strong>
+        <span className="architecture-header-spacer" />
+        <span className={`architecture-connection architecture-connection-${agentActivity.kind}`}>
+          <span aria-hidden="true" />
+          WebMCP {agentActivity.kind === 'ready' ? 'ready' : agentActivity.kind}
+        </span>
+        <a className="architecture-icon-link" href={REPO_URL} aria-label="View source on GitHub">
+          <Github size={16} />
+        </a>
+        <ThemeToggle />
+      </header>
+
+      <div className="architecture-app-body">
+        <aside className="architecture-sidebar" aria-label="Studio navigation">
+          <nav className="architecture-sidebar-nav">
+            <p className="architecture-nav-section">Studio</p>
+            <Link className="architecture-nav-item" href="/cost">
+              <DollarSign size={16} />
+              <span>Cost Attribution</span>
+            </Link>
+            <span
+              className="architecture-nav-item architecture-nav-item-active"
+              aria-current="page"
+            >
+              <Layers size={16} />
+              <span>Architecture</span>
+              <small>ROOM ↗</small>
+            </span>
+
+            <p className="architecture-nav-section">Model</p>
+            <div className="architecture-model-summary">
+              <span>
+                <Boxes size={14} />
+                Elements
+                <strong>{workspace?.snapshot.elements.length ?? '—'}</strong>
+              </span>
+              <span>
+                <Network size={14} />
+                Relationships
+                <strong>{workspace?.snapshot.relationships.length ?? '—'}</strong>
+              </span>
+            </div>
+
+            <p className="architecture-nav-section">Output</p>
             <button
               type="button"
-              className="wb-action wb-action-primary"
+              className="architecture-nav-item architecture-nav-button"
+              aria-label="Download .workspec bundle"
               disabled={workspace === null}
               onClick={downloadWorkspec}
             >
-              Download .workspec bundle
+              <FileArchive size={16} />
+              <span>.workspec bundle</span>
+              <Download size={13} />
             </button>
             <button
               type="button"
-              className="wb-action"
+              className="architecture-nav-item architecture-nav-button"
+              aria-label="Download SVG diagrams"
               disabled={workspace === null}
               onClick={() => void downloadSvgs()}
             >
-              Download SVGs
+              <Network size={16} />
+              <span>SVG diagrams</span>
+              <Download size={13} />
             </button>
-            <button type="button" className="wb-action-ghost" onClick={() => void reset()}>
-              Reset
+          </nav>
+
+          <section
+            className={`architecture-agent-panel architecture-agent-panel-${agentActivity.kind}`}
+            aria-live="polite"
+            aria-label="WebMCP agent activity"
+          >
+            <div className="architecture-agent-heading">
+              <Bot size={15} />
+              <span>Agent</span>
+              <small>WebMCP</small>
+            </div>
+            <strong>{agentActivity.title}</strong>
+            <p>{agentActivity.detail}</p>
+          </section>
+
+          <div className="architecture-sidebar-footer">
+            <button type="button" onClick={() => void reset()}>
+              <RotateCcw size={14} />
+              Reset sample
             </button>
-          </>
-        }
-      />
+            <span>Browser only · no cloud upload</span>
+          </div>
+        </aside>
 
-      <p className="demo-note" role="note">
-        Everything stays in your browser. An agent can replace this sample with an architecture
-        stocktake, inspect the model, and preview relationships before applying them.{' '}
-        <span className="demo-blurb">
-          The same validated <code>.workspec</code> source drives the canvas, YAML bundle, and SVG
-          exports.
-        </span>
-      </p>
-      {downloadStatus !== '' && (
-        <p className="cost-download-status" role="status">
-          {downloadStatus}
-        </p>
-      )}
-      <section
-        className={`cost-agent-status cost-agent-status-${agentActivity.kind}`}
-        aria-live="polite"
-        aria-label="WebMCP agent activity"
-      >
-        <span className="cost-agent-kicker">WebMCP</span>
-        <strong>{agentActivity.title}</strong>
-        <span>{agentActivity.detail}</span>
-      </section>
-
-      {error !== null ? (
-        <div className="c4-demo-error" role="alert">
-          Could not load the architecture: {error}
-        </div>
-      ) : workspace === null ? (
-        <div className="c4-demo-loading">Building the architecture model…</div>
-      ) : (
-        <main className="demo-stage" key={workspace.key}>
-          <C4Explorer
-            model={workspace.model}
-            host={host}
-            theme={theme}
-            initialDiagramSlug="system-context"
-          />
+        <main className="architecture-workspace">
+          {downloadStatus !== '' && (
+            <p className="architecture-toast" role="status">
+              {downloadStatus}
+            </p>
+          )}
+          {error !== null ? (
+            <div className="c4-demo-error" role="alert">
+              Could not load the architecture: {error}
+            </div>
+          ) : workspace === null ? (
+            <div className="c4-demo-loading">Building the architecture model…</div>
+          ) : (
+            <div className="architecture-canvas" key={workspace.key}>
+              <C4Explorer
+                model={workspace.model}
+                host={host}
+                theme={theme}
+                initialDiagramSlug="system-context"
+              />
+            </div>
+          )}
         </main>
-      )}
+      </div>
     </div>
   );
 }

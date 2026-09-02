@@ -1501,6 +1501,529 @@
     color: var(--ink);
   }
 
+  /* ── Architecture Studio — full WorkSpec project-shell composition ───────
+     This route deliberately follows the main WorkSpec application's C4 room:
+     a compact project header, grouped project rail, full-bleed blueprint
+     canvas, floating diagram controls, and contextual detail rail. */
+  .architecture-studio {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 34rem;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .architecture-app-header {
+    z-index: 30;
+    display: flex;
+    flex: 0 0 56px;
+    align-items: center;
+    gap: var(--s-3);
+    min-width: 0;
+    padding: 0 var(--s-4);
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg-elevated) 95%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  .architecture-app-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    color: var(--ink);
+  }
+  .architecture-app-brand:hover,
+  .architecture-icon-link:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .architecture-wordmark {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .architecture-wordmark strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .architecture-header-divider {
+    width: 1px;
+    height: 22px;
+    margin: 0 var(--s-1);
+    background: var(--line-2);
+  }
+  .architecture-project-title {
+    overflow: hidden;
+    max-width: 34vw;
+    font-size: 0.9rem;
+    font-weight: 620;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .architecture-header-spacer {
+    flex: 1;
+  }
+  .architecture-connection {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    background: var(--bg-soft);
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .architecture-connection > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ink-fade);
+  }
+  .architecture-connection-ready > span,
+  .architecture-connection-applied > span,
+  .architecture-connection-inspected > span,
+  .architecture-connection-previewed > span {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .architecture-connection-error > span {
+    background: var(--danger);
+  }
+  .architecture-icon-link {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: var(--r-3);
+    color: var(--ink-muted);
+  }
+  .architecture-icon-link:hover {
+    background: var(--bg-soft);
+  }
+  .architecture-app-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .architecture-sidebar {
+    display: flex;
+    flex: 0 0 240px;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--line);
+    background: var(--bg-elevated);
+  }
+  .architecture-sidebar-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--s-2);
+  }
+  .architecture-nav-section {
+    margin: 0;
+    padding: var(--s-4) var(--s-3) var(--s-1);
+    color: color-mix(in srgb, var(--ink-muted) 72%, transparent);
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .architecture-nav-section:first-child {
+    padding-top: var(--s-1);
+  }
+  .architecture-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    width: 100%;
+    height: 36px;
+    padding: 0 var(--s-3);
+    border: 0;
+    border-radius: var(--r-3);
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 0.82rem;
+    font-weight: 540;
+    text-align: left;
+  }
+  .architecture-nav-item:hover {
+    background: var(--bg-soft);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .architecture-nav-item > span {
+    flex: 1;
+  }
+  .architecture-nav-item > small {
+    padding: 1px 4px;
+    border: 1px solid color-mix(in srgb, var(--type-persona) 22%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--type-persona) 8%, transparent);
+    color: var(--type-persona);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .architecture-nav-item-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .architecture-nav-button {
+    cursor: pointer;
+  }
+  .architecture-nav-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  .architecture-model-summary {
+    display: grid;
+    gap: 1px;
+    overflow: hidden;
+    margin: var(--s-1) var(--s-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-4);
+    background: var(--line);
+  }
+  .architecture-model-summary > span {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    align-items: center;
+    gap: var(--s-2);
+    min-height: 38px;
+    padding: 0 var(--s-3);
+    background: var(--bg-soft);
+    color: var(--ink-muted);
+    font-size: 0.72rem;
+  }
+  .architecture-model-summary strong {
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+  }
+  .architecture-agent-panel {
+    margin: var(--s-2);
+    padding: var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-4);
+    background: var(--bg-soft);
+    box-shadow: inset 2px 0 0 var(--line-2);
+  }
+  .architecture-agent-panel-ready,
+  .architecture-agent-panel-applied,
+  .architecture-agent-panel-inspected,
+  .architecture-agent-panel-previewed {
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .architecture-agent-panel-error {
+    box-shadow: inset 2px 0 0 var(--danger);
+  }
+  .architecture-agent-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .architecture-agent-heading > span {
+    flex: 1;
+  }
+  .architecture-agent-heading small {
+    color: var(--ink-fade);
+    font-size: 8px;
+  }
+  .architecture-agent-panel > strong {
+    display: block;
+    margin-top: var(--s-2);
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+  .architecture-agent-panel > p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: var(--s-1) 0 0;
+    color: var(--ink-muted);
+    font-size: 0.66rem;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .architecture-sidebar-footer {
+    display: grid;
+    gap: var(--s-2);
+    padding: var(--s-3);
+    border-top: 1px solid var(--line);
+  }
+  .architecture-sidebar-footer button {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    height: 32px;
+    padding: 0 var(--s-2);
+    border: 0;
+    border-radius: var(--r-3);
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    font-size: 0.72rem;
+  }
+  .architecture-sidebar-footer button:hover {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+  .architecture-sidebar-footer > span {
+    padding: 0 var(--s-2);
+    color: var(--ink-fade);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .architecture-workspace {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--canvas-bg, var(--bg));
+  }
+  .architecture-canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .architecture-canvas .c4-root,
+  .architecture-canvas .c4-explorer {
+    width: 100%;
+    height: 100%;
+  }
+  .architecture-canvas .c4-explorer {
+    position: relative;
+    min-height: 0;
+    gap: 0;
+  }
+  .architecture-canvas .c4-explorer-header {
+    position: absolute;
+    z-index: 20;
+    top: var(--s-2);
+    left: var(--s-2);
+    display: flex;
+    max-width: calc(100% - 340px);
+    flex-wrap: nowrap;
+    gap: var(--s-2);
+    pointer-events: none;
+  }
+  .architecture-canvas .c4-explorer-header > * {
+    pointer-events: auto;
+  }
+  .architecture-canvas .c4-level-tabs,
+  .architecture-canvas .c4-crumb,
+  .architecture-canvas .c4-explorer-pane > [role='tablist'] {
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-4);
+    background: color-mix(in srgb, var(--bg-elevated) 95%, transparent);
+    box-shadow: var(--sh-2);
+    backdrop-filter: blur(8px);
+  }
+  .architecture-canvas .c4-level-tabs {
+    flex: 0 0 auto;
+    padding: 3px;
+  }
+  .architecture-canvas .c4-level-tab {
+    padding: 0 var(--s-3);
+    border: 0;
+    font-size: 9px;
+  }
+  .architecture-canvas .c4-level-tab-active {
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--sh-1);
+  }
+  .architecture-canvas .c4-crumb {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--s-3);
+    white-space: nowrap;
+  }
+  .architecture-canvas .c4-explorer-spacer,
+  .architecture-canvas .c4-explorer-hint {
+    display: none;
+  }
+  .architecture-canvas .c4-explorer-body {
+    height: 100%;
+    gap: 0;
+  }
+  .architecture-canvas .c4-explorer-pane {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background-color: var(--canvas-bg, var(--bg));
+    background-image:
+      linear-gradient(var(--canvas-grid-major, rgba(0, 0, 0, 0.04)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--canvas-grid-major, rgba(0, 0, 0, 0.04)) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .architecture-canvas .c4-explorer-pane > [role='tablist'] {
+    position: absolute;
+    z-index: 22;
+    top: var(--s-2);
+    left: 50%;
+    padding: 3px;
+    transform: translateX(-50%);
+  }
+  .architecture-canvas .c4-explorer-pane > [role='tablist'] button {
+    height: 28px;
+  }
+  .architecture-canvas .c4-diagram {
+    border-radius: 0;
+  }
+  .architecture-canvas .c4-detail-rail {
+    width: 300px;
+    padding: 56px var(--s-5) var(--s-5);
+    border: 0;
+    border-left: 1px solid var(--line);
+    border-radius: 0;
+    background: var(--bg-elevated);
+  }
+  .architecture-canvas .c4-detail-rail::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 var(--s-3);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-muted);
+    content: 'ELEMENT DETAILS';
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+  .architecture-canvas .c4-detail-rail {
+    position: relative;
+  }
+  .architecture-canvas .c4-detail-empty {
+    padding: var(--s-6) var(--s-4);
+    background: var(--bg-soft);
+  }
+  .architecture-toast {
+    position: absolute;
+    z-index: 40;
+    right: 316px;
+    bottom: var(--s-4);
+    max-width: min(32rem, calc(100% - 2rem));
+    margin: 0;
+    padding: var(--s-3) var(--s-4);
+    border: 1px solid var(--accent-mid);
+    border-radius: var(--r-4);
+    background: var(--bg-elevated);
+    box-shadow: var(--sh-3);
+    color: var(--ink);
+    font-size: 0.76rem;
+  }
+  .architecture-workspace > .c4-demo-loading,
+  .architecture-workspace > .c4-demo-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  @media (max-width: 980px) {
+    .architecture-sidebar {
+      flex-basis: 200px;
+    }
+    .architecture-canvas .c4-detail-rail {
+      width: 250px;
+    }
+    .architecture-canvas .c4-explorer-header {
+      max-width: calc(100% - 270px);
+    }
+    .architecture-canvas .c4-crumb {
+      display: none;
+    }
+  }
+  @media (max-width: 760px) {
+    .architecture-sidebar {
+      display: none;
+    }
+    .architecture-connection,
+    .architecture-app-header .theme-toggle {
+      display: none;
+    }
+    .architecture-project-title {
+      max-width: 48vw;
+    }
+    .architecture-canvas .c4-explorer-body {
+      flex-direction: column;
+    }
+    .architecture-canvas .c4-explorer-pane {
+      flex: 1 1 auto;
+    }
+    .architecture-canvas .c4-detail-rail {
+      width: 100%;
+      max-height: 180px;
+      padding: var(--s-4);
+      border-top: 1px solid var(--line);
+      border-left: 0;
+    }
+    .architecture-canvas .c4-detail-rail::before {
+      display: none;
+    }
+    .architecture-canvas .c4-explorer-header {
+      right: var(--s-2);
+      max-width: none;
+      overflow-x: auto;
+    }
+    .architecture-canvas .c4-explorer-pane > [role='tablist'] {
+      top: 52px;
+    }
+    .architecture-toast {
+      right: var(--s-3);
+      bottom: calc(180px + var(--s-3));
+    }
+  }
+  @media (max-width: 520px) {
+    .architecture-wordmark,
+    .architecture-header-divider,
+    .architecture-app-header > svg,
+    .architecture-icon-link {
+      display: none;
+    }
+    .architecture-app-header {
+      gap: var(--s-2);
+      padding: 0 var(--s-3);
+    }
+    .architecture-project-title {
+      max-width: 64vw;
+    }
+    .architecture-canvas .c4-level-tab {
+      padding: 0 var(--s-2);
+      font-size: 8px;
+    }
+  }
+
   /* ── The /c4 page's EMBEDDED demo (unlike /decisions/demo, this sits inside
      the normal `.site` marketing shell, not a full-page layout) ──────────── */
   .demo-embed {
