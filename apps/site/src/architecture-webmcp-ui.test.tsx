@@ -39,13 +39,18 @@ describe('Architecture Studio WebMCP integration', () => {
     await waitFor(() =>
       expect(document.querySelector('.c4-diagram')).toHaveAttribute('data-layout-editable', 'true'),
     );
-    expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
+    const sidebar = screen.getByRole('complementary', { name: 'Studio navigation' });
+    expect(sidebar).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cost Attribution' })).toHaveAttribute('href', '/cost');
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
-    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
+    const collapse = screen.getByRole('button', { name: 'Collapse sidebar' });
+    expect(sidebar).toContainElement(collapse);
+    expect(sidebar).toContainElement(screen.getByRole('group', { name: 'Theme' }));
+    expect(screen.getByRole('banner')).not.toContainElement(collapse);
+    fireEvent.click(collapse);
+    const expand = screen.getByRole('button', { name: 'Expand sidebar' });
+    expect(sidebar).toContainElement(expand);
+    expect(expand).toHaveAttribute('aria-expanded', 'false');
+    expect(sidebar.querySelector('.theme-toggle-collapsed')).toBeInTheDocument();
 
     let result: Record<string, unknown> | undefined;
     await act(async () => {

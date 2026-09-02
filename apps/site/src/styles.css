@@ -1554,23 +1554,6 @@
     margin: 0 var(--s-1);
     background: var(--line-2);
   }
-  .architecture-sidebar-toggle {
-    display: grid;
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    border-radius: var(--r-3);
-    background: transparent;
-    color: var(--ink-muted);
-    cursor: pointer;
-  }
-  .architecture-sidebar-toggle:hover {
-    background: var(--bg-soft);
-    color: var(--ink);
-  }
   .architecture-project-title {
     overflow: hidden;
     max-width: 34vw;
@@ -1649,7 +1632,7 @@
   .architecture-sidebar-collapsed .architecture-nav-section,
   .architecture-sidebar-collapsed .architecture-model-summary,
   .architecture-sidebar-collapsed .architecture-agent-panel,
-  .architecture-sidebar-collapsed .architecture-sidebar-footer > span {
+  .architecture-sidebar-collapsed .architecture-sidebar-note {
     display: none;
   }
   .architecture-sidebar-collapsed .architecture-nav-item {
@@ -1820,12 +1803,27 @@
     background: var(--bg-soft);
     color: var(--ink);
   }
-  .architecture-sidebar-footer > span {
+  .architecture-sidebar-note {
     padding: 0 var(--s-2);
     color: var(--ink-fade);
     font-family: var(--mono);
     font-size: 8px;
     letter-spacing: 0.04em;
+  }
+  .architecture-sidebar-footer .theme-toggle {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .architecture-sidebar-footer .theme-toggle-btn {
+    min-width: 0;
+    flex: 1;
+    padding-inline: var(--s-2);
+  }
+  .architecture-sidebar-footer .theme-toggle-btn-active {
+    border-color: var(--line-2);
+    background: var(--bg-elevated);
+    color: var(--ink);
   }
   .architecture-workspace {
     position: relative;
@@ -2008,8 +2006,7 @@
       width: 52px;
       flex-basis: auto;
     }
-    .architecture-connection,
-    .architecture-app-header .theme-toggle {
+    .architecture-connection {
       display: none;
     }
     .architecture-project-title {

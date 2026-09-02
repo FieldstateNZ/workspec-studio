@@ -44,4 +44,14 @@ describe('ThemeToggle', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
+
+  it('uses a single icon control when the sidebar is collapsed', () => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    render(<ThemeToggle collapsed />);
+
+    expect(screen.getByRole('button', { name: 'Theme: dark. Switch to light.' })).toHaveClass(
+      'theme-toggle-collapsed',
+    );
+    expect(screen.queryByRole('group', { name: 'Theme' })).not.toBeInTheDocument();
+  });
 });

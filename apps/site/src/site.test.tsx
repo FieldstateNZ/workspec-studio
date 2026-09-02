@@ -94,17 +94,21 @@ describe('cost demo page (/cost/demo)', () => {
     window.history.pushState({}, '', '/cost/demo');
     render(<CostDemo />);
 
-    expect(screen.getByRole('complementary', { name: 'Studio navigation' })).toBeInTheDocument();
+    const sidebar = screen.getByRole('complementary', { name: 'Studio navigation' });
+    expect(sidebar).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Architecture' })).toHaveAttribute(
       'href',
       '/architecture',
     );
     const toggle = screen.getByRole('button', { name: 'Collapse sidebar' });
+    expect(sidebar).toContainElement(toggle);
+    expect(sidebar).toContainElement(screen.getByRole('group', { name: 'Theme' }));
+    expect(screen.getByRole('banner')).not.toContainElement(toggle);
     fireEvent.click(toggle);
-    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
+    const expand = screen.getByRole('button', { name: 'Expand sidebar' });
+    expect(sidebar).toContainElement(expand);
+    expect(expand).toHaveAttribute('aria-expanded', 'false');
+    expect(sidebar.querySelector('.theme-toggle-collapsed')).toBeInTheDocument();
   });
 
   it('keeps the worked estate crumb and actions', async () => {

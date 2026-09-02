@@ -9,14 +9,14 @@ import { WorkspecMark } from '@workspec/design/components';
 import {
   Bot,
   Boxes,
+  ChevronsLeft,
+  ChevronsRight,
   DollarSign,
   Download,
   FileArchive,
   Github,
   Layers,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
   RotateCcw,
 } from 'lucide-react';
 
@@ -237,15 +237,6 @@ export function C4Demo(): ReactElement {
           </span>
         </Link>
         <span className="architecture-header-divider" aria-hidden="true" />
-        <button
-          type="button"
-          className="architecture-sidebar-toggle"
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={!sidebarCollapsed}
-          onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-        >
-          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
         <Layers size={16} aria-hidden="true" />
         <strong className="architecture-project-title">
           {workspace?.snapshot.system.name ?? 'Architecture Studio'}
@@ -258,7 +249,6 @@ export function C4Demo(): ReactElement {
         <a className="architecture-icon-link" href={REPO_URL} aria-label="View source on GitHub">
           <Github size={16} />
         </a>
-        <ThemeToggle />
       </header>
 
       <div className="architecture-app-body">
@@ -338,7 +328,18 @@ export function C4Demo(): ReactElement {
               <RotateCcw size={14} />
               <span>Reset sample</span>
             </button>
-            <span>Browser only · no cloud upload</span>
+            <span className="architecture-sidebar-note">Browser only · no cloud upload</span>
+            <ThemeToggle collapsed={sidebarCollapsed} />
+            <button
+              type="button"
+              className="architecture-sidebar-collapse"
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!sidebarCollapsed}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            >
+              {sidebarCollapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
+              <span>Collapse</span>
+            </button>
           </div>
         </aside>
 

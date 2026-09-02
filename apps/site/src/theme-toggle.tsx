@@ -5,9 +5,24 @@
 // preference key.
 import type { ReactElement } from 'react';
 import { setTheme, useTheme } from '@workspec/design';
+import { Moon, Sun } from 'lucide-react';
 
-export function ThemeToggle(): ReactElement {
+export function ThemeToggle(props: { collapsed?: boolean }): ReactElement {
   const theme = useTheme();
+  if (props.collapsed) {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    return (
+      <button
+        type="button"
+        className="theme-toggle-collapsed"
+        aria-label={`Theme: ${theme}. Switch to ${nextTheme}.`}
+        title={`Switch to ${nextTheme} theme`}
+        onClick={() => setTheme(nextTheme)}
+      >
+        {theme === 'dark' ? <Moon size={15} /> : <Sun size={15} />}
+      </button>
+    );
+  }
   return (
     <span className="theme-toggle" role="group" aria-label="Theme">
       <button
