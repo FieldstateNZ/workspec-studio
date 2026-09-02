@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AnchorHTMLAttributes, ReactElement } from 'react';
 
-export type Route = 'home' | 'cost-demo' | 'architecture-demo' | 'not-found';
+export type Route = 'home' | 'studio' | 'cost-demo' | 'architecture-demo' | 'not-found';
 
 function routeOf(pathname: string): Route {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/') return 'home';
+  if (path === '/studio' || path.startsWith('/studio/')) return 'studio';
   if (path === '/cost' || path === '/cost/demo') return 'cost-demo';
   if (
     path === '/architecture' ||

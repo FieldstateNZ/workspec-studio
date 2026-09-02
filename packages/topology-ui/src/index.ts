@@ -114,3 +114,9 @@ export { formatLensCounts } from './format-counts.js';
 // ── Theming (WorkSpec design tokens, owned by @workspec/design) ───────────────
 export { DEFAULT_THEME, DESIGN_THEMES, THEMES, themeStyle } from './themes.js';
 export type { ThemeName, TokenName } from './themes.js';
+
+// ── Infrastructure planning (extracted Enterprise workflow) ─────────────────
+export { InfrastructurePlanEditor } from './infrastructure-plan-editor.js';
+export type { InfrastructurePlanEditorProps } from './infrastructure-plan-editor.js';
+export { ProviderComparison } from './provider-comparison.js';
+export type { ProviderComparisonProps } from './provider-comparison.js';

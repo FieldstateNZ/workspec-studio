@@ -21,6 +21,10 @@ on:
     branches: [main]
     paths:
       - 'apps/site/**'
+      - 'packages/studio-shell/**'
+      - 'packages/topology-planning/**'
+      - 'packages/topology-ui/**'
+      - 'packages/workspace/**'
       # Repo-level build inputs: with `--frozen-lockfile` the deployed site is
       # pinned by the lockfile, so a dependency bump here must redeploy too.
       - 'pnpm-lock.yaml'
@@ -69,6 +73,11 @@ jobs:
           set -euo pipefail
           test -f apps/site/dist/CNAME
           test -f apps/site/dist/404.html
+          test -f apps/site/dist/studio/index.html
+          test -f apps/site/dist/studio/design/index.html
+          test -f apps/site/dist/studio/plan/index.html
+          test -f apps/site/dist/studio/compare/index.html
+          test -f apps/site/dist/studio/decision/index.html
           test -f apps/site/dist/cost/index.html
           test -f apps/site/dist/cost/demo/index.html
           test -f apps/site/dist/architecture/index.html
@@ -77,6 +86,11 @@ jobs:
           # 404.html must be byte-identical to index.html so unknown client
           # routes can still resolve through the SPA router.
           diff apps/site/dist/index.html apps/site/dist/404.html
+          diff apps/site/dist/index.html apps/site/dist/studio/index.html
+          diff apps/site/dist/index.html apps/site/dist/studio/design/index.html
+          diff apps/site/dist/index.html apps/site/dist/studio/plan/index.html
+          diff apps/site/dist/index.html apps/site/dist/studio/compare/index.html
+          diff apps/site/dist/index.html apps/site/dist/studio/decision/index.html
           # Canonical workbench URLs get real static entrypoints and therefore
           # return 200 responses without relying on the SPA's 404 fallback.
           diff apps/site/dist/index.html apps/site/dist/cost/index.html

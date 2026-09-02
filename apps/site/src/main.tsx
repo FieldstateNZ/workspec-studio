@@ -18,6 +18,9 @@ const CostDemo = lazy(() =>
 const ArchitectureDemo = lazy(() =>
   import('./c4-demo.js').then((module) => ({ default: module.C4Demo })),
 );
+const StudioApp = lazy(() =>
+  import('./studio-app.js').then((module) => ({ default: module.StudioApp })),
+);
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
 
@@ -51,6 +54,12 @@ function App(): ReactElement {
       return (
         <Suspense fallback={<div className="route-loading">Loading WorkSpec Studio…</div>}>
           <StudioHome />
+        </Suspense>
+      );
+    case 'studio':
+      return (
+        <Suspense fallback={<div className="route-loading">Opening WorkSpec Studio…</div>}>
+          <StudioApp />
         </Suspense>
       );
     case 'cost-demo':

@@ -29,7 +29,11 @@
     { "path": "../../packages/c4-schema/tsconfig.build.json" },
     { "path": "../../packages/c4-model/tsconfig.build.json" },
     { "path": "../../packages/c4-layout/tsconfig.build.json" },
-    { "path": "../../packages/c4-ui/tsconfig.build.json" }
+    { "path": "../../packages/c4-ui/tsconfig.build.json" },
+    { "path": "../../packages/studio-shell/tsconfig.build.json" },
+    { "path": "../../packages/topology-planning/tsconfig.build.json" },
+    { "path": "../../packages/topology-ui/tsconfig.build.json" },
+    { "path": "../../packages/workspace/tsconfig.build.json" }
   ],
   "include": ["src"]
 }

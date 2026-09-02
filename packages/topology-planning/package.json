@@ -1,0 +1,19 @@
+{
+  "name": "@workspec/topology-planning",
+  "version": "0.1.0-alpha.1",
+  "description": "Provider-neutral infrastructure planning and deterministic cloud option mapping for WorkSpec C4 models.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "default": "./dist/index.js" } },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": { "access": "public", "provenance": true },
+  "scripts": {
+    "build": "rm -rf dist .tsbuildinfo/build.tsbuildinfo && tsc -p tsconfig.build.json --emitDeclarationOnly && tsup",
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": { "@workspec/schema-core": "workspace:*", "yaml": "^2.9.0", "zod": "^4.4.3" },
+  "devDependencies": { "@types/node": "^24.0.0", "@workspec/decision-schema": "workspace:*", "@workspec/topology-schema": "workspace:*", "tsup": "^8.5.1", "typescript": "^6.0.3", "vitest": "^4.1.10" }
+}

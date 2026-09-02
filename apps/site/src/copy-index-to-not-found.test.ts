@@ -15,6 +15,9 @@ describe('copyIndexForGitHubPages — fallback plus real Studio entrypoints', ()
     copyIndexForGitHubPages(dist);
 
     expect(readFileSync(join(dist, '404.html'), 'utf8')).toBe(shell);
+    for (const route of ['studio', 'studio/design', 'studio/plan', 'studio/compare', 'studio/decision']) {
+      expect(readFileSync(join(dist, route, 'index.html'), 'utf8')).toBe(shell);
+    }
     expect(readFileSync(join(dist, 'cost/index.html'), 'utf8')).toBe(shell);
     expect(readFileSync(join(dist, 'cost/demo/index.html'), 'utf8')).toBe(shell);
     expect(readFileSync(join(dist, 'architecture/index.html'), 'utf8')).toBe(shell);
@@ -29,6 +32,7 @@ describe('copyIndexForGitHubPages — fallback plus real Studio entrypoints', ()
     copyIndexForGitHubPages(dist);
 
     expect(existsSync(join(dist, '404.html'))).toBe(false);
+    expect(existsSync(join(dist, 'studio/design/index.html'))).toBe(false);
     expect(existsSync(join(dist, 'cost/index.html'))).toBe(false);
     expect(existsSync(join(dist, 'cost/demo/index.html'))).toBe(false);
     expect(existsSync(join(dist, 'architecture/index.html'))).toBe(false);

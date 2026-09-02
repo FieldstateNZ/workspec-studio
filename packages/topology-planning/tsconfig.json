@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": ".", "outDir": ".typecheck", "types": ["node"], "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo" },
+  "references": [
+    { "path": "../schema-core/tsconfig.build.json" },
+    { "path": "../decision-schema/tsconfig.build.json" },
+    { "path": "../topology-schema/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

@@ -373,7 +373,7 @@ function typedNode(element: ArchitectureElementInput): Record<string, string> {
   return { [element.kind]: element.id };
 }
 
-function buildFiles(snapshot: ArchitectureSnapshot): Record<string, string> {
+export function buildArchitectureFiles(snapshot: ArchitectureSnapshot): Record<string, string> {
   const files: Record<string, string> = {
     '.workspec/spec.yaml': yaml(
       STYLE_SPEC,
@@ -473,7 +473,7 @@ export async function buildArchitectureWorkspace(
   imported = true,
 ): Promise<ArchitectureWorkspace> {
   const snapshot = parseArchitectureSnapshot(input);
-  const files = buildFiles(snapshot);
+  const files = buildArchitectureFiles(snapshot);
   const model = await loadC4Model(createMemorySource(files));
   const errors = model.diagnostics.filter((diagnostic) => diagnostic.severity === 'error');
   if (errors.length > 0) {
@@ -483,6 +483,58 @@ export async function buildArchitectureWorkspace(
     );
   }
   return { key, snapshot, files, model, imported };
+}
+
+export async function loadArchitectureWorkspace(
+  files: Record<string, string>,
+  key: number,
+): Promise<ArchitectureWorkspace> {
+  const model = await loadC4Model(createMemorySource(files));
+  const errors = model.diagnostics.filter((diagnostic) => diagnostic.severity === 'error');
+  if (errors.length > 0) {
+    throw new ArchitectureSnapshotError(
+      'invalid_model',
+      `The imported C4 model has ${errors.length} error${errors.length === 1 ? '' : 's'}: ${errors[0]?.message ?? 'unknown error'}`,
+    );
+  }
+  const systemEntry = [...model.elements.system.values()][0];
+  if (systemEntry === undefined) {
+    throw new ArchitectureSnapshotError('invalid_model', 'The imported workspace has no C4 system.');
+  }
+  const systemData = systemEntry.element.data;
+  const kinds: readonly ArchitectureElementKind[] = ['actor', 'external-system', 'container', 'database', 'queue'];
+  const elements = kinds.flatMap((kind) => [...model.elements[kind].values()].map((loaded): ArchitectureElementInput => {
+    const data = loaded.element.data;
+    return {
+      id: loaded.slug,
+      kind,
+      name: data.title,
+      description: data.description ?? data.title,
+      ...('technology' in data && data.technology ? { technology: data.technology } : {}),
+      ...('tags' in data && data.tags?.length ? { tags: [...data.tags] } : {}),
+    };
+  }));
+  const diagram = model.diagrams.find((candidate) => candidate.type === 'c4-container');
+  const view = diagram?.lensViews?.logical ?? diagram?.view;
+  const relationships = (view?.edges ?? []).flatMap((edge): ArchitectureRelationshipInput[] => {
+    const from = edge.from === '__system__' ? 'system' : edge.from;
+    const to = edge.to === '__system__' ? 'system' : edge.to;
+    if (edge.dangling || from === to) return [];
+    const category = ['interaction', 'data', 'dependency'].includes(edge.category ?? '')
+      ? edge.category as ArchitectureRelationshipCategory
+      : 'interaction';
+    return [{ from, to, description: edge.label ?? 'connects to', category }];
+  });
+  const snapshot: ArchitectureSnapshot = {
+    system: {
+      name: systemData.title,
+      description: systemData.description ?? systemData.title,
+      ...('summary' in systemData && systemData.summary ? { summary: systemData.summary } : {}),
+    },
+    elements,
+    relationships,
+  };
+  return { key, snapshot, files, model, imported: true };
 }
 
 export function buildArchitectureBundle(workspace: ArchitectureWorkspace): {
@@ -541,15 +593,26 @@ function slugifyName(value: string): string {
   );
 }
 
+export function bytesBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
+
+export function bytesDataUrl(bytes: Uint8Array): string {
+  return `data:application/zip;base64,${bytesBase64(bytes)}`;
+}
+
 export function downloadBytes(filename: string, bytes: Uint8Array): void {
-  const copy = new Uint8Array(bytes.byteLength);
-  copy.set(bytes);
-  const url = URL.createObjectURL(new Blob([copy], { type: 'application/zip' }));
   const link = document.createElement('a');
-  link.href = url;
+  link.href = bytesDataUrl(bytes);
   link.download = filename;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
 }
 
 interface RelationshipProposal {

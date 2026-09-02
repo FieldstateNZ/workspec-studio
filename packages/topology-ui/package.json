@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@workspec/topology-model": "workspace:*",
+    "@workspec/topology-planning": "workspace:*",
     "@workspec/topology-schema": "workspace:*",
     "@workspec/topology-recon": "workspace:*",
     "@workspec/topology-cost": "workspace:*",

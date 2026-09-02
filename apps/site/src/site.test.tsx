@@ -10,24 +10,18 @@ afterEach(() => {
 });
 
 describe('studio home page (/)', () => {
-  it('presents Cost and Architecture as the two canonical studios', () => {
+  it('presents the connected design-to-decision workflow', () => {
     render(<StudioHome />);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /make the architecture and cost model discussable/i,
+      /from application design to an infrastructure decision/i,
     );
-    expect(screen.getAllByRole('link', { name: /open cost studio/i })).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: /open architecture studio/i })).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: /open cost studio/i })[0]).toHaveAttribute(
-      'href',
-      '/cost',
-    );
-    expect(screen.getAllByRole('link', { name: /open architecture studio/i })[0]).toHaveAttribute(
-      'href',
-      '/architecture',
-    );
-    expect(screen.queryByText('Decisions')).not.toBeInTheDocument();
-    expect(screen.queryByText('Traceability')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /start new/i })).toHaveAttribute('href', '/studio/design');
+    expect(screen.getByLabelText(/import .workspec zip/i)).toHaveAttribute('accept', '.zip,application/zip');
+    expect(screen.getByRole('heading', { name: 'Design' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plan' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Compare' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Decide' })).toBeInTheDocument();
   });
 });
 

@@ -15,6 +15,11 @@ export function copyIndexForGitHubPages(distDir: string): void {
 
   for (const target of [
     resolve(distDir, '404.html'),
+    resolve(distDir, 'studio/index.html'),
+    resolve(distDir, 'studio/design/index.html'),
+    resolve(distDir, 'studio/plan/index.html'),
+    resolve(distDir, 'studio/compare/index.html'),
+    resolve(distDir, 'studio/decision/index.html'),
     resolve(distDir, 'cost/index.html'),
     resolve(distDir, 'cost/demo/index.html'),
     resolve(distDir, 'architecture/index.html'),

@@ -12,6 +12,21 @@ consumer of this code.
 | Cost Attribution | in progress | `packages/cost-*`, `apps/site` (`/cost` demo), `docs/cost/` — publishes with the next tag               |
 | Aspire Hosting   | in progress | `aspire-hosting/` (.NET), `docs/aspire-hosting/` — NuGet packaging/release wiring done, publish pending |
 
+## Connected Studio workflow
+
+The Studio site now composes the C4, topology-planning, and decision packages into one
+browser-local workflow at `/studio/design`:
+
+1. Start with the example C4 model or import a ZIP containing `.workspec/`.
+2. Design the system on the interactive C4 canvas and add or remove model elements.
+3. Review the generated, provider-neutral infrastructure plan and edit sizing, quantity, and availability.
+4. Compare deterministic Azure and AWS service mappings and monthly planning estimates.
+5. Accept an option, generate the ADR and selected provider topology, then download the complete ZIP.
+
+The browser holds one canonical byte-preserving `.workspec` file map. UI actions and the six
+imperative WebMCP tools operate on that same state; unknown imported files are retained. See
+[`docs/studio-workflow.md`](docs/studio-workflow.md) for the artifact and tool contracts.
+
 ## Layout
 
 ```
@@ -21,6 +36,14 @@ aspire-hosting/  .NET Aspire hosting integrations (own solution — not a pnpm w
 examples/        runnable example trees and demos
 docs/            specs and design bundles
 ```
+
+The connected workflow adds three reusable package seams extracted for Enterprise and other hosts:
+
+| Package | Role |
+| --- | --- |
+| `@workspec/studio-shell` | Enterprise-derived application header and collapsible workflow navigation |
+| `@workspec/workspace` | Safe ZIP import/export and the canonical in-memory `.workspec` file map |
+| `@workspec/topology-planning` | C4 → neutral requirements → Azure/AWS mappings and provider artifact generation |
 
 ## Development
 

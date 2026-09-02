@@ -30,7 +30,8 @@
     { "path": "../topology-schema/tsconfig.build.json" },
     { "path": "../topology-recon/tsconfig.build.json" },
     { "path": "../topology-cost/tsconfig.build.json" },
-    { "path": "../decision-schema/tsconfig.build.json" }
+    { "path": "../decision-schema/tsconfig.build.json" },
+    { "path": "../topology-planning/tsconfig.build.json" }
   ],
   "include": ["src"]
 }
