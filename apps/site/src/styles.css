@@ -1864,7 +1864,6 @@
     pointer-events: auto;
   }
   .architecture-canvas .c4-level-tabs,
-  .architecture-canvas .c4-crumb,
   .architecture-canvas .c4-explorer-pane > [role='tablist'] {
     height: 36px;
     border: 1px solid var(--line);
@@ -1886,12 +1885,6 @@
     background: var(--accent);
     color: var(--on-accent);
     box-shadow: var(--sh-1);
-  }
-  .architecture-canvas .c4-crumb {
-    display: flex;
-    align-items: center;
-    padding: 0 var(--s-3);
-    white-space: nowrap;
   }
   .architecture-canvas .c4-explorer-spacer,
   .architecture-canvas .c4-explorer-hint {
@@ -1994,9 +1987,6 @@
     }
     .architecture-canvas .c4-explorer-header {
       max-width: calc(100% - 270px);
-    }
-    .architecture-canvas .c4-crumb {
-      display: none;
     }
   }
   @media (max-width: 760px) {

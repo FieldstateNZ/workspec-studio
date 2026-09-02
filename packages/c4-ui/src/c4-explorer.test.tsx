@@ -5,7 +5,7 @@ import { C4Explorer } from './c4-explorer.js';
 import { firePointer } from './test-helpers/fire-pointer.js';
 import { loadAmbiguousLevelModel, loadSyntheticModel } from './test-helpers/synthetic-model.js';
 
-describe('C4Explorer — segmented level tabs + crumb (replaces the old tree nav)', () => {
+describe('C4Explorer — segmented level tabs (replaces the old tree nav)', () => {
   it('shows one numbered tab per canonical C4 level, derived from diagram TYPE, not file/list order', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} />);
@@ -25,11 +25,11 @@ describe('C4Explorer — segmented level tabs + crumb (replaces the old tree nav
       'aria-pressed',
       'true',
     );
-    expect(screen.getByText('diagrams ▸ context')).toBeInTheDocument();
+    expect(screen.queryByText(/diagrams ▸/)).not.toBeInTheDocument();
     expect(await screen.findByText('Architect')).toBeInTheDocument();
   });
 
-  it('honours initialDiagramSlug — the matching tab is pressed and the crumb names it', async () => {
+  it('honours initialDiagramSlug — the matching tab is pressed', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="ledger" />);
 
@@ -37,11 +37,10 @@ describe('C4Explorer — segmented level tabs + crumb (replaces the old tree nav
       'aria-pressed',
       'true',
     );
-    expect(screen.getByText('diagrams ▸ ledger')).toBeInTheDocument();
     expect(await screen.findByText('Billing')).toBeInTheDocument();
   });
 
-  it('clicking a level tab switches the rendered diagram and the crumb', async () => {
+  it('clicking a level tab switches the rendered diagram', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="context" />);
     await screen.findByText('Architect');
@@ -58,7 +57,6 @@ describe('C4Explorer — segmented level tabs + crumb (replaces the old tree nav
       'aria-pressed',
       'false',
     );
-    expect(screen.getByText('diagrams ▸ ledger')).toBeInTheDocument();
   });
 
   it('the hint text is always shown', async () => {

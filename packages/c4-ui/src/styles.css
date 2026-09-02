@@ -233,13 +233,6 @@
   color: var(--ink);
 }
 
-.c4-crumb {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-muted);
-  letter-spacing: 0.04em;
-}
-
 .c4-explorer-spacer {
   flex: 1 1 auto;
 }

@@ -293,7 +293,6 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
               </button>
             ))}
           </div>
-          <span className="c4-crumb">{`diagrams ▸ ${selected?.slug ?? '—'}`}</span>
           <span className="c4-explorer-spacer" />
           <span className="c4-explorer-hint">click an element for details</span>
         </div>
