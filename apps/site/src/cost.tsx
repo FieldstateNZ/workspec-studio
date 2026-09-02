@@ -80,7 +80,7 @@ export function Cost(): ReactElement {
             <div className="cost-hero-copy">
               <div className="cost-kicker">
                 <Lbl>Open-source FinOps workbench</Lbl>
-                <span>Azure · local-first · agent-ready</span>
+                <span>Azure today · multi-cloud architecture · agent-ready</span>
               </div>
               <h1>Turn cloud cost attribution into a conversation.</h1>
               <p className="cost-hero-lede">
@@ -148,6 +148,24 @@ export function Cost(): ReactElement {
                 <strong>5 agent tools available</strong>
               </div>
             </aside>
+          </section>
+
+          <section className="cost-provider-strip" aria-label="Cloud provider support">
+            <span className="cost-provider-label">Cloud providers</span>
+            <span className="cost-provider-item cost-provider-live">
+              <strong>Azure</strong>
+              <span>available now</span>
+            </span>
+            <span className="cost-provider-separator" aria-hidden="true" />
+            <span className="cost-provider-item">
+              <strong>AWS</strong>
+              <span>planned</span>
+            </span>
+            <span className="cost-provider-separator" aria-hidden="true" />
+            <span className="cost-provider-item">
+              <strong>Others</strong>
+              <span>via the provider interface</span>
+            </span>
           </section>
 
           <section className="cost-story" aria-labelledby="cost-story-title">

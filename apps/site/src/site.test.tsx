@@ -19,6 +19,10 @@ describe('cost module page (/cost)', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/npx @workspec\/cost-studio@alpha stocktake/)).toHaveLength(2);
     expect(screen.getByRole('navigation', { name: 'On this page' })).toBeInTheDocument();
+    const providers = screen.getByRole('region', { name: 'Cloud provider support' });
+    expect(providers).toHaveTextContent(/azureavailable now/i);
+    expect(providers).toHaveTextContent(/awsplanned/i);
+    expect(providers).toHaveTextContent(/othersvia the provider interface/i);
     const packagesBase = 'https://github.com/FieldstateNZ/workspec-studio/tree/main/packages';
     for (const pkg of [
       'cost-schema',
