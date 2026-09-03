@@ -10,6 +10,7 @@ import {
   Download,
   FileCheck2,
   GitCompareArrows,
+  History,
   Landmark,
   Link2,
   Network,
@@ -69,6 +70,17 @@ type ArchitectureLevel = 'context' | 'container' | 'component';
 type StudioSidebar = 'workflow' | 'architecture';
 type StudioSidebarState = 'open' | 'closed';
 type ArchitectureSidebarTab = 'elements' | 'properties';
+interface AgentNotice {
+  eyebrow: string;
+  title: string;
+  detail: string;
+}
+interface AgentActivityEntry extends AgentNotice {
+  id: number;
+  tool: string;
+  step: WorkflowStep;
+  time: string;
+}
 const EXAMPLE_CONTAINER_LAYOUT = [
   { id: 'operations-coordinator', x: 0, y: 80 },
   { id: 'utility-telemetry', x: 0, y: 470 },
@@ -147,10 +159,27 @@ function money(amount: number): string {
   }).format(amount);
 }
 
+function AgentReviewBanner({ notice, className = '' }: { readonly notice: AgentNotice; readonly className?: string }): ReactElement {
+  return <div className={`journey-agent-review${className ? ` ${className}` : ''}`} role="status"><span className="journey-agent-review-icon"><Waypoints size={16}/></span><span><small>{notice.eyebrow}</small><strong>{notice.title}</strong><span>{notice.detail}</span></span></div>;
+}
+
+function AgentActivityTrigger({ count, open, onToggle }: { readonly count: number; readonly open: boolean; readonly onToggle: () => void }): ReactElement {
+  return <div className="journey-agent-activity">
+    <button type="button" className="journey-agent-activity-trigger" aria-expanded={open} aria-controls="agent-activity-log" aria-label={`Agent activity, ${count} ${count === 1 ? 'action' : 'actions'}`} onClick={onToggle}><History size={15}/><span>Agent activity</span>{count > 0 ? <b>{count}</b> : null}</button>
+  </div>;
+}
+
+function AgentActivitySidebar({ entries, onClose }: { readonly entries: readonly AgentActivityEntry[]; readonly onClose: () => void }): ReactElement {
+  return <aside id="agent-activity-log" className="journey-agent-activity-panel" aria-label="Agent activity log">
+    <header><span><small>WebMCP session · {entries.length} {entries.length === 1 ? 'action' : 'actions'}</small><strong>Agent activity</strong></span><button type="button" aria-label="Collapse agent activity" title="Collapse agent activity" onClick={onClose}><PanelRightClose size={16}/></button></header>
+    {entries.length === 0 ? <p className="journey-agent-activity-empty">Agent actions will appear here as we work through the Studio together.</p> : <ol>{[...entries].reverse().map((entry) => <li key={entry.id}><span className="journey-agent-activity-marker"><Waypoints size={13}/></span><span><strong>{entry.title}</strong><p>{entry.detail}</p><small><time>{entry.time}</time><code>{entry.tool}</code></small></span></li>)}</ol>}
+  </aside>;
+}
+
 interface DecisionStepProps {
   readonly decision: ReturnType<typeof DecisionArtifact.parse> | null;
   readonly editing: boolean;
-  readonly agentDraft: boolean;
+  readonly agentNotice: AgentNotice | null;
   readonly options: readonly ProviderOption[];
   readonly selected: CloudProvider | undefined;
   readonly rationale: string;
@@ -185,9 +214,9 @@ function DecisionStep(props: DecisionStepProps): ReactElement {
   return (
     <section className="journey-decision">
       <header className="tp-plan-header"><div><span>04 · Decision</span><h1>{props.editing ? 'Edit the decision' : 'Record the decision'}</h1><p>Confirm the provider, capture why it won, and generate the architecture decision record.</p></div></header>
-      {props.agentDraft ? <div className="journey-agent-review" role="status"><span className="journey-agent-review-icon"><Waypoints size={16}/></span><span><small>Draft prepared with WebMCP</small><strong>Review this decision together</strong><span>The provider and rationale below are editable. No ADR changes are saved until you choose Accept and generate ADR.</span></span></div> : null}
       <div className="journey-decision-content">
         <div className="journey-decision-layout">
+          {props.agentNotice ? <AgentReviewBanner notice={props.agentNotice}/> : null}
           <section className="journey-decision-options" aria-labelledby="decision-provider-title">
             <div className="journey-decision-section-head"><small>Selected option</small><h2 id="decision-provider-title">Cloud platform</h2><p>You can change the provider before recording the decision.</p></div>
             <div className="journey-decision-provider-list">
@@ -226,7 +255,13 @@ export function StudioApp(): ReactElement {
   const [decisionEditing, setDecisionEditing] = useState(false);
   const [decisionAgentDraft, setDecisionAgentDraft] = useState(false);
   const [step, setStepState] = useState<WorkflowStep>(initialStep);
+  const stepRef = useRef(step);
+  stepRef.current = step;
   const [furthestStep, setFurthestStep] = useState<WorkflowStep>('design');
+  const [agentActivity, setAgentActivity] = useState<AgentActivityEntry[]>([]);
+  const [agentActivityOpen, setAgentActivityOpen] = useState(false);
+  const [agentNotices, setAgentNotices] = useState<Partial<Record<WorkflowStep, AgentNotice>>>({});
+  const agentActivitySequence = useRef(0);
   const [collapsed, setCollapsed] = useState(loadLeftSidebarCollapsed);
   const [elementsCollapsed, setElementsCollapsed] = useState(loadRightSidebarCollapsed);
   const [rightRailTab, setRightRailTab] = useState<'elements' | 'properties'>('elements');
@@ -254,6 +289,20 @@ export function StudioApp(): ReactElement {
   const [relationshipDescription, setRelationshipDescription] = useState('');
   const [relationshipCategory, setRelationshipCategory] = useState<ArchitectureRelationshipCategory>('interaction');
   const [rationale, setRationale] = useState('Balances managed-service simplicity, capability fit, and estimated monthly cost.');
+
+  function recordAgentActivity(tool: string, title: string, detail: string, targetStep = stepRef.current, notice?: AgentNotice): void {
+    const entry: AgentActivityEntry = {
+      id: ++agentActivitySequence.current,
+      tool,
+      title,
+      detail,
+      step: targetStep,
+      time: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date()),
+      eyebrow: notice?.eyebrow ?? 'WebMCP action',
+    };
+    setAgentActivity((current) => [...current.slice(-49), entry]);
+    if (notice) setAgentNotices((current) => ({ ...current, [targetStep]: notice }));
+  }
 
   function setStep(next: string): void {
     if (!WORKFLOW.includes(next as WorkflowStep)) return;
@@ -316,6 +365,7 @@ export function StudioApp(): ReactElement {
     setDecision(null);
     setDecisionEditing(false);
     setDecisionAgentDraft(false);
+    setAgentNotices({});
     setSelected(undefined);
     setError(null);
     if (persist) saveStudioWorkspace(canonical.toZip());
@@ -598,6 +648,10 @@ export function StudioApp(): ReactElement {
     const compared = compareProviders(next);
     planRef.current = next; optionsRef.current = compared;
     setPlan(next); setOptions(compared); setDecision(null); setDecisionEditing(false); setDecisionAgentDraft(false);
+    setAgentNotices((current) => {
+      const { compare: _compare, decision: _decision, ...rest } = current;
+      return rest;
+    });
   }
 
   function changeRequirement(id: string, patch: Parameters<typeof updateRequirement>[2]): void {
@@ -714,6 +768,7 @@ export function StudioApp(): ReactElement {
     setDiagramLayout,
     navigateStudio,
     configureStudioSidebar,
+    recordAgentActivity,
   });
   actionsRef.current = {
     replaceArchitecture,
@@ -724,6 +779,7 @@ export function StudioApp(): ReactElement {
     setDiagramLayout,
     navigateStudio,
     configureStudioSidebar,
+    recordAgentActivity,
   };
 
   useEffect(() => {
@@ -731,17 +787,17 @@ export function StudioApp(): ReactElement {
     if (!context?.registerTool) { setStatus('unsupported'); setStatusLabel('WebMCP unavailable'); return; }
     const lifecycle = new AbortController();
     const tools: WebMcpToolDefinition[] = [
-      { name: 'get_workspec_workspace_summary', title: 'Inspect WorkSpec workspace', description: 'Read the current architecture, infrastructure requirements, provider comparison, and generated files.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { return { project: workspaceRef.current?.snapshot.system.name, elements: workspaceRef.current?.snapshot.elements.length ?? 0, requirements: planRef.current?.spec.requirements.length ?? 0, providers: optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })), files: canonicalRef.current?.paths() ?? [] }; } },
-      { name: 'navigate_studio', title: 'Navigate Studio workflow', description: 'Open the next visible Design, Infrastructure, Compare, or Decision step without pointer automation. Enforces design prerequisites and prevents skipping unreviewed workflow steps.', inputSchema: { type: 'object', properties: { step: { enum: WORKFLOW } }, required: ['step'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const next = String(input.step) as WorkflowStep; actionsRef.current.navigateStudio(next); return { navigated: true, step: next, path: `/studio/${next}` }; } },
-      { name: 'set_studio_sidebar', title: 'Set Studio sidebar state', description: 'Open or close the workflow or architecture sidebar, and optionally show the Elements or Properties tab in the visible architecture sidebar.', inputSchema: { type: 'object', properties: { sidebar: { enum: ['workflow', 'architecture'] }, state: { enum: ['open', 'closed'] }, tab: { enum: ['elements', 'properties'] } }, required: ['sidebar', 'state'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const sidebar = String(input.sidebar) as StudioSidebar; const state = String(input.state) as StudioSidebarState; const tab = input.tab === undefined ? undefined : String(input.tab) as ArchitectureSidebarTab; actionsRef.current.configureStudioSidebar(sidebar, state, tab); return { updated: true, sidebar, state, ...(tab === undefined ? {} : { tab }) }; } },
-      { name: 'set_c4_architecture', title: 'Set C4 architecture', description: 'Replace the visible C4 architecture with a complete system, elements, and relationships snapshot, then regenerate the infrastructure plan.', inputSchema: { type: 'object', properties: { snapshot: { type: 'object' } }, required: ['snapshot'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { await actionsRef.current.replaceArchitecture(input.snapshot as ArchitectureSnapshot); return { updated: true, elements: workspaceRef.current?.snapshot.elements.length ?? 0, requirements: planRef.current?.spec.requirements.length ?? 0 }; } },
-      { name: 'get_c4_layout', title: 'Inspect C4 diagram layout', description: 'Read the available nodes and currently pinned positions for a C4 diagram without changing the architecture.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' } }, required: ['diagramSlug'], additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute(input) { const current = workspaceRef.current; const canonical = canonicalRef.current; if (!current || !canonical) throw new Error('The workspace is still loading.'); const diagramSlug = String(input.diagramSlug); const diagram = current.model.diagrams.find((item) => item.slug === diagramSlug); if (!diagram) throw new Error(`Unknown diagram: ${diagramSlug}`); const path = layoutPathFor(diagramSlug); const nodes = [...new Map([...(diagram.view?.nodes ?? []), ...(diagram.lensViews?.logical.nodes ?? []), ...(diagram.lensViews?.deployment.nodes ?? [])].map((node) => [node.nodeId, { id: node.nodeId, kind: node.kind, name: node.title }])).values()]; return { diagramSlug, type: diagram.type, nodes, layout: canonical.exists(path) ? Layout.parse(parse(canonical.readText(path))) : { version: 1, nodes: {} } }; } },
-      { name: 'set_c4_layout', title: 'Arrange C4 diagram', description: 'Pin node positions for a diagram without changing architecture semantics. Use replace to define the curated layout or merge to move selected nodes.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' }, mode: { enum: ['replace', 'merge'] }, positions: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number', exclusiveMinimum: 0 }, height: { type: 'number', exclusiveMinimum: 0 } }, required: ['id', 'x', 'y'], additionalProperties: false } } }, required: ['diagramSlug', 'positions'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.positions)) throw new Error('positions must be an array.'); const positions = input.positions.map((raw) => { const item = raw as Record<string, unknown>; return { id: String(item.id), x: Number(item.x), y: Number(item.y), ...(item.width !== undefined ? { width: Number(item.width) } : {}), ...(item.height !== undefined ? { height: Number(item.height) } : {}) }; }); await actionsRef.current.setDiagramLayout(String(input.diagramSlug), positions, input.mode === 'merge' ? 'merge' : 'replace'); return { updated: positions.length, diagramSlug: input.diagramSlug, persisted: true }; } },
-      { name: 'update_infrastructure_requirements', title: 'Update infrastructure requirements', description: 'Batch-update sizing, quantity, availability, or notes for provider-neutral requirements and refresh estimates.', inputSchema: { type: 'object', properties: { changes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, size: { enum: ['small', 'medium', 'large'] }, quantity: { type: 'integer', minimum: 1 }, availability: { enum: ['standard', 'high'] }, notes: { type: 'string' } }, required: ['id'], additionalProperties: false } } }, required: ['changes'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.changes)) throw new Error('changes must be an array'); const changes = input.changes.map((raw) => { const change = raw as Record<string, unknown>; const id = String(change.id ?? ''); const { id: _id, ...patch } = change; return { id, patch }; }); actionsRef.current.changeRequirements(changes); return { updated: changes.length, providers: optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })) }; } },
-      { name: 'compare_cloud_providers', title: 'Compare Azure and AWS together', description: 'Open the visible Compare step and read Azure and AWS service mappings and monthly estimates. Discuss these visible options with the user before preparing a decision.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { return { navigated: true, step: 'compare', options: actionsRef.current.showProviderComparison() }; } },
-      { name: 'prepare_cloud_decision', title: 'Prepare cloud decision for review', description: 'From the visible Compare step, open Decision and populate an editable provider and rationale draft. This does not write the ADR; stop and review the visible draft with the user before recording it.', inputSchema: { type: 'object', properties: { provider: { enum: ['azure', 'aws'] }, rationale: { type: 'string', minLength: 1 } }, required: ['provider', 'rationale'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const option = actionsRef.current.prepareDecisionForReview(input.provider as CloudProvider, String(input.rationale)); return { prepared: true, recorded: false, navigated: true, step: 'decision', provider: option.provider, monthlyTotal: option.monthlyTotal, rationale: String(input.rationale).trim(), nextAction: 'Review or edit the visible draft with the user before recording it.' }; } },
-      { name: 'record_cloud_decision', title: 'Record reviewed cloud decision', description: 'Commit the provider and rationale currently visible in the prepared Decision draft. Call only after the user explicitly approves that visible draft; use prepare_cloud_decision first.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const result = actionsRef.current.recordPreparedDecision(); return { recorded: true, decision: result.artifact.metadata.slug, provider: result.provider, files: canonicalRef.current?.paths() ?? [] }; } },
-      { name: 'export_workspec_bundle', title: 'Export WorkSpec bundle', description: 'Read the complete current .workspec workspace as a base64-encoded ZIP so an agent can save or hand off the result without relying on a browser download event.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const canonical = canonicalRef.current; const current = workspaceRef.current; if (!canonical || !current) throw new Error('The workspace is still loading.'); const bytes = canonical.toZip(); if (bytes.byteLength > 2 * 1024 * 1024) throw new Error('The ZIP is too large for WebMCP export; use the visible download link.'); return { filename: `${slug(current.snapshot.system.name)}-workspec.zip`, mediaType: 'application/zip', encoding: 'base64', byteLength: bytes.byteLength, data: bytesBase64(bytes) }; } },
+      { name: 'get_workspec_workspace_summary', title: 'Inspect WorkSpec workspace', description: 'Read the current architecture, infrastructure requirements, provider comparison, and generated files.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const result = { project: workspaceRef.current?.snapshot.system.name, elements: workspaceRef.current?.snapshot.elements.length ?? 0, requirements: planRef.current?.spec.requirements.length ?? 0, providers: optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })), files: canonicalRef.current?.paths() ?? [] }; actionsRef.current.recordAgentActivity('get_workspec_workspace_summary', 'Inspected workspace', `Read ${result.elements} architecture elements, ${result.requirements} requirements, and ${result.files.length} files.`); return result; } },
+      { name: 'navigate_studio', title: 'Navigate Studio workflow', description: 'Open the next visible Design, Infrastructure, Compare, or Decision step without pointer automation. Enforces design prerequisites and prevents skipping unreviewed workflow steps.', inputSchema: { type: 'object', properties: { step: { enum: WORKFLOW } }, required: ['step'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const next = String(input.step) as WorkflowStep; actionsRef.current.navigateStudio(next); actionsRef.current.recordAgentActivity('navigate_studio', `Opened ${STEPS.find((item) => item.id === next)?.label ?? next}`, `Navigated to the visible ${next} workflow step.`, next); return { navigated: true, step: next, path: `/studio/${next}` }; } },
+      { name: 'set_studio_sidebar', title: 'Set Studio sidebar state', description: 'Open or close the workflow or architecture sidebar, and optionally show the Elements or Properties tab in the visible architecture sidebar.', inputSchema: { type: 'object', properties: { sidebar: { enum: ['workflow', 'architecture'] }, state: { enum: ['open', 'closed'] }, tab: { enum: ['elements', 'properties'] } }, required: ['sidebar', 'state'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const sidebar = String(input.sidebar) as StudioSidebar; const state = String(input.state) as StudioSidebarState; const tab = input.tab === undefined ? undefined : String(input.tab) as ArchitectureSidebarTab; actionsRef.current.configureStudioSidebar(sidebar, state, tab); actionsRef.current.recordAgentActivity('set_studio_sidebar', `${state === 'open' ? 'Opened' : 'Closed'} ${sidebar} sidebar`, tab === undefined ? `Set the ${sidebar} sidebar to ${state}.` : `Set the ${sidebar} sidebar to ${state} on the ${tab} tab.`); return { updated: true, sidebar, state, ...(tab === undefined ? {} : { tab }) }; } },
+      { name: 'set_c4_architecture', title: 'Set C4 architecture', description: 'Replace the visible C4 architecture with a complete system, elements, and relationships snapshot, then regenerate the infrastructure plan.', inputSchema: { type: 'object', properties: { snapshot: { type: 'object' } }, required: ['snapshot'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { await actionsRef.current.replaceArchitecture(input.snapshot as ArchitectureSnapshot); const elements = workspaceRef.current?.snapshot.elements.length ?? 0; const requirements = planRef.current?.spec.requirements.length ?? 0; actionsRef.current.recordAgentActivity('set_c4_architecture', 'Prepared C4 architecture', `Replaced the visible model with ${elements} elements and inferred ${requirements} requirements.`, 'design', { eyebrow: 'Architecture prepared with WebMCP', title: 'Review the design together', detail: 'The model is fully editable. Inspect elements, relationships, and layout before continuing.' }); return { updated: true, elements, requirements }; } },
+      { name: 'get_c4_layout', title: 'Inspect C4 diagram layout', description: 'Read the available nodes and currently pinned positions for a C4 diagram without changing the architecture.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' } }, required: ['diagramSlug'], additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute(input) { const current = workspaceRef.current; const canonical = canonicalRef.current; if (!current || !canonical) throw new Error('The workspace is still loading.'); const diagramSlug = String(input.diagramSlug); const diagram = current.model.diagrams.find((item) => item.slug === diagramSlug); if (!diagram) throw new Error(`Unknown diagram: ${diagramSlug}`); const path = layoutPathFor(diagramSlug); const nodes = [...new Map([...(diagram.view?.nodes ?? []), ...(diagram.lensViews?.logical.nodes ?? []), ...(diagram.lensViews?.deployment.nodes ?? [])].map((node) => [node.nodeId, { id: node.nodeId, kind: node.kind, name: node.title }])).values()]; const result = { diagramSlug, type: diagram.type, nodes, layout: canonical.exists(path) ? Layout.parse(parse(canonical.readText(path))) : { version: 1, nodes: {} } }; actionsRef.current.recordAgentActivity('get_c4_layout', 'Inspected diagram layout', `Read ${nodes.length} nodes from ${diagramSlug}.`, 'design'); return result; } },
+      { name: 'set_c4_layout', title: 'Arrange C4 diagram', description: 'Pin node positions for a diagram without changing architecture semantics. Use replace to define the curated layout or merge to move selected nodes.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' }, mode: { enum: ['replace', 'merge'] }, positions: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number', exclusiveMinimum: 0 }, height: { type: 'number', exclusiveMinimum: 0 } }, required: ['id', 'x', 'y'], additionalProperties: false } } }, required: ['diagramSlug', 'positions'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.positions)) throw new Error('positions must be an array.'); const positions = input.positions.map((raw) => { const item = raw as Record<string, unknown>; return { id: String(item.id), x: Number(item.x), y: Number(item.y), ...(item.width !== undefined ? { width: Number(item.width) } : {}), ...(item.height !== undefined ? { height: Number(item.height) } : {}) }; }); const diagramSlug = String(input.diagramSlug); await actionsRef.current.setDiagramLayout(diagramSlug, positions, input.mode === 'merge' ? 'merge' : 'replace'); actionsRef.current.recordAgentActivity('set_c4_layout', 'Arranged C4 diagram', `Pinned ${positions.length} nodes in ${diagramSlug}.`, 'design', { eyebrow: 'Layout updated with WebMCP', title: 'Review the diagram together', detail: 'The agent adjusted node positions only; architecture semantics remain unchanged.' }); return { updated: positions.length, diagramSlug, persisted: true }; } },
+      { name: 'update_infrastructure_requirements', title: 'Update infrastructure requirements', description: 'Batch-update sizing, quantity, availability, or notes for provider-neutral requirements and refresh estimates.', inputSchema: { type: 'object', properties: { changes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, size: { enum: ['small', 'medium', 'large'] }, quantity: { type: 'integer', minimum: 1 }, availability: { enum: ['standard', 'high'] }, notes: { type: 'string' } }, required: ['id'], additionalProperties: false } } }, required: ['changes'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.changes)) throw new Error('changes must be an array'); const changes = input.changes.map((raw) => { const change = raw as Record<string, unknown>; const id = String(change.id ?? ''); const { id: _id, ...patch } = change; return { id, patch }; }); actionsRef.current.changeRequirements(changes); const providers = optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })); actionsRef.current.recordAgentActivity('update_infrastructure_requirements', 'Updated infrastructure plan', `Changed sizing or availability for ${changes.length} ${changes.length === 1 ? 'requirement' : 'requirements'} and refreshed provider estimates.`, 'plan', { eyebrow: 'Plan updated with WebMCP', title: 'Review the shopping list together', detail: 'Sizing, quantity, availability, and notes remain editable before provider comparison.' }); return { updated: changes.length, providers }; } },
+      { name: 'compare_cloud_providers', title: 'Compare Azure and AWS together', description: 'Open the visible Compare step and read Azure and AWS service mappings and monthly estimates. Discuss these visible options with the user before preparing a decision.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const options = actionsRef.current.showProviderComparison(); actionsRef.current.recordAgentActivity('compare_cloud_providers', 'Opened provider comparison', `Compared ${options.length} provider mappings for the same neutral requirements.`, 'compare', { eyebrow: 'Comparison opened with WebMCP', title: 'Review the providers together', detail: 'The mappings and estimates are visible planning inputs. Select an option only after reviewing the trade-offs.' }); return { navigated: true, step: 'compare', options }; } },
+      { name: 'prepare_cloud_decision', title: 'Prepare cloud decision for review', description: 'From the visible Compare step, open Decision and populate an editable provider and rationale draft. This does not write the ADR; stop and review the visible draft with the user before recording it.', inputSchema: { type: 'object', properties: { provider: { enum: ['azure', 'aws'] }, rationale: { type: 'string', minLength: 1 } }, required: ['provider', 'rationale'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const option = actionsRef.current.prepareDecisionForReview(input.provider as CloudProvider, String(input.rationale)); const reason = String(input.rationale).trim(); actionsRef.current.recordAgentActivity('prepare_cloud_decision', 'Prepared decision draft', `Recommended ${option.name} with an editable ${reason.length}-character rationale.`, 'decision', { eyebrow: 'Draft prepared with WebMCP', title: 'Review this decision together', detail: 'The provider and rationale below are editable. No ADR changes are saved until you choose Accept and generate ADR.' }); return { prepared: true, recorded: false, navigated: true, step: 'decision', provider: option.provider, monthlyTotal: option.monthlyTotal, rationale: reason, nextAction: 'Review or edit the visible draft with the user before recording it.' }; } },
+      { name: 'record_cloud_decision', title: 'Record reviewed cloud decision', description: 'Commit the provider and rationale currently visible in the prepared Decision draft. Call only after the user explicitly approves that visible draft; use prepare_cloud_decision first.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const result = actionsRef.current.recordPreparedDecision(); const files = canonicalRef.current?.paths() ?? []; actionsRef.current.recordAgentActivity('record_cloud_decision', 'Recorded cloud decision', `Accepted ${result.provider} and generated the ADR plus provider artifacts.`, 'decision'); return { recorded: true, decision: result.artifact.metadata.slug, provider: result.provider, files }; } },
+      { name: 'export_workspec_bundle', title: 'Export WorkSpec bundle', description: 'Read the complete current .workspec workspace as a base64-encoded ZIP so an agent can save or hand off the result without relying on a browser download event.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const canonical = canonicalRef.current; const current = workspaceRef.current; if (!canonical || !current) throw new Error('The workspace is still loading.'); const bytes = canonical.toZip(); if (bytes.byteLength > 2 * 1024 * 1024) throw new Error('The ZIP is too large for WebMCP export; use the visible download link.'); const filename = `${slug(current.snapshot.system.name)}-workspec.zip`; actionsRef.current.recordAgentActivity('export_workspec_bundle', 'Exported WorkSpec bundle', `Prepared ${filename} with ${canonical.paths().length} files for agent-side handoff.`); return { filename, mediaType: 'application/zip', encoding: 'base64', byteLength: bytes.byteLength, data: bytesBase64(bytes) }; } },
     ];
     setStatus('checking'); setStatusLabel('WebMCP checking');
     void registerStudioWebMcpTools(context, tools, lifecycle.signal)
@@ -788,7 +844,7 @@ export function StudioApp(): ReactElement {
   ] : [];
 
   return (
-    <StudioShell projectName={workspace?.snapshot.system.name ?? 'New WorkSpec project'} steps={workflowSteps} activeStep={step} onStepChange={setStep} collapsed={collapsed} onCollapsedChange={setCollapsed} status={status} statusLabel={statusLabel} onHome={() => navigate('/')} onImport={() => importRef.current?.click()} onLoadExample={() => void loadExample()} onDownload={download} repoUrl={REPO_URL}>
+    <StudioShell projectName={workspace?.snapshot.system.name ?? 'New WorkSpec project'} steps={workflowSteps} activeStep={step} onStepChange={setStep} collapsed={collapsed} onCollapsedChange={setCollapsed} status={status} statusLabel={statusLabel} headerActions={<AgentActivityTrigger count={agentActivity.length} open={agentActivityOpen} onToggle={() => setAgentActivityOpen((current) => !current)}/>} rightSidebar={agentActivityOpen ? <AgentActivitySidebar entries={agentActivity} onClose={() => setAgentActivityOpen(false)}/> : null} onHome={() => navigate('/')} onImport={() => importRef.current?.click()} onLoadExample={() => void loadExample()} onDownload={download} repoUrl={REPO_URL}>
       <input ref={importRef} hidden type="file" accept=".zip,application/zip" onChange={(event: ChangeEvent<HTMLInputElement>) => { const file = event.currentTarget.files?.[0]; if (file) void importFile(file); event.currentTarget.value = ''; }} />
       {error ? <div className="journey-error" role="alert">{error}</div> : null}
       {systemSetupOpen ? (
@@ -819,6 +875,7 @@ export function StudioApp(): ReactElement {
                   selectElementForEditing(selection.slug, selection.kind as 'system' | ArchitectureElementKind);
                 }
               }} onDiagramChange={(diagram) => { setArchitectureScope(diagram.slug); setArchitectureLevel(diagram.type === 'c4-container' ? 'container' : diagram.type === 'c4-component' ? 'component' : 'context'); setAuthoring(false); setRelationshipAuthoring(false); }}/> : <p>Building the architecture model…</p>}
+              {agentNotices.design ? <AgentReviewBanner className="journey-agent-review-design" notice={agentNotices.design}/> : null}
               <div className="journey-canvas-palette" role="toolbar" aria-label="Add architecture element">
                 {architectureLevel === 'context' ? <>
                   <button type="button" aria-label="Add Person" title="Add Person" className={authoring && newKind === 'actor' ? 'active' : ''} onClick={() => beginAdding('actor')}><UserRound size={16}/></button>
@@ -880,9 +937,9 @@ export function StudioApp(): ReactElement {
             </aside>
           </div>
         </section>
-      ) : step === 'plan' && plan ? <InfrastructurePlanEditor plan={plan} onChange={changeRequirement} onContinue={() => advanceTo('compare')}/>
-      : step === 'compare' ? <ProviderComparison options={options} {...(selected ? { selected } : {})} onSelect={setSelected} onContinue={() => advanceTo('decision')}/>
-      : <DecisionStep decision={decision} editing={decisionEditing} agentDraft={decisionAgentDraft} options={options} selected={selected} rationale={rationale} requirementCount={plan?.spec.requirements.length ?? 0} download={completeDownload} onSelect={setSelected} onRationaleChange={setRationale} onRecord={() => { recordDecision(); }} onEdit={() => { setDecisionAgentDraft(false); setDecisionEditing(true); }} onCancelEdit={() => setDecisionEditing(false)}/>}
+      ) : step === 'plan' && plan ? <InfrastructurePlanEditor plan={plan} {...(agentNotices.plan ? { notice: <AgentReviewBanner notice={agentNotices.plan}/> } : {})} onChange={changeRequirement} onContinue={() => advanceTo('compare')}/>
+      : step === 'compare' ? <ProviderComparison options={options} {...(agentNotices.compare ? { notice: <AgentReviewBanner notice={agentNotices.compare}/> } : {})} {...(selected ? { selected } : {})} onSelect={setSelected} onContinue={() => advanceTo('decision')}/>
+      : <DecisionStep decision={decision} editing={decisionEditing} agentNotice={decisionAgentDraft && agentNotices.decision ? agentNotices.decision : null} options={options} selected={selected} rationale={rationale} requirementCount={plan?.spec.requirements.length ?? 0} download={completeDownload} onSelect={setSelected} onRationaleChange={setRationale} onRecord={() => { recordDecision(); }} onEdit={() => { setDecisionAgentDraft(false); setDecisionEditing(true); }} onCancelEdit={() => setDecisionEditing(false)}/>}
     </StudioShell>
   );
 }

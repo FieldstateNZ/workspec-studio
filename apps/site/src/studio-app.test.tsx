@@ -21,6 +21,14 @@ function tool(tools: Map<string, WebMcpToolDefinition>, name: string): WebMcpToo
   return value;
 }
 
+async function executeTool(tools: Map<string, WebMcpToolDefinition>, name: string, input: Record<string, unknown>): Promise<Record<string, unknown>> {
+  let result: Record<string, unknown> | undefined;
+  await act(async () => {
+    result = await tool(tools, name).execute(input);
+  });
+  return result ?? {};
+}
+
 afterEach(() => {
   Reflect.deleteProperty(document, 'modelContext');
   localStorage.clear();
@@ -140,8 +148,18 @@ describe('connected Studio workflow', () => {
     await expect(tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'open', tab: 'properties' })).rejects.toThrow('Select or begin adding');
     fireEvent.click(screen.getByRole('button', { name: 'Load example' }));
     await waitFor(() => expect(screen.getByText('Stormglass')).toBeInTheDocument());
-    const summary = await tool(tools, 'get_workspec_workspace_summary').execute({});
+    let summary: unknown;
+    await act(async () => {
+      summary = await tool(tools, 'get_workspec_workspace_summary').execute({});
+    });
     expect(summary).toMatchObject({ project: 'Stormglass', requirements: 6 });
+    expect(screen.queryByText('Review the design together')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Agent activity, 1 action' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Agent activity, 1 action' }));
+    expect(screen.getByRole('complementary', { name: 'Agent activity log' })).toBeInTheDocument();
+    expect(screen.getByText('Inspected workspace')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse agent activity' }));
+    expect(screen.queryByRole('complementary', { name: 'Agent activity log' })).not.toBeInTheDocument();
     await expect(tool(tools, 'navigate_studio').execute({ step: 'decision' })).rejects.toThrow('Open each workflow step in order');
     await act(async () => {
       await tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'open', tab: 'elements' });
@@ -163,18 +181,19 @@ describe('connected Studio workflow', () => {
       await tool(tools, 'navigate_studio').execute({ step: 'design' });
     });
     expect(screen.getByRole('heading', { name: 'Design the application' })).toBeInTheDocument();
-    const layout = await tool(tools, 'get_c4_layout').execute({ diagramSlug: 'container' });
+    const layout = await executeTool(tools, 'get_c4_layout', { diagramSlug: 'container' });
     expect(layout).toMatchObject({ diagramSlug: 'container', type: 'c4-container' });
     expect(layout.nodes).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'incident-management', kind: 'domain' })]));
     await act(async () => {
       await tool(tools, 'set_c4_layout').execute({ diagramSlug: 'container', mode: 'merge', positions: [{ id: 'incident-management', x: 120, y: 80 }] });
     });
-    expect((await tool(tools, 'get_c4_layout').execute({ diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
+    expect(screen.getByText('Layout updated with WebMCP').closest('.journey-agent-review')).toHaveClass('journey-agent-review-design');
+    expect((await executeTool(tools, 'get_c4_layout', { diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
     fireEvent.click(await screen.findByRole('button', { name: 'system: Stormglass' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Element description' }), { target: { value: 'Coordinates storm response and field restoration.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(async () => {
-      expect((await tool(tools, 'get_c4_layout').execute({ diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
+      expect((await executeTool(tools, 'get_c4_layout', { diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
     });
 
     let before: unknown;
@@ -189,21 +208,22 @@ describe('connected Studio workflow', () => {
     await act(async () => {
       after = await tool(tools, 'compare_cloud_providers').execute({});
     });
+    expect(screen.getByText('Comparison opened with WebMCP')).toBeInTheDocument();
     expect(JSON.stringify(after)).not.toBe(JSON.stringify(before));
 
     await expect(tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'missing', size: 'large' }] })).rejects.toThrow('Unknown requirement');
-    expect((await tool(tools, 'get_workspec_workspace_summary').execute({})).requirements).toBe(6);
+    expect((await executeTool(tools, 'get_workspec_workspace_summary', {})).requirements).toBe(6);
 
     await expect(tool(tools, 'record_cloud_decision').execute({})).rejects.toThrow('Prepare and review');
     await act(async () => {
       await tool(tools, 'prepare_cloud_decision').execute({ provider: 'azure', rationale: 'Best operational fit.' });
     });
-    expect(screen.getByText('Draft prepared with WebMCP')).toBeInTheDocument();
+    expect(screen.getByText('Draft prepared with WebMCP').closest('.journey-agent-review')).toHaveProperty('parentElement', expect.objectContaining({ className: 'journey-decision-layout' }));
     expect(screen.getByText('Review this decision together')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Microsoft Azure/ })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('textbox', { name: 'Rationale' })).toHaveValue('Best operational fit.');
     expect(screen.queryByText('Decision recorded')).not.toBeInTheDocument();
-    expect((await tool(tools, 'get_workspec_workspace_summary').execute({})).files).not.toContain('.workspec/decisions/cloud-platform.yaml');
+    expect((await executeTool(tools, 'get_workspec_workspace_summary', {})).files).not.toContain('.workspec/decisions/cloud-platform.yaml');
     await act(async () => {
       await tool(tools, 'record_cloud_decision').execute({});
     });
@@ -215,13 +235,13 @@ describe('connected Studio workflow', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Rationale' }), { target: { value: 'Best operational fit, with the clearest managed-service path.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Update ADR' }));
     expect(await screen.findByText('Best operational fit, with the clearest managed-service path.')).toBeInTheDocument();
-    const recorded = await tool(tools, 'get_workspec_workspace_summary').execute({});
+    const recorded = await executeTool(tools, 'get_workspec_workspace_summary', {});
     expect(recorded.files).toEqual(expect.arrayContaining([
       '.workspec/decisions/cloud-platform.yaml',
       '.workspec/topologies/azure.yaml',
       '.workspec/resources/operations-web.yaml',
     ]));
-    const bundle = await tool(tools, 'export_workspec_bundle').execute({});
+    const bundle = await executeTool(tools, 'export_workspec_bundle', {});
     expect(bundle).toMatchObject({ filename: 'stormglass-workspec.zip', mediaType: 'application/zip', encoding: 'base64' });
     expect(typeof bundle.data).toBe('string');
   }, 20_000);

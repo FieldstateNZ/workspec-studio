@@ -22,6 +22,8 @@ export interface StudioShellProps {
   onCollapsedChange: (collapsed: boolean) => void;
   status?: StudioStatus;
   statusLabel?: string;
+  headerActions?: ReactNode;
+  rightSidebar?: ReactNode;
   onHome?: () => void;
   onImport?: () => void;
   onLoadExample?: () => void;
@@ -41,6 +43,8 @@ export function StudioShell(props: StudioShellProps): ReactElement {
     onCollapsedChange,
     status = 'checking',
     statusLabel = 'WebMCP checking',
+    headerActions,
+    rightSidebar,
     onHome,
     onImport,
     onLoadExample,
@@ -68,6 +72,7 @@ export function StudioShell(props: StudioShellProps): ReactElement {
             <Github size={16} />
           </a>
         ) : null}
+        {headerActions}
       </header>
 
       <div className="ws-shell-body">
@@ -123,6 +128,7 @@ export function StudioShell(props: StudioShellProps): ReactElement {
           </div>
         </aside>
         <main className="ws-shell-main">{children}</main>
+        {rightSidebar}
       </div>
     </div>
   );
