@@ -5,11 +5,35 @@ product, publishing packages that WorkSpec Enterprise consumes directly rather t
 duplicating. Every package here is Enterprise-grade by constitution: Enterprise is a future
 consumer of this code.
 
+## WebMCP Challenge entry
+
+**WorkSpec Studio — design an application with your agent, turn the design into a
+provider-neutral infrastructure plan, compare Azure and AWS, record the decision as an ADR, and
+download the complete `.workspec` workspace.**
+
+- **Live app:** [studio.workspec.io](https://studio.workspec.io/)
+- **Direct workbench:** [studio.workspec.io/studio/design](https://studio.workspec.io/studio/design)
+- **Suggested prompt:** “Help me design an online ordering system. Build the C4 architecture,
+  derive its infrastructure plan, compare Azure and AWS, and prepare a recommendation—but stop
+  for my review at every stage and do not record the decision until I approve it.”
+- **Submission kit:** [`docs/webmcp-challenge-entry.md`](docs/webmcp-challenge-entry.md)
+
+WebMCP is the interaction layer, not a bolt-on chat panel. Eleven tools operate on the exact
+browser-local workspace shown in the UI. An agent can create and arrange a C4 model, navigate the
+gated workflow, edit neutral infrastructure requirements, compare providers, prepare an unsaved
+decision, and export the resulting ZIP. The human sees every successful tool call in the
+collapsible Agent activity sidebar and retains the final approval step.
+
+The reusable WorkSpec schema, canvas, topology, and decision packages pre-date the challenge.
+The connected `/studio/*` product journey, canonical browser workspace, Azure/AWS planning flow,
+WebMCP tool surface, staged decision guardrail, agent activity history, and end-to-end import/export
+experience were built during the challenge.
+
 | Module           | Status      | Where                                                                                                   |
 | ---------------- | ----------- | ------------------------------------------------------------------------------------------------------- |
 | Decisions        | live        | `packages/decision-*`, `apps/site`, `apps/mf-host`                                                      |
-| C4 Diagrams      | in progress | `packages/c4-*`, `apps/site` (`/c4` demo), `docs/c4/`                                                   |
-| Cost Attribution | in progress | `packages/cost-*`, `apps/site` (`/cost` demo), `docs/cost/` — publishes with the next tag               |
+| C4 Diagrams      | live        | `packages/c4-*`, `apps/site` (`/studio/design`), `docs/c4/`                                             |
+| Cost Attribution | live        | `packages/cost-*`, `apps/site` (`/cost/demo`), `docs/cost/`                                             |
 | Aspire Hosting   | in progress | `aspire-hosting/` (.NET), `docs/aspire-hosting/` — NuGet packaging/release wiring done, publish pending |
 
 ## Connected Studio workflow
@@ -17,7 +41,7 @@ consumer of this code.
 The Studio site now composes the C4, topology-planning, and decision packages into one
 browser-local workflow at `/studio/design`:
 
-1. Start with the example C4 model or import a ZIP containing `.workspec/`.
+1. Start with a blank design, load the example, or import a ZIP containing `.workspec/`.
 2. Design the system on the interactive C4 canvas and add or remove model elements.
 3. Review the generated, provider-neutral infrastructure plan and edit sizing, quantity, and availability.
 4. Compare deterministic Azure and AWS service mappings and monthly planning estimates.

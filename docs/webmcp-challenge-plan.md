@@ -1,6 +1,11 @@
-# WebMCP Challenge plan: WorkSpec Cost Copilot
+# Archived WebMCP Challenge plan: WorkSpec Cost Copilot
 
-Status: implementation-ready
+Status: superseded by the connected Studio entry in [`webmcp-challenge-entry.md`](webmcp-challenge-entry.md)
+
+This document preserves the original cost-only concept and implementation record. The final entry
+expanded the collaboration story into Design → Infrastructure → Compare → Decision while retaining
+the Cost Studio as an additional live WebMCP workbench.
+
 Entry URL: `https://studio.workspec.io/cost/demo/`
 Deadline: 2026-09-04 08:00 NZST (2026-09-03 13:00 PT)
 
