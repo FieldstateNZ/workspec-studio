@@ -47,6 +47,7 @@ import {
   type C4Lens,
   type C4NodeShape,
 } from './c4/index.js';
+import { reflowC4Boundary } from './c4/boundary-reflow.js';
 import { serializeForWrite } from './drag/serialize-for-write.js';
 import { clampTooltipPercents } from './geometry/clamp-tooltip.js';
 import { createInertLinkResolver } from './host.js';
@@ -225,6 +226,20 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     return inst;
   });
   useEffect(() => () => instance.dispose(), [instance]);
+
+  // The projection derives the system boundary from the initial layout and
+  // tags its contained nodes with `meta.inBoundary`. Reflow that derived
+  // panel from the live shape positions as a node moves so it continues to
+  // enclose the system during the gesture (not only after a re-projection).
+  useEffect(
+    () =>
+      instance.subscribe((state, previousState) => {
+        if (state.shapes === previousState.shapes) return;
+        const reflowed = reflowC4Boundary(state.shapes);
+        if (reflowed !== state.shapes) state._setShapesRaw(reflowed);
+      }),
+    [instance],
+  );
 
   /** Click/Enter activation: onSelect always, onNavigate only for a resolved slug. */
   const activateRef = useRef((shapeId: ShapeId) => {

@@ -35,20 +35,27 @@ references all three outputs and records the other provider as the considered al
 
 ## WebMCP workflow
 
-In a browser that supports the imperative WebMCP API, Studio exposes six page-scoped tools:
+In a browser that supports the imperative WebMCP API, Studio exposes eleven page-scoped tools:
 
 | Tool | Effect |
 | --- | --- |
 | `get_workspec_workspace_summary` | Reads project, requirement, estimate, and file summaries. |
+| `navigate_studio` | Opens visible workflow steps without pointer automation, while enforcing prerequisites and review order. |
+| `set_studio_sidebar` | Opens or closes the workflow or architecture sidebar and selects the Elements or Properties tab. |
 | `set_c4_architecture` | Atomically replaces the complete C4 snapshot and regenerates the plan. |
+| `get_c4_layout` | Reads the nodes and pinned positions for a C4 diagram. |
+| `set_c4_layout` | Curates or adjusts persisted C4 node positions without changing architecture semantics. |
 | `update_infrastructure_requirements` | Atomically applies a batch of neutral sizing changes. |
-| `compare_cloud_providers` | Reads Azure and AWS mappings and estimates. |
-| `record_cloud_decision` | Accepts a provider and writes the provider artifacts and ADR. |
+| `compare_cloud_providers` | Opens the visible Compare step and reads Azure and AWS mappings and estimates. |
+| `prepare_cloud_decision` | Opens Decision with an editable, explicitly unsaved provider and rationale draft for joint review. |
+| `record_cloud_decision` | Commits the currently visible prepared draft after the user approves it. |
 | `export_workspec_bundle` | Returns the complete ZIP as base64 with filename and media type for agent-side saving or handoff. |
 
-The tools call the same actions used by the visible React interface. A successful mutation is
-visible immediately; invalid architecture or requirement input fails before the canonical file
-map is changed.
+The tools call the same actions used by the visible React interface. A successful mutation or UI
+control is visible immediately; invalid architecture, navigation, sidebar, or requirement input
+fails before the requested state is changed. Provider selection is intentionally staged:
+`compare_cloud_providers` makes the comparison visible, `prepare_cloud_decision` renders an unsaved
+draft, and `record_cloud_decision` is reserved for the user's explicit approval of that draft.
 
 The visible completion action is a native download link rather than a JavaScript-only blob click,
 which lets Codex Browser use its normal file-download capability. WebMCP export is capped at 2 MiB;

@@ -2275,6 +2275,12 @@
   .journey-system-setup > button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; margin-top: var(--s-5); border: 1px solid var(--accent); border-radius: var(--r-2); padding: 0 14px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 600; cursor: pointer; }
   .journey-system-setup > button:disabled { opacity: .42; cursor: not-allowed; }
   .journey-decision { display: flex; height: 100%; min-height: 0; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
+  .journey-agent-review { display: flex; align-items: center; gap: var(--s-3); margin: 0 clamp(var(--s-6), 4vw, var(--s-10)) var(--s-4); padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line)); border-radius: var(--r-3); background: var(--accent-soft); color: var(--ink); }
+  .journey-agent-review > span:last-child { display: grid; gap: 2px; }
+  .journey-agent-review small { color: var(--accent); font: 8px var(--mono); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .journey-agent-review strong { font-size: 11px; }
+  .journey-agent-review > span:last-child > span { color: var(--ink-muted); font-size: 10px; line-height: 1.4; }
+  .journey-agent-review-icon { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: var(--r-2); background: var(--bg-elevated); color: var(--accent); }
   .journey-decision-content { width: 100%; min-height: 0; flex: 1; margin: 0; padding: 0; }
   .journey-decision-layout { display: grid; width: 100%; height: 100%; min-height: 0; grid-template-columns: minmax(0, .9fr) minmax(360px, 1.1fr); overflow: hidden; border: 0; border-radius: 0; background: var(--bg-elevated); box-shadow: none; }
   .journey-decision-options, .journey-decision-form { min-height: 0; overflow-y: auto; padding: var(--s-6) clamp(var(--s-6), 4vw, var(--s-10)); }
@@ -2392,12 +2398,26 @@
   letter-spacing: .04em;
 }
 .journey-element-list .journey-next {
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-3);
+  background: var(--accent);
+  color: var(--on-accent);
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 18%, transparent);
+  cursor: pointer;
+}
+.journey-element-list .journey-next:hover:not(:disabled) {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  transform: translateY(-1px);
+}
+.journey-element-list .journey-next:active:not(:disabled) {
+  transform: translateY(0);
 }
 .journey-element-list .journey-properties-actions button {
   font-family: var(--sans);

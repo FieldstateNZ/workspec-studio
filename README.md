@@ -23,7 +23,7 @@ browser-local workflow at `/studio/design`:
 4. Compare deterministic Azure and AWS service mappings and monthly planning estimates.
 5. Accept an option, generate the ADR and selected provider topology, then download the complete ZIP.
 
-The browser holds one canonical byte-preserving `.workspec` file map. UI actions and the six
+The browser holds one canonical byte-preserving `.workspec` file map. UI actions and the eleven
 imperative WebMCP tools operate on that same state; unknown imported files are retained. See
 [`docs/studio-workflow.md`](docs/studio-workflow.md) for the artifact and tool contracts.
 

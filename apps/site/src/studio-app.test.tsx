@@ -77,12 +77,12 @@ describe('connected Studio workflow', () => {
     expect(screen.getByRole('button', { name: 'Collapse model elements' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '2 Infrastructure' })).toBeDisabled();
     fireEvent.click(screen.getByRole('tab', { name: /Elements/ }));
-    expect(screen.getByRole('button', { name: 'Build infrastructure plan →' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Build infrastructure plan' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Collapse model elements' }));
-    expect(screen.queryByRole('button', { name: 'Build infrastructure plan →' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Build infrastructure plan' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Expand model elements' }));
-    expect(screen.getByRole('button', { name: 'Build infrastructure plan →' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Build infrastructure plan →' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Build infrastructure plan' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Build infrastructure plan' })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: '2 · Container' }));
     const addDomain = await screen.findByRole('button', { name: 'Add Domain' });
@@ -122,24 +122,47 @@ describe('connected Studio workflow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add to model' }));
     await waitFor(() => expect(screen.getAllByText('Report builder').length).toBeGreaterThan(0));
     expect(screen.getByRole('button', { name: '2 Infrastructure' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Build infrastructure plan →' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Build infrastructure plan →' }));
+    expect(screen.getByRole('button', { name: 'Build infrastructure plan' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Build infrastructure plan' }));
     expect(await screen.findByRole('heading', { name: 'Infrastructure shopping list' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '2 Infrastructure' })).toBeEnabled();
     expect(screen.getByRole('button', { name: '3 Compare' })).toBeDisabled();
   }, 20_000);
 
-  it('exposes WebMCP tools over the same plan and records a visible decision', async () => {
+  it('exposes WebMCP tools over the same visible, reviewable workflow', async () => {
     window.history.pushState({}, '', '/studio/design');
     const tools = installModelContext();
     render(<StudioApp />);
 
-    await waitFor(() => expect(tools.size).toBe(8));
+    await waitFor(() => expect(tools.size).toBe(11));
     expect(screen.getByText('WebMCP ready')).toBeInTheDocument();
+    await expect(tool(tools, 'navigate_studio').execute({ step: 'plan' })).rejects.toThrow('Design at least one deployable element');
+    await expect(tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'open', tab: 'properties' })).rejects.toThrow('Select or begin adding');
     fireEvent.click(screen.getByRole('button', { name: 'Load example' }));
     await waitFor(() => expect(screen.getByText('Stormglass')).toBeInTheDocument());
     const summary = await tool(tools, 'get_workspec_workspace_summary').execute({});
     expect(summary).toMatchObject({ project: 'Stormglass', requirements: 6 });
+    await expect(tool(tools, 'navigate_studio').execute({ step: 'decision' })).rejects.toThrow('Open each workflow step in order');
+    await act(async () => {
+      await tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'open', tab: 'elements' });
+    });
+    expect(screen.getByRole('button', { name: 'Collapse model elements' })).toBeInTheDocument();
+    await act(async () => {
+      await tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'closed' });
+    });
+    expect(screen.getByRole('button', { name: 'Expand model elements' })).toBeInTheDocument();
+    await act(async () => {
+      await tool(tools, 'navigate_studio').execute({ step: 'plan' });
+    });
+    expect(screen.getByRole('heading', { name: 'Infrastructure shopping list' })).toBeInTheDocument();
+    await act(async () => {
+      await tool(tools, 'navigate_studio').execute({ step: 'compare' });
+    });
+    expect(screen.getByRole('heading', { name: 'Compare cloud providers' })).toBeInTheDocument();
+    await act(async () => {
+      await tool(tools, 'navigate_studio').execute({ step: 'design' });
+    });
+    expect(screen.getByRole('heading', { name: 'Design the application' })).toBeInTheDocument();
     const layout = await tool(tools, 'get_c4_layout').execute({ diagramSlug: 'container' });
     expect(layout).toMatchObject({ diagramSlug: 'container', type: 'c4-container' });
     expect(layout.nodes).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'incident-management', kind: 'domain' })]));
@@ -154,18 +177,35 @@ describe('connected Studio workflow', () => {
       expect((await tool(tools, 'get_c4_layout').execute({ diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
     });
 
-    const before = await tool(tools, 'compare_cloud_providers').execute({});
+    let before: unknown;
+    await act(async () => {
+      before = await tool(tools, 'compare_cloud_providers').execute({});
+    });
+    expect(screen.getByRole('heading', { name: 'Compare cloud providers' })).toBeInTheDocument();
     await act(async () => {
       await tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'operations-web', size: 'large', quantity: 2 }] });
     });
-    const after = await tool(tools, 'compare_cloud_providers').execute({});
+    let after: unknown;
+    await act(async () => {
+      after = await tool(tools, 'compare_cloud_providers').execute({});
+    });
     expect(JSON.stringify(after)).not.toBe(JSON.stringify(before));
 
     await expect(tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'missing', size: 'large' }] })).rejects.toThrow('Unknown requirement');
     expect((await tool(tools, 'get_workspec_workspace_summary').execute({})).requirements).toBe(6);
 
+    await expect(tool(tools, 'record_cloud_decision').execute({})).rejects.toThrow('Prepare and review');
     await act(async () => {
-      await tool(tools, 'record_cloud_decision').execute({ provider: 'azure', rationale: 'Best operational fit.' });
+      await tool(tools, 'prepare_cloud_decision').execute({ provider: 'azure', rationale: 'Best operational fit.' });
+    });
+    expect(screen.getByText('Draft prepared with WebMCP')).toBeInTheDocument();
+    expect(screen.getByText('Review this decision together')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Microsoft Azure/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('textbox', { name: 'Rationale' })).toHaveValue('Best operational fit.');
+    expect(screen.queryByText('Decision recorded')).not.toBeInTheDocument();
+    expect((await tool(tools, 'get_workspec_workspace_summary').execute({})).files).not.toContain('.workspec/decisions/cloud-platform.yaml');
+    await act(async () => {
+      await tool(tools, 'record_cloud_decision').execute({});
     });
     expect(await screen.findByText('Decision recorded')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Use Microsoft Azure for the application platform' })).toBeInTheDocument();

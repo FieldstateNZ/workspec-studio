@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
 import { Layout, parseLayoutYaml, serializeLayout } from '@workspec/c4-schema';
+import type { Diagram } from '@workspec/c4-schema';
 import type { C4Model, ResolvedDiagram } from '@workspec/c4-model';
 import { THEME_TOKENS } from '@workspec/design';
 import { C4Diagram } from './c4-diagram.js';
@@ -103,6 +104,43 @@ function unresolvedNodeFixture(): { diagram: PositionedDiagram; resolved: Resolv
     layout: null,
   };
   return { diagram, resolved };
+}
+
+/** Two logical domains inside one system boundary, for live-reflow gestures. */
+function boundaryFixture(): { diagram: PositionedDiagram; resolved: ResolvedDiagram } {
+  const positionedNode = (nodeId: string, x: number): PositionedNode => ({
+    nodeId,
+    slug: nodeId,
+    kind: 'domain',
+    title: nodeId,
+    description: null,
+    technology: null,
+    tags: [],
+    position: null,
+    injected: false,
+    dangling: false,
+    x,
+    y: 0,
+    width: 300,
+    height: 110,
+    pinned: false,
+  });
+  const nodes = [positionedNode('first', 0), positionedNode('second', 400)];
+  const diagram: PositionedDiagram = { nodes, edges: [] };
+  return {
+    diagram,
+    resolved: {
+      slug: 'container',
+      path: '.workspec/diagrams/container.yaml',
+      title: 'Container',
+      type: 'c4-container',
+      description: null,
+      raw: {} as Diagram,
+      view: { nodes, edges: [] },
+      lensViews: null,
+      layout: null,
+    },
+  };
 }
 
 describe('C4Diagram — representative fixture render', () => {
@@ -522,6 +560,33 @@ describe('C4Diagram — editLayout gating', () => {
     expect(path).toBe('.workspec/diagrams/.layout/context.yaml');
     expect(content).toContain('ledger:');
     expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it('resizes the system boundary live when a contained node is dragged outward', () => {
+    const { resolved, diagram } = boundaryFixture();
+    const host: C4StudioHost = { capabilities: { editLayout: true }, source };
+    const { container } = render(
+      <C4Diagram
+        diagram={diagram}
+        resolved={resolved}
+        host={host}
+        boundary={{ level: 'container', label: 'Test System', accent: 'blue' }}
+      />,
+    );
+    const root = canvasRoot(container);
+    const at = centerOf(diagram, 'second');
+    const boundary = screen.getByLabelText('System boundary: Test System');
+
+    expect(boundary.style.width).toBe('796px');
+    expect(boundary.style.height).toBe('206px');
+    firePointer(root, 'pointerdown', at);
+    firePointer(root, 'pointermove', { clientX: at.clientX + 200, clientY: at.clientY + 120 });
+
+    // Assert before pointer-up: the system follows the gesture rather than
+    // waiting for layout persistence or a diagram re-projection.
+    expect(boundary.style.width).toBe('996px');
+    expect(boundary.style.height).toBe('326px');
+    firePointer(root, 'pointerup', { clientX: at.clientX + 200, clientY: at.clientY + 120 });
   });
 
   it("a drag merges into the diagram's EXISTING .layout/ data — the other lens's pins survive byte-for-byte (S4 fix round)", async () => {
