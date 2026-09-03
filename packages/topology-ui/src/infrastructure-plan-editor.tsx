@@ -1,24 +1,22 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import type { InfrastructurePlan, InfrastructureRequirement, RequirementSize } from '@workspec/topology-planning';
 import { Database, MessageSquare, Server, Sparkles } from 'lucide-react';
 
 export interface InfrastructurePlanEditorProps {
   plan: InfrastructurePlan;
-  notice?: ReactNode;
   onChange: (id: string, patch: Partial<Pick<InfrastructureRequirement, 'name' | 'size' | 'quantity' | 'availability' | 'notes'>>) => void;
   onContinue?: () => void;
 }
 
 const ICON = { compute: Server, database: Database, messaging: MessageSquare } as const;
 
-export function InfrastructurePlanEditor({ plan, notice, onChange, onContinue }: InfrastructurePlanEditorProps): ReactElement {
+export function InfrastructurePlanEditor({ plan, onChange, onContinue }: InfrastructurePlanEditorProps): ReactElement {
   return (
     <div className="tp-plan">
       <header className="tp-plan-header">
         <div><span>02 · Infrastructure</span><h1>Infrastructure shopping list</h1><p>Provider-neutral requirements derived from deployable C4 elements.</p></div>
         <div className="tp-plan-summary"><strong>{plan.spec.requirements.length}</strong><span>requirements</span></div>
       </header>
-      {notice}
       <div className="tp-plan-table-wrap">
         <table className="tp-plan-table">
           <thead><tr><th>Requirement</th><th>Capability</th><th>Size</th><th>Qty</th><th>Availability</th><th>Realizes</th></tr></thead>

@@ -2275,14 +2275,6 @@
   .journey-system-setup > button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; margin-top: var(--s-5); border: 1px solid var(--accent); border-radius: var(--r-2); padding: 0 14px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 600; cursor: pointer; }
   .journey-system-setup > button:disabled { opacity: .42; cursor: not-allowed; }
   .journey-decision { display: flex; height: 100%; min-height: 0; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
-  .journey-agent-review { display: flex; grid-area: review; align-items: center; gap: var(--s-3); margin: var(--s-4) clamp(var(--s-6), 4vw, var(--s-10)); padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line)); border-radius: var(--r-3); background: var(--accent-soft); color: var(--ink); }
-  .journey-agent-review > span:last-child { display: grid; gap: 2px; }
-  .journey-agent-review small { color: var(--accent); font: 8px var(--mono); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
-  .journey-agent-review strong { font-size: 11px; }
-  .journey-agent-review > span:last-child > span { color: var(--ink-muted); font-size: 10px; line-height: 1.4; }
-  .journey-agent-review-icon { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: var(--r-2); background: var(--bg-elevated); color: var(--accent); }
-  .journey-decision-layout > .journey-agent-review { margin-bottom: 0; }
-  .journey-agent-review-design { position: absolute; z-index: 14; right: 16px; bottom: 16px; left: 16px; width: min(660px, calc(100% - 32px)); margin: 0 auto; box-shadow: var(--sh-3); }
   .journey-agent-activity { position: relative; }
   .journey-agent-activity-trigger { display: inline-flex; min-height: 32px; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid var(--line); border-radius: var(--r-2); background: transparent; color: var(--ink-muted); font: 10px var(--mono); cursor: pointer; }
   .journey-agent-activity-trigger:hover, .journey-agent-activity-trigger[aria-expanded='true'] { border-color: var(--line-2); background: var(--bg-soft); color: var(--ink); }
@@ -2305,7 +2297,7 @@
   .journey-agent-activity-panel li code { overflow: hidden; color: var(--ink-fade); text-overflow: ellipsis; white-space: nowrap; }
   .journey-agent-activity-empty { margin: 0; padding: var(--s-6); color: var(--ink-muted); font-size: 11px; line-height: 1.55; }
   .journey-decision-content { width: 100%; min-height: 0; flex: 1; margin: 0; padding: 0; }
-  .journey-decision-layout { display: grid; width: 100%; height: 100%; min-height: 0; grid-template: "review review" auto "options form" minmax(0, 1fr) / minmax(0, .9fr) minmax(360px, 1.1fr); overflow: hidden; border: 0; border-radius: 0; background: var(--bg-elevated); box-shadow: none; }
+  .journey-decision-layout { display: grid; width: 100%; height: 100%; min-height: 0; grid-template: "options form" minmax(0, 1fr) / minmax(0, .9fr) minmax(360px, 1.1fr); overflow: hidden; border: 0; border-radius: 0; background: var(--bg-elevated); box-shadow: none; }
   .journey-decision-options, .journey-decision-form { min-height: 0; overflow-y: auto; padding: var(--s-6) clamp(var(--s-6), 4vw, var(--s-10)); }
   .journey-decision-options { grid-area: options; border-right: 1px solid var(--line); }
   .journey-decision-section-head small { color: var(--accent); font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -2370,7 +2362,7 @@
     .home-journey-card:nth-child(2) { border-right: 0; }
     .home-journey-card:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
     .journey-stage-head { align-items: flex-start; flex-direction: column; gap: var(--s-2); }
-    .journey-decision-layout { grid-template: "review" auto "options" auto "form" minmax(0, 1fr) / 1fr; }
+    .journey-decision-layout { grid-template: "options" auto "form" minmax(0, 1fr) / 1fr; }
     .journey-decision-options { border-right: 0; border-bottom: 1px solid var(--line); }
     .journey-complete { align-items: flex-start; flex-wrap: wrap; }
     .journey-complete a { width: 100%; justify-content: center; }

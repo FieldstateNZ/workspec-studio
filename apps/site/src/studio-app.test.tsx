@@ -187,7 +187,8 @@ describe('connected Studio workflow', () => {
     await act(async () => {
       await tool(tools, 'set_c4_layout').execute({ diagramSlug: 'container', mode: 'merge', positions: [{ id: 'incident-management', x: 120, y: 80 }] });
     });
-    expect(screen.getByText('Layout updated with WebMCP').closest('.journey-agent-review')).toHaveClass('journey-agent-review-design');
+    expect(screen.queryByText('Layout updated with WebMCP')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Agent activity, \d+ actions/ })).toBeInTheDocument();
     expect((await executeTool(tools, 'get_c4_layout', { diagramSlug: 'container' })).layout).toMatchObject({ nodes: { 'incident-management': { x: 120, y: 80 } } });
     fireEvent.click(await screen.findByRole('button', { name: 'system: Stormglass' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Element description' }), { target: { value: 'Coordinates storm response and field restoration.' } });
@@ -208,7 +209,7 @@ describe('connected Studio workflow', () => {
     await act(async () => {
       after = await tool(tools, 'compare_cloud_providers').execute({});
     });
-    expect(screen.getByText('Comparison opened with WebMCP')).toBeInTheDocument();
+    expect(screen.queryByText('Comparison opened with WebMCP')).not.toBeInTheDocument();
     expect(JSON.stringify(after)).not.toBe(JSON.stringify(before));
 
     await expect(tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'missing', size: 'large' }] })).rejects.toThrow('Unknown requirement');
@@ -218,8 +219,7 @@ describe('connected Studio workflow', () => {
     await act(async () => {
       await tool(tools, 'prepare_cloud_decision').execute({ provider: 'azure', rationale: 'Best operational fit.' });
     });
-    expect(screen.getByText('Draft prepared with WebMCP').closest('.journey-agent-review')).toHaveProperty('parentElement', expect.objectContaining({ className: 'journey-decision-layout' }));
-    expect(screen.getByText('Review this decision together')).toBeInTheDocument();
+    expect(screen.queryByText('Draft prepared with WebMCP')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Microsoft Azure/ })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('textbox', { name: 'Rationale' })).toHaveValue('Best operational fit.');
     expect(screen.queryByText('Decision recorded')).not.toBeInTheDocument();

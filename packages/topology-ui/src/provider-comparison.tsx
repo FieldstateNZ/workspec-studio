@@ -1,10 +1,9 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import type { CloudProvider, ProviderOption } from '@workspec/topology-planning';
 import { Check, Cloud } from 'lucide-react';
 
 export interface ProviderComparisonProps {
   options: readonly ProviderOption[];
-  notice?: ReactNode;
   selected?: CloudProvider;
   onSelect: (provider: CloudProvider) => void;
   onContinue?: () => void;
@@ -12,12 +11,11 @@ export interface ProviderComparisonProps {
 
 function money(amount: number): string { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount); }
 
-export function ProviderComparison({ options, notice, selected, onSelect, onContinue }: ProviderComparisonProps): ReactElement {
+export function ProviderComparison({ options, selected, onSelect, onContinue }: ProviderComparisonProps): ReactElement {
   const requirements = options[0]?.lines ?? [];
   return (
     <div className="tp-compare">
       <header className="tp-plan-header"><div><span>03 · Compare</span><h1>Compare cloud providers</h1><p>The same requirements, mapped and priced across Azure and AWS.</p></div><small>Estimate · prices captured {options[0]?.asOf}</small></header>
-      {notice}
       <div className="tp-compare-grid">
         <div className="tp-compare-requirements"><div className="tp-compare-title">Requirement</div>{requirements.map((line) => <div className="tp-compare-row" key={line.requirementId}><strong>{line.requirementName}</strong><span>{line.requirementId}</span></div>)}<div className="tp-compare-total-label">Estimated monthly total</div></div>
         {options.map((option) => <section className={`tp-provider${selected === option.provider ? ' tp-provider-selected' : ''}`} key={option.provider}>

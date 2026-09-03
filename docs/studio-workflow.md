@@ -58,9 +58,8 @@ fails before the requested state is changed. Provider selection is intentionally
 draft, and `record_cloud_decision` is reserved for the user's explicit approval of that draft.
 
 Every successful WebMCP call is also appended to the session's collapsible **Agent activity** sidebar in the Studio
-header. Review-worthy changes add a contextual banner to the affected Design, Infrastructure,
-Compare, or Decision surface; ordinary human interactions are not labelled as agent actions.
-Failed tool calls are excluded from the completed-action history.
+header. Ordinary human interactions are not labelled as agent actions, and failed tool calls are
+excluded from the completed-action history.
 
 The visible completion action is a native download link rather than a JavaScript-only blob click,
 which lets Codex Browser use its normal file-download capability. WebMCP export is capped at 2 MiB;
