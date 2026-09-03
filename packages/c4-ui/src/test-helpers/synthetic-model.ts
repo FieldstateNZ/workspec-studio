@@ -99,7 +99,7 @@ edges:
     category: data
     lens: deployment
   - from: billing
-    to: event-bus
+    to: __system__
     label: publishes events
     category: interaction
     lens: logical

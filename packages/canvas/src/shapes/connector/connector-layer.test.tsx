@@ -12,11 +12,12 @@ import { shapeFactory } from '../../test-helpers/factories.js';
 // optimistic local update + host.renameEdge bridge call, and the Escape
 // revert.
 
-function seeded(): { instance: CanvasStoreInstance; connectorId: ShapeId } {
+function seeded(routed = false): { instance: CanvasStoreInstance; connectorId: ShapeId } {
   const instance = createCanvasStore();
   registerWhiteboard(instance);
-  const a = shapeFactory({ type: 'sticky', x: 0, y: 0, width: 210, height: 150 });
-  const b = shapeFactory({ type: 'sticky', x: 400, y: 300, width: 210, height: 150 });
+  const endpointType = routed ? 'c4node' : 'sticky';
+  const a = shapeFactory({ type: endpointType, x: 0, y: 0, width: 210, height: 150 });
+  const b = shapeFactory({ type: endpointType, x: 400, y: 300, width: 210, height: 150 });
   const c = shapeFactory({ type: 'connector', x: 0, y: 0, width: 0, height: 0 });
   const connector: Shape = {
     ...c,
@@ -44,6 +45,20 @@ describe('ConnectorLayer — label rendering', () => {
       </CanvasProvider>,
     );
     expect(screen.getByText('calls')).toBeDefined();
+  });
+
+  test('shows the full connection description when its label is hovered', () => {
+    const { instance } = seeded(true);
+    render(
+      <CanvasProvider store={instance}>
+        <ConnectorLayer />
+      </CanvasProvider>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Connection: calls' });
+    expect(trigger).not.toHaveTextContent('calls');
+    fireEvent.pointerEnter(trigger);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('calls');
   });
 });
 

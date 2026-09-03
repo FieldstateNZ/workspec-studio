@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
-import { ChevronsLeft, ChevronsRight, Github, Home, PackageOpen } from 'lucide-react';
+import { BookOpen, ChevronsLeft, ChevronsRight, Download, Github, Home, PackageOpen } from 'lucide-react';
 import { WorkspecMark } from '@workspec/design/components';
 
 export interface StudioStep {
@@ -8,6 +8,7 @@ export interface StudioStep {
   description?: string;
   icon: ReactNode;
   complete?: boolean;
+  disabled?: boolean;
 }
 
 export type StudioStatus = 'checking' | 'ready' | 'working' | 'error' | 'unsupported';
@@ -23,6 +24,7 @@ export interface StudioShellProps {
   statusLabel?: string;
   onHome?: () => void;
   onImport?: () => void;
+  onLoadExample?: () => void;
   onDownload?: () => void;
   repoUrl?: string;
   footer?: ReactNode;
@@ -41,6 +43,7 @@ export function StudioShell(props: StudioShellProps): ReactElement {
     statusLabel = 'WebMCP checking',
     onHome,
     onImport,
+    onLoadExample,
     onDownload,
     repoUrl,
     footer,
@@ -77,6 +80,11 @@ export function StudioShell(props: StudioShellProps): ReactElement {
             <button className="ws-shell-nav-item" type="button" onClick={onImport} title="Import .workspec ZIP">
               <PackageOpen size={16} /><span>Import workspace</span>
             </button>
+            {onLoadExample ? (
+              <button className="ws-shell-nav-item" type="button" onClick={onLoadExample} title="Load example workspace">
+                <BookOpen size={16} /><span>Load example</span>
+              </button>
+            ) : null}
 
             <p className="ws-shell-section">Workflow</p>
             {steps.map((step, index) => (
@@ -84,7 +92,8 @@ export function StudioShell(props: StudioShellProps): ReactElement {
                 key={step.id}
                 className={`ws-shell-nav-item${step.id === activeStep ? ' ws-shell-nav-active' : ''}`}
                 type="button"
-                onClick={() => onStepChange(step.id)}
+                disabled={step.disabled}
+                onClick={() => { if (!step.disabled) onStepChange(step.id); }}
                 aria-current={step.id === activeStep ? 'step' : undefined}
                 title={step.description ?? step.label}
               >
@@ -98,8 +107,8 @@ export function StudioShell(props: StudioShellProps): ReactElement {
           <div className="ws-shell-sidebar-bottom">
             {footer}
             {onDownload ? (
-              <button className="ws-shell-download" type="button" onClick={onDownload}>
-                Download .workspec
+              <button className="ws-shell-download" type="button" onClick={onDownload} aria-label="Download .workspec" title="Download .workspec">
+                <Download size={16} /><span>Download .workspec</span>
               </button>
             ) : null}
             <button

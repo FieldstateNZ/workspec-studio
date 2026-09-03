@@ -325,7 +325,7 @@ describe('buildC4Shapes — boundary + z-banding', () => {
     expect(conn < inside).toBe(true);
   });
 
-  test('an empty interior gets the default footprint centred on the node centroid', () => {
+  test('an empty interior gets the default footprint after the outside nodes', () => {
     const empty = diagram('c4-container', [node('user', 'actor', 'User')], []);
     const result = buildC4Shapes(empty, {
       lens: 'logical',
@@ -334,9 +334,8 @@ describe('buildC4Shapes — boundary + z-banding', () => {
     });
     const b = result.shapes['c4_boundary' as ShapeId];
     expect(b).toMatchObject({ width: 600, height: 360 });
-    // Centred on the (single-node) centroid.
-    expect(b?.x).toBe(100 - 300);
-    expect(b?.y).toBe(100 - 180);
+    expect(b?.x).toBe(100 + C4_NODE_WIDTH + C4_BOUNDARY_PAD);
+    expect(b?.y).toBe(100 + C4_NODE_HEIGHT / 2 - 180);
   });
 
   test('meta.dimmed is NOT set by the projection (current enterprise parity)', () => {

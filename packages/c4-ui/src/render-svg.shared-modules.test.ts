@@ -57,7 +57,8 @@ describe('render-svg.ts and c4-diagram.tsx share the canvas geometry/style modul
   });
 
   it('the facade RENDERS the shared ConnectorLayer and CALLS the projection (same router at runtime)', () => {
-    expect(canvasBody).toMatch(/<ConnectorLayer\s*\/?>/);
+    expect(canvasBody).toMatch(/<ConnectorLayer\s+layer=["']geometry["']\s*\/?>/);
+    expect(canvasBody).toMatch(/<ConnectorLayer\s+layer=["']labels["']\s*\/?>/);
     expect(canvasBody).toMatch(/buildC4Shapes\s*\(/);
   });
 

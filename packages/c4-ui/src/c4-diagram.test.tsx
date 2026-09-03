@@ -145,8 +145,8 @@ describe('C4Diagram — representative fixture render', () => {
   it('renders the shared-router edges with their category labels', async () => {
     const { resolved, diagram } = await loadContext();
     const { container } = render(<C4Diagram diagram={diagram} resolved={resolved} />);
-    expect(screen.getByText('designs systems in')).toBeInTheDocument();
-    expect(screen.getByText('settles invoices via')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connection: designs systems in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connection: settles invoices via' })).toBeInTheDocument();
     // The edges are the engine's .c4-conn groups (the enterprise treatment).
     expect(container.querySelectorAll('g.c4-conn').length).toBeGreaterThanOrEqual(2);
   });

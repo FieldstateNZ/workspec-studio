@@ -7,6 +7,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+import { Info } from 'lucide-react';
 import { useCanvasHover, useCanvasInstance, useCanvasStore } from '../../canvas-provider.js';
 import { pageToScreen } from '../../utils/transforms.js';
 import type { ConnectorShape } from '../../shape-types.js';
@@ -113,7 +114,9 @@ const EdgeLabelEditor: FC<{
   );
 };
 
-export const ConnectorLayer: FC = () => {
+export const ConnectorLayer: FC<{ layer?: 'all' | 'geometry' | 'labels' }> = ({
+  layer = 'all',
+}) => {
   const instance = useCanvasInstance();
   const shapes = useCanvasStore((s) => s.shapes);
   const camera = useCanvasStore((s) => s.camera);
@@ -121,6 +124,7 @@ export const ConnectorLayer: FC = () => {
   const editingId = useCanvasStore((s) => s.editingId);
   const hiddenKinds = useCanvasStore((s) => s.hiddenKinds);
   const hoveredId = useCanvasHover((s) => s.hoveredId);
+  const setHovered = useCanvasHover((s) => s.setHovered);
   const spec = useCanvasSpec();
   const kindOf = instance.kindResolver;
   const routingOpts = routingOptsFromUtils((type) => instance.shapeUtils.get(type));
@@ -148,7 +152,7 @@ export const ConnectorLayer: FC = () => {
 
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-      <svg
+      {layer !== 'labels' && <svg
         style={{
           position: 'absolute',
           inset: 0,
@@ -254,9 +258,9 @@ export const ConnectorLayer: FC = () => {
             </g>
           );
         })}
-      </svg>
+      </svg>}
 
-      {connectors.map((c) => {
+      {layer !== 'geometry' && connectors.map((c) => {
         const geom = resolveConnectorGeometry(c, shapes, routingOpts);
         if (!geom || !c.cardinality) return null;
         // ER multiplicity chips sit just inside each endpoint, nudged along
@@ -306,7 +310,7 @@ export const ConnectorLayer: FC = () => {
         );
       })}
 
-      {connectors.map((c) => {
+      {layer !== 'geometry' && connectors.map((c) => {
         const geom = resolveConnectorGeometry(c, shapes, routingOpts);
         if (!geom) return null;
         const labelScreen = pageToScreen(geom.label, camera);
@@ -343,30 +347,67 @@ export const ConnectorLayer: FC = () => {
           );
         }
         return (
-          <div
+          <button
+            type="button"
+            data-canvas-ui
             key={`label-${c.id}`}
+            aria-label={`Connection: ${c.label}`}
+            tabIndex={0}
+            onPointerEnter={() => setHovered(c.id)}
+            onPointerLeave={() => setHovered(null)}
+            onFocus={() => setHovered(c.id)}
+            onBlur={() => setHovered(null)}
+            onPointerDown={(event) => event.stopPropagation()}
             style={{
               position: 'absolute',
+              zIndex: hoveredId === c.id ? 100 : 20,
               left: labelScreen.x,
               top: labelScreen.y,
               transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-              fontSize: 11,
-              lineHeight: 1.2,
-              maxWidth: 180,
-              textAlign: 'center',
-              padding: '2px 6px',
-              borderRadius: 6,
-              background: 'color-mix(in oklab, var(--bg-elevated) 88%, transparent)',
+              pointerEvents: 'auto',
+              display: 'grid',
+              placeItems: 'center',
+              width: 22,
+              height: 22,
+              padding: 0,
+              borderRadius: 999,
+              background: 'color-mix(in oklab, var(--bg-elevated) 94%, transparent)',
               color: 'var(--ink-soft)',
               border: '1px solid var(--line)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              outline: 'none',
+              cursor: 'help',
+              boxShadow: hoveredId === c.id ? 'var(--sh-1)' : 'none',
             }}
           >
-            {c.label}
-          </div>
+            <Info size={13} aria-hidden="true" />
+            {hoveredId === c.id && (
+              <span
+                role="tooltip"
+                style={{
+                  position: 'absolute',
+                  zIndex: 1,
+                  top: 'calc(100% + 8px)',
+                  left: '50%',
+                  width: 'max-content',
+                  maxWidth: 320,
+                  transform: 'translateX(-50%)',
+                  whiteSpace: 'normal',
+                  padding: '8px 10px',
+                  border: '1px solid var(--line)',
+                  borderRadius: 8,
+                  background: 'var(--bg-elevated)',
+                  boxShadow: 'var(--sh-3)',
+                  color: 'var(--ink)',
+                  fontSize: 11,
+                  lineHeight: 1.4,
+                  textAlign: 'left',
+                  pointerEvents: 'none',
+                }}
+              >
+                {c.label}
+              </span>
+            )}
+          </button>
         );
       })}
     </div>

@@ -31,7 +31,7 @@ export { elementKey } from './element-key.js';
 export { C4Diagram } from './c4-diagram.js';
 export type { C4DiagramProps } from './c4-diagram.js';
 export { C4Explorer } from './c4-explorer.js';
-export type { C4ExplorerProps } from './c4-explorer.js';
+export type { C4ExplorerProps, C4ExplorerSelection } from './c4-explorer.js';
 
 // ── Standalone SVG rendering ────────────────────────────────────────────────
 export { renderSvg } from './render-svg.js';

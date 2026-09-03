@@ -130,6 +130,7 @@ const CHIP: CSSProperties = {
 
 export const C4NodeComponent: FC<Props> = ({ shape, isEditing }) => {
   const instance = useCanvasInstance();
+  const canvasHost = getC4Host(instance);
   const updateShape = useCanvasStore((s) => s.updateShape);
   const setEditing = useCanvasStore((s) => s.setEditing);
   const renderStatus = useC4NodeStatus();
@@ -270,7 +271,7 @@ export const C4NodeComponent: FC<Props> = ({ shape, isEditing }) => {
           {renderStatus(shape)}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {shape.drillable === true && (
+          {shape.drillable === true && canvasHost.enterRoom !== undefined && (
             <button
               type="button"
               data-canvas-ui
@@ -303,7 +304,7 @@ export const C4NodeComponent: FC<Props> = ({ shape, isEditing }) => {
               ROOM <ArrowUpRight size={10} strokeWidth={2.5} />
             </button>
           )}
-          {shape.drillable === true && (
+          {shape.drillable === true && canvasHost.drillDown !== undefined && (
             <button
               type="button"
               data-canvas-ui

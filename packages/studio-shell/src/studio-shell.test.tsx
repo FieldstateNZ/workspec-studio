@@ -7,7 +7,7 @@ describe('StudioShell', () => {
     const html = renderToStaticMarkup(
       <StudioShell
         projectName="Ledger"
-        steps={[{ id: 'design', label: 'Design', icon: <span>icon</span> }]}
+        steps={[{ id: 'design', label: 'Design', icon: <span>icon</span> }, { id: 'plan', label: 'Plan', icon: <span>icon</span>, disabled: true }]}
         activeStep="design"
         onStepChange={() => undefined}
         collapsed={false}
@@ -15,6 +15,7 @@ describe('StudioShell', () => {
         status="ready"
         statusLabel="WebMCP ready"
         onImport={() => undefined}
+        onLoadExample={() => undefined}
         onDownload={() => undefined}
       >
         <p>Workspace</p>
@@ -23,7 +24,9 @@ describe('StudioShell', () => {
     expect(html).toContain('Ledger');
     expect(html).toContain('WebMCP ready');
     expect(html).toContain('Import workspace');
+    expect(html).toContain('Load example');
     expect(html).toContain('Download .workspec');
     expect(html).toContain('aria-current="step"');
+    expect(html).toContain('disabled=""');
   });
 });

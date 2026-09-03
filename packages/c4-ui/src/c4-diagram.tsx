@@ -42,6 +42,9 @@ import {
   fitCamera,
   nodeShapeId,
   registerC4,
+  type BoundaryOpts,
+  type C4CanvasHost,
+  type C4Lens,
   type C4NodeShape,
 } from './c4/index.js';
 import { serializeForWrite } from './drag/serialize-for-write.js';
@@ -65,6 +68,14 @@ export interface C4DiagramProps {
   host?: C4StudioHost | undefined;
   /** Called when the user drills down on a node with a resolved slug (click, or Enter while focused). */
   onNavigate?: ((diagramSlug: string) => void) | undefined;
+  /** Diagram targets keyed by node id for explicit drill-button navigation. */
+  drillTargets?: ReadonlyMap<string, string> | undefined;
+  /** Called by a node's magnifying-glass button with its target diagram slug. */
+  onDrill?: ((diagramSlug: string) => void) | undefined;
+  /** Optional system/container boundary rendered behind the in-scope nodes. */
+  boundary?: BoundaryOpts | undefined;
+  /** Active C4 container lens, used to determine which nodes belong inside the boundary. */
+  lens?: C4Lens | undefined;
   /** The persistently-selected node's `nodeId` (accent ring), or null/omitted for none — the caller owns selection state. */
   selectedNodeId?: string | null | undefined;
   /** Called when the user activates a node (click/Enter) with that node, or clicks the background (with null). */
@@ -153,6 +164,10 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     spec,
     host,
     onNavigate,
+    drillTargets,
+    onDrill,
+    boundary,
+    lens = 'logical',
     selectedNodeId = null,
     onSelect,
     elementsByKindAndSlug,
@@ -170,8 +185,8 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
 
   // Latest-props refs so the ONE registered tool/a11y bridge always sees
   // current callbacks and data without re-registration.
-  const latest = useRef({ diagram, resolved, host, onNavigate, onSelect, editable });
-  latest.current = { diagram, resolved, host, onNavigate, onSelect, editable };
+  const latest = useRef({ diagram, resolved, host, onNavigate, onSelect, drillTargets, onDrill, editable });
+  latest.current = { diagram, resolved, host, onNavigate, onSelect, drillTargets, onDrill, editable };
 
   const nodesById = useMemo(
     () => new Map(diagram.nodes.map((n) => [n.nodeId, n] as const)),
@@ -182,6 +197,12 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
 
   const [instance] = useState<CanvasStoreInstance>(() => {
     const inst = createCanvasStore();
+    inst.host = {
+      drillDown: (nodeId: string) => {
+        const target = latest.current.drillTargets?.get(nodeId);
+        if (target) latest.current.onDrill?.(target);
+      },
+    } as C4CanvasHost;
     registerC4(inst);
     // The facade's a11y wrapper replaces the raw card Component; the facade
     // tool replaces the whiteboard select tool (see c4-canvas/facade-tool.ts
@@ -263,7 +284,12 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         (n) => [n.nodeId, { x: n.x, y: n.y, width: n.width, height: n.height }] as const,
       ),
     );
-    const projection = buildC4Shapes(synthetic, { positions });
+    const projection = buildC4Shapes(synthetic, {
+      positions,
+      drillableSlugs: new Set(drillTargets?.keys() ?? []),
+      lens,
+      ...(boundary ? { boundary } : {}),
+    });
     instance.getState()._setShapesRaw(projection.shapes);
 
     const rect = containerRef.current?.getBoundingClientRect();
@@ -272,7 +298,7 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     } else {
       instance.getState().setCamera({ x: 0, y: 0, zoom: 1 });
     }
-  }, [diagram, resolved, instance]);
+  }, [diagram, resolved, drillTargets, boundary, lens, instance]);
 
   // Controlled selection: the caller owns it; the store halo follows.
   useEffect(() => {
@@ -389,8 +415,9 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
               <A11yBridgeContext.Provider value={bridge}>
                 <Canvas shortcutScope="none" renderContextMenu={() => null}>
                   {canvasChrome && <Background variant="lines" />}
-                  <ConnectorLayer />
+                  <ConnectorLayer layer="geometry" />
                   <ShapeLayer />
+                  <ConnectorLayer layer="labels" />
                   {canvasChrome && (
                     <>
                       <CanvasZoomControls />

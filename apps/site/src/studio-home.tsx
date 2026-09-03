@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { SiteNav } from './nav.js';
 import { Link, navigate } from './router.js';
 import { setPendingImport } from './pending-import.js';
+import { clearStudioWorkspace } from './studio-storage.js';
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio';
 
@@ -31,7 +32,7 @@ export function StudioHome(): ReactElement {
                 record the decision. The complete result stays in portable, reviewable WorkSpec files.
               </p>
               <div className="home-cta-row">
-                <Link href="/studio/design" className="home-cta home-cta-primary">
+                <Link href="/studio/design" className="home-cta home-cta-primary" onClick={clearStudioWorkspace}>
                   Start new <span aria-hidden="true">→</span>
                 </Link>
                 <label className="home-cta home-cta-outline home-import-cta">

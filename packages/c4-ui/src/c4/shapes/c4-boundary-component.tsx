@@ -20,6 +20,7 @@ interface Props {
 export const C4BoundaryComponent: FC<Props> = ({ shape }) => {
   return (
     <div
+      aria-label={`System boundary: ${shape.label}`}
       style={{
         position: 'relative',
         width: shape.width,

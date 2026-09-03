@@ -152,8 +152,9 @@ export function Canvas({
   const defaultStack = (
     <>
       {backgroundVariant !== undefined && <Background variant={backgroundVariant} />}
-      <ConnectorLayer />
+      <ConnectorLayer layer="geometry" />
       <ShapeLayer />
+      <ConnectorLayer layer="labels" />
       <SelectionLayer />
       <MarqueeBox />
       <CanvasZoomControls />

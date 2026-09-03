@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { C4StudioHost } from './host.js';
 import { C4Explorer } from './c4-explorer.js';
 import { firePointer } from './test-helpers/fire-pointer.js';
@@ -82,6 +82,27 @@ describe('C4Explorer — segmented level tabs (replaces the old tree nav)', () =
 });
 
 describe('C4Explorer — clicking an element populates the detail rail', () => {
+  it('can omit the details rail when the host relies on hover cards', async () => {
+    const model = await loadSyntheticModel();
+    render(<C4Explorer model={model} initialDiagramSlug="context" showDetails={false} />);
+    await screen.findByText('Architect');
+
+    fireEvent.click(screen.getByRole('button', { name: /actor: Architect/i }));
+    expect(screen.queryByRole('complementary', { name: 'Element details' })).not.toBeInTheDocument();
+    expect(screen.getByText('hover an element for details')).toBeInTheDocument();
+  });
+
+  it('drills from the context system to the sole container diagram with the canvas icon', async () => {
+    const model = await loadSyntheticModel();
+    render(<C4Explorer model={model} initialDiagramSlug="context" showDetails={false} />);
+    await screen.findByText('Architect');
+
+    expect(screen.queryByLabelText('Enter architecture room')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Drill into this'));
+    expect(await screen.findByText('Billing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '2 · Container' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('keeps collapsible details closed until selection and lets the user close them again', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="context" collapsibleDetails />);
@@ -118,7 +139,8 @@ describe('C4Explorer — clicking an element populates the detail rail', () => {
 
   it('clicking a node — WITHOUT drilling down — populates the rail with its kind/name/description', async () => {
     const model = await loadSyntheticModel();
-    render(<C4Explorer model={model} initialDiagramSlug="context" />);
+    const onSelectionChange = vi.fn();
+    render(<C4Explorer model={model} initialDiagramSlug="context" onSelectionChange={onSelectionChange} />);
     await screen.findByText('Architect');
 
     fireEvent.click(screen.getByRole('button', { name: /actor: Architect/i }));
@@ -134,12 +156,21 @@ describe('C4Explorer — clicking an element populates the detail rail', () => {
     expect(
       within(rail).getByText('Designs systems and reviews proposed changes.'),
     ).toBeInTheDocument();
+    expect(onSelectionChange).toHaveBeenLastCalledWith({
+      nodeId: 'architect',
+      slug: 'architect',
+      kind: 'actor',
+      name: 'Architect',
+    });
   });
 
   it('shows a Tech row for an element that carries a technology field (the rail omits it entirely otherwise — see the Architect case above, which has none)', async () => {
     const model = await loadSyntheticModel();
     render(<C4Explorer model={model} initialDiagramSlug="ledger" />);
     await screen.findByText('Billing');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Deployment' }));
+    await screen.findByText('API Server');
 
     fireEvent.click(screen.getByRole('button', { name: /container: API Server/i }));
 
@@ -297,10 +328,15 @@ describe('C4Explorer — lens toggle for a c4-container diagram', () => {
     render(<C4Explorer model={model} initialDiagramSlug="ledger" />);
     await screen.findByText('Billing');
 
+    expect(screen.getByLabelText('System boundary: Ledger')).toBeInTheDocument();
+
     expect(screen.getByText('Logical')).toBeInTheDocument();
-    expect(screen.getByText('publishes events')).toBeInTheDocument(); // lens: logical
-    expect(screen.getByText('publishes/consumes')).toBeInTheDocument(); // lens: both
-    expect(screen.queryByText('reads/writes')).not.toBeInTheDocument(); // lens: deployment
+    expect(screen.getByText('Billing')).toBeInTheDocument();
+    expect(screen.queryByText('API Server')).not.toBeInTheDocument();
+    expect(screen.queryByText('Primary Database')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Connection: publishes events')).toBeInTheDocument(); // lens: logical
+    expect(screen.queryByLabelText('Connection: publishes/consumes')).not.toBeInTheDocument(); // both-tagged, but runtime endpoints are not in the logical projection
+    expect(screen.queryByLabelText('Connection: reads/writes')).not.toBeInTheDocument(); // lens: deployment
   });
 
   it('switching to the deployment lens re-lays-out with the deployment-lens edges', async () => {
@@ -310,8 +346,11 @@ describe('C4Explorer — lens toggle for a c4-container diagram', () => {
 
     fireEvent.click(screen.getByText('Deployment'));
 
-    expect(await screen.findByText('reads/writes')).toBeInTheDocument(); // lens: deployment
-    expect(screen.getByText('publishes/consumes')).toBeInTheDocument(); // lens: both
-    expect(screen.queryByText('publishes events')).not.toBeInTheDocument(); // lens: logical
+    expect(await screen.findByLabelText('Connection: reads/writes')).toBeInTheDocument(); // lens: deployment
+    expect(screen.getByText('API Server')).toBeInTheDocument();
+    expect(screen.getByText('Primary Database')).toBeInTheDocument();
+    expect(screen.queryByText('Billing')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Connection: publishes/consumes')).toBeInTheDocument(); // lens: both
+    expect(screen.queryByLabelText('Connection: publishes events')).not.toBeInTheDocument(); // lens: logical
   });
 });

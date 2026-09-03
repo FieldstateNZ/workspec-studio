@@ -7,6 +7,7 @@ import {
   ActorElement,
   C4Element,
   Diagram,
+  DomainElement,
   ExternalSystemElement,
   Spec,
   SystemElement,
@@ -19,7 +20,9 @@ import type { WebMcpToolDefinition } from './cost-webmcp.js';
 export const ARCHITECTURE_ELEMENT_KINDS = [
   'actor',
   'external-system',
+  'domain',
   'container',
+  'component',
   'database',
   'queue',
 ] as const;
@@ -34,6 +37,10 @@ export interface ArchitectureElementInput {
   description: string;
   technology?: string;
   tags?: string[];
+  /** Functional owner shown by the logical lens. Components only. */
+  logicalParentId?: string;
+  /** Runtime host shown by the deployment lens. Components only. */
+  deploymentParentId?: string;
 }
 
 export interface ArchitectureRelationshipInput {
@@ -41,6 +48,7 @@ export interface ArchitectureRelationshipInput {
   to: string;
   description: string;
   category?: ArchitectureRelationshipCategory;
+  lens?: 'logical' | 'deployment' | 'both';
 }
 
 export interface ArchitectureSnapshot {
@@ -89,8 +97,10 @@ const STYLE_SPEC = Spec.parse({
       variant: 'external',
     },
     container: { accent: '#8b5cf6', icon: 'box', shape: 'box' },
+    component: { accent: '#6366f1', icon: 'component', shape: 'box' },
     database: { accent: '#10b981', icon: 'database', shape: 'cylinder' },
     queue: { accent: '#f59e0b', icon: 'queue', shape: 'box' },
+    domain: { accent: '#8b5cf6', icon: 'layers', shape: 'box' },
   },
   connections: {
     interaction: { accent: '#64748b', style: 'solid' },
@@ -101,85 +111,183 @@ const STYLE_SPEC = Spec.parse({
 
 export const DEFAULT_ARCHITECTURE_SNAPSHOT: ArchitectureSnapshot = {
   system: {
-    name: 'Fieldstate Ledger',
-    summary: 'A small event-driven billing platform.',
+    name: 'Stormglass',
+    summary: 'A coordinated outage response and customer communications platform.',
     description:
-      'Captures billable events, maintains an authoritative ledger, and sends payments to an external gateway.',
+      'Stormglass ingests outage reports and infrastructure telemetry, helps operations teams prioritise incidents, dispatches field crews, and keeps customers updated.',
   },
   elements: [
     {
-      id: 'platform-architect',
+      id: 'operations-coordinator',
       kind: 'actor',
-      name: 'Platform Architect',
-      description: 'Explores the system and plans architectural change.',
+      name: 'Operations Coordinator',
+      description: 'Monitors active incidents, sets priorities, and dispatches field crews.',
     },
     {
-      id: 'payment-gateway',
+      id: 'field-technician',
+      kind: 'actor',
+      name: 'Field Technician',
+      description: 'Receives assignments and reports investigation and repair progress from the field.',
+    },
+    {
+      id: 'customer',
+      kind: 'actor',
+      name: 'Customer',
+      description: 'Reports outages and follows restoration progress.',
+    },
+    {
+      id: 'utility-telemetry',
       kind: 'external-system',
-      name: 'Payment Gateway',
-      description: 'Authorises and settles customer payments.',
+      name: 'Utility Telemetry Platform',
+      description: 'Streams equipment alarms and infrastructure telemetry.',
     },
     {
-      id: 'web-app',
+      id: 'weather-data',
+      kind: 'external-system',
+      name: 'Weather Data Service',
+      description: 'Provides forecasts and severe-weather alerts for affected areas.',
+    },
+    {
+      id: 'customer-messaging',
+      kind: 'external-system',
+      name: 'Customer Messaging Provider',
+      description: 'Delivers outage and restoration notifications over SMS, email, and push.',
+    },
+    {
+      id: 'incident-management',
+      kind: 'domain',
+      name: 'Incident Management',
+      description: 'Owns the outage lifecycle, impact assessment, prioritisation, and restoration state.',
+    },
+    {
+      id: 'field-operations',
+      kind: 'domain',
+      name: 'Field Operations',
+      description: 'Coordinates dispatch, assignments, and progress reported by field crews.',
+    },
+    {
+      id: 'customer-communications',
+      kind: 'domain',
+      name: 'Customer Communications',
+      description: 'Owns outage reporting and proactive customer status updates.',
+    },
+    {
+      id: 'situational-intelligence',
+      kind: 'domain',
+      name: 'Situational Intelligence',
+      description: 'Combines telemetry and weather signals to detect and enrich incidents.',
+    },
+    {
+      id: 'operations-web',
       kind: 'container',
-      name: 'Operations Web App',
-      description: 'Lets operators inspect accounts, invoices, and payment state.',
+      name: 'Operations Web',
+      description: 'Hosts the browser experience used by operations teams.',
       technology: 'React',
     },
     {
-      id: 'ledger-api',
+      id: 'field-mobile',
       kind: 'container',
-      name: 'Ledger API',
-      description: 'Coordinates ledger commands and exposes account state.',
-      technology: 'Node.js',
+      name: 'Field Mobile App',
+      description: 'Hosts the offline-capable experience used by field technicians.',
+      technology: 'React Native',
     },
     {
-      id: 'primary-db',
+      id: 'platform-api',
+      kind: 'container',
+      name: 'Platform API',
+      description: 'Exposes incident, dispatch, and customer-reporting capabilities.',
+      technology: '.NET',
+    },
+    {
+      id: 'background-workers',
+      kind: 'container',
+      name: 'Background Workers',
+      description: 'Runs telemetry ingestion, risk analysis, and notification workflows.',
+      technology: '.NET',
+    },
+    {
+      id: 'incident-store',
       kind: 'database',
-      name: 'Primary Database',
-      description: 'Stores accounts, ledger entries, and payment state.',
+      name: 'Incident Store',
+      description: 'Stores incidents, assignments, observations, and customer notification state.',
       technology: 'PostgreSQL',
     },
     {
       id: 'event-bus',
       kind: 'queue',
       name: 'Event Bus',
-      description: 'Distributes durable billing and payment events.',
-      technology: 'Azure Service Bus',
+      description: 'Distributes durable incident, dispatch, telemetry, and notification events.',
+      technology: 'Cloud-neutral messaging',
+    },
+    {
+      id: 'incident-command-ui', kind: 'component', name: 'Incident Command UI',
+      description: 'Presents the live incident board and restoration workflow.', logicalParentId: 'incident-management', deploymentParentId: 'operations-web',
+    },
+    {
+      id: 'incident-api', kind: 'component', name: 'Incident API',
+      description: 'Owns incident commands, queries, prioritisation, and restoration state.', logicalParentId: 'incident-management', deploymentParentId: 'platform-api',
+    },
+    {
+      id: 'dispatch-board-ui', kind: 'component', name: 'Dispatch Board UI',
+      description: 'Lets coordinators assign crews and track field progress.', logicalParentId: 'field-operations', deploymentParentId: 'operations-web',
+    },
+    {
+      id: 'technician-workflow', kind: 'component', name: 'Technician Workflow',
+      description: 'Supports assignments, observations, and repair updates in the field.', logicalParentId: 'field-operations', deploymentParentId: 'field-mobile',
+    },
+    {
+      id: 'dispatch-api', kind: 'component', name: 'Dispatch API',
+      description: 'Coordinates assignments and technician progress.', logicalParentId: 'field-operations', deploymentParentId: 'platform-api',
+    },
+    {
+      id: 'outage-reporting', kind: 'component', name: 'Outage Reporting',
+      description: 'Accepts customer outage reports and returns current status.', logicalParentId: 'customer-communications', deploymentParentId: 'platform-api',
+    },
+    {
+      id: 'notification-orchestrator', kind: 'component', name: 'Notification Orchestrator',
+      description: 'Selects affected customers and schedules lifecycle notifications.', logicalParentId: 'customer-communications', deploymentParentId: 'background-workers',
+    },
+    {
+      id: 'telemetry-ingestion', kind: 'component', name: 'Telemetry Ingestion',
+      description: 'Normalises equipment alarms and converts signals into incident candidates.', logicalParentId: 'situational-intelligence', deploymentParentId: 'background-workers',
+    },
+    {
+      id: 'weather-risk-analysis', kind: 'component', name: 'Weather Risk Analysis',
+      description: 'Enriches incidents with forecasts and severe-weather risk.', logicalParentId: 'situational-intelligence', deploymentParentId: 'background-workers',
     },
   ],
   relationships: [
-    {
-      from: 'platform-architect',
-      to: 'web-app',
-      description: 'Inspects account and payment state',
-      category: 'interaction',
-    },
-    {
-      from: 'web-app',
-      to: 'ledger-api',
-      description: 'Calls HTTPS APIs',
-      category: 'interaction',
-    },
-    {
-      from: 'ledger-api',
-      to: 'primary-db',
-      description: 'Reads and writes ledger state',
-      category: 'data',
-    },
-    {
-      from: 'ledger-api',
-      to: 'event-bus',
-      description: 'Publishes billing events',
-      category: 'data',
-    },
-    {
-      from: 'ledger-api',
-      to: 'payment-gateway',
-      description: 'Requests payment authorisation',
-      category: 'interaction',
-    },
+    { from: 'operations-coordinator', to: 'incident-command-ui', description: 'Prioritises incidents and coordinates restoration', category: 'interaction' },
+    { from: 'operations-coordinator', to: 'dispatch-board-ui', description: 'Dispatches crews and tracks field progress', category: 'interaction' },
+    { from: 'field-technician', to: 'technician-workflow', description: 'Receives work and reports repair progress', category: 'interaction' },
+    { from: 'customer', to: 'outage-reporting', description: 'Reports outages and tracks restoration', category: 'interaction' },
+    { from: 'utility-telemetry', to: 'telemetry-ingestion', description: 'Streams equipment alarms and telemetry', category: 'data' },
+    { from: 'weather-data', to: 'weather-risk-analysis', description: 'Provides forecasts and severe-weather alerts', category: 'data' },
+    { from: 'notification-orchestrator', to: 'customer-messaging', description: 'Sends outage and restoration notifications', category: 'interaction' },
+    { from: 'incident-command-ui', to: 'incident-api', description: 'Submits incident commands and queries', category: 'interaction' },
+    { from: 'dispatch-board-ui', to: 'dispatch-api', description: 'Submits assignments and reads crew status', category: 'interaction' },
+    { from: 'technician-workflow', to: 'dispatch-api', description: 'Synchronises assignments and field updates', category: 'interaction' },
+    { from: 'outage-reporting', to: 'incident-api', description: 'Creates reports and reads incident status', category: 'interaction' },
+    { from: 'telemetry-ingestion', to: 'incident-api', description: 'Creates telemetry-derived incident candidates', category: 'dependency' },
+    { from: 'weather-risk-analysis', to: 'incident-api', description: 'Enriches incidents with weather risk', category: 'dependency' },
+    { from: 'incident-api', to: 'dispatch-api', description: 'Requests operational response', category: 'dependency' },
+    { from: 'incident-api', to: 'notification-orchestrator', description: 'Publishes customer-impact changes', category: 'dependency' },
+    { from: 'incident-api', to: 'incident-store', description: 'Reads and writes incident state', category: 'data' },
+    { from: 'dispatch-api', to: 'incident-store', description: 'Reads and writes assignment state', category: 'data' },
+    { from: 'incident-api', to: 'event-bus', description: 'Publishes incident lifecycle events', category: 'data' },
+    { from: 'telemetry-ingestion', to: 'event-bus', description: 'Consumes telemetry and publishes candidates', category: 'data' },
+    { from: 'notification-orchestrator', to: 'event-bus', description: 'Consumes customer-impact events', category: 'data' },
   ],
+};
+
+/** Minimal valid workspace used for a genuinely blank Studio session. */
+export const EMPTY_ARCHITECTURE_SNAPSHOT: ArchitectureSnapshot = {
+  system: {
+    name: 'New WorkSpec project',
+    description: 'A new system architecture.',
+  },
+  elements: [],
+  relationships: [],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -229,10 +337,10 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
     description: requireString(systemValue.description, 'snapshot.system.description', 1_000),
     ...(summary !== undefined ? { summary } : {}),
   };
-  if (!Array.isArray(root.elements) || root.elements.length === 0) {
+  if (!Array.isArray(root.elements)) {
     throw new ArchitectureSnapshotError(
       'invalid_input',
-      'snapshot.elements must contain at least one element.',
+      'snapshot.elements must be an array.',
     );
   }
   if (root.elements.length > MAX_ELEMENTS) {
@@ -246,7 +354,7 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
     const value = requireRecord(raw, `snapshot.elements[${index}]`);
     assertKeys(
       value,
-      ['id', 'kind', 'name', 'description', 'technology', 'tags'],
+      ['id', 'kind', 'name', 'description', 'technology', 'tags', 'logicalParentId', 'deploymentParentId'],
       `snapshot.elements[${index}]`,
     );
     const id = requireString(value.id, `snapshot.elements[${index}].id`, 80);
@@ -272,10 +380,26 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
       `snapshot.elements[${index}].technology`,
       160,
     );
-    if ((kind === 'actor' || kind === 'external-system') && technology !== undefined) {
+    if ((kind === 'actor' || kind === 'external-system' || kind === 'domain') && technology !== undefined) {
       throw new ArchitectureSnapshotError(
         'invalid_input',
         `${kind} elements do not accept technology.`,
+      );
+    }
+    const logicalParentId = optionalString(
+      value.logicalParentId,
+      `snapshot.elements[${index}].logicalParentId`,
+      80,
+    );
+    const deploymentParentId = optionalString(
+      value.deploymentParentId,
+      `snapshot.elements[${index}].deploymentParentId`,
+      80,
+    );
+    if (kind !== 'component' && (logicalParentId !== undefined || deploymentParentId !== undefined)) {
+      throw new ArchitectureSnapshotError(
+        'invalid_input',
+        `${kind} elements do not accept logicalParentId or deploymentParentId.`,
       );
     }
     let tags: string[] | undefined;
@@ -301,8 +425,20 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
       ),
       ...(technology !== undefined ? { technology } : {}),
       ...(tags !== undefined ? { tags } : {}),
+      ...(logicalParentId !== undefined ? { logicalParentId } : {}),
+      ...(deploymentParentId !== undefined ? { deploymentParentId } : {}),
     };
   });
+  const kindById = new Map(elements.map((element) => [element.id, element.kind]));
+  for (const element of elements) {
+    if (element.kind !== 'component') continue;
+    if (element.logicalParentId !== undefined && kindById.get(element.logicalParentId) !== 'domain') {
+      throw new ArchitectureSnapshotError('invalid_parent', `${element.id}.logicalParentId must reference a domain.`);
+    }
+    if (element.deploymentParentId !== undefined && kindById.get(element.deploymentParentId) !== 'container') {
+      throw new ArchitectureSnapshotError('invalid_parent', `${element.id}.deploymentParentId must reference a container.`);
+    }
+  }
   if (!Array.isArray(root.relationships)) {
     throw new ArchitectureSnapshotError(
       'invalid_input',
@@ -320,7 +456,7 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
     const value = requireRecord(raw, `snapshot.relationships[${index}]`);
     assertKeys(
       value,
-      ['from', 'to', 'description', 'category'],
+      ['from', 'to', 'description', 'category', 'lens'],
       `snapshot.relationships[${index}]`,
     );
     const from = requireString(value.from, `snapshot.relationships[${index}].from`, 80);
@@ -343,6 +479,10 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
         `${String(category)} is not a supported relationship category.`,
       );
     }
+    const lens = value.lens ?? 'both';
+    if (!['logical', 'deployment', 'both'].includes(String(lens))) {
+      throw new ArchitectureSnapshotError('invalid_input', `${String(lens)} is not a supported relationship lens.`);
+    }
     return {
       from,
       to,
@@ -352,6 +492,7 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
         240,
       ),
       category: category as ArchitectureRelationshipCategory,
+      lens: lens as 'logical' | 'deployment' | 'both',
     };
   });
   return { system, elements, relationships };
@@ -360,7 +501,9 @@ export function parseArchitectureSnapshot(input: unknown): ArchitectureSnapshot 
 const DIRECTORY_BY_KIND: Record<ArchitectureElementKind, string> = {
   actor: 'actors',
   'external-system': 'external-systems',
+  domain: 'domains',
   container: 'containers',
+  component: 'components',
   database: 'databases',
   queue: 'queues',
 };
@@ -391,19 +534,27 @@ export function buildArchitectureFiles(snapshot: ArchitectureSnapshot): Record<s
   };
   for (const element of snapshot.elements) {
     const data = {
-      ...(element.kind === 'container' || element.kind === 'database' || element.kind === 'queue'
+      ...(element.kind === 'container' || element.kind === 'component' || element.kind === 'database' || element.kind === 'queue'
         ? { type: element.kind }
         : {}),
       title: element.name,
       description: element.description,
       ...(element.technology !== undefined ? { technology: element.technology } : {}),
       ...(element.tags !== undefined ? { tags: element.tags } : {}),
+      ...(element.kind === 'component' ? {
+        links: [
+          ...(element.logicalParentId ? [{ 'feature-in-domain': `~/domains/${element.logicalParentId}.yaml` }] : []),
+          ...(element.deploymentParentId ? [{ 'part-of': `~/containers/${element.deploymentParentId}.yaml` }] : []),
+        ],
+      } : {}),
     };
     const parsed =
       element.kind === 'actor'
         ? ActorElement.parse(data)
         : element.kind === 'external-system'
           ? ExternalSystemElement.parse(data)
+          : element.kind === 'domain'
+            ? DomainElement.parse(data)
           : C4Element.parse(data);
     files[`.workspec/${DIRECTORY_BY_KIND[element.kind]}/${element.id}.yaml`] = yaml(
       parsed,
@@ -411,7 +562,7 @@ export function buildArchitectureFiles(snapshot: ArchitectureSnapshot): Record<s
     );
   }
 
-  const internalKinds = new Set<ArchitectureElementKind>(['container', 'database', 'queue']);
+  const internalKinds = new Set<ArchitectureElementKind>(['domain', 'container', 'component', 'database', 'queue']);
   const kindById = new Map(snapshot.elements.map((element) => [element.id, element.kind]));
   const contextElements = snapshot.elements.filter((element) => !internalKinds.has(element.kind));
   const contextEdgeKeys = new Set<string>();
@@ -441,20 +592,40 @@ export function buildArchitectureFiles(snapshot: ArchitectureSnapshot): Record<s
     nodes: contextElements.map(typedNode),
     edges: contextEdges,
   });
+  const containerElements = snapshot.elements.filter((element) => element.kind !== 'component');
+  const projectEndpoint = (id: string, lens: 'logical' | 'deployment'): string | null => {
+    if (id === 'system') return '__system__';
+    const element = snapshot.elements.find((candidate) => candidate.id === id);
+    if (!element) return null;
+    if (element.kind === 'component') {
+      return lens === 'logical'
+        ? element.logicalParentId ?? null
+        : element.deploymentParentId ?? null;
+    }
+    if (lens === 'logical' && ['container', 'database', 'queue'].includes(element.kind)) return null;
+    if (lens === 'deployment' && element.kind === 'domain') return null;
+    return element.id;
+  };
+  const containerEdges: Record<string, string>[] = [];
+  const containerEdgeKeys = new Set<string>();
+  for (const relationship of snapshot.relationships) {
+    for (const lens of ['logical', 'deployment'] as const) {
+      if (relationship.lens && relationship.lens !== 'both' && relationship.lens !== lens) continue;
+      const from = projectEndpoint(relationship.from, lens);
+      const to = projectEndpoint(relationship.to, lens);
+      if (!from || !to || from === to) continue;
+      const key = `${lens}\u0000${from}\u0000${to}\u0000${relationship.description}`;
+      if (containerEdgeKeys.has(key)) continue;
+      containerEdgeKeys.add(key);
+      containerEdges.push({ from, to, label: relationship.description, category: relationship.category ?? 'interaction', lens });
+    }
+  }
   const container = Diagram.parse({
     title: `${snapshot.system.name} · Containers`,
     type: 'c4-container',
     description: 'The deployable services, data stores, queues, actors, and external dependencies.',
-    nodes: snapshot.elements.map(typedNode),
-    edges: snapshot.relationships
-      .filter((relationship) => relationship.from !== 'system' && relationship.to !== 'system')
-      .map((relationship) => ({
-        from: relationship.from,
-        to: relationship.to,
-        label: relationship.description,
-        category: relationship.category ?? 'interaction',
-        lens: 'both' as const,
-      })),
+    nodes: containerElements.map(typedNode),
+    edges: containerEdges,
   });
   files['.workspec/diagrams/system-context.yaml'] = yaml(
     context,
@@ -464,6 +635,24 @@ export function buildArchitectureFiles(snapshot: ArchitectureSnapshot): Record<s
     container,
     'https://schema.workspec.io/v1alpha1/c4/diagram.schema.json',
   );
+  const drillParents = snapshot.elements.filter((element) => element.kind === 'domain' || element.kind === 'container');
+  for (const parent of drillParents) {
+    const parentField = parent.kind === 'domain' ? 'logicalParentId' : 'deploymentParentId';
+    const components = snapshot.elements.filter((element) => element.kind === 'component' && element[parentField] === parent.id);
+    const componentIds = new Set(components.map((element) => element.id));
+    const componentDiagram = Diagram.parse({
+      title: `${parent.name} · Components`,
+      type: 'c4-component',
+      description: parent.kind === 'domain'
+        ? `Functional components owned by ${parent.name}.`
+        : `Components deployed in ${parent.name}.`,
+      nodes: components.map(typedNode),
+      edges: snapshot.relationships
+        .filter((relationship) => componentIds.has(relationship.from) && componentIds.has(relationship.to))
+        .map((relationship) => ({ from: relationship.from, to: relationship.to, label: relationship.description, category: relationship.category ?? 'interaction' })),
+    });
+    files[`.workspec/diagrams/${parent.id}.yaml`] = yaml(componentDiagram, 'https://schema.workspec.io/v1alpha1/c4/diagram.schema.json');
+  }
   return files;
 }
 
@@ -502,9 +691,20 @@ export async function loadArchitectureWorkspace(
     throw new ArchitectureSnapshotError('invalid_model', 'The imported workspace has no C4 system.');
   }
   const systemData = systemEntry.element.data;
-  const kinds: readonly ArchitectureElementKind[] = ['actor', 'external-system', 'container', 'database', 'queue'];
+  const kinds: readonly ArchitectureElementKind[] = ['actor', 'external-system', 'domain', 'container', 'component', 'database', 'queue'];
   const elements = kinds.flatMap((kind) => [...model.elements[kind].values()].map((loaded): ArchitectureElementInput => {
     const data = loaded.element.data;
+    const links = 'links' in data && Array.isArray(data.links) ? data.links : [];
+    const linkedSlug = (linkType: string, directory: string): string | undefined => {
+      for (const raw of links) {
+        if (!isRecord(raw) || typeof raw[linkType] !== 'string') continue;
+        const match = (raw[linkType] as string).match(new RegExp(`(?:^|/)${directory}/([^/]+)\\.ya?ml$`));
+        if (match?.[1]) return match[1];
+      }
+      return undefined;
+    };
+    const logicalParentId = kind === 'component' ? linkedSlug('feature-in-domain', 'domains') : undefined;
+    const deploymentParentId = kind === 'component' ? linkedSlug('part-of', 'containers') : undefined;
     return {
       id: loaded.slug,
       kind,
@@ -512,18 +712,27 @@ export async function loadArchitectureWorkspace(
       description: data.description ?? data.title,
       ...('technology' in data && data.technology ? { technology: data.technology } : {}),
       ...('tags' in data && data.tags?.length ? { tags: [...data.tags] } : {}),
+      ...(logicalParentId ? { logicalParentId } : {}),
+      ...(deploymentParentId ? { deploymentParentId } : {}),
     };
   }));
   const diagram = model.diagrams.find((candidate) => candidate.type === 'c4-container');
-  const view = diagram?.lensViews?.logical ?? diagram?.view;
-  const relationships = (view?.edges ?? []).flatMap((edge): ArchitectureRelationshipInput[] => {
-    const from = edge.from === '__system__' ? 'system' : edge.from;
-    const to = edge.to === '__system__' ? 'system' : edge.to;
-    if (edge.dangling || from === to) return [];
-    const category = ['interaction', 'data', 'dependency'].includes(edge.category ?? '')
-      ? edge.category as ArchitectureRelationshipCategory
-      : 'interaction';
-    return [{ from, to, description: edge.label ?? 'connects to', category }];
+  const relationshipKeys = new Set<string>();
+  const relationships = (['logical', 'deployment'] as const).flatMap((lens): ArchitectureRelationshipInput[] => {
+    const view = diagram?.lensViews?.[lens] ?? diagram?.view;
+    return (view?.edges ?? []).flatMap((edge): ArchitectureRelationshipInput[] => {
+      const from = edge.from === '__system__' ? 'system' : edge.from;
+      const to = edge.to === '__system__' ? 'system' : edge.to;
+      if (edge.dangling || from === to) return [];
+      const description = edge.label ?? 'connects to';
+      const key = `${from}\u0000${to}\u0000${description}`;
+      if (relationshipKeys.has(key)) return [];
+      relationshipKeys.add(key);
+      const category = ['interaction', 'data', 'dependency'].includes(edge.category ?? '')
+        ? edge.category as ArchitectureRelationshipCategory
+        : 'interaction';
+      return [{ from, to, description, category, lens: edge.lens === 'both' ? 'both' : lens }];
+    });
   });
   const snapshot: ArchitectureSnapshot = {
     system: {
@@ -830,6 +1039,7 @@ function relationshipSchema(): Record<string, unknown> {
       },
       description: { type: 'string', minLength: 1, maxLength: 240 },
       category: { type: 'string', enum: ['interaction', 'data', 'dependency'] },
+      lens: { type: 'string', enum: ['logical', 'deployment', 'both'] },
     },
     ['from', 'to', 'description'],
   );
@@ -870,6 +1080,8 @@ export function createArchitectureWebMcpTools(
       description: { type: 'string', minLength: 1, maxLength: 1000 },
       technology: { type: 'string', minLength: 1, maxLength: 160 },
       tags: { type: 'array', maxItems: 20, items: { type: 'string', minLength: 1, maxLength: 64 } },
+      logicalParentId: { type: 'string', description: 'For a component, the domain that owns it in the logical lens.' },
+      deploymentParentId: { type: 'string', description: 'For a component, the runtime container that hosts it in the deployment lens.' },
     },
     ['id', 'kind', 'name', 'description'],
   );

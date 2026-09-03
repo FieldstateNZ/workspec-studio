@@ -33,9 +33,9 @@ describe('Architecture Studio WebMCP integration', () => {
       </StrictMode>,
     );
 
-    await waitFor(() => expect(registered.size).toBe(5));
+    await waitFor(() => expect(registered.size).toBe(5), { timeout: 5_000 });
     expect(screen.getByText('Agent tools ready')).toBeInTheDocument();
-    expect(screen.getByText('Fieldstate Ledger')).toBeInTheDocument();
+    expect(screen.getByText('Stormglass')).toBeInTheDocument();
     await waitFor(() =>
       expect(document.querySelector('.c4-diagram')).toHaveAttribute('data-layout-editable', 'true'),
     );

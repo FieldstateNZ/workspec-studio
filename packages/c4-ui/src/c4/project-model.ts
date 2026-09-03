@@ -150,7 +150,7 @@ export function buildC4Shapes(
   // both. (Idempotent over `lensViews`, which arrive pre-partitioned.)
   const allNodes = view.nodes;
   const nodesIn =
-    options.boundary?.level === 'container'
+    options.boundary?.level === 'container' && resolved.type === 'c4-container'
       ? allNodes.filter(
           (n) =>
             ALWAYS_OUTSIDE.has(kindOf(n)) ||
@@ -365,16 +365,15 @@ export function buildC4Shapes(
       bw = bMaxX - bMinX + C4_BOUNDARY_PAD * 2;
       bh = bMaxY - bMinY + C4_BOUNDARY_PAD * 2;
     } else {
-      // Empty interior — a minimum visible footprint centred on the node
-      // centroid (or the origin), so the container stays a usable "drop
-      // things here" target.
+      // Empty interior — place a minimum visible footprint after the outside
+      // nodes in the left-to-right reading direction. Centering it on their
+      // centroid made people and external systems appear inside an empty
+      // system, reversing the meaning of the boundary.
       const placed = Object.values(positions);
-      const cx = placed.length ? placed.reduce((s, p) => s + p.x, 0) / placed.length : 0;
-      const cy = placed.length ? placed.reduce((s, p) => s + p.y, 0) / placed.length : 0;
       bw = C4_BOUNDARY_DEFAULT_W;
       bh = C4_BOUNDARY_DEFAULT_H;
-      bx = cx - bw / 2;
-      by = cy - bh / 2;
+      bx = placed.length ? maxX + C4_BOUNDARY_PAD : -bw / 2;
+      by = placed.length ? (minY + maxY - bh) / 2 : -bh / 2;
     }
 
     // Indexed (with the z-bands above) between the outside nodes and the
@@ -399,10 +398,17 @@ export function buildC4Shapes(
   // boundary exists (an empty container/component/code view), frame the
   // boundary so the "drop things here" target is centred instead of
   // stranded at the origin.
-  const bounds: Box | null =
-    nodesIn.length > 0
-      ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
-      : boundaryRect;
+  const nodeRect: Box | null = nodesIn.length > 0
+    ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+    : null;
+  const bounds: Box | null = nodeRect && boundaryRect
+    ? {
+        x: Math.min(nodeRect.x, boundaryRect.x),
+        y: Math.min(nodeRect.y, boundaryRect.y),
+        width: Math.max(nodeRect.x + nodeRect.width, boundaryRect.x + boundaryRect.width) - Math.min(nodeRect.x, boundaryRect.x),
+        height: Math.max(nodeRect.y + nodeRect.height, boundaryRect.y + boundaryRect.height) - Math.min(nodeRect.y, boundaryRect.y),
+      }
+    : nodeRect ?? boundaryRect;
 
   return { shapes, slugToShapeId, bounds };
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { C4Demo, demoProjection } from './c4-demo.js';
 import { edgeShapeId, nodeShapeId } from './project-model.js';
 import type { ShapeId } from '@workspec/canvas';
@@ -98,8 +98,8 @@ describe.each(['light', 'dark'] as const)('C4Demo (%s theme)', (theme) => {
     expect(accents.filter((a) => a === '#4CAF50')).toHaveLength(2); // data ×2
     expect(accents.filter((a) => a === '#4A90D9')).toHaveLength(1); // identity
 
-    // Edge labels render as midpoint chips.
-    expect(container.textContent).toContain('reads/writes');
+    // Edge descriptions render as accessible midpoint icon buttons.
+    expect(screen.getByRole('button', { name: 'Connection: reads/writes' })).toBeInTheDocument();
   });
 });
 

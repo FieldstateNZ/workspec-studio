@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { C4Model, LoadedElement, ResolvedDiagram } from '@workspec/c4-model';
 import { layoutDiagram } from '@workspec/c4-layout';
 import type { LayoutDirection, PositionedDiagram, PositionedNode } from '@workspec/c4-layout';
-import { labelAwareLayerSpacing } from './c4/index.js';
+import { insideTypesFor, labelAwareLayerSpacing } from './c4/index.js';
 import { LensToggle } from '@workspec/design/components';
 import { PanelRightClose } from 'lucide-react';
 import { C4Diagram } from './c4-diagram.js';
@@ -36,10 +36,27 @@ export interface C4ExplorerProps {
   direction?: LayoutDirection | undefined;
   /** Initially selected diagram slug. Defaults to the first LEVEL TAB's diagram (the lowest-numbered canonical level present — a multi-diagram model opens on `1 · Context` when a context diagram exists, never `3 · Component`), falling back to `model.diagrams[0]` only for an empty tab set (i.e. an empty model). */
   initialDiagramSlug?: string | undefined;
+  /** Initially selected container lens. Defaults to logical. */
+  initialLens?: 'logical' | 'deployment' | undefined;
   /** Show the shared infinite-canvas grid, zoom controls, and minimap. */
   canvasChrome?: boolean | undefined;
   /** Hide the details rail until selection and let the user collapse it. */
   collapsibleDetails?: boolean | undefined;
+  /** Render the element details rail. Disable when the host uses canvas hover cards instead. */
+  showDetails?: boolean | undefined;
+  /** Notify hosts when the active diagram changes so surrounding controls can follow its C4 level. */
+  onDiagramChange?: ((diagram: ResolvedDiagram) => void) | undefined;
+  /** Notify hosts when the active container lens changes so authoring controls can match the projection. */
+  onLensChange?: ((lens: 'logical' | 'deployment') => void) | undefined;
+  /** Notify hosts when a canvas element is selected or the selection is cleared. */
+  onSelectionChange?: ((selection: C4ExplorerSelection | null) => void) | undefined;
+}
+
+export interface C4ExplorerSelection {
+  readonly nodeId: string;
+  readonly slug: string | null;
+  readonly kind: PositionedNode['kind'];
+  readonly name: string;
 }
 
 type Lens = 'logical' | 'deployment';
@@ -73,7 +90,10 @@ const LEVEL_DEFS: readonly { readonly type: string; readonly label: string }[] =
  * `model.diagrams` order. Never invents a number for a diagram the scheme
  * can't uniquely place.
  */
-function deriveLevelTabs(diagrams: readonly ResolvedDiagram[]): readonly LevelTab[] {
+function deriveLevelTabs(
+  diagrams: readonly ResolvedDiagram[],
+  selectedSlug?: string | null,
+): readonly LevelTab[] {
   const byType = new Map<string, ResolvedDiagram[]>();
   for (const diagram of diagrams) {
     const bucket = byType.get(diagram.type);
@@ -91,6 +111,13 @@ function deriveLevelTabs(diagrams: readonly ResolvedDiagram[]): readonly LevelTa
         tabs.push({ slug: diagram.slug, label });
         claimed.add(diagram.slug);
       }
+    } else if (type === 'c4-component' && bucket && bucket.length > 1) {
+      // Component views are scoped drill-downs. When there are several,
+      // keep them out of the global level switch and surface only the
+      // currently open scope as the canonical Component tab.
+      const selectedComponent = bucket.find((diagram) => diagram.slug === selectedSlug);
+      if (selectedComponent) tabs.push({ slug: selectedComponent.slug, label });
+      for (const diagram of bucket) claimed.add(diagram.slug);
     }
   }
   for (const diagram of diagrams) {
@@ -131,8 +158,13 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     className,
     direction = 'LR',
     initialDiagramSlug,
+    initialLens = 'logical',
     canvasChrome = false,
     collapsibleDetails = false,
+    showDetails = true,
+    onDiagramChange,
+    onLensChange,
+    onSelectionChange,
   } = props;
 
   // Default selection = the first LEVEL TAB's diagram, not `model.diagrams[0]`:
@@ -146,7 +178,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
       ? initialDiagramSlug
       : (deriveLevelTabs(model.diagrams)[0]?.slug ?? model.diagrams[0]?.slug ?? null),
   );
-  const [lens, setLens] = useState<Lens>('logical');
+  const [lens, setLens] = useState<Lens>(initialLens);
   const [positioned, setPositioned] = useState<PositionedDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,13 +186,23 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
   // the CURRENT diagram/lens layout. Cleared on every diagram switch (a
   // node id from diagram A means nothing once diagram B is on screen).
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const onDiagramChangeRef = useRef(onDiagramChange);
+  onDiagramChangeRef.current = onDiagramChange;
+  const onLensChangeRef = useRef(onLensChange);
+  onLensChangeRef.current = onLensChange;
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
 
   const selected: ResolvedDiagram | null = useMemo(
     () => model.diagrams.find((d) => d.slug === selectedSlug) ?? null,
     [model, selectedSlug],
   );
 
-  const levelTabs = useMemo(() => deriveLevelTabs(model.diagrams), [model]);
+  useEffect(() => {
+    if (selected) onDiagramChangeRef.current?.(selected);
+  }, [selected]);
+
+  const levelTabs = useMemo(() => deriveLevelTabs(model.diagrams, selectedSlug), [model, selectedSlug]);
   const elementsByKindAndSlug = useMemo(() => buildElementsByKindAndSlug(model), [model]);
   const linkResolver = useMemo(
     () => host?.linkResolver ?? createInertLinkResolver(),
@@ -183,8 +225,8 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
       return;
     }
 
-    const view = selected.lensViews ? selected.lensViews[lens] : selected.view;
-    if (!view) {
+    const resolvedView = selected.lensViews ? selected.lensViews[lens] : selected.view;
+    if (!resolvedView) {
       setPositioned(null);
       setLoading(false);
       setError(null);
@@ -197,6 +239,20 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     // out — a diagram switch clears the pane immediately rather than
     // leaving the previous selection's nodes on screen.
     setPositioned(null);
+    const view = selected.type === 'c4-container'
+      ? (() => {
+          const allowedKinds = insideTypesFor('container', lens);
+          const nodes = resolvedView.nodes.filter((node) =>
+            node.kind === 'actor' || node.kind === 'external-system' || node.kind === 'system' ||
+            (node.kind !== null && allowedKinds.has(node.kind)),
+          );
+          const nodeIds = new Set(nodes.map((node) => node.nodeId));
+          return {
+            nodes,
+            edges: resolvedView.edges.filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to)),
+          };
+        })()
+      : resolvedView;
     layoutDiagram(
       { nodes: view.nodes, edges: view.edges, layout: selected.layout?.data ?? null },
       // Label-aware layer spacing (S4 fix round, #120): guarantee the
@@ -222,6 +278,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     setSelectedSlug(slug);
     setLens('logical');
     setSelectedNodeId(null);
+    onSelectionChangeRef.current?.(null);
   }
 
   /**
@@ -237,11 +294,20 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
    */
   function handleSelectNode(node: PositionedNode | null): void {
     setSelectedNodeId(node ? node.nodeId : null);
+    onSelectionChangeRef.current?.(node ? {
+      nodeId: node.nodeId,
+      slug: node.slug,
+      kind: node.kind,
+      name: node.title,
+    } : null);
   }
 
   /** Escape clears the rail selection regardless of where focus is (canvas or rail) — `C4Diagram` also clears on Escape for its own, narrower case (focus already on the canvas). */
   function handleExplorerKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
-    if (event.key === 'Escape') setSelectedNodeId(null);
+    if (event.key === 'Escape') {
+      setSelectedNodeId(null);
+      onSelectionChangeRef.current?.(null);
+    }
   }
 
   const selectedNode: PositionedNode | null = useMemo(
@@ -258,6 +324,42 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     () => (selectedNode ? resolveElementStyle(selectedNode.kind, model.spec.data) : null),
     [selectedNode, model],
   );
+  const systemName = useMemo(
+    () => [...model.elements.system.values()][0]?.element.data.title ?? 'System',
+    [model],
+  );
+  const componentScopeName = useMemo(() => {
+    if (selected?.type !== 'c4-component') return null;
+    for (const kind of ['domain', 'container'] as const) {
+      const match = model.elements[kind].get(selected.slug);
+      if (match) return match.element.data.title;
+    }
+    return selected.title.replace(/ · Components$/, '');
+  }, [model, selected]);
+  const boundary = useMemo(
+    () => selected?.type === 'c4-container'
+      ? { level: 'container' as const, label: systemName, accent: 'var(--el-system)' }
+      : selected?.type === 'c4-component' && componentScopeName
+        ? { level: 'component' as const, label: componentScopeName, accent: 'var(--type-feature)' }
+        : undefined,
+    [selected?.type, systemName, componentScopeName],
+  );
+
+  const drillTargets = useMemo(() => {
+    const targets = new Map<string, string>();
+    if (!selected || !positioned) return targets;
+    const canonicalContainer = selected.type === 'c4-context'
+      ? model.diagrams.filter((diagram) => diagram.type === 'c4-container')
+      : [];
+    for (const node of positioned.nodes) {
+      const direct = node.slug === null
+        ? undefined
+        : model.diagrams.find((diagram) => diagram.slug === node.slug && diagram.slug !== selectedSlug);
+      const target = direct ?? (node.kind === 'system' && canonicalContainer.length === 1 ? canonicalContainer[0] : undefined);
+      if (target) targets.set(node.nodeId, target.slug);
+    }
+    return targets;
+  }, [model, positioned, selected, selectedSlug]);
 
   // The drill target: another diagram (never the one currently showing)
   // whose OWN slug equals the selected node's resolved slug — the SAME
@@ -294,7 +396,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
             ))}
           </div>
           <span className="c4-explorer-spacer" />
-          <span className="c4-explorer-hint">click an element for details</span>
+          <span className="c4-explorer-hint">{showDetails ? 'click an element for details' : 'hover an element for details'}</span>
         </div>
 
         <div className="c4-explorer-body">
@@ -302,7 +404,10 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
             {selected?.lensViews && (
               <LensToggle
                 value={lens}
-                onChange={setLens}
+                onChange={(next) => {
+                  setLens(next);
+                  onLensChangeRef.current?.(next);
+                }}
                 options={[
                   { value: 'logical', label: 'Logical' },
                   { value: 'deployment', label: 'Deployment' },
@@ -326,6 +431,10 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
                 host={host}
                 selectedNodeId={selectedNodeId}
                 onSelect={handleSelectNode}
+                drillTargets={drillTargets}
+                onDrill={selectDiagram}
+                boundary={boundary}
+                lens={lens}
                 elementsByKindAndSlug={elementsByKindAndSlug}
                 direction={direction}
                 theme={theme}
@@ -337,7 +446,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
           {/* aria-live (not a focus move): selecting a canvas node announces
               the rail's new content to assistive tech while focus stays on
               the node the user just activated. */}
-          {(!collapsibleDetails || railContent !== null) && (
+          {showDetails && (!collapsibleDetails || railContent !== null) && (
             <aside className="c4-detail-rail" aria-label="Element details" aria-live="polite">
               {collapsibleDetails && railContent !== null && (
                 <div className="c4-detail-header">
@@ -346,7 +455,10 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
                     type="button"
                     className="c4-detail-collapse"
                     aria-label="Collapse element details"
-                    onClick={() => setSelectedNodeId(null)}
+                    onClick={() => {
+                      setSelectedNodeId(null);
+                      onSelectionChangeRef.current?.(null);
+                    }}
                   >
                     <PanelRightClose size={16} />
                   </button>
