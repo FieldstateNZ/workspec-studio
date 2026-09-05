@@ -50,6 +50,8 @@
     "react-dom": "^18.3.0"
   },
   "dependencies": {
+    "@workspec/cost-catalog": "workspace:*",
+    "@workspec/cost-catalog-ui": "workspace:*",
     "@workspec/topology-model": "workspace:*",
     "@workspec/topology-planning": "workspace:*",
     "@workspec/topology-schema": "workspace:*",

@@ -23,6 +23,7 @@
     "noEmit": true
   },
   "references": [
+    { "path": "../../packages/cost-catalog/tsconfig.build.json" },
     { "path": "../../packages/decision-schema/tsconfig.build.json" },
     { "path": "../../packages/decision-engine/tsconfig.build.json" },
     { "path": "../../packages/decision-ui/tsconfig.build.json" },

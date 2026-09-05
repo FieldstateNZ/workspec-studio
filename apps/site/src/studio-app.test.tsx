@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { StudioApp } from './studio-app.js';
+import { DEFAULT_ARCHITECTURE_SNAPSHOT } from './architecture-snapshot.js';
+import { deriveInfrastructurePlan, seedCostAnalysis } from '@workspec/topology-planning';
 import type { WebMcpModelContext, WebMcpToolDefinition } from './cost-webmcp.js';
 
 function installModelContext(): Map<string, WebMcpToolDefinition> {
@@ -79,7 +81,9 @@ describe('connected Studio workflow', () => {
     expect(screen.getByRole('combobox', { name: 'Connection from' })).toHaveValue('system');
     expect(screen.getByRole('combobox', { name: 'Connection to' })).toHaveValue('reporting-analyst');
     fireEvent.change(screen.getByRole('textbox', { name: 'Connection description' }), { target: { value: 'Reviews reports' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add connection' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Add connection' }));
+    });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Connection: Reviews reports' })).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Collapse model elements' })).toBeInTheDocument();
@@ -134,7 +138,7 @@ describe('connected Studio workflow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Build infrastructure plan' }));
     expect(await screen.findByRole('heading', { name: 'Infrastructure shopping list' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '2 Infrastructure' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: '3 Compare' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '3 Cost analysis' })).toBeDisabled();
   }, 20_000);
 
   it('exposes WebMCP tools over the same visible, reviewable workflow', async () => {
@@ -142,7 +146,8 @@ describe('connected Studio workflow', () => {
     const tools = installModelContext();
     render(<StudioApp />);
 
-    await waitFor(() => expect(tools.size).toBe(11));
+    await waitFor(() => expect(tools.size).toBe(14));
+    await expect(tool(tools, 'apply_cost_analysis').execute({})).rejects.toThrow('Preview a cost analysis');
     expect(screen.getByText('WebMCP ready')).toBeInTheDocument();
     await expect(tool(tools, 'navigate_studio').execute({ step: 'plan' })).rejects.toThrow('Design at least one deployable element');
     await expect(tool(tools, 'set_studio_sidebar').execute({ sidebar: 'architecture', state: 'open', tab: 'properties' })).rejects.toThrow('Select or begin adding');
@@ -153,9 +158,28 @@ describe('connected Studio workflow', () => {
       summary = await tool(tools, 'get_workspec_workspace_summary').execute({});
     });
     expect(summary).toMatchObject({ project: 'Stormglass', requirements: 6 });
+    const proposalPlan = deriveInfrastructurePlan(
+      DEFAULT_ARCHITECTURE_SNAPSHOT.system.name,
+      DEFAULT_ARCHITECTURE_SNAPSHOT.elements.filter((item) => ['container', 'database', 'queue'].includes(item.kind)),
+      ['dev', 'prod'],
+      DEFAULT_ARCHITECTURE_SNAPSHOT.relationships,
+    );
+    const proposal = seedCostAnalysis(proposalPlan);
+    const firstProposedSku = proposal.catalog.skus[0];
+    if (!firstProposedSku) throw new Error('Seeded proposal SKU missing');
+    proposal.catalog.skus[0] = { ...firstProposedSku, source: 'Agent-researched public price · review required' };
+    const beforeProposal = await executeTool(tools, 'export_workspec_bundle', {});
+    await executeTool(tools, 'preview_cost_analysis', { analysis: proposal });
+    expect(screen.getByRole('heading', { name: 'Build solution options' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Solution options/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Manage catalog' })).toHaveAttribute('aria-selected', 'false');
+    expect((await executeTool(tools, 'export_workspec_bundle', {})).data).toBe(beforeProposal.data);
+    await executeTool(tools, 'apply_cost_analysis', {});
+    expect((await executeTool(tools, 'export_workspec_bundle', {})).data).not.toBe(beforeProposal.data);
+    await executeTool(tools, 'navigate_studio', { step: 'design' });
     expect(screen.queryByText('Review the design together')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Agent activity, 1 action' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Agent activity, 1 action' }));
+    expect(screen.getByRole('button', { name: /Agent activity, \d+ actions?/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Agent activity, \d+ actions?/ }));
     expect(screen.getByRole('complementary', { name: 'Agent activity log' })).toBeInTheDocument();
     expect(screen.getByText('Inspected workspace')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Collapse agent activity' }));
@@ -174,9 +198,13 @@ describe('connected Studio workflow', () => {
     });
     expect(screen.getByRole('heading', { name: 'Infrastructure shopping list' })).toBeInTheDocument();
     await act(async () => {
+      await tool(tools, 'navigate_studio').execute({ step: 'cost' });
+    });
+    expect(screen.getByRole('heading', { name: 'Build solution options' })).toBeInTheDocument();
+    await act(async () => {
       await tool(tools, 'navigate_studio').execute({ step: 'compare' });
     });
-    expect(screen.getByRole('heading', { name: 'Compare cloud providers' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Compare solution options' })).toBeInTheDocument();
     await act(async () => {
       await tool(tools, 'navigate_studio').execute({ step: 'design' });
     });
@@ -199,15 +227,15 @@ describe('connected Studio workflow', () => {
 
     let before: unknown;
     await act(async () => {
-      before = await tool(tools, 'compare_cloud_providers').execute({});
+      before = await tool(tools, 'compare_solution_options').execute({});
     });
-    expect(screen.getByRole('heading', { name: 'Compare cloud providers' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Compare solution options' })).toBeInTheDocument();
     await act(async () => {
       await tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'operations-web', size: 'large', quantity: 2 }] });
     });
     let after: unknown;
     await act(async () => {
-      after = await tool(tools, 'compare_cloud_providers').execute({});
+      after = await tool(tools, 'compare_solution_options').execute({});
     });
     expect(screen.queryByText('Comparison opened with WebMCP')).not.toBeInTheDocument();
     expect(JSON.stringify(after)).not.toBe(JSON.stringify(before));
@@ -215,9 +243,9 @@ describe('connected Studio workflow', () => {
     await expect(tool(tools, 'update_infrastructure_requirements').execute({ changes: [{ id: 'missing', size: 'large' }] })).rejects.toThrow('Unknown requirement');
     expect((await executeTool(tools, 'get_workspec_workspace_summary', {})).requirements).toBe(6);
 
-    await expect(tool(tools, 'record_cloud_decision').execute({})).rejects.toThrow('Prepare and review');
+    await expect(tool(tools, 'record_solution_decision').execute({})).rejects.toThrow('Prepare and review');
     await act(async () => {
-      await tool(tools, 'prepare_cloud_decision').execute({ provider: 'azure', rationale: 'Best operational fit.' });
+      await tool(tools, 'prepare_solution_decision').execute({ optionId: 'azure-container-apps', rationale: 'Best operational fit.' });
     });
     expect(screen.queryByText('Draft prepared with WebMCP')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Microsoft Azure/ })).toHaveAttribute('aria-pressed', 'true');
@@ -225,10 +253,10 @@ describe('connected Studio workflow', () => {
     expect(screen.queryByText('Decision recorded')).not.toBeInTheDocument();
     expect((await executeTool(tools, 'get_workspec_workspace_summary', {})).files).not.toContain('.workspec/decisions/cloud-platform.yaml');
     await act(async () => {
-      await tool(tools, 'record_cloud_decision').execute({});
+      await tool(tools, 'record_solution_decision').execute({});
     });
     expect(await screen.findByText('Decision recorded')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Use Microsoft Azure for the application platform' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Use Azure Container Apps for the application platform' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Edit decision' }));
     expect(screen.getByRole('heading', { name: 'Edit the decision' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Microsoft Azure/ })).toHaveAttribute('aria-pressed', 'true');
@@ -238,7 +266,7 @@ describe('connected Studio workflow', () => {
     const recorded = await executeTool(tools, 'get_workspec_workspace_summary', {});
     expect(recorded.files).toEqual(expect.arrayContaining([
       '.workspec/decisions/cloud-platform.yaml',
-      '.workspec/topologies/azure.yaml',
+      '.workspec/topologies/azure-container-apps.yaml',
       '.workspec/resources/operations-web.yaml',
     ]));
     const bundle = await executeTool(tools, 'export_workspec_bundle', {});

@@ -1,0 +1,33 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@workspec/site",
+        "exec",
+        "vite",
+        "--port",
+        "4321",
+        "--strictPort"
+      ],
+      "port": 4321,
+      "autoPort": false
+    },
+    {
+      "name": "workspec-cost-serve",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "/Users/brettsmith/GitHub/workspec-studio-cost/packages/cost-studio/dist/bin.js",
+        "serve",
+        "--dir",
+        "/private/tmp/claude-501/-Users-brettsmith-GitHub-workspec-studio/0dd1c500-1dc2-4156-a808-755137800237/scratchpad/estate",
+        "--port",
+        "4173"
+      ],
+      "port": 4173
+    }
+  ]
+}

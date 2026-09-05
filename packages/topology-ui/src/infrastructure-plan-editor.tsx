@@ -33,7 +33,7 @@ export function InfrastructurePlanEditor({ plan, onChange, onContinue }: Infrast
           })}</tbody>
         </table>
       </div>
-      <footer className="tp-plan-footer"><p>Actors and external systems are intentionally excluded from deployment.</p>{onContinue ? <button type="button" onClick={onContinue}>Compare providers →</button> : null}</footer>
+      <footer className="tp-plan-footer"><p>Actors and external systems are intentionally excluded from deployment.</p>{onContinue ? <button type="button" onClick={onContinue}>Build cost analysis →</button> : null}</footer>
     </div>
   );
 }

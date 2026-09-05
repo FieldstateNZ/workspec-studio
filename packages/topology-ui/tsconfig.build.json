@@ -7,6 +7,8 @@
     "types": []
   },
   "references": [
+    { "path": "../cost-catalog/tsconfig.build.json" },
+    { "path": "../cost-catalog-ui/tsconfig.build.json" },
     { "path": "../topology-model/tsconfig.build.json" },
     { "path": "../topology-schema/tsconfig.build.json" },
     { "path": "../topology-recon/tsconfig.build.json" },
