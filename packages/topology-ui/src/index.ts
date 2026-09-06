@@ -118,5 +118,7 @@ export type { ThemeName, TokenName } from './themes.js';
 // ── Infrastructure planning (extracted Enterprise workflow) ─────────────────
 export { InfrastructurePlanEditor } from './infrastructure-plan-editor.js';
 export type { InfrastructurePlanEditorProps } from './infrastructure-plan-editor.js';
-export { ProviderComparison } from './provider-comparison.js';
-export type { ProviderComparisonProps } from './provider-comparison.js';
+export { CostAnalysisEditor } from './cost-analysis-editor.js';
+export type { CostAnalysisEditorProps } from './cost-analysis-editor.js';
+export { ProviderComparison, SolutionComparison } from './provider-comparison.js';
+export type { ProviderComparisonProps, SolutionComparisonProps } from './provider-comparison.js';

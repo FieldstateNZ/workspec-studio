@@ -28,7 +28,7 @@ export function StudioHome(): ReactElement {
               </div>
               <h1 className="home-title">From application design to an infrastructure decision.</h1>
               <p className="home-lede">
-                Design the system, derive the infrastructure it needs, compare Azure and AWS, and
+                Design the system, derive the infrastructure it needs, build catalog-backed solution options, and
                 record the decision. The complete result stays in portable, reviewable WorkSpec files.
               </p>
               <div className="home-cta-row">
@@ -66,7 +66,7 @@ export function StudioHome(): ReactElement {
                 design&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C4 architecture · interactive canvas
               </div>
               <div className="home-terminal-line home-terminal-soft">
-                plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requirements · Azure / AWS comparison
+                cost&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;provider catalog · solution options · estimates
               </div>
               <div className="home-terminal-line home-terminal-muted">
                 data stays in this browser
@@ -87,8 +87,9 @@ export function StudioHome(): ReactElement {
             {[
               ['01', 'Design', 'Build the C4 model on an interactive canvas.'],
               ['02', 'Plan', 'Turn deployable elements into an editable infrastructure shopping list.'],
-              ['03', 'Compare', 'Map the same requirements to Azure and AWS with monthly estimates.'],
-              ['04', 'Decide', 'Choose an option, generate the ADR, and download the complete workspace.'],
+              ['03', 'Cost analysis', 'Map requirements to catalog-backed options, including multiple approaches from one provider.'],
+              ['04', 'Compare', 'Compare complete solution options with monthly estimates and visible provenance.'],
+              ['05', 'Decide', 'Choose an option, generate the ADR, and download the complete workspace.'],
             ].map(([number, title, copy]) => (
               <article className="home-journey-card" key={number}>
                 <span>{number}</span><h2>{title}</h2><p>{copy}</p>

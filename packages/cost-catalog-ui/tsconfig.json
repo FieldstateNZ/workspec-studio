@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": ".", "outDir": ".typecheck", "jsx": "react-jsx", "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": ["react"], "tsBuildInfoFile": "./.tsbuildinfo/typecheck.tsbuildinfo" },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [{ "path": "../cost-catalog" }]
+}

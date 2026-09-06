@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "rootDir": "src", "outDir": "dist", "types": [], "tsBuildInfoFile": "./.tsbuildinfo/build.tsbuildinfo" },
-  "references": [{ "path": "../cost-catalog/tsconfig.build.json" }, { "path": "../schema-core/tsconfig.build.json" }],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

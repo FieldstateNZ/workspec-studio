@@ -147,6 +147,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.62.7
         version: 5.101.2(react@18.3.1)
+      '@workspec/cost-catalog':
+        specifier: workspace:*
+        version: link:../../packages/cost-catalog
       '@workspec/cost-engine':
         specifier: 0.1.0-alpha.7
         version: 0.1.0-alpha.7
@@ -573,6 +576,47 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.0)(jsdom@25.0.1)(vite@7.3.6(@types/node@22.20.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/cost-catalog:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/cost-catalog-ui:
+    dependencies:
+      '@workspec/cost-catalog':
+        specifier: workspace:*
+        version: link:../cost-catalog
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.28
+        version: 18.3.31
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@24.13.2)(jsdom@25.0.1)(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/cost-engine:
     dependencies:
@@ -1290,6 +1334,9 @@ importers:
 
   packages/topology-planning:
     dependencies:
+      '@workspec/cost-catalog':
+        specifier: workspace:*
+        version: link:../cost-catalog
       '@workspec/schema-core':
         specifier: workspace:*
         version: link:../schema-core
@@ -1459,6 +1506,12 @@ importers:
 
   packages/topology-ui:
     dependencies:
+      '@workspec/cost-catalog':
+        specifier: workspace:*
+        version: link:../cost-catalog
+      '@workspec/cost-catalog-ui':
+        specifier: workspace:*
+        version: link:../cost-catalog-ui
       '@workspec/decision-schema':
         specifier: workspace:*
         version: link:../decision-schema
@@ -4770,6 +4823,11 @@ packages:
 
   lucide-react@0.545.0:
     resolution: {integrity: sha512-7r1/yUuflQDSt4f1bpn5ZAocyIxcTyVyBBChSVtBKn5M+392cPmI5YJMWOJKk/HUWGm5wg83chlAZtCcGbEZtw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lucide-react@0.577.0:
+    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -9030,6 +9088,10 @@ snapshots:
       yallist: 3.1.1
 
   lucide-react@0.545.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
+  lucide-react@0.577.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 

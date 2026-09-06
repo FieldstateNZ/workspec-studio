@@ -1,7 +1,7 @@
 {
-  "name": "@workspec/topology-planning",
+  "name": "@workspec/cost-catalog",
   "version": "0.1.0-alpha.1",
-  "description": "Provider-neutral infrastructure planning and deterministic cloud option mapping for WorkSpec C4 models.",
+  "description": "Provider-agnostic cost catalog schemas and deterministic solution-option pricing for WorkSpec.",
   "license": "Apache-2.0",
   "type": "module",
   "files": ["dist", "README.md", "LICENSE"],
@@ -14,6 +14,6 @@
     "typecheck": "tsc -b",
     "test": "vitest run"
   },
-  "dependencies": { "@workspec/cost-catalog": "workspace:*", "@workspec/schema-core": "workspace:*", "yaml": "^2.9.0", "zod": "^4.4.3" },
-  "devDependencies": { "@types/node": "^24.0.0", "@workspec/decision-schema": "workspace:*", "@workspec/topology-schema": "workspace:*", "tsup": "^8.5.1", "typescript": "^6.0.3", "vitest": "^4.1.10" }
+  "dependencies": { "zod": "^4.4.3" },
+  "devDependencies": { "tsup": "^8.5.1", "typescript": "^6.0.3", "vitest": "^4.1.10" }
 }

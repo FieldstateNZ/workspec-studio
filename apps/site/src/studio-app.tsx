@@ -35,11 +35,12 @@ import { StudioShell } from '@workspec/studio-shell';
 import type { StudioStatus, StudioStep } from '@workspec/studio-shell';
 import '@workspec/studio-shell/styles.css';
 import {
-  InfrastructurePlanArtifact, buildProviderArtifacts, compareProviders,
-  deriveInfrastructurePlan, serializeInfrastructurePlan, updateRequirement,
+  CostAnalysis, CostCatalog, InfrastructurePlanArtifact, SolutionOption, buildSolutionArtifacts, computeAnalysis,
+  deriveInfrastructurePlan, duplicateSolutionOption, reconcileCostAnalysis, renameSolutionOption,
+  createSolutionOption, serializeCostCatalog, serializeInfrastructurePlan, serializeSolutionOption, setOptionRequirementSku, updateRequirement, updateSolutionLine,
 } from '@workspec/topology-planning';
-import type { CloudProvider, InfrastructurePlan, ProviderOption } from '@workspec/topology-planning';
-import { InfrastructurePlanEditor, ProviderComparison } from '@workspec/topology-ui';
+import type { CostAnalysisModel, CostedOption, InfrastructurePlan } from '@workspec/topology-planning';
+import { CostAnalysisEditor, InfrastructurePlanEditor, SolutionComparison } from '@workspec/topology-ui';
 import '@workspec/topology-ui/styles.css';
 import { MemoryWorkspace, importWorkspecZip, textFileMap } from '@workspec/workspace';
 import { Layout, layoutPathFor } from '@workspec/c4-schema';
@@ -63,7 +64,7 @@ import {
 
 const REPO_URL = 'https://github.com/FieldstateNZ/workspec-studio';
 const MANAGED_C4 = ['.workspec/spec.yaml', '.workspec/system/', '.workspec/actors/', '.workspec/external-systems/', '.workspec/domains/', '.workspec/containers/', '.workspec/components/', '.workspec/databases/', '.workspec/queues/', '.workspec/diagrams/'];
-const WORKFLOW = ['design', 'plan', 'compare', 'decision'] as const;
+const WORKFLOW = ['design', 'plan', 'cost', 'compare', 'decision'] as const;
 const studioRegistrationTails = new WeakMap<WebMcpModelContext, Promise<void>>();
 type WorkflowStep = (typeof WORKFLOW)[number];
 type ArchitectureLevel = 'context' | 'container' | 'component';
@@ -102,7 +103,8 @@ const AUTHORING_COPY: Record<ArchitectureElementKind, { name: string; descriptio
 const STEPS: readonly StudioStep[] = [
   { id: 'design', label: 'Design', description: 'Design the C4 architecture', icon: <Network size={16} /> },
   { id: 'plan', label: 'Infrastructure', description: 'Build the provider-neutral shopping list', icon: <Boxes size={16} /> },
-  { id: 'compare', label: 'Compare', description: 'Compare Azure and AWS', icon: <GitCompareArrows size={16} /> },
+  { id: 'cost', label: 'Cost analysis', description: 'Build catalog-backed solution options', icon: <Cloud size={16} /> },
+  { id: 'compare', label: 'Compare', description: 'Compare solution options', icon: <GitCompareArrows size={16} /> },
   { id: 'decision', label: 'Decision', description: 'Record the architecture decision', icon: <Landmark size={16} /> },
 ];
 
@@ -150,6 +152,22 @@ function decisionYaml(decision: ReturnType<typeof DecisionArtifact.parse>): stri
   return `# yaml-language-server: $schema=https://schema.workspec.io/v1alpha1/decision.schema.json\n${stringify(decision, { lineWidth: 0 })}`;
 }
 
+function writeCostAnalysis(workspace: MemoryWorkspace, analysis: CostAnalysisModel): void {
+  workspace.writeText('.workspec/cost/catalog.yaml', serializeCostCatalog(analysis.catalog));
+  for (const path of workspace.paths().filter((path) => path.startsWith('.workspec/cost/options/'))) workspace.remove(path);
+  for (const option of analysis.options) workspace.writeText(`.workspec/cost/options/${option.id}.yaml`, serializeSolutionOption(option));
+}
+
+function readCostAnalysis(workspace: MemoryWorkspace): CostAnalysisModel | undefined {
+  if (!workspace.exists('.workspec/cost/catalog.yaml')) return undefined;
+  const optionPaths = workspace.paths().filter((path) => path.startsWith('.workspec/cost/options/') && /\.ya?ml$/i.test(path));
+  if (optionPaths.length === 0) return undefined;
+  return CostAnalysis.parse({
+    catalog: CostCatalog.parse(parse(workspace.readText('.workspec/cost/catalog.yaml'))),
+    options: optionPaths.map((path) => SolutionOption.parse(parse(workspace.readText(path)))),
+  });
+}
+
 function money(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0,
@@ -172,12 +190,12 @@ function AgentActivitySidebar({ entries, onClose }: { readonly entries: readonly
 interface DecisionStepProps {
   readonly decision: ReturnType<typeof DecisionArtifact.parse> | null;
   readonly editing: boolean;
-  readonly options: readonly ProviderOption[];
-  readonly selected: CloudProvider | undefined;
+  readonly options: readonly CostedOption[];
+  readonly selected: string | undefined;
   readonly rationale: string;
   readonly requirementCount: number;
   readonly download: { href: string; filename: string } | null;
-  readonly onSelect: (provider: CloudProvider) => void;
+  readonly onSelect: (optionId: string) => void;
   readonly onRationaleChange: (value: string) => void;
   readonly onRecord: () => void;
   readonly onEdit: () => void;
@@ -185,15 +203,15 @@ interface DecisionStepProps {
 }
 
 function DecisionStep(props: DecisionStepProps): ReactElement {
-  const selectedOption = props.options.find((option) => option.provider === props.selected);
+  const selectedOption = props.options.find((option) => option.option.id === props.selected);
   if (props.decision && !props.editing) {
     return (
       <section className="journey-decision">
-        <header className="tp-plan-header"><div><span>04 · Decision</span><h1>Architecture decision</h1><p>The selected platform is recorded as a durable, traceable ADR.</p></div></header>
+        <header className="tp-plan-header"><div><span>05 · Decision</span><h1>Architecture decision</h1><p>The selected solution is recorded as a durable, traceable ADR.</p></div></header>
         <div className="journey-decision-content journey-decision-recorded">
           <div className="journey-complete">
             <span className="journey-complete-icon"><CheckCircle2 size={20}/></span>
-            <span className="journey-complete-copy"><small>Decision recorded</small><strong>{selectedOption?.name ?? 'Cloud platform'} selected</strong><span>The ADR and deployable provider files are ready.</span></span>
+            <span className="journey-complete-copy"><small>Decision recorded</small><strong>{selectedOption?.option.name ?? 'Solution option'} selected</strong><span>The ADR and deployable solution files are ready.</span></span>
             <button type="button" className="journey-decision-edit" onClick={props.onEdit}><Pencil size={13}/> Edit decision</button>
             {props.download ? <a href={props.download.href} download={props.download.filename}><Download size={14}/> Download .workspec ZIP</a> : null}
           </div>
@@ -205,15 +223,15 @@ function DecisionStep(props: DecisionStepProps): ReactElement {
 
   return (
     <section className="journey-decision">
-      <header className="tp-plan-header"><div><span>04 · Decision</span><h1>{props.editing ? 'Edit the decision' : 'Record the decision'}</h1><p>Confirm the provider, capture why it won, and generate the architecture decision record.</p></div></header>
+      <header className="tp-plan-header"><div><span>05 · Decision</span><h1>{props.editing ? 'Edit the decision' : 'Record the decision'}</h1><p>Confirm the solution option, capture why it won, and generate the architecture decision record.</p></div></header>
       <div className="journey-decision-content">
         <div className="journey-decision-layout">
           <section className="journey-decision-options" aria-labelledby="decision-provider-title">
-            <div className="journey-decision-section-head"><small>Selected option</small><h2 id="decision-provider-title">Cloud platform</h2><p>You can change the provider before recording the decision.</p></div>
+            <div className="journey-decision-section-head"><small>Decision workspace · ADR-014</small><h2 id="decision-provider-title">Considered options</h2><p>Choose the approach that best balances cost, capability, and operational trade-offs.</p></div>
             <div className="journey-decision-provider-list">
               {props.options.map((option) => {
-                const active = option.provider === props.selected;
-                return <button type="button" key={option.provider} className={active ? 'active' : ''} aria-pressed={active} onClick={() => props.onSelect(option.provider)}><span className="journey-decision-provider-icon"><Cloud size={17}/></span><span><strong>{option.name}</strong><small>{money(option.monthlyTotal)} USD / month</small></span>{active ? <Check size={16}/> : <i aria-hidden="true"/>}</button>;
+                const active = option.option.id === props.selected;
+                return <button type="button" key={option.option.id} disabled={!option.complete} className={active ? 'active' : ''} aria-pressed={active} onClick={() => props.onSelect(option.option.id)}><span className="journey-decision-provider-icon"><Cloud size={17}/></span><span><strong>{option.option.name}</strong><small>{option.providerNames.join(' + ') || 'Unresolved provider'}</small><em>{money(option.monthlyTotal)} / month · {money(option.monthlyTotal * 12)} / year</em></span>{active ? <Check size={16}/> : <i aria-hidden="true"/>}</button>;
               })}
             </div>
             {selectedOption ? <div className="journey-decision-summary"><div><small>Planning estimate</small><strong>{money(selectedOption.monthlyTotal)}</strong><span>USD per month</span></div><div><small>Requirements</small><strong>{props.requirementCount}</strong><span>across dev and prod</span></div></div> : null}
@@ -237,11 +255,15 @@ export function StudioApp(): ReactElement {
   const canonicalRef = useRef<MemoryWorkspace | null>(null);
   const workspaceRef = useRef<ArchitectureWorkspace | null>(null);
   const planRef = useRef<InfrastructurePlan | null>(null);
-  const optionsRef = useRef<ProviderOption[]>([]);
+  const analysisRef = useRef<CostAnalysisModel | null>(null);
+  const pendingAnalysisRef = useRef<CostAnalysisModel | null>(null);
+  const optionsRef = useRef<CostedOption[]>([]);
   const [workspace, setWorkspace] = useState<ArchitectureWorkspace | null>(null);
   const [plan, setPlan] = useState<InfrastructurePlan | null>(null);
-  const [options, setOptions] = useState<ProviderOption[]>([]);
-  const [selected, setSelected] = useState<CloudProvider | undefined>();
+  const [analysis, setAnalysis] = useState<CostAnalysisModel | null>(null);
+  const [options, setOptions] = useState<CostedOption[]>([]);
+  const [selected, setSelected] = useState<string | undefined>();
+  const [analysisAgentDraft, setAnalysisAgentDraft] = useState(false);
   const [decision, setDecision] = useState<ReturnType<typeof DecisionArtifact.parse> | null>(null);
   const [decisionEditing, setDecisionEditing] = useState(false);
   const [decisionAgentDraft, setDecisionAgentDraft] = useState(false);
@@ -343,16 +365,22 @@ export function StudioApp(): ReactElement {
     const derived = existingPlan ?? deriveInfrastructurePlan(next.snapshot.system.name, planningElements, ['dev', 'prod'], next.snapshot.relationships);
     canonical.writeText('.workspec/plans/infrastructure.yaml', serializeInfrastructurePlan(derived));
     canonicalRef.current = canonical;
-    workspaceRef.current = { ...next, files: textFiles(canonical) };
     planRef.current = derived;
-    const compared = compareProviders(derived);
+    const costAnalysis = reconcileCostAnalysis(derived, readCostAnalysis(canonical));
+    writeCostAnalysis(canonical, costAnalysis);
+    workspaceRef.current = { ...next, files: textFiles(canonical) };
+    const compared = computeAnalysis(costAnalysis);
+    analysisRef.current = costAnalysis;
     optionsRef.current = compared;
     setWorkspace(workspaceRef.current);
     setPlan(derived);
+    setAnalysis(costAnalysis);
     setOptions(compared);
     setDecision(null);
     setDecisionEditing(false);
     setDecisionAgentDraft(false);
+    setAnalysisAgentDraft(false);
+    pendingAnalysisRef.current = null;
     setSelected(undefined);
     setError(null);
     if (persist) saveStudioWorkspace(canonical.toZip());
@@ -371,9 +399,11 @@ export function StudioApp(): ReactElement {
 
   async function loadExample(): Promise<void> {
     const next = await buildArchitectureWorkspace(DEFAULT_ARCHITECTURE_SNAPSHOT, (workspaceRef.current?.key ?? 0) + 1, false);
-    install(next, new MemoryWorkspace(textFileMap(next.files)));
+    const planningElements = next.snapshot.elements.filter((item) => ['container', 'database', 'queue'].includes(item.kind));
+    const examplePlan = deriveInfrastructurePlan(next.snapshot.system.name, planningElements, ['dev', 'prod'], next.snapshot.relationships);
+    install(next, new MemoryWorkspace(textFileMap(next.files)), examplePlan);
     await setDiagramLayout('container', EXAMPLE_CONTAINER_LAYOUT);
-    setFurthestStep('design');
+    setFurthestStep('cost');
     setStepState('design');
     setSystemSetupOpen(false);
     navigate('/studio/design');
@@ -597,6 +627,7 @@ export function StudioApp(): ReactElement {
         to: relationshipTo,
         description: relationshipDescription.trim(),
         category: relationshipCategory,
+        lens: 'both',
       }],
     });
     setRelationshipDescription('');
@@ -631,14 +662,36 @@ export function StudioApp(): ReactElement {
       next = updateRequirement(next, change.id, change.patch);
     }
     canonical.writeText('.workspec/plans/infrastructure.yaml', serializeInfrastructurePlan(next));
+    const nextAnalysis = reconcileCostAnalysis(next, analysisRef.current ?? undefined);
+    writeCostAnalysis(canonical, nextAnalysis);
+    const compared = computeAnalysis(nextAnalysis);
+    planRef.current = next; analysisRef.current = nextAnalysis; optionsRef.current = compared;
+    setPlan(next); setAnalysis(nextAnalysis); setOptions(compared); setDecision(null); setDecisionEditing(false); setDecisionAgentDraft(false);
     saveStudioWorkspace(canonical.toZip());
-    const compared = compareProviders(next);
-    planRef.current = next; optionsRef.current = compared;
-    setPlan(next); setOptions(compared); setDecision(null); setDecisionEditing(false); setDecisionAgentDraft(false);
   }
 
   function changeRequirement(id: string, patch: Parameters<typeof updateRequirement>[2]): void {
     changeRequirements([{ id, patch }]);
+  }
+
+  function installAnalysis(next: CostAnalysisModel, persist = true): void {
+    const canonical = canonicalRef.current;
+    if (!canonical) throw new Error('The workspace is still loading.');
+    const parsed = CostAnalysis.parse(next);
+    writeCostAnalysis(canonical, parsed);
+    analysisRef.current = parsed;
+    pendingAnalysisRef.current = null;
+    const computed = computeAnalysis(parsed);
+    optionsRef.current = computed;
+    setAnalysis(parsed); setOptions(computed); setAnalysisAgentDraft(false);
+    setSelected(undefined); setDecision(null); setDecisionEditing(false); setDecisionAgentDraft(false);
+    if (persist) saveStudioWorkspace(canonical.toZip());
+  }
+
+  function updateAnalysis(transform: (current: CostAnalysisModel) => CostAnalysisModel): void {
+    const current = analysisRef.current;
+    if (!current) throw new Error('Cost analysis is not ready.');
+    installAnalysis(transform(current));
   }
 
   async function setDiagramLayout(
@@ -679,51 +732,47 @@ export function StudioApp(): ReactElement {
     setWorkspace(next);
   }
 
-  function recordDecision(provider = selected, reason = rationale): ReturnType<typeof DecisionArtifact.parse> {
-    const canonical = canonicalRef.current; const currentPlan = planRef.current;
-    const option = optionsRef.current.find((item) => item.provider === provider);
-    if (!canonical || !currentPlan || !option) throw new Error('Select Azure or AWS before recording the decision.');
-    for (const candidate of ['azure', 'aws'] as const) {
-      for (const path of [`.workspec/decisions/catalogs/${candidate}.yaml`, `.workspec/topologies/${candidate}.yaml`]) {
-        if (canonical.exists(path)) canonical.remove(path);
-      }
-    }
-    for (const [path, content] of Object.entries(buildProviderArtifacts(currentPlan, option))) canonical.writeText(path, content);
-    const alternative = optionsRef.current.find((item) => item.provider !== provider);
+  function recordDecision(optionId = selected, reason = rationale): ReturnType<typeof DecisionArtifact.parse> {
+    const canonical = canonicalRef.current; const currentPlan = planRef.current; const currentAnalysis = analysisRef.current;
+    const option = optionsRef.current.find((item) => item.option.id === optionId);
+    if (!canonical || !currentPlan || !currentAnalysis || !option?.complete) throw new Error('Select a complete solution option before recording the decision.');
+    for (const path of canonical.paths().filter((path) => path.startsWith('.workspec/topologies/'))) canonical.remove(path);
+    for (const [path, content] of Object.entries(buildSolutionArtifacts(currentPlan, currentAnalysis, option.option.id))) canonical.writeText(path, content);
+    const alternative = optionsRef.current.find((item) => item.option.id !== option.option.id && item.complete);
     const date = localDate();
     const artifact = DecisionArtifact.parse({
       apiVersion: 'workspec.io/v1alpha1', kind: 'Decision', metadata: { slug: 'cloud-platform' },
       spec: {
-        title: `Use ${option.name} for the application platform`, status: 'accepted', created: date, decided: date,
+        title: `Use ${option.option.name} for the application platform`, status: 'accepted', created: date, decided: date,
         context: `The ${currentPlan.spec.title} needs a provider implementation for ${currentPlan.spec.requirements.length} infrastructure requirements across ${currentPlan.spec.environments.join(' and ')}.`,
-        decision: `Adopt ${option.name}. The planning estimate is $${Math.round(option.monthlyTotal)} USD per month.`, rationale: reason,
-        consequences: ['The provider-neutral plan remains the traceability source.', `Provider resources and pricing are materialized for ${option.provider}.`, 'Estimates must be refreshed before procurement.'],
-        alternatives: alternative ? [{ title: alternative.name, reason: `Estimated at $${Math.round(alternative.monthlyTotal)} USD per month.` }] : undefined,
-        references: [{ kind: 'InfrastructurePlan', target: '.workspec/plans/infrastructure.yaml' }, { kind: 'Topology', target: `.workspec/topologies/${option.provider}.yaml` }, { kind: 'Catalog', target: `.workspec/decisions/catalogs/${option.provider}.yaml` }],
-        tags: ['cloud', option.provider, 'studio-generated'],
+        decision: `Adopt ${option.option.name}. The planning estimate is $${Math.round(option.monthlyTotal)} ${option.currency} per month.`, rationale: reason,
+        consequences: ['The provider-neutral plan remains the traceability source.', `Catalog-backed resources are materialized for ${option.providerNames.join(' + ')}.`, 'Estimates must be refreshed before procurement.'],
+        alternatives: alternative ? [{ title: alternative.option.name, reason: `Estimated at $${Math.round(alternative.monthlyTotal)} ${alternative.currency} per month.` }] : undefined,
+        references: [{ kind: 'InfrastructurePlan', target: '.workspec/plans/infrastructure.yaml' }, { kind: 'Topology', target: `.workspec/topologies/${option.option.id}.yaml` }, { kind: 'Catalog', target: '.workspec/cost/catalog.yaml' }],
+        tags: ['cloud', option.option.id, ...option.providerNames.map((name) => slug(name)), 'studio-generated'],
       },
     });
     canonical.writeText('.workspec/decisions/cloud-platform.yaml', decisionYaml(artifact));
     saveStudioWorkspace(canonical.toZip());
-    setDecision(artifact); setDecisionEditing(false); setDecisionAgentDraft(false); setSelected(option.provider); advanceTo('decision');
+    setDecision(artifact); setDecisionEditing(false); setDecisionAgentDraft(false); setSelected(option.option.id); advanceTo('decision');
     return artifact;
   }
 
-  function showProviderComparison(): readonly ProviderOption[] {
+  function showSolutionComparison(): readonly CostedOption[] {
     setDecisionAgentDraft(false);
     navigateStudio('compare');
     return optionsRef.current;
   }
 
-  function prepareDecisionForReview(provider: CloudProvider, reason: string): ProviderOption {
+  function prepareDecisionForReview(optionId: string, reason: string): CostedOption {
     if (step !== 'compare') {
       throw new Error('Open and review the Compare step before preparing a decision.');
     }
-    const option = optionsRef.current.find((item) => item.provider === provider);
+    const option = optionsRef.current.find((item) => item.option.id === optionId && item.complete);
     const nextRationale = reason.trim();
-    if (!option) throw new Error('Select Azure or AWS before preparing the decision.');
+    if (!option) throw new Error('Select a complete solution option before preparing the decision.');
     if (!nextRationale) throw new Error('Provide a rationale before preparing the decision.');
-    setSelected(option.provider);
+    setSelected(option.option.id);
     setRationale(nextRationale);
     setDecisionEditing(decision !== null);
     setDecisionAgentDraft(true);
@@ -733,21 +782,43 @@ export function StudioApp(): ReactElement {
 
   function recordPreparedDecision(): {
     artifact: ReturnType<typeof DecisionArtifact.parse>;
-    provider: CloudProvider;
+    optionId: string;
   } {
     if (step !== 'decision' || !decisionAgentDraft) {
       throw new Error('Prepare and review the visible decision draft before recording it.');
     }
-    if (!selected) throw new Error('Select Azure or AWS before recording the decision.');
-    return { artifact: recordDecision(selected, rationale), provider: selected };
+    if (!selected) throw new Error('Select a solution option before recording the decision.');
+    return { artifact: recordDecision(selected, rationale), optionId: selected };
+  }
+
+  function previewCostAnalysis(input: unknown): readonly CostedOption[] {
+    const parsed = CostAnalysis.parse(input);
+    const computed = computeAnalysis(parsed);
+    pendingAnalysisRef.current = parsed;
+    analysisRef.current = parsed;
+    optionsRef.current = computed;
+    setAnalysis(parsed); setOptions(computed); setAnalysisAgentDraft(true);
+    setSelected(undefined); setDecision(null); setDecisionEditing(false); setDecisionAgentDraft(false);
+    advanceTo('cost');
+    return computed;
+  }
+
+  function applyCostAnalysis(): readonly CostedOption[] {
+    const pending = pendingAnalysisRef.current;
+    if (!pending || !analysisAgentDraft) throw new Error('Preview a cost analysis and review it visibly before applying it.');
+    installAnalysis(pending);
+    advanceTo('cost');
+    return optionsRef.current;
   }
 
   const actionsRef = useRef({
     replaceArchitecture,
     changeRequirements,
-    showProviderComparison,
+    showSolutionComparison,
     prepareDecisionForReview,
     recordPreparedDecision,
+    previewCostAnalysis,
+    applyCostAnalysis,
     setDiagramLayout,
     navigateStudio,
     configureStudioSidebar,
@@ -756,9 +827,11 @@ export function StudioApp(): ReactElement {
   actionsRef.current = {
     replaceArchitecture,
     changeRequirements,
-    showProviderComparison,
+    showSolutionComparison,
     prepareDecisionForReview,
     recordPreparedDecision,
+    previewCostAnalysis,
+    applyCostAnalysis,
     setDiagramLayout,
     navigateStudio,
     configureStudioSidebar,
@@ -770,16 +843,19 @@ export function StudioApp(): ReactElement {
     if (!context?.registerTool) { setStatus('unsupported'); setStatusLabel('WebMCP unavailable'); return; }
     const lifecycle = new AbortController();
     const tools: WebMcpToolDefinition[] = [
-      { name: 'get_workspec_workspace_summary', title: 'Inspect WorkSpec workspace', description: 'Read the current architecture, infrastructure requirements, provider comparison, and generated files.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const result = { project: workspaceRef.current?.snapshot.system.name, elements: workspaceRef.current?.snapshot.elements.length ?? 0, requirements: planRef.current?.spec.requirements.length ?? 0, providers: optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })), files: canonicalRef.current?.paths() ?? [] }; actionsRef.current.recordAgentActivity('get_workspec_workspace_summary', 'Inspected workspace', `Read ${result.elements} architecture elements, ${result.requirements} requirements, and ${result.files.length} files.`); return result; } },
+      { name: 'get_workspec_workspace_summary', title: 'Inspect WorkSpec workspace', description: 'Read the current architecture, infrastructure requirements, solution options, and generated files.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const result = { project: workspaceRef.current?.snapshot.system.name, elements: workspaceRef.current?.snapshot.elements.length ?? 0, requirements: planRef.current?.spec.requirements.length ?? 0, options: optionsRef.current.map((item) => ({ id: item.option.id, name: item.option.name, providers: item.providerNames, monthlyTotal: item.monthlyTotal, complete: item.complete })), files: canonicalRef.current?.paths() ?? [] }; actionsRef.current.recordAgentActivity('get_workspec_workspace_summary', 'Inspected workspace', `Read ${result.elements} architecture elements, ${result.requirements} requirements, and ${result.files.length} files.`); return result; } },
       { name: 'navigate_studio', title: 'Navigate Studio workflow', description: 'Open the next visible Design, Infrastructure, Compare, or Decision step without pointer automation. Enforces design prerequisites and prevents skipping unreviewed workflow steps.', inputSchema: { type: 'object', properties: { step: { enum: WORKFLOW } }, required: ['step'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const next = String(input.step) as WorkflowStep; actionsRef.current.navigateStudio(next); actionsRef.current.recordAgentActivity('navigate_studio', `Opened ${STEPS.find((item) => item.id === next)?.label ?? next}`, `Navigated to the visible ${next} workflow step.`, next); return { navigated: true, step: next, path: `/studio/${next}` }; } },
       { name: 'set_studio_sidebar', title: 'Set Studio sidebar state', description: 'Open or close the workflow or architecture sidebar, and optionally show the Elements or Properties tab in the visible architecture sidebar.', inputSchema: { type: 'object', properties: { sidebar: { enum: ['workflow', 'architecture'] }, state: { enum: ['open', 'closed'] }, tab: { enum: ['elements', 'properties'] } }, required: ['sidebar', 'state'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const sidebar = String(input.sidebar) as StudioSidebar; const state = String(input.state) as StudioSidebarState; const tab = input.tab === undefined ? undefined : String(input.tab) as ArchitectureSidebarTab; actionsRef.current.configureStudioSidebar(sidebar, state, tab); actionsRef.current.recordAgentActivity('set_studio_sidebar', `${state === 'open' ? 'Opened' : 'Closed'} ${sidebar} sidebar`, tab === undefined ? `Set the ${sidebar} sidebar to ${state}.` : `Set the ${sidebar} sidebar to ${state} on the ${tab} tab.`); return { updated: true, sidebar, state, ...(tab === undefined ? {} : { tab }) }; } },
       { name: 'set_c4_architecture', title: 'Set C4 architecture', description: 'Replace the visible C4 architecture with a complete system, elements, and relationships snapshot, then regenerate the infrastructure plan.', inputSchema: { type: 'object', properties: { snapshot: { type: 'object' } }, required: ['snapshot'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { await actionsRef.current.replaceArchitecture(input.snapshot as ArchitectureSnapshot); const elements = workspaceRef.current?.snapshot.elements.length ?? 0; const requirements = planRef.current?.spec.requirements.length ?? 0; actionsRef.current.recordAgentActivity('set_c4_architecture', 'Prepared C4 architecture', `Replaced the visible model with ${elements} elements and inferred ${requirements} requirements.`, 'design'); return { updated: true, elements, requirements }; } },
       { name: 'get_c4_layout', title: 'Inspect C4 diagram layout', description: 'Read the available nodes and currently pinned positions for a C4 diagram without changing the architecture.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' } }, required: ['diagramSlug'], additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute(input) { const current = workspaceRef.current; const canonical = canonicalRef.current; if (!current || !canonical) throw new Error('The workspace is still loading.'); const diagramSlug = String(input.diagramSlug); const diagram = current.model.diagrams.find((item) => item.slug === diagramSlug); if (!diagram) throw new Error(`Unknown diagram: ${diagramSlug}`); const path = layoutPathFor(diagramSlug); const nodes = [...new Map([...(diagram.view?.nodes ?? []), ...(diagram.lensViews?.logical.nodes ?? []), ...(diagram.lensViews?.deployment.nodes ?? [])].map((node) => [node.nodeId, { id: node.nodeId, kind: node.kind, name: node.title }])).values()]; const result = { diagramSlug, type: diagram.type, nodes, layout: canonical.exists(path) ? Layout.parse(parse(canonical.readText(path))) : { version: 1, nodes: {} } }; actionsRef.current.recordAgentActivity('get_c4_layout', 'Inspected diagram layout', `Read ${nodes.length} nodes from ${diagramSlug}.`, 'design'); return result; } },
       { name: 'set_c4_layout', title: 'Arrange C4 diagram', description: 'Pin node positions for a diagram without changing architecture semantics. Use replace to define the curated layout or merge to move selected nodes.', inputSchema: { type: 'object', properties: { diagramSlug: { type: 'string' }, mode: { enum: ['replace', 'merge'] }, positions: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number', exclusiveMinimum: 0 }, height: { type: 'number', exclusiveMinimum: 0 } }, required: ['id', 'x', 'y'], additionalProperties: false } } }, required: ['diagramSlug', 'positions'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.positions)) throw new Error('positions must be an array.'); const positions = input.positions.map((raw) => { const item = raw as Record<string, unknown>; return { id: String(item.id), x: Number(item.x), y: Number(item.y), ...(item.width !== undefined ? { width: Number(item.width) } : {}), ...(item.height !== undefined ? { height: Number(item.height) } : {}) }; }); const diagramSlug = String(input.diagramSlug); await actionsRef.current.setDiagramLayout(diagramSlug, positions, input.mode === 'merge' ? 'merge' : 'replace'); actionsRef.current.recordAgentActivity('set_c4_layout', 'Arranged C4 diagram', `Pinned ${positions.length} nodes in ${diagramSlug}.`, 'design'); return { updated: positions.length, diagramSlug, persisted: true }; } },
-      { name: 'update_infrastructure_requirements', title: 'Update infrastructure requirements', description: 'Batch-update sizing, quantity, availability, or notes for provider-neutral requirements and refresh estimates.', inputSchema: { type: 'object', properties: { changes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, size: { enum: ['small', 'medium', 'large'] }, quantity: { type: 'integer', minimum: 1 }, availability: { enum: ['standard', 'high'] }, notes: { type: 'string' } }, required: ['id'], additionalProperties: false } } }, required: ['changes'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.changes)) throw new Error('changes must be an array'); const changes = input.changes.map((raw) => { const change = raw as Record<string, unknown>; const id = String(change.id ?? ''); const { id: _id, ...patch } = change; return { id, patch }; }); actionsRef.current.changeRequirements(changes); const providers = optionsRef.current.map((item) => ({ provider: item.provider, monthlyTotal: item.monthlyTotal })); actionsRef.current.recordAgentActivity('update_infrastructure_requirements', 'Updated infrastructure plan', `Changed sizing or availability for ${changes.length} ${changes.length === 1 ? 'requirement' : 'requirements'} and refreshed provider estimates.`, 'plan'); return { updated: changes.length, providers }; } },
-      { name: 'compare_cloud_providers', title: 'Compare Azure and AWS together', description: 'Open the visible Compare step and read Azure and AWS service mappings and monthly estimates. Discuss these visible options with the user before preparing a decision.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const options = actionsRef.current.showProviderComparison(); actionsRef.current.recordAgentActivity('compare_cloud_providers', 'Opened provider comparison', `Compared ${options.length} provider mappings for the same neutral requirements.`, 'compare'); return { navigated: true, step: 'compare', options }; } },
-      { name: 'prepare_cloud_decision', title: 'Prepare cloud decision for review', description: 'From the visible Compare step, open Decision and populate an editable provider and rationale draft. This does not write the ADR; stop and review the visible draft with the user before recording it.', inputSchema: { type: 'object', properties: { provider: { enum: ['azure', 'aws'] }, rationale: { type: 'string', minLength: 1 } }, required: ['provider', 'rationale'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const option = actionsRef.current.prepareDecisionForReview(input.provider as CloudProvider, String(input.rationale)); const reason = String(input.rationale).trim(); actionsRef.current.recordAgentActivity('prepare_cloud_decision', 'Prepared decision draft', `Recommended ${option.name} with an editable ${reason.length}-character rationale.`, 'decision'); return { prepared: true, recorded: false, navigated: true, step: 'decision', provider: option.provider, monthlyTotal: option.monthlyTotal, rationale: reason, nextAction: 'Review or edit the visible draft with the user before recording it.' }; } },
-      { name: 'record_cloud_decision', title: 'Record reviewed cloud decision', description: 'Commit the provider and rationale currently visible in the prepared Decision draft. Call only after the user explicitly approves that visible draft; use prepare_cloud_decision first.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const result = actionsRef.current.recordPreparedDecision(); const files = canonicalRef.current?.paths() ?? []; actionsRef.current.recordAgentActivity('record_cloud_decision', 'Recorded cloud decision', `Accepted ${result.provider} and generated the ADR plus provider artifacts.`, 'decision'); return { recorded: true, decision: result.artifact.metadata.slug, provider: result.provider, files }; } },
+      { name: 'update_infrastructure_requirements', title: 'Update infrastructure requirements', description: 'Batch-update sizing, quantity, availability, or notes for provider-neutral requirements and refresh estimates.', inputSchema: { type: 'object', properties: { changes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, size: { enum: ['small', 'medium', 'large'] }, quantity: { type: 'integer', minimum: 1 }, availability: { enum: ['standard', 'high'] }, notes: { type: 'string' } }, required: ['id'], additionalProperties: false } } }, required: ['changes'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { if (!Array.isArray(input.changes)) throw new Error('changes must be an array'); const changes = input.changes.map((raw) => { const change = raw as Record<string, unknown>; const id = String(change.id ?? ''); const { id: _id, ...patch } = change; return { id, patch }; }); actionsRef.current.changeRequirements(changes); const options = optionsRef.current.map((item) => ({ id: item.option.id, monthlyTotal: item.monthlyTotal, complete: item.complete })); actionsRef.current.recordAgentActivity('update_infrastructure_requirements', 'Updated infrastructure plan', `Changed sizing or availability for ${changes.length} ${changes.length === 1 ? 'requirement' : 'requirements'} and refreshed solution estimates.`, 'plan'); return { updated: changes.length, options }; } },
+      { name: 'preview_cost_analysis', title: 'Preview cost analysis', description: 'Open a visible, editable draft cost analysis without writing it to the workspace. The user must review it before apply_cost_analysis.', inputSchema: { type: 'object', properties: { analysis: { type: 'object' } }, required: ['analysis'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const options = actionsRef.current.previewCostAnalysis(input.analysis); actionsRef.current.recordAgentActivity('preview_cost_analysis', 'Prepared cost analysis draft', `Opened ${options.length} solution options for visible review.`, 'cost'); return { prepared: true, applied: false, navigated: true, step: 'cost', options }; } },
+      { name: 'apply_cost_analysis', title: 'Apply reviewed cost analysis', description: 'Persist the cost analysis currently visible in the reviewed draft. Call only after user approval.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const options = actionsRef.current.applyCostAnalysis(); actionsRef.current.recordAgentActivity('apply_cost_analysis', 'Applied cost analysis', `Saved ${options.length} catalog-backed solution options.`, 'cost'); return { applied: true, options }; } },
+      { name: 'compare_solution_options', title: 'Compare solution options together', description: 'Open the visible Compare step and read catalog-backed solution estimates.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const options = actionsRef.current.showSolutionComparison(); actionsRef.current.recordAgentActivity('compare_solution_options', 'Opened solution comparison', `Compared ${options.length} solution options.`, 'compare'); return { navigated: true, step: 'compare', options }; } },
+      { name: 'compare_cloud_providers', title: 'Compare solution options (legacy)', description: 'Backward-compatible alias for compare_solution_options.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { return { navigated: true, step: 'compare', options: actionsRef.current.showSolutionComparison() }; } },
+      { name: 'prepare_solution_decision', title: 'Prepare solution decision for review', description: 'Open Decision with an editable option and rationale draft. This does not write the ADR.', inputSchema: { type: 'object', properties: { optionId: { type: 'string' }, rationale: { type: 'string', minLength: 1 } }, required: ['optionId', 'rationale'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute(input) { const option = actionsRef.current.prepareDecisionForReview(String(input.optionId), String(input.rationale)); const reason = String(input.rationale).trim(); actionsRef.current.recordAgentActivity('prepare_solution_decision', 'Prepared decision draft', `Recommended ${option.option.name} for visible review.`, 'decision'); return { prepared: true, recorded: false, step: 'decision', optionId: option.option.id, monthlyTotal: option.monthlyTotal, rationale: reason }; } },
+      { name: 'record_solution_decision', title: 'Record reviewed solution decision', description: 'Commit the option and rationale currently visible in Decision after explicit user approval.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, async execute() { const result = actionsRef.current.recordPreparedDecision(); const files = canonicalRef.current?.paths() ?? []; actionsRef.current.recordAgentActivity('record_solution_decision', 'Recorded solution decision', `Accepted ${result.optionId} and generated the ADR plus solution artifacts.`, 'decision'); return { recorded: true, decision: result.artifact.metadata.slug, optionId: result.optionId, files }; } },
       { name: 'export_workspec_bundle', title: 'Export WorkSpec bundle', description: 'Read the complete current .workspec workspace as a base64-encoded ZIP so an agent can save or hand off the result without relying on a browser download event.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, async execute() { const canonical = canonicalRef.current; const current = workspaceRef.current; if (!canonical || !current) throw new Error('The workspace is still loading.'); const bytes = canonical.toZip(); if (bytes.byteLength > 2 * 1024 * 1024) throw new Error('The ZIP is too large for WebMCP export; use the visible download link.'); const filename = `${slug(current.snapshot.system.name)}-workspec.zip`; actionsRef.current.recordAgentActivity('export_workspec_bundle', 'Exported WorkSpec bundle', `Prepared ${filename} with ${canonical.paths().length} files for agent-side handoff.`); return { filename, mediaType: 'application/zip', encoding: 'base64', byteLength: bytes.byteLength, data: bytesBase64(bytes) }; } },
     ];
     setStatus('checking'); setStatusLabel('WebMCP checking');
@@ -919,8 +995,9 @@ export function StudioApp(): ReactElement {
             </aside>
           </div>
         </section>
-      ) : step === 'plan' && plan ? <InfrastructurePlanEditor plan={plan} onChange={changeRequirement} onContinue={() => advanceTo('compare')}/>
-      : step === 'compare' ? <ProviderComparison options={options} {...(selected ? { selected } : {})} onSelect={setSelected} onContinue={() => advanceTo('decision')}/>
+      ) : step === 'plan' && plan ? <InfrastructurePlanEditor plan={plan} onChange={changeRequirement} onContinue={() => advanceTo('cost')}/>
+      : step === 'cost' && plan && analysis ? <CostAnalysisEditor analysis={analysis} plan={plan} computed={options} onCatalogChange={(catalog) => updateAnalysis((current) => ({ ...current, catalog }))} onRenameOption={(optionId, name) => updateAnalysis((current) => renameSolutionOption(current, optionId, name))} onDuplicateOption={(optionId) => updateAnalysis((current) => duplicateSolutionOption(current, optionId))} onCreateOption={() => updateAnalysis((current) => createSolutionOption(current, plan))} onSkuChange={(optionId, requirementId, skuId) => updateAnalysis((current) => setOptionRequirementSku(current, optionId, requirementId, skuId))} onLineChange={(optionId, lineId, patch) => updateAnalysis((current) => updateSolutionLine(current, optionId, lineId, patch))} onContinue={() => advanceTo('compare')}/>
+      : step === 'compare' && analysis ? <SolutionComparison analysis={analysis} options={options} {...(selected ? { selected } : {})} onSelect={setSelected} onContinue={() => advanceTo('decision')}/>
       : <DecisionStep decision={decision} editing={decisionEditing} options={options} selected={selected} rationale={rationale} requirementCount={plan?.spec.requirements.length ?? 0} download={completeDownload} onSelect={setSelected} onRationaleChange={setRationale} onRecord={() => { recordDecision(); }} onEdit={() => { setDecisionAgentDraft(false); setDecisionEditing(true); }} onCancelEdit={() => setDecisionEditing(false)}/>}
     </StudioShell>
   );

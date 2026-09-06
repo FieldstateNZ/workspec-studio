@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.7",
+    "@workspec/cost-catalog": "workspace:*",
     "@workspec/cost-engine": "0.1.0-alpha.7",
     "@workspec/cost-schema": "0.1.0-alpha.7",
     "@workspec/cost-ui": "0.1.0-alpha.7",

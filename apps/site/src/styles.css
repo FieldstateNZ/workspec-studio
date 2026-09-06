@@ -2101,7 +2101,7 @@
   }
   .home-journey-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     border: 1px solid var(--line);
     border-radius: var(--r-4);
     overflow: hidden;
@@ -2310,6 +2310,7 @@
   .journey-decision-provider-list button > span:nth-child(2) { display: grid; gap: 2px; }
   .journey-decision-provider-list button strong { font-size: 11px; }
   .journey-decision-provider-list button small { color: var(--ink-muted); font: 9px var(--mono); }
+  .journey-decision-provider-list button em { color: var(--ink-soft); font: 10px var(--mono); font-style: normal; margin-top: 3px; }
   .journey-decision-provider-list button > i { width: 14px; height: 14px; border: 1px solid var(--line-2); border-radius: 999px; }
   .journey-decision-provider-icon { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--bg-elevated); color: var(--accent); }
   .journey-decision-summary { display: grid; grid-template-columns: 1fr 1fr; margin-top: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-3); background: var(--bg-soft); }
