@@ -148,12 +148,29 @@ export function createFacadeTool(
     // pointer pipeline (300ms/5px) INSTEAD of a second down/up pair — treat
     // it as another activation so double-clicking keeps the previous
     // facade's two-activations behaviour.
+    //
+    // EXCEPT for text-editable shapes, where the enterprise select tool's
+    // own double-click branch applies verbatim (`SelectTool.ts:531-535`:
+    // select + `setEditing(hitId)` gated on `canEditText`). That branch is
+    // the ONLY thing that opens `ConnectorLayer`'s `EdgeLabelEditor`, so
+    // without it edge labels are unreachable by gesture. It cannot capture
+    // a named C4 card: `c4NodeShapeUtil.canEditText` is true for PENDING
+    // nodes only, and a pending node is already in its inline editor — so
+    // cards keep activating, exactly as before, and the card's own React
+    // `onDoubleClick` still opens the element editor.
     onDoubleClick: (e, store) => {
       const hit = hitTestTopmost(e.pageX, e.pageY, store.shapes, store.lens, (type) =>
         instance.shapeUtils.get(type),
       );
-      if (hit !== null) callbacks.onActivateNode(hit);
       reset();
+      if (hit === null) return;
+      const shape = store.shapes[hit];
+      if (shape !== undefined && instance.shapeUtils.get(shape.type)?.canEditText(shape) === true) {
+        store.select([hit], 'replace');
+        store.setEditing(hit);
+        return;
+      }
+      callbacks.onActivateNode(hit);
     },
 
     onExit: reset,

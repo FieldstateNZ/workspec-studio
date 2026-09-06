@@ -230,14 +230,38 @@ export const C4NodeComponent: FC<Props> = ({ shape, isEditing }) => {
     }
   };
 
+  // The HANDLE the host needs to load and save this node's element.
+  //
+  // Enterprise always has one: `meta.artifactRefId`, the artifact row's id,
+  // and it uses `artifactRefId === null` to mean "orphan node, nothing to
+  // edit" (C4NodeComponent.tsx:163). A FILE-BACKED host has no such ids —
+  // c4-studio addresses elements by slug — so gating on `artifactRefId`
+  // alone would leave the element editor permanently unreachable there
+  // (A3, #133).
+  //
+  // So the handle falls back to the element slug, and "orphan" is decided
+  // by the same meta the projection already sets for it: a node that is
+  // still `pending` has no file yet, an `injected` node was synthesised by
+  // the resolver, and a `dangling` node is an edge endpoint with no element
+  // behind it. None of the three is editable, on either host.
+  //
+  // `meta.elementSlug` wins over `shape.slug` for the same reason
+  // `renameNode` prefers it: on a fat/aliased node the shape's id is the
+  // DIAGRAM's node key, and the element file is under the element slug.
+  const editorHandle: string | null =
+    artifactRefId ??
+    (isPending || meta.injected === true || meta.dangling === true
+      ? null
+      : (meta.elementSlug ?? shape.slug));
+
   // Open the element editor (name + description) for this node's artifact.
   // Triggered by the validity marker and by double-clicking the card.
   // (Enterprise dispatched a window CustomEvent; the host callback replaces
   // it — declared deviation, #119.)
   const openEditor = (): void => {
-    if (artifactRefId === null) return; // orphan node — no artifact to edit
+    if (editorHandle === null) return; // orphan node — no artifact to edit
     getC4Host(instance).openElementEditor?.({
-      artifactRefId,
+      artifactRefId: editorHandle,
       slug: shape.slug,
       label: shape.label,
       description: shape.description ?? '',

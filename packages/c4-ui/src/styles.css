@@ -432,3 +432,111 @@
 .c4-rail-drill:hover {
   filter: brightness(1.08);
 }
+
+/* ── Authoring chrome (A3, #133) ──────────────────────────────────────────
+   Enterprise's C4 page floats four groups over the canvas in ONE shared
+   chrome (`C4Toolbar.tsx:76-77`'s GROUP_CHROME: a fixed 36px strip height,
+   an elevated translucent surface, a hairline border and a lifted shadow)
+   so crumb, lens and tools read as a single system rather than three
+   widgets. `.c4-toolbar` therefore repeats `.c4-lens-overlay`'s values
+   exactly — same height, radius, surface, blur and shadow — and differs
+   only in where it is pinned (top-RIGHT, enterprise's tools slot). */
+.c4-toolbar {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  pointer-events: auto;
+}
+
+.c4-tb-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  background: color-mix(in oklab, var(--bg) 95%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-3);
+}
+
+/* Enterprise's IconButton: a 32px square, muted by default, accent-filled
+   when its tool is armed (`C4Toolbar.tsx:79-103`). */
+.c4-tb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color 80ms,
+    background-color 80ms;
+}
+
+.c4-tb-btn:hover {
+  color: var(--ink);
+  background: var(--bg-soft);
+}
+
+.c4-tb-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.c4-tb-btn-active,
+.c4-tb-btn-active:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.c4-tb-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--line);
+  flex: 0 0 auto;
+}
+
+/* The placement-mode capsule — enterprise pins it bottom-centre and leaves
+   it pointer-transparent so it can never swallow the very click it is
+   asking for (`ArchitectureCanvasView.tsx:537-550`). */
+.c4-place-hint {
+  position: absolute;
+  bottom: var(--s-5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 95%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-3);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.c4-place-hint-sep {
+  color: var(--ink-fade);
+}
+
+.c4-place-hint-key {
+  color: var(--ink-soft);
+}

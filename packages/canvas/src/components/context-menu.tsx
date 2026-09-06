@@ -40,24 +40,54 @@ const CANVAS_FONTS: { value: string | undefined; label: string; family: string }
   { value: "'Caveat', cursive", label: 'Script', family: "'Caveat', cursive" },
 ];
 
-interface Props {
+export interface ContextMenuProps {
   x: number;
   y: number;
   ids: ShapeId[];
   onClose: () => void;
+  /**
+   * Host-supplied entries rendered at the TOP of the menu, above everything
+   * the menu composes for itself. The seam exists because the menu builds
+   * its own item list from store state + ShapeUtil capabilities — a host
+   * with a domain action that no generic capability describes (c4-ui's
+   * "Rename", which routes to the C4 host's `renameNode`/`renameEdge`) has
+   * no other way in.
+   *
+   * The slot deliberately carries NO automatic divider: render
+   * {@link ContextMenuDivider} yourself after your items, and render
+   * `null` when none of them apply, so an inapplicable selection never
+   * leaves a stray rule at the top of the menu.
+   */
+  extraItems?: ReactNode;
 }
 
-interface MenuItemProps {
+export interface ContextMenuItemProps {
   icon: ReactNode;
   label: string;
+  /** Destructive styling (`--danger` ink) — the Delete convention. */
   danger?: boolean;
   onClick: () => void;
 }
 
-const MenuItem: FC<MenuItemProps> = ({ icon, label, danger, onClick }) => (
+/**
+ * One row of the context menu. Exported so {@link ContextMenuProps.extraItems}
+ * entries are chrome-identical to the menu's own rows rather than a
+ * hand-rolled lookalike.
+ */
+export const ContextMenuItem: FC<ContextMenuItemProps> = ({ icon, label, danger, onClick }) => (
   <button
     onPointerDown={(e) => {
       e.stopPropagation();
+      // Suppress the mousedown default action — which would FOCUS this
+      // button. Every row acts on pointerdown, so the focus move buys
+      // nothing; and once {@link ContextMenuProps.extraItems} can host a row
+      // that opens an inline editor (the C4 `Rename` row, #133), it actively
+      // breaks one: `setEditing` mounts and focuses the editor input
+      // synchronously, then the default action pulls focus to this button,
+      // the input's blur handler commits an unchanged value, and the edit
+      // session ends before the user can type. Verified live against the
+      // served studio — without this line Rename is a no-op.
+      e.preventDefault();
       onClick();
     }}
     style={{
@@ -86,11 +116,15 @@ const MenuItem: FC<MenuItemProps> = ({ icon, label, danger, onClick }) => (
   </button>
 );
 
-const Divider: FC = () => (
+/** The menu's horizontal rule. Exported alongside {@link ContextMenuItem} for the same reason. */
+export const ContextMenuDivider: FC = () => (
   <div style={{ height: 1, backgroundColor: 'var(--line)', margin: '4px 0' }} />
 );
 
-export const ContextMenu: FC<Props> = ({ x, y, ids, onClose }) => {
+const MenuItem = ContextMenuItem;
+const Divider = ContextMenuDivider;
+
+export const ContextMenu: FC<ContextMenuProps> = ({ x, y, ids, onClose, extraItems }) => {
   const ref = useRef<HTMLDivElement>(null);
   const instance = useCanvasInstance();
   const store = useCanvasStore();
@@ -263,6 +297,7 @@ export const ContextMenu: FC<Props> = ({ x, y, ids, onClose }) => {
         pointerEvents: 'auto',
       }}
     >
+      {extraItems}
       {allFontCapable && (
         <>
           <div style={{ padding: '6px 14px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>

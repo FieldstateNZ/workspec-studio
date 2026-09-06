@@ -2,6 +2,8 @@ import type { C4FileSource } from '@workspec/c4-model';
 import { loadDiagramDoc, persistDiagramDoc } from './diagram-doc.js';
 import { mutationError, mutationOk } from './mutation-result.js';
 import type { MutationResult } from './mutation-result.js';
+import { readSystemSlug } from './read-system-slug.js';
+import { relationEndpointMatches } from './relation-endpoint-matches.js';
 import type { RenameRelationRequest } from './rename-relation-request.js';
 import type { YamlSourceEdit } from './yaml-source-edit.js';
 
@@ -19,6 +21,11 @@ export interface RenamedRelation {
  * empty label deletes the `label` key rather than writing `label: ""`.
  * Only the label lines move — the surgical Document edit leaves the rest
  * of the file byte-identical.
+ *
+ * Endpoints are compared through {@link relationEndpointMatches}, so a
+ * request naming the system's real slug still finds an edge the diagram
+ * authored against `__system__` — the shape every canvas rename of such an
+ * edge takes, since the resolver hands the canvas resolved slugs.
  */
 export async function renameRelation(
   source: C4FileSource,
@@ -28,9 +35,15 @@ export async function renameRelation(
   if (!loaded.ok) return loaded;
   const diagram = loaded.value;
 
+  const systemSlug = await readSystemSlug(source);
   const matches: number[] = [];
   diagram.data.edges.forEach((edge, index) => {
-    if (edge.from === request.from && edge.to === request.to) matches.push(index);
+    if (
+      relationEndpointMatches(edge.from, request.from, systemSlug) &&
+      relationEndpointMatches(edge.to, request.to, systemSlug)
+    ) {
+      matches.push(index);
+    }
   });
   if (matches.length === 0) {
     return mutationError(

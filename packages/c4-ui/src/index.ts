@@ -33,6 +33,14 @@ export type { C4DiagramProps } from './c4-diagram.js';
 export { C4Explorer } from './c4-explorer.js';
 export type { C4ExplorerProps } from './c4-explorer.js';
 
+// ── Authoring surface (A3, #133) — the floating C4 tool palette and the
+// per-level palette rule, exported so a host composing its own canvas chrome
+// (rather than passing `authoring` to C4Diagram/C4Explorer) offers exactly
+// the kinds the enterprise toolbar offers at each level. ────────────────────
+export { C4Toolbar } from './c4-canvas/c4-toolbar.js';
+export type { C4ToolbarProps } from './c4-canvas/c4-toolbar.js';
+export { paletteForDiagram } from './c4-canvas/c4-palette.js';
+
 // ── Level-tab derivation (A1, #131) — the explorer's diagram ordering +
 // default-selection rule, exported so hosts composing their own diagram
 // navigation (c4-studio's sidebar) agree with the explorer exactly. ──────────

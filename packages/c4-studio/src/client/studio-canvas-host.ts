@@ -13,7 +13,7 @@
 // a rejection surfaces through `onWriteError` (the shell's write-error
 // banner, same pattern as `C4Diagram`'s layout-write banner).
 
-import { generateKeyBetween, screenToPage } from '@workspec/canvas';
+import { generateKeyBetween } from '@workspec/canvas';
 import type { CanvasStoreInstance, Shape, ShapeId, Vec2 } from '@workspec/canvas';
 import { C4_NODE_HEIGHT, C4_NODE_WIDTH, nodeShapeId } from '@workspec/c4-ui';
 import type { C4CanvasHost, C4NodeMeta, C4NodeShape } from '@workspec/c4-ui';
@@ -42,11 +42,19 @@ export interface StudioCanvasHostOptions {
    */
   readonly onMutated?: () => void;
   /**
-   * Converts the place-tool's raw event point (document coordinates) to
-   * canvas PAGE coordinates. The default assumes the canvas viewport sits
-   * at the document origin (a full-bleed shell) and applies the camera
-   * only; a shell whose canvas is offset supplies the exact conversion —
-   * it owns the container rect.
+   * Converts the point `placeNode` is handed into canvas PAGE coordinates.
+   *
+   * DEFAULTS TO IDENTITY, because the shared place tool already hands over
+   * page coordinates: `createPlaceTool` calls `host.placeNode` with
+   * `{ x: e.pageX, y: e.pageY }` (place-tool.ts:20), and `CanvasPointerEvent.pageX`
+   * is world space — `use-pointer-events.ts:16` builds it by running the
+   * raw client point through `screenToPage` before any tool sees it. The
+   * pre-A3 default applied `screenToPage` a SECOND time, so at any zoom or
+   * pan other than the identity camera a placed card landed away from the
+   * cursor (harmless in A2, which had no palette to place from).
+   *
+   * Supply an override only for a caller that invokes `placeNode` with
+   * something other than the place tool's point.
    */
   readonly toPagePoint?: (point: Vec2) => Vec2;
   /** Navigate one level deeper (shell-owned navigation). */
@@ -216,9 +224,7 @@ export function installStudioCanvasHost(
       }),
 
     placeNode: (nodeType, point) => {
-      const toPage =
-        options.toPagePoint ?? ((p: Vec2) => screenToPage(p, instance.getState().camera));
-      const page = toPage(point);
+      const page = options.toPagePoint?.(point) ?? point;
       pendingCounter += 1;
       const slug = `pending-${String(pendingCounter)}`;
       const id = nodeShapeId(slug);

@@ -27,7 +27,10 @@ import { C4Explorer, createInertLinkResolver, deriveLevelTabs } from '@workspec/
 import type { C4StudioHost, ThemeName } from '@workspec/c4-ui';
 import type { CanvasStoreInstance } from '@workspec/canvas';
 import { createMutationApi, installStudioCanvasHost } from '../src/client/index.js';
+import { ElementEditor } from './element-editor.js';
+import type { ElementEditorTarget } from './element-editor.js';
 import { fetchModel } from './fetch-model.js';
+import { findElementBySlug } from './find-element.js';
 import { createHttpSource } from './http-source.js';
 import type { DiagramCrumbFrame } from './diagram-crumb.js';
 import { Shell } from './shell.js';
@@ -53,6 +56,8 @@ export function App(): ReactElement {
   const [dir, setDir] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [writeError, setWriteError] = useState<string | null>(null);
+  // The element the editor panel is open on (A3, #133), or null for closed.
+  const [editorSlug, setEditorSlug] = useState<string | null>(null);
 
   // The host's `diagramSlug` is a THUNK, not a value: one host install must
   // keep landing mutations on whatever diagram is showing at gesture time.
@@ -104,9 +109,16 @@ export function App(): ReactElement {
         drillDown: (slug) => {
           setSelectedSlug(slug);
         },
-        // A3 lands the element editor; until then the canvas's edit
-        // affordance is inert rather than throwing.
-        openElementEditor: () => undefined,
+        // The editor is opened by SLUG, not by the payload's contents: the
+        // payload is what the CARD knows, and the card is a projection that
+        // may already be stale after an edit. Storing the handle and
+        // reading the element out of the live model on render means the
+        // panel always shows what is on disk (`artifactRefId` is the
+        // element slug for a file-backed host — see `c4-node-component`'s
+        // `editorHandle`).
+        openElementEditor: (payload) => {
+          setEditorSlug(payload.artifactRefId);
+        },
       });
     },
     [loadModel],
@@ -123,6 +135,28 @@ export function App(): ReactElement {
     const current = model?.diagrams.find((d) => d.slug === selectedSlug);
     return current ? [{ slug: current.slug, title: current.title, type: current.type }] : [];
   }, [model, selectedSlug]);
+
+  // Re-derived from the live model every render, so a save-then-refetch
+  // repopulates the open panel instead of leaving it showing pre-save
+  // values. Resolves to null once the element is gone (deleted, or a
+  // refetch dropped it), which closes the panel by construction.
+  const editorTarget = useMemo<ElementEditorTarget | null>(() => {
+    if (model === null || editorSlug === null) return null;
+    const found = findElementBySlug(model, editorSlug);
+    if (found === null) return null;
+    const data = found.element.element.data;
+    return {
+      slug: found.element.slug,
+      kind: found.kind,
+      title: data.title,
+      description: data.description,
+      // `technology` and `tags` exist on some element schemas only (the
+      // four `C4Element` kinds carry technology; several kinds carry no
+      // tags at all), so both are probed rather than assumed.
+      technology: 'technology' in data ? (data.technology ?? '') : '',
+      tags: 'tags' in data ? (data.tags ?? []) : [],
+    };
+  }, [model, editorSlug]);
 
   return (
     <Shell
@@ -159,7 +193,15 @@ export function App(): ReactElement {
           onDiagramChange={setSelectedSlug}
           onCanvasReady={handleCanvasReady}
           showHeader={false}
-          backgroundVariant="dots"
+          authoring
+          // Lines, not dots: enterprise's architecture canvas passes
+          // `backgroundVariant="lines"` (`ArchitectureCanvasView.tsx:497`)
+          // and only its whiteboard-flavoured surfaces use dots
+          // (`workflows-workspace.tsx:947`). A1 shipped dots as an
+          // undeclared delta; owner ruling is that parity wins, so this
+          // follows enterprise. Component-level goldens are unaffected —
+          // they pass their own variant, or none.
+          backgroundVariant="lines"
           // No minimap: enterprise does not mount one on the architecture
           // canvas (`ArchitectureCanvasView.tsx:497` calls `<Canvas>` with
           // no `showMinimap`, unlike `ProjectGraphCanvas.tsx:890,893` for
@@ -167,6 +209,39 @@ export function App(): ReactElement {
           // `C4Diagram.showMinimap` stays a supported, default-off prop for
           // hosts that do want one.
           showZoomControls
+        />
+      )}
+      {/* Mounted as a SIBLING of the explorer, outside `.c4-diagram`, so its
+          inputs are not even in the canvas key handler's bubble path — the
+          outermost of the three locks on Backspace-while-typing (the other
+          two: the panel stops keys itself, and the canvas branch refuses
+          editable targets). */}
+      {editorTarget !== null && (
+        <ElementEditor
+          key={editorTarget.slug}
+          target={editorTarget}
+          onSave={async (patch) => {
+            const { tags, ...rest } = patch;
+            await api.updateElement({
+              slug: editorTarget.slug,
+              ...(editorTarget.kind !== null ? { kind: editorTarget.kind } : {}),
+              ...rest,
+              // The request schema takes a mutable array; the editor hands
+              // back a readonly one (house rule), so copy at the boundary.
+              ...(tags !== undefined ? { tags: [...tags] } : {}),
+            });
+            await loadModel();
+          }}
+          onDelete={async () => {
+            await api.deleteElement({
+              slug: editorTarget.slug,
+              ...(editorTarget.kind !== null ? { kind: editorTarget.kind } : {}),
+            });
+            await loadModel();
+          }}
+          onClose={() => {
+            setEditorSlug(null);
+          }}
         />
       )}
     </Shell>

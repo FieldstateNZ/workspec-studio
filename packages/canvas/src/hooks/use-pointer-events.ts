@@ -45,6 +45,29 @@ export interface PointerEventOpts {
 const PAN_THRESHOLD = 4;
 
 /**
+ * How far a left/middle gesture must travel (screen px) before the canvas
+ * root takes pointer capture.
+ *
+ * Capture is what keeps a DRAG alive when the cursor leaves the canvas, so
+ * the root must hold it for the whole of one — but taking it on
+ * `pointerdown` (as enterprise's `usePointerEvents` does) makes the browser
+ * retarget that gesture's compatibility mouse events (`mouseup`, `click`,
+ * `dblclick`) to the capturing element. Verified in Chrome against the
+ * served studio: with capture on pointerdown a double-click on a C4 card
+ * arrives as `dblclick` on the canvas ROOT, so the card's own React
+ * `onDoubleClick` — the only route to the element editor — never fires;
+ * with capture deferred, the same gesture lands on the card and the editor
+ * opens (A3, #133).
+ *
+ * Deferring costs nothing: below the threshold no tool treats the gesture
+ * as a drag (`PAN_THRESHOLD` here, `DRAG_THRESHOLD` in the C4 facade tool
+ * and the select tool), and the first move past it is dispatched while the
+ * cursor is still over the root, so a real drag captures before it can
+ * escape. Only a click keeps its DOM semantics — which is the fix.
+ */
+const CAPTURE_THRESHOLD = PAN_THRESHOLD;
+
+/**
  * Wires the canvas root element's pointer/keyboard gestures to the
  * instance's tool registry: left/middle button events dispatch to the
  * active tool (double-click detected at 300ms/5px), right-button drag
@@ -68,6 +91,9 @@ export function usePointerEvents(
   // move focus to body (which would blur the freshly-mounted contentEditable).
   // Cleared after one mousedown so subsequent clicks-away exit editing normally.
   const justEnteredEditingRef = useRef(false);
+  // A left/middle gesture that has not yet earned pointer capture — see
+  // `CAPTURE_THRESHOLD` and `handlePointerMove`.
+  const pendingCaptureRef = useRef<{ id: number; x: number; y: number } | null>(null);
   // Right-button drag = pan. Tracks the gesture; `moved` distinguishes a pan
   // (suppress the menu) from a plain right-click (open the menu on pointerup).
   const panRef = useRef<{
@@ -118,7 +144,10 @@ export function usePointerEvents(
       }
 
       if (e.button !== 0 && e.button !== 1) return;
-      if (e.currentTarget instanceof Element) e.currentTarget.setPointerCapture(e.pointerId);
+      // Capture is ARMED here and taken on the first move past
+      // `CAPTURE_THRESHOLD` — see that constant for why taking it now would
+      // break every shape's own DOM click/double-click handler.
+      pendingCaptureRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
 
       const rect = el.getBoundingClientRect();
       const store = instance.getState();
@@ -148,6 +177,17 @@ export function usePointerEvents(
     };
 
     const handlePointerMove = (e: PointerEvent): void => {
+      // Take the capture the pointerdown armed, once this gesture is a drag
+      // rather than a click (see `CAPTURE_THRESHOLD`).
+      const pending = pendingCaptureRef.current;
+      if (
+        pending !== null &&
+        Math.hypot(e.clientX - pending.x, e.clientY - pending.y) > CAPTURE_THRESHOLD
+      ) {
+        pendingCaptureRef.current = null;
+        el.setPointerCapture(pending.id);
+      }
+
       // Right-button pan — adjust the camera by the screen-space drag delta.
       if (panRef.current) {
         const dx = e.clientX - panRef.current.sx;
@@ -190,6 +230,7 @@ export function usePointerEvents(
     };
 
     const handlePointerUp = (e: PointerEvent): void => {
+      pendingCaptureRef.current = null;
       // End a right-button gesture: a plain click (no drag) opens the context
       // menu; a pan drag just ends.
       if (panRef.current) {
@@ -206,6 +247,7 @@ export function usePointerEvents(
     };
 
     const handlePointerCancel = (): void => {
+      pendingCaptureRef.current = null;
       panRef.current = null;
       const store = instance.getState();
       store.setMarquee(null);
@@ -257,8 +299,7 @@ export function usePointerEvents(
   const keyboardScope = opts.keyboardScope ?? 'window';
   useEffect(() => {
     if (keyboardScope === 'none') return;
-    const target: EventTarget | null =
-      keyboardScope === 'root' ? containerRef.current : window;
+    const target: EventTarget | null = keyboardScope === 'root' ? containerRef.current : window;
     if (!target) return;
 
     const handleKeyDown = (e: KeyboardEvent): void => {

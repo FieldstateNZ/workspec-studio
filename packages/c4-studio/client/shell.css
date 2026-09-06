@@ -323,3 +323,195 @@ body,
 .c4sh-write-error-close:hover {
   background: var(--bg-soft);
 }
+
+/* ── Element editor (A3, #133) ────────────────────────────────────────────
+   Enterprise's C4ElementEditor is a CENTRED shadcn Dialog, deliberately —
+   `C4ElementEditor.tsx:40`: "Centered Dialog so it never covers the
+   toolbar". Same geometry here (scrim + centred card, ~460px), hand-rolled
+   over the WorkSpec tokens because this package ships plain CSS. */
+.c4sh-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-5);
+  background: color-mix(in oklab, #000 46%, transparent);
+}
+
+.c4sh-modal {
+  width: 460px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-4);
+  background: var(--bg-elevated);
+  box-shadow: var(--sh-3);
+}
+
+.c4sh-modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.c4sh-modal-sub {
+  margin: 4px 0 var(--s-5);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.c4sh-field {
+  display: block;
+  margin-bottom: var(--s-4);
+}
+
+.c4sh-field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.c4sh-req {
+  color: var(--danger);
+}
+
+.c4sh-field-alert {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger);
+}
+
+.c4sh-field-warn {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--warn, #b45309);
+}
+
+.c4sh-field-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-fade);
+}
+
+.c4sh-input,
+.c4sh-textarea {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.c4sh-textarea {
+  resize: none;
+}
+
+.c4sh-input:focus,
+.c4sh-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.c4sh-input-invalid,
+.c4sh-input-invalid:focus {
+  border-color: var(--danger);
+  box-shadow: none;
+}
+
+.c4sh-textarea-warn,
+.c4sh-textarea-warn:focus {
+  border-color: var(--warn, #b45309);
+  box-shadow: none;
+}
+
+.c4sh-modal-error {
+  margin-bottom: var(--s-4);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-2);
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.c4sh-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  flex-wrap: wrap;
+}
+
+.c4sh-modal-spacer {
+  flex: 1 1 auto;
+}
+
+.c4sh-btn {
+  height: 30px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.c4sh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.c4sh-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.c4sh-btn-danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}
+
+.c4sh-btn-danger-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--danger);
+}
+
+/* The destructive confirmation — enterprise's AlertDialog pattern
+   (`ElementsPanel.tsx:276-313`: "Delete element?" + Cancel + destructive
+   Delete), inlined into the footer rather than stacked as a second modal. */
+.c4sh-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.c4sh-confirm-text {
+  flex: 1 1 220px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}

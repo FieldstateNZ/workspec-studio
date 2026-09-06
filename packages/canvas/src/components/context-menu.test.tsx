@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ContextMenu } from './context-menu.js';
+import { ContextMenu, ContextMenuItem } from './context-menu.js';
 import { CanvasProvider } from '../canvas-provider.js';
 import { createCanvasStore } from '../store/store.js';
 import type { CanvasStoreInstance } from '../store/store.types.js';
@@ -139,5 +139,39 @@ describe('ContextMenu — auto-layout capability gate', () => {
     instance.host = { autoLayout: vi.fn() };
     renderMenu(instance, [a.id]);
     expect(screen.queryByText('Auto-layout contents')).toBeNull();
+  });
+});
+
+describe('ContextMenuItem — a row must not steal focus', () => {
+  // WHY (A3, #133): every row acts on `pointerdown`, and the browser's
+  // mousedown default action then FOCUSES the button. That is inert for the
+  // menu's own rows, but the `extraItems` slot can host a row that opens an
+  // inline editor (the C4 `Rename` row): the editor input mounts and focuses
+  // synchronously, the default action pulls focus onto this button, the
+  // input's blur handler commits the unchanged value, and the edit session
+  // ends before the user can type. Verified live — without the
+  // `preventDefault` below, Rename is a no-op on the served studio.
+  test('the row runs its action AND cancels the mousedown default', () => {
+    const a = shapeFactory();
+    const instance = seeded([a]);
+    const onClick = vi.fn();
+    render(
+      <CanvasProvider store={instance}>
+        <ContextMenu
+          x={10}
+          y={10}
+          ids={[a.id]}
+          onClose={vi.fn()}
+          extraItems={<ContextMenuItem icon={null} label="Rename" onClick={onClick} />}
+        />
+      </CanvasProvider>,
+    );
+
+    const event = new MouseEvent('pointerdown', { bubbles: true, cancelable: true });
+    screen.getByText('Rename').dispatchEvent(event);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    // The mutation that dies here: dropping `e.preventDefault()`.
+    expect(event.defaultPrevented).toBe(true);
   });
 });

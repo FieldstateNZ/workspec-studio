@@ -141,10 +141,66 @@ describe('usePointerEvents — right-button gesture', () => {
   });
 });
 
+describe('usePointerEvents — pointer capture is a DRAG affordance, not a click one', () => {
+  // WHY THESE EXIST (A3, #133). Capturing the pointer on `pointerdown` makes
+  // the browser retarget the gesture's compatibility mouse events
+  // (`mouseup`/`click`/`dblclick`) to the capturing element — so a shape's
+  // own DOM handlers stop firing, and the C4 card's double-click (the only
+  // route to the studio's element editor) silently dies. jsdom implements
+  // neither pointer capture nor that retargeting, which is exactly why no
+  // existing test could see it; these assert the TIMING instead, which is
+  // the property the browser behaviour hangs off.
+
+  test('a click never captures the pointer — the shape keeps its DOM click/dblclick', () => {
+    const { instance } = seededInstance();
+    const root = mountCanvas(instance);
+    const capture = HTMLElement.prototype.setPointerCapture as ReturnType<typeof vi.fn>;
+
+    pointer(root, 'pointerdown', 150, 130, { button: 0 });
+    pointer(root, 'pointerup', 150, 130, { button: 0 });
+
+    // Mutation that dies here: taking the capture in `handlePointerDown`
+    // (the pre-fix code, and enterprise's).
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  test('a jitter under the drag threshold still does not capture', () => {
+    const { instance } = seededInstance();
+    const root = mountCanvas(instance);
+    const capture = HTMLElement.prototype.setPointerCapture as ReturnType<typeof vi.fn>;
+
+    pointer(root, 'pointerdown', 150, 130, { button: 0 });
+    pointer(root, 'pointermove', 152, 131, { buttons: 1 });
+    pointer(root, 'pointerup', 152, 131, { button: 0 });
+
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  test('a real drag captures once, on the first move past the threshold', () => {
+    const { instance } = seededInstance();
+    const root = mountCanvas(instance);
+    const capture = HTMLElement.prototype.setPointerCapture as ReturnType<typeof vi.fn>;
+
+    pointer(root, 'pointerdown', 150, 130, { button: 0, pointerId: 7 } as MouseEventInit);
+    pointer(root, 'pointermove', 200, 180, { buttons: 1 });
+    pointer(root, 'pointermove', 260, 240, { buttons: 1 });
+
+    // Mutation that dies here: dropping the lazy capture entirely — a drag
+    // that leaves the canvas would then stop receiving moves.
+    expect(capture).toHaveBeenCalledTimes(1);
+
+    pointer(root, 'pointerup', 260, 240, { button: 0 });
+    // A second gesture re-arms rather than reusing the stale capture.
+    pointer(root, 'pointerdown', 150, 130, { button: 0 });
+    pointer(root, 'pointerup', 150, 130, { button: 0 });
+    expect(capture).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('keyboard tool keys — registration gate (S1 debt)', () => {
   // The gate lives in useKeyboardShortcuts, exercised here through the
   // real <Canvas> wiring alongside the other pointer-pipeline contracts.
-  test("a tool key for an UNREGISTERED tool no-ops; registering the tool activates it", () => {
+  test('a tool key for an UNREGISTERED tool no-ops; registering the tool activates it', () => {
     const { instance } = seededInstance();
     mountCanvas(instance);
     expect(instance.tools.get('draw')).toBeUndefined();
@@ -208,7 +264,7 @@ describe('usePointerEvents — space-pan gating (S1 debt)', () => {
     expect(instance.getState().activeTool).toBe('select');
   });
 
-  test("root scope: focus leaving the canvas mid-hold releases the space pan (FIX 5)", () => {
+  test('root scope: focus leaving the canvas mid-hold releases the space pan (FIX 5)', () => {
     const instance = createCanvasStore();
     instance.shapeUtils.register(boxShapeUtilFactory());
     instance.tools.register(createHandTool());

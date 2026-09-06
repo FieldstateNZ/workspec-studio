@@ -5,6 +5,8 @@ import { diagramNodeRef } from './diagram-node-ref.js';
 import { loadDiagramDoc, persistDiagramDoc } from './diagram-doc.js';
 import { mutationError, mutationOk } from './mutation-result.js';
 import type { MutationResult } from './mutation-result.js';
+import { readSystemSlug } from './read-system-slug.js';
+import { relationEndpointMatches } from './relation-endpoint-matches.js';
 
 /** What `createRelation` reports back on success. */
 export interface CreatedRelation {
@@ -26,6 +28,16 @@ export interface CreatedRelation {
  * `.layout/` hints address edges, so parallel pairs would become
  * unaddressable — authors who want lens-split parallels write them by
  * hand.
+ *
+ * THE SYSTEM CARD. The canvas names endpoints by the slugs the RESOLVER
+ * produced, and the resolver rewrites `__system__` to the system element's
+ * real slug — so drawing a connector to the system card asks for
+ * `to: "workspec-studio"` on a diagram whose only expression of that node
+ * is the alias (it has no node entry: the resolver injected one). Such an
+ * endpoint is canonicalised back to `__system__` before anything is
+ * written, which is both the form the file can express and the form its
+ * existing edges use — so the duplicate check sees the collision it should
+ * (409, not a second edge that projects onto the same connector).
  */
 export async function createRelation(
   source: C4FileSource,
@@ -35,30 +47,39 @@ export async function createRelation(
   if (!loaded.ok) return loaded;
   const diagram = loaded.value;
 
+  const systemSlug = await readSystemSlug(source);
   const nodeRefs = new Set(diagram.data.nodes.map((n) => diagramNodeRef(n).slug));
   nodeRefs.add(SYSTEM_ALIAS);
-  for (const [field, endpoint] of [
-    ['from', request.from],
-    ['to', request.to],
-  ] as const) {
-    if (!nodeRefs.has(endpoint)) {
-      return mutationError(
-        400,
-        `"${field}" endpoint "${endpoint}" is not a node of diagram "${diagram.slug}"`,
-      );
+  const authored: Record<'from' | 'to', string> = { from: request.from, to: request.to };
+  for (const field of ['from', 'to'] as const) {
+    const endpoint = request[field];
+    if (nodeRefs.has(endpoint)) continue;
+    if (systemSlug !== null && endpoint === systemSlug) {
+      authored[field] = SYSTEM_ALIAS;
+      continue;
     }
+    return mutationError(
+      400,
+      `"${field}" endpoint "${endpoint}" is not a node of diagram "${diagram.slug}"`,
+    );
   }
 
-  if (diagram.data.edges.some((e) => e.from === request.from && e.to === request.to)) {
+  if (
+    diagram.data.edges.some(
+      (e) =>
+        relationEndpointMatches(e.from, authored.from, systemSlug) &&
+        relationEndpointMatches(e.to, authored.to, systemSlug),
+    )
+  ) {
     return mutationError(
       409,
-      `diagram "${diagram.slug}" already has an edge ${request.from} -> ${request.to}`,
+      `diagram "${diagram.slug}" already has an edge ${authored.from} -> ${authored.to}`,
     );
   }
 
   const edge = {
-    from: request.from,
-    to: request.to,
+    from: authored.from,
+    to: authored.to,
     ...(request.label !== undefined ? { label: request.label } : {}),
     ...(request.lens !== undefined ? { lens: request.lens } : {}),
     ...(request.category !== undefined ? { category: request.category } : {}),
@@ -70,5 +91,7 @@ export async function createRelation(
     { op: 'append-item', seq: 'edges', value: edge },
   ]);
   if (!persisted.ok) return persisted;
-  return mutationOk({ diagram: diagram.slug, from: request.from, to: request.to });
+  // Report what was WRITTEN, not what was asked for — the caller's next
+  // read of the file has to be able to find this edge.
+  return mutationOk({ diagram: diagram.slug, from: authored.from, to: authored.to });
 }

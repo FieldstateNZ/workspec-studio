@@ -80,6 +80,19 @@ export interface C4ExplorerProps {
    * `selectedDiagramSlug`/`onDiagramChange`.
    */
   showHeader?: boolean | undefined;
+  /**
+   * Passthrough to {@link C4DiagramProps.authoring} (A3, #133) — turns the
+   * canvas into an editing surface: the floating C4 tool palette, the
+   * place/connector gestures, the right-click menu, and the enterprise
+   * Escape cascade. The explorer supplies the CURRENT LENS to the palette
+   * so a container diagram offers domains under the logical lens and
+   * infrastructure under the deployment lens, exactly as enterprise's
+   * `paletteFor(level, lens)` does.
+   *
+   * Writes still require a host installed via {@link C4ExplorerProps.onCanvasReady}
+   * — this only exposes the gestures. Defaults to false.
+   */
+  authoring?: boolean | undefined;
 }
 
 type Lens = 'logical' | 'deployment';
@@ -135,6 +148,7 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
     showZoomControls = false,
     onCanvasReady,
     showHeader = true,
+    authoring = false,
   } = props;
 
   // Default selection = the first LEVEL TAB's diagram, not `model.diagrams[0]`:
@@ -387,6 +401,8 @@ export function C4Explorer(props: C4ExplorerProps): ReactElement {
                 showMinimap={showMinimap}
                 showZoomControls={showZoomControls}
                 onCanvasReady={onCanvasReady}
+                authoring={authoring}
+                lens={lens}
               />
             )}
             {/* The lens pills float over the canvas top-left (enterprise

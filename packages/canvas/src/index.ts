@@ -79,7 +79,12 @@ export { MarqueeBox } from './components/marquee-box.js';
 export { CanvasZoomControls } from './components/canvas-zoom-controls.js';
 export { Minimap } from './components/minimap.js';
 export type { MinimapProps } from './components/minimap.js';
-export { ContextMenu } from './components/context-menu.js';
+export {
+  ContextMenu,
+  ContextMenuDivider,
+  ContextMenuItem,
+} from './components/context-menu.js';
+export type { ContextMenuItemProps, ContextMenuProps } from './components/context-menu.js';
 export { Toolbar } from './components/toolbar.js';
 export type { ToolbarProps } from './components/toolbar.js';
 export { Kbd, Tooltip } from './components/tooltip.js';

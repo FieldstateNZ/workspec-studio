@@ -27,9 +27,12 @@ import {
   CanvasSpecContext,
   CanvasZoomControls,
   ConnectorLayer,
+  ContextMenu,
   Minimap,
   ShapeLayer,
   createCanvasStore,
+  createConnectorTool,
+  createPlaceTool,
   pageToScreen,
   useCanvasHover,
   useCanvasStore,
@@ -42,6 +45,7 @@ import {
   fitCamera,
   nodeShapeId,
   registerC4,
+  type C4Lens,
   type C4NodeShape,
 } from './c4/index.js';
 import { serializeForWrite } from './drag/serialize-for-write.js';
@@ -52,6 +56,10 @@ import { ThemedRoot } from './themed-root.js';
 import { tooltipContentFor, TooltipContent } from './tooltip.js';
 import type { ThemeName } from './themes.js';
 import { A11yBridgeContext, a11yC4NodeShapeUtil, type A11yBridge } from './c4-canvas/a11y-node.js';
+import { C4ContextMenuExtras } from './c4-canvas/c4-context-menu-extras.js';
+import { paletteForDiagram } from './c4-canvas/c4-palette.js';
+import { C4PlacementHint } from './c4-canvas/c4-placement-hint.js';
+import { C4Toolbar } from './c4-canvas/c4-toolbar.js';
 import { createFacadeTool } from './c4-canvas/facade-tool.js';
 
 export interface C4DiagramProps {
@@ -129,6 +137,43 @@ export interface C4DiagramProps {
    * changes.
    */
   cameraFitKey?: string | undefined;
+  /**
+   * Turn the canvas into an AUTHORING surface (A3, #133) — the enterprise
+   * C4 architecture page rather than a viewer. Switching it on:
+   *
+   * - registers the shared `place` and `connector` tools on this instance
+   *   (`registerC4` registers shape modules only), so the palette can arm
+   *   them;
+   * - mounts the floating {@link C4Toolbar} top-right and the placement
+   *   hint bottom-centre, exactly where enterprise's `C4Toolbar` /
+   *   `ArchitectureCanvasView` put them;
+   * - mounts the shared `ContextMenu` on right-click (suppressed otherwise)
+   *   with the C4 `Rename` row injected;
+   * - extends the Escape key from "clear selection" to the full enterprise
+   *   cascade (see `onContainerKeyDown`).
+   *
+   * It does NOT grant write access on its own: every gesture routes to
+   * `instance.host`, so a canvas with no host installed still cannot mutate
+   * anything.
+   *
+   * READ ONCE, AT MOUNT — tool registration happens in the instance
+   * initializer. Toggling it on a mounted diagram does not add the tools.
+   * The explorer remounts per view switch, so this is not a practical
+   * limit.
+   *
+   * DEFAULTS TO FALSE, and every authoring surface is gated on it, so
+   * omitting it leaves the rendered output byte-identical for goldens, the
+   * site demo, and the MF smoke.
+   */
+  authoring?: boolean | undefined;
+  /**
+   * Which container lens is on screen — the only input to the authoring
+   * palette that this component cannot derive from `resolved` (both lenses
+   * of a `c4-container` diagram share one `ResolvedDiagram`). Ignored at
+   * other levels, and ignored entirely unless {@link C4DiagramProps.authoring}
+   * is set. Defaults to `'logical'`, matching `C4Explorer`'s own initial lens.
+   */
+  lens?: C4Lens | undefined;
 }
 
 const PAN_STEP = 40;
@@ -205,6 +250,8 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
     showZoomControls = false,
     onCanvasReady,
     cameraFitKey,
+    authoring = false,
+    lens = 'logical',
   } = props;
   void direction; // positions are authoritative; the shared router recomputes edge look live
 
@@ -255,6 +302,15 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         },
       }),
     );
+    // Authoring tools (A3, #133). `registerC4` registers SHAPE MODULES
+    // only, and the whiteboard bundle that normally registers these
+    // (`registerWhiteboard`) would also drag in sticky/text/draw — none of
+    // which belong on a C4 canvas. Registered here, gated, so a viewer
+    // instance has no reachable place/connector tool at all.
+    if (authoring) {
+      inst.tools.register(createPlaceTool(inst));
+      inst.tools.register(createConnectorTool(inst));
+    }
     return inst;
   });
   useEffect(() => () => instance.dispose(), [instance]);
@@ -433,10 +489,55 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         event.preventDefault();
         store.setCamera(zoomCamera(camera, cx, cy, 1 / ZOOM_FACTOR));
         break;
-      case 'Escape':
+      case 'Escape': {
+        // ESCAPE PRECEDENCE (A3 acceptance, #133 ledger). Once a palette
+        // exists, one key has to arbitrate between cancelling a
+        // half-finished operation and dismissing a passive panel. The order
+        // below is enterprise's, ported from `useKeyboardShortcuts.ts:89-98`
+        // — most-transient state first, so Escape always undoes the LAST
+        // thing the user started:
+        //
+        //   0. an open inline editor (node name / edge label) — never gets
+        //      here at all: both editors `stopPropagation()` on every key
+        //      (`c4-node-component.tsx:82`, `connector-layer.tsx:120`), so
+        //      Escape cancels the edit at the input and this handler never
+        //      runs. That is also the Backspace guard below.
+        //   1. an open context menu — its own `document` listener closes it
+        //      (`context-menu.tsx:104-106`).
+        //   2. `editingId` set with focus elsewhere — leave edit mode.
+        //   3. PLACE MODE ARMED — disarm back to Select. Outranks the rail
+        //      because placement is an operation IN FLIGHT and the rail is
+        //      just a panel; the placement hint pill advertises exactly
+        //      this ("Esc to cancel").
+        //   4. otherwise — clear the selection, which is what dismisses
+        //      `C4Explorer`'s detail rail (its own root handler, and the
+        //      `onSelect(null)` below).
+        //
+        // Cases 2 and 3 CONSUME the event (`stopPropagation`) so the
+        // explorer's root Escape handler cannot also close the rail behind
+        // the user's back — one Escape, one effect. Case 4 lets it bubble,
+        // because there the two handlers want the same thing.
+        //
+        // Neither case is gated on `authoring`: `activeTool === 'place'` is
+        // unreachable without it (the tool is not registered), and an edit
+        // session IS reachable without it — double-clicking a connector
+        // opens the edge-label editor on any canvas — so gating case 2
+        // would leave viewers with an Escape that clears the selection out
+        // from under an open editor.
+        if (store.editingId !== null) {
+          store.setEditing(null);
+          event.stopPropagation();
+          break;
+        }
+        if (store.activeTool === 'place') {
+          store.setActiveTool('select');
+          event.stopPropagation();
+          break;
+        }
         store.clearSelection();
         onSelect?.(null);
         break;
+      }
       case 'Delete':
       case 'Backspace': {
         // Deletion is a MODEL mutation, so it only exists when an embedding
@@ -446,6 +547,20 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
         // demo, the MF smoke) keep their pre-A1 keyboard surface exactly:
         // Delete falls through untouched, never a local-only delete.
         if (instance.host.deleteShapes === undefined) break;
+        // TYPING GUARD (A3 acceptance, #133 ledger). Backspace is both
+        // "delete the selection" and "delete the character behind the
+        // caret", and A3 puts text inputs on this canvas for the first
+        // time (the pending-node name editor, the edge-label editor). The
+        // primary defence is that both editors stop propagation, so this
+        // handler never sees their keys — but that is a property of ANOTHER
+        // file, and the cost of it regressing is destroying the user's node
+        // mid-rename. So the branch refuses independently, on both signals
+        // enterprise uses (`use-keyboard-shortcuts.ts:109-116`): an active
+        // edit session, and an editable event target.
+        if (store.editingId !== null) break;
+        const target = event.target as HTMLElement | null;
+        const tag = target?.tagName;
+        if (target?.isContentEditable === true || tag === 'INPUT' || tag === 'TEXTAREA') break;
         const ids = [...store.selectedIds];
         if (ids.length === 0) break;
         event.preventDefault();
@@ -506,7 +621,25 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
           <CanvasProvider store={instance}>
             <CanvasSpecContext.Provider value={canvasSpec}>
               <A11yBridgeContext.Provider value={bridge}>
-                <Canvas shortcutScope="none" renderContextMenu={() => null}>
+                <Canvas
+                  shortcutScope="none"
+                  // The shared menu, unmodified, is what enterprise's C4
+                  // canvas shows — plus the C4 `Rename` row in its
+                  // host-items slot. Viewers keep the suppressed menu they
+                  // have always had.
+                  renderContextMenu={
+                    authoring
+                      ? (menu) => (
+                          <ContextMenu
+                            {...menu}
+                            extraItems={
+                              <C4ContextMenuExtras ids={menu.ids} onClose={menu.onClose} />
+                            }
+                          />
+                        )
+                      : () => null
+                  }
+                >
                   {backgroundVariant !== undefined && <Background variant={backgroundVariant} />}
                   <ConnectorLayer />
                   <ShapeLayer />
@@ -518,6 +651,30 @@ export function C4Diagram(props: C4DiagramProps): ReactElement {
                     linkResolver={linkResolver}
                   />
                 </Canvas>
+                {/* Floating authoring chrome — a SIBLING of the canvas
+                    inside the same positioned stage, exactly as enterprise
+                    composes it (`ArchitectureCanvasView.tsx:493-550`: the
+                    toolbar and hint are siblings of `<Canvas>`, never
+                    children of it). */}
+                {authoring && (
+                  <>
+                    <C4Toolbar
+                      palette={paletteForDiagram(resolved.type, lens)}
+                      // Resolved at CLICK time, not render time: the host
+                      // is installed by `onCanvasReady` (an effect, so
+                      // after the first render) and `instance.host` is a
+                      // plain mutable field, not reactive state — reading
+                      // it during render would latch "no auto-layout"
+                      // forever. Enterprise's `onRelayout` is a required
+                      // prop for the same reason its button is always
+                      // shown (`C4Toolbar.tsx:23,248`).
+                      onRelayout={() => {
+                        instance.host.autoLayout?.();
+                      }}
+                    />
+                    <C4PlacementHint />
+                  </>
+                )}
               </A11yBridgeContext.Provider>
             </CanvasSpecContext.Provider>
           </CanvasProvider>
